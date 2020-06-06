@@ -17,7 +17,7 @@ npm install --save metaapi.cloud-sdk
 You can obtain MetaApi token via [https://app.metaapi.cloud/token](https://app.metaapi.cloud/token) UI.
 
 ## Working code examples
-You can find code examples in the examples folder of this npm package.
+You can find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
 
 ## Add MetaTrader account to MetaApi
 You can use [https://app.metaapi.cloud/accounts](https://app.metaapi.cloud/accounts) UI to add a MetaTrader
