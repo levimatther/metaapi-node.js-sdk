@@ -16,6 +16,9 @@ npm install --save metaapi.cloud-sdk
 ## Obtaining MetaApi token
 You can obtain MetaApi token via [https://app.metaapi.cloud/token](https://app.metaapi.cloud/token) UI.
 
+## Working code examples
+You can find code examples in the examples folder of this npm package.
+
 ## Add MetaTrader account to MetaApi
 You can use [https://app.metaapi.cloud/accounts](https://app.metaapi.cloud/accounts) UI to add a MetaTrader
 account to MetaApi application. Alternatively you can use API as

@@ -1,3 +1,6 @@
+1.0.19
+  - mentioned code examples in readme.md
+
 1.0.18
   - added license clarifications
   - added example code based on user requests
