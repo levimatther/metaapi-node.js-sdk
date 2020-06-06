@@ -1,3 +1,7 @@
+1.0.18
+  - added license clarifications
+  - added example code based on user requests
+
 1.0.17
   - improve stability on reconnect in user synchronization mode
   - added commission field to Metatrader position model
