@@ -66,7 +66,7 @@ const account = await api.metatraderAccountApi.createAccount({
   // DST switch (the values will be changed soon)
   timeConverter: 'roboforex',
   application: 'MetaApi',
-  magic: '123456'
+  magic: 123456
 });
 
 // Alternatively you can retrieve an existing account from API

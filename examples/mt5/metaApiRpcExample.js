@@ -45,7 +45,7 @@ async function testMetaApiSynchronization() {
         provisioningProfileId: profile.id,
         timeConverter: 'icmarkets',
         application: 'MetaApi',
-        magic: '1000'
+        magic: 1000
       });
     } else {
       console.log('MT5 account already added to MetaApi');
