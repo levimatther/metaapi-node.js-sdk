@@ -494,13 +494,15 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Returns flag indicating status of state synchronization with MetaTrader terminal
-   * @return {Boolean} flag indicating status of state synchronization with MetaTrader terminal
+   * @return {Promise<Boolean>} promise resolving with a flag indicating status of state synchronization with MetaTrader
+   * terminal
    */
-  get synchronized() {
+  async isSynchronized() {
     if (this._account.synchronizationMode === 'user') {
       return this._synchronized;
     } else {
-      return true;
+      let result = await this.getDealsByTimeRange(new Date(), new Date());
+      return !result.synchronizing;
     }
   }
 
@@ -512,15 +514,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TimeoutError} if application failed to synchronize with the teminal withing timeout allowed
    */
   async waitSynchronized(timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
-    if (this._account.synchronizationMode === 'user') {
-      let startTime = Date.now();
-      while (!this._synchronized && (startTime + timeoutInSeconds * 1000) > Date.now()) {
-        await new Promise(res => setTimeout(res, intervalInMilliseconds));
-      }
-      if (!this._synchronized) {
-        throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
-          this._account.id);
-      }
+    let startTime = Date.now();
+    while (!(await this.isSynchronized()) && (startTime + timeoutInSeconds * 1000) > Date.now()) {
+      await new Promise(res => setTimeout(res, intervalInMilliseconds));
+    }
+    if (!(await this.isSynchronized())) {
+      throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
+        this._account.id);
     }
   }
 

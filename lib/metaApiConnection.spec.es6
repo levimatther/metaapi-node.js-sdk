@@ -3,6 +3,7 @@
 import should from 'should';
 import sinon from 'sinon';
 import MetaApiConnection from './metaApiConnection';
+import NotSynchronizedError from './clients/notSynchronizedError';
 
 /**
  * @test {MetaApiConnection}
@@ -699,8 +700,8 @@ describe('MetaApiConnection', () => {
     /**
      * @test {MetaApiConnection#waitSynchronized}
      */
-    it('should wait util connection', async () => {
-      api.synchronized.should.equal(false);
+    it('should wait util synchronization complete in user mode', async () => {
+      (await api.isSynchronized()).should.equal(false);
       let promise = api.waitSynchronized(1, 10);
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
@@ -709,20 +710,41 @@ describe('MetaApiConnection', () => {
       startTime = Date.now();
       await promise;
       (Date.now() - startTime).should.be.approximately(0, 10);
-      api.synchronized.should.equal(true);
+      (await api.isSynchronized()).should.equal(true);
     });
 
     /**
      * @test {MetaApiConnection#waitSynchronized}
      */
-    it('should time out waiting for connection', async () => {
+    it('should time out waiting for synchronization complete in user mode', async () => {
       try {
         await api.waitSynchronized(1, 10);
         throw new Error('TimeoutError is expected');
       } catch (err) {
         err.name.should.equal('TimeoutError');
       }
-      api.synchronized.should.equal(false);
+      (await api.isSynchronized()).should.equal(false);
+    });
+
+    /**
+     * @test {MetaApiConnection#waitSynchronized}
+     */
+    it('should wait util synchronization complete in automatic mode', async () => {
+      api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'automatic'});
+      sandbox.stub(client, 'getDealsByTimeRange')
+        .onCall(0).resolves({synchronizing: true})
+        .onCall(1).resolves({synchronizing: true})
+        .onCall(2).resolves({synchronizing: true})
+        .onCall(3).resolves({synchronizing: false})
+        .onCall(4).resolves({synchronizing: false})
+        .onCall(5).resolves({synchronizing: false});
+      (await api.isSynchronized()).should.equal(false);
+      let promise = api.waitSynchronized(1, 10);
+      let startTime = Date.now();
+      await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
+      await promise;
+      (Date.now() - startTime).should.be.approximately(20, 10);
+      (await api.isSynchronized()).should.equal(true);
     });
 
   });

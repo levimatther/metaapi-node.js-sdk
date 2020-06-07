@@ -646,7 +646,7 @@ export default class MetaApiWebsocketClient {
   async _processSynchronizationPacket(data) {
     try {
       if (data.type === 'authenticated') {
-        for (let listener of this._synchronizationListeners[data.accountId]) {
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
             await listener.onConnected();
           } catch (err) {
@@ -655,7 +655,7 @@ export default class MetaApiWebsocketClient {
           }
         }
       } else if (data.type === 'disconnected') {
-        for (let listener of this._synchronizationListeners[data.accountId]) {
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
             await listener.onDisconnected();
           } catch (err) {
@@ -665,7 +665,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'accountInformation') {
         if (data.accountInformation) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onAccountInformationUpdated(data.accountInformation);
             } catch (err) {
@@ -676,7 +676,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'deals') {
         for (let deal of (data.deals || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onDealAdded(deal);
             } catch (err) {
@@ -687,7 +687,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'orders') {
         for (let order of (data.orders || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onOrderUpdated(order);
             } catch (err) {
@@ -698,7 +698,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'historyOrders') {
         for (let historyOrder of (data.historyOrders || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onHistoryOrderAdded(historyOrder);
             } catch (err) {
@@ -709,7 +709,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'positions') {
         for (let position of (data.positions || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onPositionUpdated(position);
             } catch (err) {
@@ -720,7 +720,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'update') {
         if (data.accountInformation) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onAccountInformationUpdated(data.accountInformation);
             } catch (err) {
@@ -730,7 +730,7 @@ export default class MetaApiWebsocketClient {
           }
         }
         for (let position of (data.updatedPositions || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onPositionUpdated(position);
             } catch (err) {
@@ -740,7 +740,7 @@ export default class MetaApiWebsocketClient {
           }
         }
         for (let positionId of (data.removedPositionIds || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onPositionRemoved(positionId);
             } catch (err) {
@@ -750,7 +750,7 @@ export default class MetaApiWebsocketClient {
           }
         }
         for (let order of (data.updatedOrders || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onOrderUpdated(order);
             } catch (err) {
@@ -760,7 +760,7 @@ export default class MetaApiWebsocketClient {
           }
         }
         for (let orderId of (data.completedOrderIds || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onOrderCompleted(orderId);
             } catch (err) {
@@ -770,7 +770,7 @@ export default class MetaApiWebsocketClient {
           }
         }
         for (let historyOrder of (data.historyOrders || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onHistoryOrderAdded(historyOrder);
             } catch (err) {
@@ -780,7 +780,7 @@ export default class MetaApiWebsocketClient {
           }
         }
         for (let deal of (data.deals || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onDealAdded(deal);
             } catch (err) {
@@ -790,7 +790,7 @@ export default class MetaApiWebsocketClient {
           }
         }
       } else if (data.type === 'dealSynchronizationFinished') {
-        for (let listener of this._synchronizationListeners[data.accountId]) {
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
             await listener.onDealSynchronizationFinished();
           } catch (err) {
@@ -799,7 +799,7 @@ export default class MetaApiWebsocketClient {
           }
         }
       } else if (data.type === 'orderSynchronizationFinished') {
-        for (let listener of this._synchronizationListeners[data.accountId]) {
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
             await listener.onOrderSynchronizationFinished();
           } catch (err) {
@@ -808,7 +808,7 @@ export default class MetaApiWebsocketClient {
           }
         }
       } else if (data.type === 'status') {
-        for (let listener of this._synchronizationListeners[data.accountId]) {
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
             await listener.onBrokerConnectionStatusChanged(!!data.connected);
           } catch (err) {
@@ -818,7 +818,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'specifications') {
         for (let specification of (data.specifications || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onSymbolSpecificationUpdated(specification);
             } catch (err) {
@@ -829,7 +829,7 @@ export default class MetaApiWebsocketClient {
         }
       } else if (data.type === 'prices') {
         for (let price of (data.prices || [])) {
-          for (let listener of this._synchronizationListeners[data.accountId]) {
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
             try {
               await listener.onSymbolPriceUpdated(price);
             } catch (err) {
