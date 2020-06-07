@@ -96,7 +96,7 @@ export default class MetatraderAccount {
 
   /**
    * Returns MetaTrader magic to place trades using
-   * @return {String} MetaTrader magic to place trades using
+   * @return {Number} MetaTrader magic to place trades using
    */
   get magic() {
     return this._data.magic;
