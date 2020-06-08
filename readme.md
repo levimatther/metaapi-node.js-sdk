@@ -87,6 +87,8 @@ const account = await api.metatraderAccountApi.getAccount('accountId');
 
 const connection = await account.connect();
 
+await connection.waitSynchronized();
+
 // retrieve balance and equity
 console.log(await connection.getAccountInformation());
 // retrieve open positions
@@ -157,7 +159,7 @@ class MongodbHistoryStorage extends HistoryStorage {
   // implementation
 }
 
-const historyStorage = new MongodbHistoryStorage();
+let historyStorage = new MongodbHistoryStorage();
 
 // Note: if you will not specify history storage, then in-memory storage
 // will be used (instalce of MemoryHistoryStorage)
@@ -180,7 +182,7 @@ console.log(terminalState.specification('EURUSD'));
 console.log(terminalState.price('EURUSD'));
 
 // access history storage
-const historyStorage = account.historyStorage;
+historyStorage = connection.historyStorage;
 
 // both orderSynchronizationFinished and dealSynchronizationFinished
 // should be true once history synchronization have finished
