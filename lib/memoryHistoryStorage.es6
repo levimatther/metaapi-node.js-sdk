@@ -56,6 +56,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   onHistoryOrderAdded(historyOrder) {
     let insertIndex = 0;
     let replacementIndex = -1;
+    // eslint-disable-next-line complexity
     this._historyOrders.forEach((order, index) => {
       if (((order.doneTime || new Date(0)).getTime() < (historyOrder.doneTime || new Date(0)).getTime()) ||
         ((order.doneTime || new Date(0)).getTime() === (historyOrder.doneTime || new Date(0)).getTime() &&
@@ -82,6 +83,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   onDealAdded(deal) {
     let insertIndex = 0;
     let replacementIndex = -1;
+    // eslint-disable-next-line complexity
     this._deals.forEach((d, index) => {
       if (((d.time || new Date(0)).getTime() < (deal.time || new Date(0)).getTime()) ||
         ((d.time || new Date(0)).getTime() === (deal.time || new Date(0)).getTime() && d.id <= deal.id)) {
