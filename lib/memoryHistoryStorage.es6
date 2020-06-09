@@ -57,14 +57,14 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     let insertIndex = 0;
     let replacementIndex = -1;
     this._historyOrders.forEach((order, index) => {
-      if ((order.doneTime || new Date(0)).getTime() <= (historyOrder.doneTime || new Date(0)).getTime()) {
-        if (order.id <= historyOrder.id) {
-          if (order.doneTime === historyOrder.doneTime && order.id === historyOrder.id &&
-            order.type === historyOrder.type) {
-            replacementIndex = index;
-          }
-          insertIndex = index + 1;
+      if (((order.doneTime || new Date(0)).getTime() < (historyOrder.doneTime || new Date(0)).getTime()) ||
+        ((order.doneTime || new Date(0)).getTime() === (historyOrder.doneTime || new Date(0)).getTime() &&
+          order.id <= historyOrder.id)) {
+        if (order.doneTime === historyOrder.doneTime && order.id === historyOrder.id &&
+          order.type === historyOrder.type) {
+          replacementIndex = index;
         }
+        insertIndex = index + 1;
       }
     });
     if (replacementIndex !== -1) {
@@ -83,13 +83,12 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     let insertIndex = 0;
     let replacementIndex = -1;
     this._deals.forEach((d, index) => {
-      if ((d.time || new Date(0)).getTime() <= (deal.time || new Date(0)).getTime()) {
-        if (d.id <= deal.id) {
-          if (d.time === deal.time && d.id === deal.id && d.entryType === deal.entryType) {
-            replacementIndex = index;
-          }
-          insertIndex = index + 1;
+      if (((d.time || new Date(0)).getTime() < (deal.time || new Date(0)).getTime()) ||
+        ((d.time || new Date(0)).getTime() === (deal.time || new Date(0)).getTime() && d.id <= deal.id)) {
+        if (d.time === deal.time && d.id === deal.id && d.entryType === deal.entryType) {
+          replacementIndex = index;
         }
+        insertIndex = index + 1;
       }
     });
     if (replacementIndex !== -1) {

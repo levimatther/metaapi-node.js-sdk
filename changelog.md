@@ -1,3 +1,7 @@
+1.1.2
+  - fixed magic field type in docs and code samples
+  - MemoryHistoryStorage bugfixes
+
 1.1.1
   - extended waitSynchronized method logic so that it can be used for accounts in automatic synchronization mode
   - Breaking change: renamed MetaApiConnection synchronied property to isSynchronized method

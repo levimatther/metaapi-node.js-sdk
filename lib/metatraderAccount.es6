@@ -254,7 +254,7 @@ export default class MetatraderAccount {
 
   /**
    * Connects to MetaApi
-   * @param {HistoryStorage} optional history storage
+   * @param {HistoryStorage} historyStorage optional history storage
    * @returns {MetaApiConnection} MetaApi connection
    */
   async connect(historyStorage) {
