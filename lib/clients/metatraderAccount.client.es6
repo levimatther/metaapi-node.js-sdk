@@ -112,7 +112,7 @@ export default class MetatraderAccountClient {
    * connect the terminal to the broker, you can use the connectionStatus field to monitor the current status of the
    * terminal.
    * @param {NewMetatraderAccountDto} account MetaTrader account to create
-   * @return {Promise<MetatraerAccountIdDto>} promise resolving with an id of the MetaTrader account created
+   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id of the MetaTrader account created
    */
   createAccount(account) {
     const opts = {
@@ -167,7 +167,7 @@ export default class MetatraderAccountClient {
    * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
    * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
    * @param {String} id MetaTrader account id to redeploy
-   * @return {Promise} promise resolving when MetaTrader account is scheduled for redeployed
+   * @return {Promise} promise resolving when MetaTrader account is scheduled for redeployment
    */
   redeployAccount(id) {
     const opts = {

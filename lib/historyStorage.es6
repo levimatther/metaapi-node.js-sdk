@@ -21,16 +21,16 @@ export default class HistoryStorage extends SynchronizationListener {
   }
 
   /**
-   * Returns flag indicating wether order history synchronization have finished
-   * @return {Boolean} flag indicating wether order history synchronization have finished
+   * Returns flag indicating whether order history synchronization have finished
+   * @return {Boolean} flag indicating whether order history synchronization have finished
    */
   get orderSynchronizationFinished() {
     return this._orderSynchronizationFinished;
   }
 
   /**
-   * Returns flag indicating wether deal history synchronization have finished
-   * @return {Boolean} flag indicating wether deal history synchronization have finished
+   * Returns flag indicating whether deal history synchronization have finished
+   * @return {Boolean} flag indicating whether deal history synchronization have finished
    */
   get dealSynchronizationFinished() {
     return this._dealSynchronizationFinished;
@@ -79,7 +79,7 @@ export default class HistoryStorage extends SynchronizationListener {
   }
 
   /**
-   * Invoked when connection to MetaTrader terminal terminated
+   * Invoked when connection to MetaTrader terminal established
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onConnected() {
