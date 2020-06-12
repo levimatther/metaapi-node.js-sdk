@@ -17,6 +17,22 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   }
 
   /**
+   * Returns all deals stored in history storage
+   * @return {Array<MetatraderDeal>} all deals stored in history storage
+   */
+  get deals() {
+    return this._deals;
+  }
+
+  /**
+   * Returns all history orders stored in history storage
+   * @return {Array<MetatraderOrder>} all history orders stored in history storage
+   */
+  get historyOrders() {
+    return this._historyOrders;
+  }
+
+  /**
    * Resets the storage. Intended for use in tests
    */
   reset() {
@@ -41,14 +57,6 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   }
 
   /**
-   * Returns all deals stored in history storage
-   * @return {Array<MetatraderDeal>} all deals stored in history storage
-   */
-  get deals() {
-    return this._deals;
-  }
-
-  /**
    * Invoked when a new MetaTrader history order is added
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    * @return {Promise} promise which resolves when the asynchronous event is processed
@@ -61,8 +69,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
       if (((order.doneTime || new Date(0)).getTime() < (historyOrder.doneTime || new Date(0)).getTime()) ||
         ((order.doneTime || new Date(0)).getTime() === (historyOrder.doneTime || new Date(0)).getTime() &&
           order.id <= historyOrder.id)) {
-        if (order.doneTime === historyOrder.doneTime && order.id === historyOrder.id &&
-          order.type === historyOrder.type) {
+        if ((order.doneTime || new Date(0)).getTime() === (historyOrder.doneTime || new Date(0)).getTime() &&
+          order.id === historyOrder.id && order.type === historyOrder.type) {
           replacementIndex = index;
         }
         insertIndex = index + 1;
@@ -87,7 +95,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     this._deals.forEach((d, index) => {
       if (((d.time || new Date(0)).getTime() < (deal.time || new Date(0)).getTime()) ||
         ((d.time || new Date(0)).getTime() === (deal.time || new Date(0)).getTime() && d.id <= deal.id)) {
-        if (d.time === deal.time && d.id === deal.id && d.entryType === deal.entryType) {
+        if ((d.time || new Date(0)).getTime() === (deal.time || new Date(0)).getTime()
+          && d.id === deal.id && d.entryType === deal.entryType) {
           replacementIndex = index;
         }
         insertIndex = index + 1;
@@ -98,14 +107,6 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     } else {
       this._deals.splice(insertIndex, 0, deal);
     }
-  }
-
-  /**
-   * Returns all history orders stored in history storage
-   * @return {Array<MetatraderOrder>} all history orders stored in history storage
-   */
-  get historyOrders() {
-    return this._historyOrders;
   }
 
 }
