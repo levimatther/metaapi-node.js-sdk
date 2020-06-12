@@ -64,7 +64,6 @@ export default class HistoryStorage extends SynchronizationListener {
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onDealSynchronizationFinished() {
     this._dealSynchronizationFinished = true;
@@ -72,7 +71,6 @@ export default class HistoryStorage extends SynchronizationListener {
 
   /**
    * Invoked when a synchronization of history orders on a MetaTrader account have finished
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onOrderSynchronizationFinished() {
     this._orderSynchronizationFinished = true;
@@ -80,7 +78,6 @@ export default class HistoryStorage extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal established
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onConnected() {
     this._orderSynchronizationFinished = false;
