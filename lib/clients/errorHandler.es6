@@ -91,7 +91,7 @@ export class ForbiddenError extends ApiError {
 }
 
 /**
- * Throwing this error results in 401 (Unautorized) HTTP response code.
+ * Throwing this error results in 401 (Unauthorized) HTTP response code.
  */
 export class UnauthorizedError extends ApiError {
 

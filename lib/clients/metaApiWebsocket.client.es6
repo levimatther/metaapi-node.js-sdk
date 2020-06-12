@@ -35,7 +35,7 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Connects to MetaApi server via socket.io protocol
-   * @returns {Promise} promise which resolves when connection is eatablished
+   * @returns {Promise} promise which resolves when connection is established
    */
   connect() {
     if (!this._connected) {
@@ -555,7 +555,7 @@ export default class MetaApiWebsocketClient {
    */
   removeAllListeners() {
     this._synchronizationListeners = {};
-    this._reconnectListeners = {};
+    this._reconnectListeners = [];
   }
 
   async _reconnect() {
@@ -639,7 +639,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} bid bid price
    * @property {Number} ask ask price
    * @property {Number} profitTickValue tick value for a profitable position
-   * @property {Number} lossTickValue tick value for a loosing position
+   * @property {Number} lossTickValue tick value for a losing position
    */
 
   // eslint-disable-next-line complexity,max-statements
