@@ -59,7 +59,6 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Invoked when a new MetaTrader history order is added
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onHistoryOrderAdded(historyOrder) {
     let insertIndex = 0;
@@ -86,7 +85,6 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Invoked when a new MetaTrader history deal is added
    * @param {MetatraderDeal} deal new MetaTrader history deal
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onDealAdded(deal) {
     let insertIndex = 0;

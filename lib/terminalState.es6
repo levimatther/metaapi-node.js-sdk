@@ -93,7 +93,6 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal established
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onConnected() {
     this._connected = true;
@@ -107,7 +106,6 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal terminated
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onDisconnected() {
     this._connected = false;
@@ -117,7 +115,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when broker connection satus have changed
    * @param {Boolean} connected is MetaTrader terminal is connected to broker
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onBrokerConnectionStatusChanged(connected) {
     this._connectedToBroker = connected;
@@ -126,7 +123,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when MetaTrader account information is updated
    * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onAccountInformationUpdated(accountInformation) {
     this._accountInformation = accountInformation;
@@ -135,7 +131,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when MetaTrader position is updated
    * @param {MetatraderPosition} position updated MetaTrader position
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onPositionUpdated(position) {
     let index = this._positions.findIndex(p => p.id === position.id);
@@ -149,7 +144,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when MetaTrader position is removed
    * @param {String} positionId removed MetaTrader position id
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onPositionRemoved(positionId) {
     this._positions = this._positions.filter(p => p.id !== positionId);
@@ -158,7 +152,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when MetaTrader order is updated
    * @param {MetatraderOrder} order updated MetaTrader order
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onOrderUpdated(order) {
     let index = this._orders.findIndex(o => o.id === order.id);
@@ -172,7 +165,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when MetaTrader order is completed (executed or canceled)
    * @param {String} orderId completed MetaTrader order id
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onOrderCompleted(orderId) {
     this._orders = this._orders.filter(o => o.id !== orderId);
@@ -181,7 +173,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when a symbol specification was updated
    * @param {MetatraderSymbolSpecification} specification updated MetaTrader symbol specification
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onSymbolSpecificationUpdated(specification) {
     let index = this._specifications.findIndex(s => s.symbol === specification.symbol);
@@ -196,7 +187,6 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when a symbol price was updated
    * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price
-   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   // eslint-disable-next-line complexity
   onSymbolPriceUpdated(price) {
