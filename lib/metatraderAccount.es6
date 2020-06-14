@@ -119,6 +119,15 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns authorization access token to be used for accessing single account data.
+   * Intended to be used in browser API.
+   * @return {String} authorization token
+   */
+  get accessToken() {
+    return this._data.accessToken;
+  }
+
+  /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */

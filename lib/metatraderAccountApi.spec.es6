@@ -66,7 +66,8 @@ describe('MetatraderAccountApi', () => {
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
       synchronizationMode: 'automatic',
-      type: 'cloud'
+      type: 'cloud',
+      accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
     });
     let account = await api.getAccount('id');
     account.id.should.equal('id');
@@ -81,6 +82,7 @@ describe('MetatraderAccountApi', () => {
     account.state.should.equal('DEPLOYED');
     account.synchronizationMode.should.equal('automatic');
     account.type.should.equal('cloud');
+    account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
     sinon.assert.calledWith(client.getAccount, 'id');
   });
@@ -102,7 +104,8 @@ describe('MetatraderAccountApi', () => {
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
       synchronizationMode: 'automatic',
-      type: 'cloud'
+      type: 'cloud',
+      accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
     });
     let newAccountData = {
       login: '50194988',
@@ -114,7 +117,8 @@ describe('MetatraderAccountApi', () => {
       timeConverter: 'icmarkets',
       application: 'MetaApi',
       synchronizationMode: 'automatic',
-      type: 'cloud'
+      type: 'cloud',
+      accessToken: 'NyV5no9TMffJyUts2FjI80wly0so3rVCz4xOqiDx'
     };
     let account = await api.createAccount(newAccountData);
     account.id.should.equal('id');
@@ -129,6 +133,7 @@ describe('MetatraderAccountApi', () => {
     account.state.should.equal('DEPLOYED');
     account.synchronizationMode.should.equal('automatic');
     account.type.should.equal('cloud');
+    account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
     sinon.assert.calledWith(client.createAccount, newAccountData);
     sinon.assert.calledWith(client.getAccount, 'id');
