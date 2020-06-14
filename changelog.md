@@ -1,6 +1,7 @@
 1.1.2
   - fixed magic field type in docs and code samples
   - MemoryHistoryStorage bugfixes
+  - esdoc fixes
 
 1.1.1
   - extended waitSynchronized method logic so that it can be used for accounts in automatic synchronization mode
