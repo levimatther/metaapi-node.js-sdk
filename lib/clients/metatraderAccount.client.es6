@@ -39,6 +39,8 @@ export default class MetatraderAccountClient {
    * DELETING
    * @property {String} connectionStatus terminal & broker connection status, one of CONNECTED, DISCONNECTED,
    * DISCONNECTED_FROM_BROKER
+   * @property {String} accessToken authorization token to be used for accessing single account data.
+   * Intended to be used in browser API.
    */
 
   /**
