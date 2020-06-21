@@ -30,7 +30,7 @@ export default class MetatraderAccountApi {
   /**
    * Retrieves a MetaTrader account by id
    * @param {String} accountId MetaTrader account id
-   * @return {Promise<ProvisioningProfile>} promise resolving with MetaTrader account entity
+   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
    */
   async getAccount(accountId) {
     let account = await this._metatraderAccountClient.getAccount(accountId);

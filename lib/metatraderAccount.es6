@@ -271,6 +271,16 @@ export default class MetatraderAccount {
     return connection;
   }
 
+  /**
+   * Updates MetaTrader account data
+   * @param {MetatraderAccountUpdateDto} account MetaTrader account update
+   * @return {Promise} promise resolving when account is updated
+   */
+  async update(account) {
+    await this._metatraderAccountClient.updateAccount(this.id, account);
+    await this.reload();
+  }
+
   _delay(timeoutInMilliseconds) {
     return new Promise(res => setTimeout(res, timeoutInMilliseconds));
   }
