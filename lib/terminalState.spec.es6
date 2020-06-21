@@ -149,4 +149,32 @@ describe('TerminalState', () => {
     state.accountInformation.equity.should.equal(1100);
   });
 
+  /**
+   * @test {TerminalState#onSymbolPriceUpdated}
+   * @test {TerminalState#orders}
+   */
+  it('should update order currentPrice on price update', () => {
+    state.onOrderUpdated({
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 9
+    });
+    state.onOrderUpdated({
+      id: '2',
+      symbol: 'AUDUSD',
+      type: 'ORDER_TYPE_SELL_LIMIT',
+      currentPrice: 9
+    });
+    state.onSymbolSpecificationUpdated({symbol: 'EURUSD', tickSize: 0.01});
+    state.onSymbolPriceUpdated({
+      symbol: 'EURUSD',
+      profitTickValue: 0.5,
+      lossTickValue: 0.5,
+      bid: 10,
+      ask: 11
+    });
+    state.orders.map(o => o.currentPrice).should.match([11, 9]);
+  });
+
 });

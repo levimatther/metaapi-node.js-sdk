@@ -192,6 +192,7 @@ export default class TerminalState extends SynchronizationListener {
   onSymbolPriceUpdated(price) {
     this._pricesBySymbol[price.symbol] = price;
     let positions = this._positions.filter(p => p.symbol === price.symbol);
+    let orders = this._orders.filter(o => o.symbol === price.symbol);
     let specification = this.specification(price.symbol);
     if (specification) {
       for (let position of positions) {
@@ -216,6 +217,10 @@ export default class TerminalState extends SynchronizationListener {
           this._accountInformation.equity += increment;
           this._accountInformation.updateCount = (this._accountInformation.updateCount || 0) + 1;
         }
+      }
+      for (let order of orders) {
+        order.currentPrice = order.type === 'ORDER_TYPE_BUY_LIMIT' || order.type === 'ORDER_TYPE_BUY_STOP' ||
+          order.type === 'ORDER_TYPE_BUY_STOP_LIMIT' ? price.ask : price.bid;
       }
       if ((this._accountInformation || {}).updateCount > 100) {
         this._accountInformation.equity = this._accountInformation.balance +
