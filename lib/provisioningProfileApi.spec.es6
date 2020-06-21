@@ -45,12 +45,11 @@ describe('ProvisioningProfileApi', () => {
    * @test {ProvisioningProfileApi#getProvisioningProfile}
    */
   it('should retrieve provisioning profile by id', async () => {
-    sandbox.stub(client, 'getProvisioningProfile').resolves({_id: 'id', name: 'name', type: 'standard', version: 4,
+    sandbox.stub(client, 'getProvisioningProfile').resolves({_id: 'id', name: 'name', version: 4,
       status: 'new'});
     let profile = await api.getProvisioningProfile('id');
     profile.id.should.equal('id');
     profile.name.should.equal('name');
-    profile.type.should.equal('standard');
     profile.version.should.equal(4);
     profile.status.should.equal('new');
     (profile instanceof ProvisioningProfile).should.be.true();
@@ -62,14 +61,13 @@ describe('ProvisioningProfileApi', () => {
    */
   it('should create provisioning profile', async () => {
     sandbox.stub(client, 'createProvisioningProfile').resolves({id: 'id'});
-    let profile = await api.createProvisioningProfile({name: 'name', type: 'standard', version: 4});
+    let profile = await api.createProvisioningProfile({name: 'name', version: 4});
     profile.id.should.equal('id');
     profile.name.should.equal('name');
-    profile.type.should.equal('standard');
     profile.version.should.equal(4);
     profile.status.should.equal('new');
     (profile instanceof ProvisioningProfile).should.be.true();
-    sinon.assert.calledWith(client.createProvisioningProfile, {name: 'name', type: 'standard', version: 4});
+    sinon.assert.calledWith(client.createProvisioningProfile, {name: 'name', version: 4});
   });
 
   /**
@@ -77,8 +75,8 @@ describe('ProvisioningProfileApi', () => {
    */
   it('should reload provisioning profile', async () => {
     sandbox.stub(client, 'getProvisioningProfile')
-      .onFirstCall().resolves({_id: 'id', name: 'name', type: 'standard', version: 4, status: 'new'})
-      .onSecondCall().resolves({_id: 'id', name: 'name', type: 'standard', version: 4, status: 'active'});
+      .onFirstCall().resolves({_id: 'id', name: 'name', version: 4, status: 'new'})
+      .onSecondCall().resolves({_id: 'id', name: 'name', version: 4, status: 'active'});
     let profile = await api.getProvisioningProfile('id');
     await profile.reload();
     profile.status.should.equal('active');
@@ -91,7 +89,7 @@ describe('ProvisioningProfileApi', () => {
    */
   it('should remove provisioning profile', async () => {
     sandbox.stub(client, 'getProvisioningProfile')
-      .resolves({_id: 'id', name: 'name', type: 'standard', version: 4, status: 'new'});
+      .resolves({_id: 'id', name: 'name', version: 4, status: 'new'});
     sandbox.stub(client, 'deleteProvisioningProfile').resolves();
     let profile = await api.getProvisioningProfile('id');
     await profile.remove();
@@ -103,7 +101,7 @@ describe('ProvisioningProfileApi', () => {
    */
   it('should upload a file to provisioning profile', async () => {
     sandbox.stub(client, 'getProvisioningProfile')
-      .resolves({_id: 'id', name: 'name', type: 'standard', version: 4, status: 'new'});
+      .resolves({_id: 'id', name: 'name', version: 4, status: 'new'});
     sandbox.stub(client, 'uploadProvisioningProfileFile').resolves();
     let profile = await api.getProvisioningProfile('id');
     await profile.uploadFile('broker.srv', '/path/to/file.srv');

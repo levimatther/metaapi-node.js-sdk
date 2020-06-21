@@ -24,7 +24,6 @@ export default class ProvisioningProfileClient {
    * @typedef {Object} ProvisioningProfileDto
    * @property {String} _id provisioning profile unique identifier
    * @property {String} name provisioning profile name
-   * @property {String} type provisioning profile type (allowed values are standard and advanced)
    * @property {Number} version MetaTrader version (allowed values are 4 and 5)
    * @property {String} status provisioning profile status (allowed values are new and active)
    */
@@ -79,7 +78,6 @@ export default class ProvisioningProfileClient {
    * New provisioning profile model
    * @typedef {Object} NewProvisioningProfileDto
    * @property {String} name provisioning profile name
-   * @property {String} type provisioning profile type (allowed values are standard and advanced)
    * @property {Number} version MetaTrader version (allowed values are 4 and 5)
    */
 
@@ -114,7 +112,7 @@ export default class ProvisioningProfileClient {
    * https://metaapi.cloud/docs/provisioning/api/provisioningProfile/uploadFilesToProvisioningProfile/).
    * @param {String} provisioningProfileId provisioning profile id to upload file to
    * @param {String} fileName name of the file to upload. Allowed values are servers.dat for MT5 profile, broker.srv for
-   * MT4 profile, profile.zip for advanced profile
+   * MT4 profile
    * @param {String|Buffer} file path to a file to upload or buffer containing file contents
    * @return {Promise} promise resolving when file upload is completed
    */

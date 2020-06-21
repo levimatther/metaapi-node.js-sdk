@@ -32,14 +32,6 @@ export default class ProvisioningProfile {
   }
 
   /**
-   * Returns profile type. Possible values are standard and advanced
-   * @return {String} profile type
-   */
-  get type() {
-    return this._data.type;
-  }
-
-  /**
    * Returns profile version. Possible values are 4 and 5
    * @return {String} profile version
    */
@@ -60,8 +52,7 @@ export default class ProvisioningProfile {
    * @return {Promise} promise resolving when provisioning profile is updated
    */
   async reload() {
-    let data = await this._provisioningProfileClient.getProvisioningProfile(this.id);
-    this._data = data;
+    this._data = await this._provisioningProfileClient.getProvisioningProfile(this.id);
   }
 
   /**
@@ -75,7 +66,7 @@ export default class ProvisioningProfile {
   /**
    * Uploads a file to provisioning profile.
    * @param {String} fileName name of the file to upload. Allowed values are servers.dat for MT5 profile, broker.srv for
-   * MT4 profile, profile.zip for advanced profile
+   * MT4 profile
    * @param {String|Buffer} file path to a file to upload or buffer containing file contents
    * @return {Promise} promise which resolves when the file is uploaded
    */

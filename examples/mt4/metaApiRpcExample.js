@@ -18,7 +18,6 @@ async function testMetaApiSynchronization() {
       console.log('Creating account profile');
       profile = await api.provisioningProfileApi.createProvisioningProfile({
         name: serverName,
-        type: 'standard',
         version: 4
       });
       await profile.uploadFile('broker.srv', brokerSrvFile);
@@ -32,7 +31,7 @@ async function testMetaApiSynchronization() {
 
     // Add test MetaTrader account
     let accounts = await api.metatraderAccountApi.getAccounts();
-    let account = accounts.find(a => a.login === login && a.synchronizationMode == 'automatic');
+    let account = accounts.find(a => a.login === login && a.synchronizationMode === 'automatic');
     if (!account) {
       console.log('Adding MT4 account to MetaApi');
       account = await api.metatraderAccountApi.createAccount({
