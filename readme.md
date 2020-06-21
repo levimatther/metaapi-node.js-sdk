@@ -35,7 +35,6 @@ const api = new MetaApi(token);
 // you should do it before creating an account
 const provisioningProfile = await api.provisioningProfileApi.createProvisioningProfile({
   name: 'My profile',
-  type: 'standard',
   version: 5
 });
 // servers.dat file is required for MT5 profile and can be found inside

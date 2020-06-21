@@ -26,7 +26,6 @@ describe('ProvisioningProfileClient', () => {
     let expected = [{
       _id: 'id',
       name: 'name',
-      type: 'standard',
       version: 4,
       status: 'active'
     }];
@@ -60,7 +59,6 @@ describe('ProvisioningProfileClient', () => {
     let expected = {
       _id: 'id',
       name: 'name',
-      type: 'standard',
       version: 4,
       status: 'active'
     };
@@ -93,7 +91,6 @@ describe('ProvisioningProfileClient', () => {
     let profile = {
       _id: 'id',
       name: 'name',
-      type: 'standard',
       version: 4,
       status: 'active'
     };

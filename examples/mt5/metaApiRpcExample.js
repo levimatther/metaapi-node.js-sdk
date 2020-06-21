@@ -18,7 +18,6 @@ async function testMetaApiSynchronization() {
       console.log('Creating account profile');
       profile = await api.provisioningProfileApi.createProvisioningProfile({
         name: serverName,
-        type: 'standard',
         version: 5
       });
       await profile.uploadFile('servers.dat', serverDatFile);

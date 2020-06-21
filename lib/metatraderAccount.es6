@@ -132,8 +132,7 @@ export default class MetatraderAccount {
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
   async reload() {
-    let data = await this._metatraderAccountClient.getAccount(this.id);
-    this._data = data;
+    this._data = await this._metatraderAccountClient.getAccount(this.id);
   }
 
   /**
