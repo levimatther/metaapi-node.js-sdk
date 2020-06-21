@@ -60,7 +60,7 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
     };
     return this._httpClient.request(opts);
   }
@@ -78,7 +78,7 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
     };
     return this._httpClient.request(opts);
   }
@@ -123,7 +123,7 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
-      json:true,
+      json: true,
       body: account
     };
     return this._httpClient.request(opts);
@@ -142,7 +142,7 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
     };
     return this._httpClient.request(opts);
   }
@@ -160,7 +160,7 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
     };
     return this._httpClient.request(opts);
   }
@@ -178,7 +178,7 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
     };
     return this._httpClient.request(opts);
   }
@@ -197,7 +197,38 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Updated MetaTrader account data
+   * @typedef {Object} MetatraderAccountUpdateDto
+   * @property {String} name MetaTrader account human-readable name in the MetaApi app
+   * @property {String} password MetaTrader account password. The password can be either investor password for read-only
+   * access or master password to enable trading features. Required for cloud account
+   * @property {String} server MetaTrader server which hosts the account
+   * @property {String} synchronizationMode synchronization mode, can be automatic or user. See
+   * https://metaapi.cloud/docs/client/websocket/synchronizationMode/ for more details.
+   */
+
+  /**
+   * Updates existing metatrader account data (see
+   * https://metaapi.cloud/docs/provisioning/api/account/updateAccount/)
+   * @param {String} id MetaTrader account id
+   * @param {MetatraderAccountUpdateDto} account updated MetaTrader account
+   * @return {Promise} promise resolving when MetaTrader account is updated
+   */
+  updateAccount(id, account) {
+    const opts = {
+      url: `${this._host}/users/current/accounts/${id}`,
+      method: 'PUT',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true,
+      body: account
     };
     return this._httpClient.request(opts);
   }

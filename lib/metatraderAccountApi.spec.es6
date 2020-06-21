@@ -22,7 +22,8 @@ describe('MetatraderAccountApi', () => {
     deleteAccount: () => {},
     deployAccount: () => {},
     undeployAccount: () => {},
-    redeployAccount: () => {}
+    redeployAccount: () => {},
+    updateAccount: () => {}
   };
   let metaApiWebsocketClient = {
     addSynchronizationListener: () => {},
@@ -658,6 +659,62 @@ describe('MetatraderAccountApi', () => {
     connection.historyStorage.should.equal(storage);
     sinon.assert.calledWith(metaApiWebsocketClient.addSynchronizationListener, 'id', storage);
     sinon.assert.calledWith(metaApiWebsocketClient.subscribe, 'id');
+  });
+
+  /**
+   * @test {MetatraderAccount#update}
+   */
+  it('should update MT account', async () => {
+    sandbox.stub(client, 'getAccount')
+      .onFirstCall()
+      .resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        timeConverter: 'icmarkets',
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'DEPLOYED',
+        synchronizationMode: 'automatic',
+        type: 'cloud'
+      })
+      .onSecondCall()
+      .resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a__',
+        server: 'OtherMarkets-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        timeConverter: 'icmarkets',
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'DEPLOYED',
+        synchronizationMode: 'user',
+        type: 'cloud'
+      });
+    sandbox.stub(client, 'updateAccount').resolves();
+    let account = await api.getAccount('id');
+    await account.update({
+      name: 'mt5a__',
+      password: 'moreSecurePass',
+      server: 'OtherMarkets-Demo',
+      synchronizationMode: 'user'
+    });
+    account.name.should.equal('mt5a__');
+    account.server.should.equal('OtherMarkets-Demo');
+    account.synchronizationMode.should.equal('user');
+    sinon.assert.calledWith(client.updateAccount, 'id', {
+      name: 'mt5a__',
+      password: 'moreSecurePass',
+      server: 'OtherMarkets-Demo',
+      synchronizationMode: 'user'
+    });
+    sinon.assert.calledWith(client.getAccount, 'id');
+    sinon.assert.calledTwice(client.getAccount);
   });
 
 });

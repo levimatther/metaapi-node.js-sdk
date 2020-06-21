@@ -162,4 +162,28 @@ describe('ProvisioningProfileClient', () => {
     await provisioningClient.deleteProvisioningProfile('id');
   });
 
+  /**
+   * @test {ProvisioningProfileClient#updateProvisioningProfile}
+   */
+  it('should update provisioning profile via API', async () => {
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
+            method: 'PUT',
+            headers: {
+              'auth-token': 'token'
+            },
+            json: true,
+            body: {
+              name: 'new name'
+            }
+          });
+        });
+    };
+    await provisioningClient.updateProvisioningProfile('id', {name: 'new name'});
+  });
+
 });

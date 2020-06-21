@@ -33,7 +33,7 @@ export default class ProvisioningProfile {
 
   /**
    * Returns profile version. Possible values are 4 and 5
-   * @return {String} profile version
+   * @return {Number} profile version
    */
   get version() {
     return this._data.version;
@@ -72,6 +72,16 @@ export default class ProvisioningProfile {
    */
   uploadFile(fileName, file) {
     return this._provisioningProfileClient.uploadProvisioningProfileFile(this.id, fileName, file);
+  }
+
+  /**
+   * Updates provisioning profile
+   * @param {ProvisioningProfileUpdateDto} profile provisioning profile update
+   * @return {Promise} promise resolving when provisioning profile is updated
+   */
+  async update(profile) {
+    await this._provisioningProfileClient.updateProvisioningProfile(this.id, profile);
+    await this.reload();
   }
 
 }

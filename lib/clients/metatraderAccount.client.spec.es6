@@ -223,4 +223,36 @@ describe('MetatraderAccountClient', () => {
     await provisioningClient.deleteAccount('id');
   });
 
+  /**
+   * @test {MetatraderAccountClient#updateAccount}
+   */
+  it('should update MetaTrader account via API', async () => {
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${provisioningApiUrl}/users/current/accounts/id`,
+            method: 'PUT',
+            headers: {
+              'auth-token': 'token'
+            },
+            json: true,
+            body: {
+              name: 'new account name',
+              password: 'new_password007',
+              server: 'ICMarketsSC2-Demo',
+              synchronizationMode: 'user'
+            }
+          });
+        });
+    };
+    await provisioningClient.updateAccount('id', {
+      name: 'new account name',
+      password: 'new_password007',
+      server: 'ICMarketsSC2-Demo',
+      synchronizationMode: 'user'
+    });
+  });
+
 });

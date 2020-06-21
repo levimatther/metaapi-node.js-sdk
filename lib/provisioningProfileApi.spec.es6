@@ -18,7 +18,8 @@ describe('ProvisioningProfileApi', () => {
     getProvisioningProfile: () => {},
     createProvisioningProfile: () => {},
     deleteProvisioningProfile: () => {},
-    uploadProvisioningProfileFile: () => {}
+    uploadProvisioningProfileFile: () => {},
+    updateProvisioningProfile: () => {}
   };
 
   before(() => {
@@ -106,6 +107,18 @@ describe('ProvisioningProfileApi', () => {
     let profile = await api.getProvisioningProfile('id');
     await profile.uploadFile('broker.srv', '/path/to/file.srv');
     sinon.assert.calledWith(client.uploadProvisioningProfileFile, 'id', 'broker.srv', '/path/to/file.srv');
+  });
+
+  /**
+   * @test {ProvisioningProfile#update}
+   */
+  it('should update provisioning profile', async () => {
+    sandbox.stub(client, 'getProvisioningProfile')
+      .resolves({_id: 'id', name: 'name', version: 4, status: 'new'});
+    sandbox.stub(client, 'updateProvisioningProfile').resolves();
+    let profile = await api.getProvisioningProfile('id');
+    await profile.update({name: 'name'});
+    sinon.assert.calledWith(client.updateProvisioningProfile, 'id', {name: 'name'});
   });
 
 });

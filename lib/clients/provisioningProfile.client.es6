@@ -50,7 +50,7 @@ export default class ProvisioningProfileClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
     };
     return this._httpClient.request(opts);
   }
@@ -69,7 +69,7 @@ export default class ProvisioningProfileClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
     };
     return this._httpClient.request(opts);
   }
@@ -101,7 +101,7 @@ export default class ProvisioningProfileClient {
       headers: {
         'auth-token': this._token
       },
-      json:true,
+      json: true,
       body: provisioningProfile
     };
     return this._httpClient.request(opts);
@@ -148,7 +148,33 @@ export default class ProvisioningProfileClient {
       headers: {
         'auth-token': this._token
       },
-      json:true
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Updated provisioning profile data
+   * @typedef {Object} ProvisioningProfileUpdateDto
+   * @property {String} name provisioning profile name
+   */
+
+  /**
+   * Updates existing provisioning profile data (see
+   * https://metaapi.cloud/docs/provisioning/api/provisioningProfile/updateProvisioningProfile/).
+   * @param {String} id provisioning profile id
+   * @param {ProvisioningProfileUpdateDto} provisioningProfile updated provisioning profile
+   * @return {Promise} promise resolving when provisioning profile is updated
+   */
+  updateProvisioningProfile(id, provisioningProfile) {
+    const opts = {
+      url: `${this._host}/users/current/provisioning-profiles/${id}`,
+      method: 'PUT',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true,
+      body: provisioningProfile
     };
     return this._httpClient.request(opts);
   }
