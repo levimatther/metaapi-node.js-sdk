@@ -1,3 +1,9 @@
+1.1.3
+  - minor bugfixes
+  - add API to update provisioning profiles ana MT accounts
+  - update current price of the pending order when current price updates
+  - removed support for advanced profiles and provisioning profile type since they are no longer used
+
 1.1.2
   - fixed magic field type in docs and code samples
   - MemoryHistoryStorage bugfixes
