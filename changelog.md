@@ -1,3 +1,6 @@
+1.1.4
+  - renamed github repository
+
 1.1.3
   - minor bugfixes
   - add API to update provisioning profiles ana MT accounts
