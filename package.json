@@ -29,7 +29,8 @@
     "REST",
     "websocket",
     "client",
-    "sdk"
+    "sdk",
+    "cloud"
   ],
   "name": "metaapi.cloud-sdk",
   "description": "SDK for MetaApi, a professional cloud MetaTrader API which includes MetaTrader REST API and MetaTrader websocket API. Supports both MetaTrader 5 (MT5) and MetaTrader 4 (MT4). (https://metaapi.cloud)",
