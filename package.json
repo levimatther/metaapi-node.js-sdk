@@ -33,7 +33,7 @@
     "cloud"
   ],
   "name": "metaapi.cloud-sdk",
-  "description": "SDK for MetaApi, a professional cloud MetaTrader API which includes MetaTrader REST API and MetaTrader websocket API. Supports both MetaTrader 5 (MT5) and MetaTrader 4 (MT4). (https://metaapi.cloud)",
+  "description": "SDK for MetaApi, a professional cloud forex API which includes MetaTrader REST API and MetaTrader websocket API. Supports both MetaTrader 5 (MT5) and MetaTrader 4 (MT4). (https://metaapi.cloud)",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
