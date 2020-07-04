@@ -144,7 +144,13 @@ export default class MetatraderAccount {
   async remove() {
     await this._metatraderAccountClient.deleteAccount(this.id);
     if (this.type !== 'self-hosted') {
-      await this.reload();
+      try {
+        await this.reload();
+      } catch (err) {
+        if (err.name !== 'NotFoundError') {
+          throw err;
+        }
+      }
     }
   }
 
