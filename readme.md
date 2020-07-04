@@ -18,7 +18,7 @@ npm install --save metaapi.cloud-sdk
 ## Obtaining MetaApi token
 You can obtain MetaApi token via [https://app.metaapi.cloud/token](https://app.metaapi.cloud/token) UI.
 
-## Working complete code examples
+## Working code examples
 You can find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
 
 We have composed a [short guide explaining how to use the example code](https://metaapi.cloud/docs/client/usingCodeExamples)
@@ -140,7 +140,7 @@ await account.redeploy();
 
 ## Access MetaTrader account via RPC API
 RPC API let you query the trading terminal state. You should use
-RPC API if you develop trading monitoring apps like myfx book or other
+RPC API if you develop trading monitoring apps like myfxbook or other
 simple trading apps.
 
 You should create your account with automatic synchronization mode if
@@ -193,7 +193,7 @@ console.log(await connection.getSymbolPrice('GBPUSD'));
 
 ### Use real-time streaming API
 Real-time streaming API is good for developing trading applications like trade copiers or automated trading strategies.
-The API synchronizes to terminal state so that you can query local copy of the terminal state really fast.
+The API synchronizes the terminal state locally so that you can query local copy of the terminal state really fast.
 
 In order to use this API you need to create an account with `user` synchronization mode.
 
@@ -229,7 +229,7 @@ console.log(historyStorage.dealSynchronizationFinished);
 ```
 
 #### Overriding local history storage
-By default history is stored in memory only. You can override history storage to save trade history to a persistant storage like MongoDB database.
+By default history is stored in memory only. You can override history storage to save trade history to a persistent storage like MongoDB database.
 ```javascript
 import {HistoryStorage} from 'metaapi.cloud-sdk';
 
@@ -290,7 +290,7 @@ console.log(await connection.closePositionBySymbol('EURUSD'));
 console.log(await connection.modifyOrder('46870472', 0.07, 1.0, 2.0, 0.9));
 console.log(await connection.cancelOrder('46870472'));
 
-// Note: trade methods do not throw an exception if terminal have refused
+// Note: trade methods does not throw an exception if terminal have refused
 // the trade, thus you must check the returned value
 const result = await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE');
 if (result.description !== 'TRADE_RETCODE_DONE') {
