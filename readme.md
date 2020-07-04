@@ -15,9 +15,6 @@ For more information about SDK APIs please check esdoc documentation in source c
 npm install --save metaapi.cloud-sdk
 ```
 
-## Obtaining MetaApi token
-You can obtain MetaApi token via [https://app.metaapi.cloud/token](https://app.metaapi.cloud/token) UI.
-
 ## Working code examples
 You can find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
 
