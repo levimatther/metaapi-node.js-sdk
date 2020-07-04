@@ -1,5 +1,7 @@
 let MetaApi = require('metaapi.cloud-sdk').default;
 
+// Note: for information on how to use this example code please read https://metaapi.cloud/docs/client/usingCodeExamples
+
 let token = process.env.TOKEN || '<put in your token here>';
 let login = process.env.LOGIN || '<put in your MT login here>';
 let password = process.env.PASSWORD || '<put in your MT password here>';
