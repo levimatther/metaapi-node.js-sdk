@@ -1,3 +1,6 @@
+1.1.5
+  - increased synchronization speed
+
 1.1.4
   - renamed github repository
 
