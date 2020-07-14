@@ -118,6 +118,12 @@ export default class TerminalState extends SynchronizationListener {
    */
   onBrokerConnectionStatusChanged(connected) {
     this._connectedToBroker = connected;
+    if (this._statusTimer) {
+      clearTimeout(this._statusTimer);
+    }
+    this._statusTimer = setTimeout(() => {
+      this.onDisconnected();
+    }, 60000);
   }
 
   /**

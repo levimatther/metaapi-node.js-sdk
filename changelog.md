@@ -1,3 +1,6 @@
+1.1.6
+  - mark account as disconnected if there is no status notification for a long time
+
 1.1.5
   - increased synchronization speed
 
