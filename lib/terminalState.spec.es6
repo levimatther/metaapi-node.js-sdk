@@ -42,6 +42,14 @@ describe('TerminalState', () => {
     state.connectedToBroker.should.be.false();
   });
 
+  it('should call an onDisconnect if there was no signal for a long time', async function () {
+    this.timeout(65000);
+    state.onBrokerConnectionStatusChanged(true);
+    await new Promise(res => setTimeout(res, 61000));
+    state.connectedToBroker.should.be.false();
+    state.connected.should.be.false();
+  });
+
   /**
    * @test {TerminalState#onAccountInformationUpdated}
    * @test {TerminalState#accountInformation}
