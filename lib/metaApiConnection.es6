@@ -346,14 +346,13 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Modifies a pending order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} orderId order id (ticket number)
-   * @param {Number} volume order volume
    * @param {Number} openPrice order stop price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  modifyOrder(orderId, volume, openPrice, stopLoss, takeProfit) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_MODIFY', orderId, volume, openPrice,
+  modifyOrder(orderId, openPrice, stopLoss, takeProfit) {
+    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_MODIFY', orderId, openPrice,
       stopLoss, takeProfit});
   }
 
