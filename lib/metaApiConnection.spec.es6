@@ -538,10 +538,10 @@ describe('MetaApiConnection', () => {
       orderId: '46870472'
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.modifyOrder('46870472', 0.07, 1.0, 2.0, 0.9);
+    let actual = await api.modifyOrder('46870472', 1.0, 2.0, 0.9);
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_MODIFY', orderId: '46870472',
-      volume: 0.07, openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9}));
+      openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9}));
   });
 
   /**

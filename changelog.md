@@ -1,4 +1,5 @@
-1.1.6
+2.0.0
+  - breaking change: removed volume as an argument from a modifyOrder function
   - mark account as disconnected if there is no status notification for a long time
 
 1.1.5
