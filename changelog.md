@@ -21,7 +21,7 @@
 
 1.1.1
   - extended waitSynchronized method logic so that it can be used for accounts in automatic synchronization mode
-  - Breaking change: renamed MetaApiConnection synchronied property to isSynchronized method
+  - Breaking change: renamed MetaApiConnection synchronized property to isSynchronized method
 
 1.0.19
   - mentioned code examples in readme.md
