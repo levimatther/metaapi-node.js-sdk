@@ -96,12 +96,6 @@ export default class TerminalState extends SynchronizationListener {
    */
   onConnected() {
     this._connected = true;
-    this._accountInformation = undefined;
-    this._positions = [];
-    this._orders = [];
-    this._specifications = [];
-    this._specificationsBySymbol = {};
-    this._pricesBySymbol = {};
   }
 
   /**
@@ -113,7 +107,7 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
-   * Invoked when broker connection satus have changed
+   * Invoked when broker connection status have changed
    * @param {Boolean} connected is MetaTrader terminal is connected to broker
    */
   onBrokerConnectionStatusChanged(connected) {
