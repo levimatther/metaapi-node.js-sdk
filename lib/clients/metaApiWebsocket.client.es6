@@ -850,7 +850,10 @@ export default class MetaApiWebsocketClient {
   _dropAllRequests(accountId){
     for (let requestResolve of Object.values(this._requestResolves)) {
       if(requestResolve.accountId === accountId || !accountId) {
-        requestResolve.promise.reject(new NotConnectedError('MetaApi connection closed'));
+        const errorMessage = (accountId) ? 
+          `Account ${accountId} has disconnected from MetaApi, thus all requests to this account were cancelled` : 
+          'MetaApi connection closed';
+        requestResolve.promise.reject(new NotConnectedError(errorMessage));
       }
     }
   }
