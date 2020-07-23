@@ -284,7 +284,7 @@ console.log(await connection.modifyPosition('46870472', 2.0, 0.9));
 console.log(await connection.closePositionPartially('46870472', 0.9));
 console.log(await connection.closePosition('46870472'));
 console.log(await connection.closePositionBySymbol('EURUSD'));
-console.log(await connection.modifyOrder('46870472', 0.07, 1.0, 2.0, 0.9));
+console.log(await connection.modifyOrder('46870472', 1.0, 2.0, 0.9));
 console.log(await connection.cancelOrder('46870472'));
 
 // Note: trade methods does not throw an exception if terminal have refused
