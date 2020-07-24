@@ -89,10 +89,8 @@ describe('ProvisioningProfileClient', () => {
       id: 'id'
     };
     let profile = {
-      _id: 'id',
       name: 'name',
-      version: 4,
-      status: 'active'
+      version: 4
     };
     httpClient.requestFn = (opts) => {
       return Promise
