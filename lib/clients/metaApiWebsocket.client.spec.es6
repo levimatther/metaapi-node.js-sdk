@@ -610,27 +610,11 @@ describe('MetaApiWebsocketClient', () => {
       let listener = {
         onDisconnected: () => {}
       };
-      const promiseStatus = ['pending', 'pending'];
-      new Promise((resolve, reject) => client._requestResolves.test = 
-      {accountId: 'accountId', promise: {resolve, reject}}).then(() => {
-        promiseStatus[0] = 'resolved';
-      }, () => {  
-        promiseStatus[0] = 'rejected'; 
-      });
-      new Promise((resolve, reject) => client._requestResolves.test2 = 
-      {accountId: 'accountId2', promise: {resolve, reject}}).then(() => {
-        promiseStatus[1] = 'resolved';
-      }, () => {  
-        promiseStatus[1] = 'rejected'; 
-      });
       sandbox.stub(listener, 'onDisconnected').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'disconnected', accountId: 'accountId'});
       await new Promise(res => setTimeout(res, 50));
-      sinon.assert.match(promiseStatus[0], 'rejected');
-      sinon.assert.match(promiseStatus[1], 'pending');
       sinon.assert.calledWith(listener.onDisconnected);
-      client._requestResolves.test2.promise.resolve();
     });
 
   });

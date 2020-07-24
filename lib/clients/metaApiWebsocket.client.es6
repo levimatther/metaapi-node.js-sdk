@@ -99,17 +99,15 @@ export default class MetaApiWebsocketClient {
         await this._reconnect();
       });
       this._socket.on('response', data => {
-        let requestResolve = (this._requestResolves[data.requestId] || 
-          {promise: {resolve: () => {}, reject: () => {}}});
+        let requestResolve = (this._requestResolves[data.requestId] || {resolve: () => {}, reject: () => {}});
         delete this._requestResolves[data.requestId];
         this._convertIsoTimeToDate(data);
-        requestResolve.promise.resolve(data);
+        requestResolve.resolve(data);
       });
       this._socket.on('processingError', data => {
-        let requestResolve = (this._requestResolves[data.requestId] || 
-          {promise: {resolve: () => {}, reject: () => {}}});
+        let requestResolve = (this._requestResolves[data.requestId] || {resolve: () => {}, reject: () => {}});
         delete this._requestResolves[data.requestId];
-        requestResolve.promise.reject(this._convertError(data));
+        requestResolve.reject(this._convertError(data));
       });
       this._socket.on('synchronization', async data => {
         this._convertIsoTimeToDate(data);
@@ -126,7 +124,9 @@ export default class MetaApiWebsocketClient {
     if (this._connected) {
       this._connected = false;
       this._socket.close();
-      this._dropAllRequests();
+      for (let requestResolve of Object.values(this._requestResolves)) {
+        requestResolve.reject(new Error('MetaApi connection closed'));
+      }
       this._requestResolves = {};
       this._synchronizationListeners = {};
     }
@@ -578,8 +578,7 @@ export default class MetaApiWebsocketClient {
       await this.connect();
     }
     let requestId = randomstring.generate(32);
-    let result = new Promise((resolve, reject) => this._requestResolves[requestId] = 
-      {accountId, promise: {resolve, reject}});
+    let result = new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject});
     request.accountId = accountId;
     request.requestId = requestId;
     this._socket.emit('request', request);
@@ -656,7 +655,6 @@ export default class MetaApiWebsocketClient {
           }
         }
       } else if (data.type === 'disconnected') {
-        this._dropAllRequests(data.accountId);
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
             await listener.onDisconnected();
@@ -844,17 +842,6 @@ export default class MetaApiWebsocketClient {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to process incoming synchronization packet', err);
-    }
-  }
-
-  _dropAllRequests(accountId){
-    for (let requestResolve of Object.values(this._requestResolves)) {
-      if(requestResolve.accountId === accountId || !accountId) {
-        const errorMessage = (accountId) ? 
-          `Account ${accountId} has disconnected from MetaApi, thus all requests to this account were cancelled` : 
-          'MetaApi connection closed';
-        requestResolve.promise.reject(new NotConnectedError(errorMessage));
-      }
     }
   }
 
