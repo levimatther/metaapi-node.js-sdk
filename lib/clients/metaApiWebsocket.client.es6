@@ -445,7 +445,10 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when subscription started
    */
   subscribe(accountId) {
-    return this._rpcRequest(accountId, {type: 'subscribe'});
+    this._rpcRequest(accountId, {type: 'subscribe'}).catch((err) => {
+      console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' + 
+      'subscribe response ' + err);
+    });
   }
 
   /**
