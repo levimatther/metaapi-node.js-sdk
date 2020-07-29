@@ -75,15 +75,17 @@ export default class SynchronizationListener {
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished
+   * @param {String} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onDealSynchronizationFinished() {}
+  async onDealSynchronizationFinished(synchronizationId) {}
 
   /**
    * Invoked when a synchronization of history orders on a MetaTrader account have finished
+   * @param {String} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onOrderSynchronizationFinished() {}
+  async onOrderSynchronizationFinished(synchronizationId) {}
 
   /**
    * Invoked when a symbol specification was updated

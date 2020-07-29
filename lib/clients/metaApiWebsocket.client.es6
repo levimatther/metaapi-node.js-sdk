@@ -465,14 +465,16 @@ export default class MetaApiWebsocketClient {
    * Requests the terminal to start synchronization process. Use it if user synchronization mode is set to user for the
    * account (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
    * @param {String} accountId id of the MetaTrader account to synchronize
+   * @param {String} synchronizationId synchronization request id
    * @param {Date} startingHistoryOrderTime from what date to start synchronizing history orders from. If not specified,
    * the entire order history will be downloaded.
    * @param {Date} startingDealTime from what date to start deal synchronization from. If not specified, then all
    * history deals will be downloaded.
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(accountId, startingHistoryOrderTime, startingDealTime) {
-    return this._rpcRequest(accountId, {type: 'synchronize', startingHistoryOrderTime, startingDealTime});
+  synchronize(accountId, synchronizationId, startingHistoryOrderTime, startingDealTime) {
+    return this._rpcRequest(accountId, {requestId: synchronizationId, type: 'synchronize',
+      startingHistoryOrderTime, startingDealTime});
   }
 
   /**
@@ -581,10 +583,12 @@ export default class MetaApiWebsocketClient {
     if (!this._connected) {
       await this.connect();
     }
-    let requestId = randomstring.generate(32);
+    let requestId = request.requestId || randomstring.generate(32);
     let result = new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject});
     request.accountId = accountId;
-    request.requestId = requestId;
+    if (!request.requestId) {
+      request.requestId = requestId;
+    }
     this._socket.emit('request', request);
     return result;
   }
@@ -796,7 +800,7 @@ export default class MetaApiWebsocketClient {
       } else if (data.type === 'dealSynchronizationFinished') {
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
-            await listener.onDealSynchronizationFinished();
+            await listener.onDealSynchronizationFinished(data.synchronizationId);
           } catch (err) {
             // eslint-disable-next-line no-console
             console.error('Failed to notify listener about dealSynchronizationFinished event', err);
@@ -805,7 +809,7 @@ export default class MetaApiWebsocketClient {
       } else if (data.type === 'orderSynchronizationFinished') {
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           try {
-            await listener.onOrderSynchronizationFinished();
+            await listener.onOrderSynchronizationFinished(data.synchronizationId);
           } catch (err) {
             // eslint-disable-next-line no-console
             console.error('Failed to notify listener about orderSynchronizationFinished event', err);

@@ -1,6 +1,7 @@
-2.1.0
+3.0.0
   - improved account connection stability
   - added platform field to MetatraderAccountInformation model
+  - breaking change: changed synchronize API to allow for unique synchronization id to be able to track when the synchronization is complete in situation when other clients have also requested a concurrent synchronization on the account
   
 2.0.0
   - breaking change: removed volume as an argument from a modifyOrder function

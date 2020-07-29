@@ -4,6 +4,7 @@ import TerminalState from './terminalState';
 import MemoryHistoryStorage from './memoryHistoryStorage';
 import SynchronizationListener from './clients/synchronizationListener';
 import TimeoutError from './clients/timeoutError';
+import randomstring from 'randomstring';
 
 /**
  * Exposes MetaApi MetaTrader API connection to consumers
@@ -21,7 +22,9 @@ export default class MetaApiConnection extends SynchronizationListener {
     super();
     this._websocketClient = websocketClient;
     this._account = account;
-    this._synchronized = false;
+    this._ordersSynchronized = {};
+    this._dealsSynchronized = {};
+    this._lastSynchronizationId = undefined;
     if (account.synchronizationMode === 'user') {
       this._terminalState = new TerminalState();
       this._historyStorage = historyStorage || new MemoryHistoryStorage();
@@ -383,7 +386,10 @@ export default class MetaApiConnection extends SynchronizationListener {
     if (this._account.synchronizationMode === 'user') {
       let startingHistoryOrderTime = await this._historyStorage.lastHistoryOrderTime();
       let startingDealTime = await this._historyStorage.lastDealTime();
-      return this._websocketClient.synchronize(this._account.id, startingHistoryOrderTime, startingDealTime);
+      let synchronizationId = randomstring.generate(32);
+      this._lastSynchronizationId = synchronizationId;
+      return this._websocketClient.synchronize(this._account.id, synchronizationId, startingHistoryOrderTime,
+        startingDealTime);
     }
   }
 
@@ -473,14 +479,23 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Invoked when connection to MetaTrader terminal terminated
    */
   onDisconnected() {
-    this._synchronized = false;
+    this._lastSynchronizationId = undefined;
   }
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished
+   * @param {String} synchronizationId synchronization request id
    */
-  async onDealSynchronizationFinished() {
-    this._synchronized = true;
+  async onDealSynchronizationFinished(synchronizationId) {
+    this._dealsSynchronized[synchronizationId] = true;
+  }
+
+  /**
+   * Invoked when a synchronization of history orders on a MetaTrader account have finished
+   * @param {String} synchronizationId synchronization request id
+   */
+  async onOrderSynchronizationFinished(synchronizationId) {
+    this._ordersSynchronized[synchronizationId] = true;
   }
 
   /**
@@ -493,12 +508,15 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Returns flag indicating status of state synchronization with MetaTrader terminal
+   * @param {String} synchronizationId optional synchronization request id, last synchronization request id will be used
+   * by default
    * @return {Promise<Boolean>} promise resolving with a flag indicating status of state synchronization with MetaTrader
    * terminal
    */
-  async isSynchronized() {
+  async isSynchronized(synchronizationId) {
+    synchronizationId = synchronizationId || this._lastSynchronizationRequestId;
     if (this._account.synchronizationMode === 'user') {
-      return this._synchronized;
+      return !!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId];
     } else {
       let result = await this.getDealsByTimeRange(new Date(), new Date());
       return !result.synchronizing;
@@ -507,19 +525,21 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Waits until synchronization to MetaTrader terminal is completed
+   * @param {String} synchronizationId optional synchronization id, last synchronization request id will be used by
+   * default
    * @param {Number} timeoutInSeconds wait timeout in seconds
    * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change
    * @return {Promise} promise which resolves when synchronization to MetaTrader terminal is completed
    * @throws {TimeoutError} if application failed to synchronize with the teminal withing timeout allowed
    */
-  async waitSynchronized(timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
+  async waitSynchronized(synchronizationId = undefined, timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
     let startTime = Date.now();
-    while (!(await this.isSynchronized()) && (startTime + timeoutInSeconds * 1000) > Date.now()) {
+    while (!(await this.isSynchronized(synchronizationId)) && (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await new Promise(res => setTimeout(res, intervalInMilliseconds));
     }
-    if (!(await this.isSynchronized())) {
+    if (!(await this.isSynchronized(synchronizationId))) {
       throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
-        this._account.id);
+        this._account.id + ', synchronization id ' + synchronizationId);
     }
   }
 

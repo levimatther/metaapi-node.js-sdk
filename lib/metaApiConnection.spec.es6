@@ -4,6 +4,7 @@ import should from 'should';
 import sinon from 'sinon';
 import MetaApiConnection from './metaApiConnection';
 import NotSynchronizedError from './clients/notSynchronizedError';
+import randomstring from 'randomstring';
 
 /**
  * @test {MetaApiConnection}
@@ -582,11 +583,12 @@ describe('MetaApiConnection', () => {
    */
   it('should synchronize state with terminal', async () => {
     sandbox.stub(client, 'synchronize').resolves();
+    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
     api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize();
-    sinon.assert.calledWith(client.synchronize, 'accountId', new Date('2020-01-01T00:00:00.000Z'),
+    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId', new Date('2020-01-01T00:00:00.000Z'),
       new Date('2020-01-02T00:00:00.000Z'));
   });
 
@@ -674,12 +676,13 @@ describe('MetaApiConnection', () => {
    */
   it('should sychronize on connection', async () => {
     sandbox.stub(client, 'synchronize').resolves();
+    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
     api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected();
-    sinon.assert.calledWith(client.synchronize, 'accountId', new Date('2020-01-01T00:00:00.000Z'),
-      new Date('2020-01-02T00:00:00.000Z'));
+    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId',
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
 
   /**
@@ -702,15 +705,16 @@ describe('MetaApiConnection', () => {
      */
     it('should wait util synchronization complete in user mode', async () => {
       (await api.isSynchronized()).should.equal(false);
-      let promise = api.waitSynchronized(1, 10);
+      let promise = api.waitSynchronized('synchronizationId', 1, 10);
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
       (Date.now() - startTime).should.be.approximately(50, 10);
-      api.onDealSynchronizationFinished();
+      api.onOrderSynchronizationFinished('synchronizationId');
+      api.onDealSynchronizationFinished('synchronizationId');
       startTime = Date.now();
       await promise;
       (Date.now() - startTime).should.be.approximately(0, 10);
-      (await api.isSynchronized()).should.equal(true);
+      (await api.isSynchronized('synchronizationId')).should.equal(true);
     });
 
     /**
@@ -718,12 +722,12 @@ describe('MetaApiConnection', () => {
      */
     it('should time out waiting for synchronization complete in user mode', async () => {
       try {
-        await api.waitSynchronized(1, 10);
+        await api.waitSynchronized('synchronizationId', 1, 10);
         throw new Error('TimeoutError is expected');
       } catch (err) {
         err.name.should.equal('TimeoutError');
       }
-      (await api.isSynchronized()).should.equal(false);
+      (await api.isSynchronized('synchronizationId')).should.equal(false);
     });
 
     /**
@@ -739,7 +743,7 @@ describe('MetaApiConnection', () => {
         .onCall(4).resolves({synchronizing: false})
         .onCall(5).resolves({synchronizing: false});
       (await api.isSynchronized()).should.equal(false);
-      let promise = api.waitSynchronized(1, 10);
+      let promise = api.waitSynchronized('synchronizationId', 1, 10);
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
       await promise;

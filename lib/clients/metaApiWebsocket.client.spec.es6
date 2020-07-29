@@ -652,12 +652,13 @@ describe('MetaApiWebsocketClient', () => {
       server.on('request', data => {
         if (data.type === 'synchronize' && data.accountId === 'accountId' &&
           data.startingHistoryOrderTime === '2020-01-01T00:00:00.000Z' &&
-          data.startingDealTime === '2020-01-02T00:00:00.000Z') {
+          data.startingDealTime === '2020-01-02T00:00:00.000Z' && data.requestId === 'synchronizationId') {
           requestReceived = true;
           server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         }
       });
-      await client.synchronize('accountId', new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+      await client.synchronize('accountId', 'synchronizationId', new Date('2020-01-01T00:00:00.000Z'),
+        new Date('2020-01-02T00:00:00.000Z'));
       requestReceived.should.be.true();
     });
 
