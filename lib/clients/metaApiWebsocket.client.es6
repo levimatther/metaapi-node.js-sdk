@@ -135,6 +135,7 @@ export default class MetaApiWebsocketClient {
   /**
    * MetaTrader account information (see https://metaapi.cloud/docs/client/models/metatraderAccountInformation/)
    * @typedef {Object} MetatraderAccountInformation
+   * @property {String} platform platform id (mt4 or mt5)
    * @property {String} broker broker name
    * @property {String} currency account base currency ISO code
    * @property {String} server broker server name

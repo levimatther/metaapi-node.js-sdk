@@ -1,5 +1,6 @@
-2.0.1
+2.1.0
   - improved account connection stability
+  - added platform field to MetatraderAccountInformation model
   
 2.0.0
   - breaking change: removed volume as an argument from a modifyOrder function
