@@ -514,7 +514,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * terminal
    */
   async isSynchronized(synchronizationId) {
-    synchronizationId = synchronizationId || this._lastSynchronizationRequestId;
+    synchronizationId = synchronizationId || this._lastSynchronizationId;
     if (this._account.synchronizationMode === 'user') {
       return !!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId];
     } else {
