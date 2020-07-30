@@ -527,12 +527,12 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Waits until synchronization to MetaTrader terminal is completed
    * @param {String} synchronizationId optional synchronization id, last synchronization request id will be used by
    * default
-   * @param {Number} timeoutInSeconds wait timeout in seconds
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change
+   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when synchronization to MetaTrader terminal is completed
    * @throws {TimeoutError} if application failed to synchronize with the teminal withing timeout allowed
    */
-  async waitSynchronized(synchronizationId = undefined, timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
+  async waitSynchronized(synchronizationId = undefined, timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
     while (!(await this.isSynchronized(synchronizationId)) && (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await new Promise(res => setTimeout(res, intervalInMilliseconds));

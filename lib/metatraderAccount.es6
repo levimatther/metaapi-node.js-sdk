@@ -186,12 +186,12 @@ export default class MetatraderAccount {
 
   /**
    * Waits until API server has finished deployment and account reached the DEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change
+   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
    * @throws {TimeoutError} if account have not reached the DEPLOYED state withing timeout allowed
    */
-  async waitDeployed(timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
+  async waitDeployed(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
     await this.reload();
     while (this.state !== 'DEPLOYED' && (startTime + timeoutInSeconds * 1000) > Date.now()) {
@@ -205,12 +205,12 @@ export default class MetatraderAccount {
 
   /**
    * Waits until API server has finished undeployment and account reached the UNDEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change
+   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
    * @throws {TimeoutError} if account have not reached the UNDEPLOYED state withing timeout allowed
    */
-  async waitUndeployed(timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
+  async waitUndeployed(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
     await this.reload();
     while (this.state !== 'UNDEPLOYED' && (startTime + timeoutInSeconds * 1000) > Date.now()) {
@@ -224,12 +224,12 @@ export default class MetatraderAccount {
 
   /**
    * Waits until account has been deleted
-   * @param {Number} timeoutInSeconds wait timeout in seconds
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change
+   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deleted
    * @throws {TimeoutError} if account was not deleted withing timeout allowed
    */
-  async waitRemoved(timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
+  async waitRemoved(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
     try {
       await this.reload();
@@ -249,12 +249,12 @@ export default class MetatraderAccount {
 
   /**
    * Waits until API server has connected to the terminal and terminal has connected to the broker
-   * @param {Number} timeoutInSeconds wait timeout in seconds
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change
+   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when API server is connected to the broker
    * @throws {TimeoutError} if account have not connected to the broker withing timeout allowed
    */
-  async waitConnected(timeoutInSeconds = 300, intervalInMilliseconds = 5000) {
+  async waitConnected(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
     await this.reload();
     while (this.connectionStatus !== 'CONNECTED' && (startTime + timeoutInSeconds * 1000) > Date.now()) {
