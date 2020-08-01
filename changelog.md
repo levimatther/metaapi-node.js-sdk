@@ -1,3 +1,6 @@
+3.0.1
+  - previous release was broken, releasing one more time
+
 3.0.0
   - improved account connection stability
   - added platform field to MetatraderAccountInformation model
