@@ -144,7 +144,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} margin used margin
    * @property {Number} freeMargin free margin
    * @property {Number} leverage account leverage coefficient
-   * @property {Number} marginLevel margin level calculated as % of freeMargin/margin
+   * @property {Number} marginLevel margin level calculated as % of equity/margin
    */
 
   /**
