@@ -394,15 +394,16 @@ describe('MetaApiWebsocketClient', () => {
   /**
    * @test {MetaApiWebsocketClient#trade}
    */
-  it('should execute a trade via API', async () => {
+  it('should execute a trade via new API version', async () => {
     let trade = {
       actionType: 'ORDER_TYPE_SELL',
       symbol: 'AUDNZD',
       volume: 0.07
     };
     let response = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
+      numericCode: 10009,
+      stringCode: 'TRADE_RETCODE_DONE',
+      message: 'Request completed',
       orderId: '46870472'
     };
     server.on('request', data => {
@@ -413,6 +414,38 @@ describe('MetaApiWebsocketClient', () => {
     });
     let actual = await client.trade('accountId', trade);
     actual.should.match(response);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#trade}
+   */
+  it('should execute a trade via API and receive trade error from old API version', async () => {
+    let trade = {
+      actionType: 'ORDER_TYPE_SELL',
+      symbol: 'AUDNZD',
+      volume: 0.07
+    };
+    let response = {
+      error: 10006,
+      description: 'TRADE_RETCODE_REJECT',
+      message: 'Request rejected',
+      orderId: '46870472'
+    };
+    server.on('request', data => {
+      data.trade.should.match(trade);
+      if (data.type === 'trade' && data.accountId === 'accountId') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+      }
+    });
+    try {
+      await client.trade('accountId', trade);
+      should.fail('Trade error expected');
+    } catch (err) {
+      err.message.should.equal('Request rejected');
+      err.name.should.equal('TradeError');
+      err.stringCode.should.equal('TRADE_RETCODE_REJECT');
+      err.numericCode.should.equal(10006);
+    }
   });
 
   /**

@@ -171,6 +171,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   createMarketBuyOrder(symbol, volume, stopLoss, takeProfit, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_BUY', symbol, volume, stopLoss,
@@ -191,6 +192,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   createMarketSellOrder(symbol, volume, stopLoss, takeProfit, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_SELL', symbol, volume, stopLoss,
@@ -212,6 +214,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   createLimitBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_BUY_LIMIT', symbol, volume, openPrice,
@@ -233,6 +236,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   createLimitSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_SELL_LIMIT', symbol, volume,
@@ -254,6 +258,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   createStopBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_BUY_STOP', symbol, volume, openPrice,
@@ -275,6 +280,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   createStopSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_SELL_STOP', symbol, volume, openPrice,
@@ -287,6 +293,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   modifyPosition(positionId, stopLoss, takeProfit) {
     return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_MODIFY', positionId, stopLoss,
@@ -305,6 +312,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   closePositionPartially(positionId, volume, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_PARTIAL', positionId, volume, comment,
@@ -322,6 +330,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   closePosition(positionId, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_CLOSE_ID', positionId, comment,
@@ -340,6 +349,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * comment and the clientId must be less than or equal to 27. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   closePositionBySymbol(symbol, comment, clientId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_CLOSE_SYMBOL', symbol, comment,
@@ -353,6 +363,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   modifyOrder(orderId, openPrice, stopLoss, takeProfit) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_MODIFY', orderId, openPrice,
@@ -363,6 +374,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Cancels order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} orderId order id (ticket number)
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   cancelOrder(orderId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_CANCEL', orderId});

@@ -6,6 +6,7 @@ import TimeoutError from './timeoutError';
 import {ValidationError, NotFoundError, InternalError, UnauthorizedError} from './errorHandler';
 import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
+import TradeError from './tradeError';
 
 /**
  * MetaApi websocket API client (see https://metaapi.cloud/docs/client/websocket/overview/)
@@ -434,10 +435,16 @@ export default class MetaApiWebsocketClient {
    * @param {String} accountId id of the MetaTrader account to execute trade for
    * @param {MetatraderTrade} trade trade to execute (see docs for possible trade types)
    * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error
    */
   async trade(accountId, trade) {
     let response = await this._rpcRequest(accountId, {type: 'trade', trade});
-    return response.response;
+    if (['ERR_NO_ERROR', 'TRADE_RETCODE_PLACED', 'TRADE_RETCODE_DONE', 'TRADE_RETCODE_DONE_PARTIAL',
+      'TRADE_RETCODE_NO_CHANGES'].includes(response.response.stringCode || response.response.description)) {
+      return response.response;
+    } else {
+      throw new TradeError(response.response.message, response.response.error, response.response.description);
+    }
   }
 
   /**
@@ -602,6 +609,8 @@ export default class MetaApiWebsocketClient {
       return new NotSynchronizedError(data.message);
     } else if (data.error === 'NotAuthenticatedError') {
       return new NotConnectedError(data.message);
+    } else if (data.error === 'TradeError') {
+      return new TradeError(data.message, data.numericCode, data.stringCode);
     } else if (data.error === 'UnauthorizedError') {
       this.close();
       return new UnauthorizedError(data.message);

@@ -1,3 +1,7 @@
+4.0.0
+  - breaking change: throw TradeError in case of trade error
+  - rename trade response fields so that they are more meaningful
+
 3.0.1
   - previous release was broken, releasing one more time
 
