@@ -287,12 +287,8 @@ console.log(await connection.closePositionBySymbol('EURUSD'));
 console.log(await connection.modifyOrder('46870472', 1.0, 2.0, 0.9));
 console.log(await connection.cancelOrder('46870472'));
 
-// Note: trade methods does not throw an exception if terminal have refused
-// the trade, thus you must check the returned value
 const result = await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE');
-if (result.description !== 'TRADE_RETCODE_DONE') {
-  console.error('Trade was rejected by MetaTrader terminal with ' + result.description + ' error');
-}
+    console.log('Trade successful, result code is ' + result.stringCode);
 ```
 
 Keywords: MetaTrader API, MetaTrader REST API, MetaTrader websocket API,

@@ -80,11 +80,7 @@ async function testMetaApiSynchronization() {
     // trade
     console.log('Submitting pending order');
     let result = await connection.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, 'comm', 'TE_GBPUSD_7hyINWqAlE')
-    if (result.description === 'TRADE_RETCODE_DONE') {
-      console.log('Trade successful');
-    } else {
-      console.error('Trade failed with ' + result.description + ' error');
-    }
+    console.log('Trade successful, result code is ' + result.stringCode);
 
     // finally, undeploy account after the test
     console.log('Undeploying MT4 account so that it does not consume any unwanted resources');
