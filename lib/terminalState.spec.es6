@@ -1,6 +1,7 @@
 'use strict';
 
 import should from 'should';
+import sinon from 'sinon';
 import TerminalState from './terminalState';
 
 /**
@@ -31,7 +32,8 @@ describe('TerminalState', () => {
    * @test {TerminalState#onBrokerConnectionStatus}
    * @test {TerminalState#connectedToBroker}
    */
-  it('should return broker connection state', () => {
+  it('should return broker connection state', async () => {
+    const clock = sinon.useFakeTimers();
     state.connectedToBroker.should.be.false();
     state.onBrokerConnectionStatusChanged(true);
     state.connectedToBroker.should.be.true();
@@ -40,14 +42,20 @@ describe('TerminalState', () => {
     state.onBrokerConnectionStatusChanged(true);
     state.onDisconnected();
     state.connectedToBroker.should.be.false();
+    await clock.tickAsync(65000);
+    clock.restore();
   });
 
-  it('should call an onDisconnect if there was no signal for a long time', async function () {
-    this.timeout(65000);
+  /**
+   * @test {TerminalState#onBrokerConnectionStatus}
+   */
+  it('should call an onDisconnect if there was no signal for a long time', async () => {
+    const clock = sinon.useFakeTimers();
     state.onBrokerConnectionStatusChanged(true);
-    await new Promise(res => setTimeout(res, 61000));
+    await clock.tickAsync(65000);
     state.connectedToBroker.should.be.false();
     state.connected.should.be.false();
+    clock.restore();
   });
 
   /**

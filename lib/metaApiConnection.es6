@@ -27,7 +27,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._lastSynchronizationId = undefined;
     if (account.synchronizationMode === 'user') {
       this._terminalState = new TerminalState();
-      this._historyStorage = historyStorage || new MemoryHistoryStorage();
+      this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id);
       this._websocketClient.addSynchronizationListener(account.id, this);
       this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
       this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);

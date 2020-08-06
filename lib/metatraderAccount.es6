@@ -2,6 +2,7 @@
 
 import TimeoutError from './clients/timeoutError';
 import MetaApiConnection from './metaApiConnection';
+import HistoryFileManager from './historyFileManager';
 
 /**
  * Implements a MetaTrader account entity
@@ -143,6 +144,8 @@ export default class MetatraderAccount {
    */
   async remove() {
     await this._metatraderAccountClient.deleteAccount(this.id);
+    const fileManager = new HistoryFileManager(this.id);
+    await fileManager.deleteStorageFromDisk();
     if (this.type !== 'self-hosted') {
       try {
         await this.reload();
