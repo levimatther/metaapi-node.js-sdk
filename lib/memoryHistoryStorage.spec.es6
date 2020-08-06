@@ -1,7 +1,9 @@
 'use strict';
 
 import should from 'should';
+import sinon from 'sinon';
 import MemoryHistoryStorage from './memoryHistoryStorage';
+import HistoryFileManager from './historyFileManager';
 
 /**
  * @test {MemoryHistoryStorage}
@@ -9,14 +11,49 @@ import MemoryHistoryStorage from './memoryHistoryStorage';
 describe('MemoryHistoryStorage', () => {
 
   let storage;
+  let testDeal;
+  let testOrder;
+  let sandbox;
 
   before(() => {
-    storage = new MemoryHistoryStorage();
+    sandbox = sinon.createSandbox();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
+    storage = new MemoryHistoryStorage('accountId');
+    testDeal = {id:'37863643', type:'DEAL_TYPE_BALANCE', magic:0, time: new Date(100), commission:0, 
+      swap:0, profit:10000, platform:'mt5', comment:'Demo deposit 1'};
+    testOrder = {id:'61210463', type:'ORDER_TYPE_SELL', state:'ORDER_STATE_FILLED', symbol:'AUDNZD', magic:0, 
+      time: new Date(50), doneTime: new Date(100), currentPrice:1, volume:0.01, 
+      currentVolume:0, positionId:'61206630', platform:'mt5', comment:'AS_AUDNZD_5YyM6KS7Fv:'};
     storage.reset();
     storage.onConnected();
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+  
+  /**
+   * @test {MemoryHistoryStorage#constructor}
+   */
+  it('should get history from file manager on construct', async () => {
+    sandbox.stub(HistoryFileManager.prototype, 'getHistoryFromDisk')
+      .returns({deals: [testDeal], historyOrders: [testOrder]});
+    storage = new MemoryHistoryStorage('accountId');
+    await new Promise(res => setTimeout(res, 50));
+    storage.deals.should.match([testDeal]);
+    storage.historyOrders.should.match([testOrder]);
+  });
+
+  /**
+   * @test {MemoryHistoryStorage#updateDiskStorage}
+   */
+  it('should update disk storage', async () => {
+    sandbox.stub(HistoryFileManager.prototype, 'updateDiskStorage');
+    await storage.updateDiskStorage();
+    sinon.assert.calledOnce(HistoryFileManager.prototype.updateDiskStorage);
   });
 
   /**
@@ -73,7 +110,7 @@ describe('MemoryHistoryStorage', () => {
   /**
    * @test {MemoryHistoryStorage#historyOrders}
    */
-  it('should return saved historyOrders', () => {                                     
+  it('should return saved historyOrders', () => {                                  
     storage.onHistoryOrderAdded({id: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
     storage.onHistoryOrderAdded({id: '7', doneTime: new Date('2020-05-01T00:00:00.000Z'), type: 'ORDER_TYPE_BUY'});
     storage.onHistoryOrderAdded({id: '8', doneTime: new Date('2020-02-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});

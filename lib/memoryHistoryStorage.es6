@@ -1,6 +1,7 @@
 'use strict';
 
 import HistoryStorage from './historyStorage';
+import HistoryFileManager from './historyFileManager';
 
 /**
  * History storage which stores MetaTrader history in RAM
@@ -10,10 +11,14 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Constructs the in-memory history store instance
    */
-  constructor() {
+  constructor(accountId) {
     super();
-    this._deals = [];
-    this._historyOrders = [];
+    this._accountId = accountId;
+    this._fileManager = new HistoryFileManager(accountId, this);
+    const history = this._fileManager.getHistoryFromDisk();
+    this._deals = history.deals;
+    this._historyOrders = history.historyOrders;
+    this._fileManager.startUpdateJob();
   }
 
   /**
@@ -38,6 +43,13 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   reset() {
     this._deals = [];
     this._historyOrders = [];
+  }
+
+  /**
+   * Saves unsaved history items to disk storage
+   */
+  async updateDiskStorage() {
+    await this._fileManager.updateDiskStorage();
   }
 
   /**
@@ -81,8 +93,10 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     }
     if (replacementIndex !== -1) {
       this._historyOrders[replacementIndex] = historyOrder;
+      this._fileManager.setStartNewOrderIndex(replacementIndex);
     } else {
       this._historyOrders.splice(insertIndex, 0, historyOrder);
+      this._fileManager.setStartNewOrderIndex(insertIndex);
     }
   }
 
@@ -109,8 +123,10 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     }
     if (replacementIndex !== -1) {
       this._deals[replacementIndex] = deal;
+      this._fileManager.setStartNewDealIndex(replacementIndex);
     } else {
       this._deals.splice(insertIndex, 0, deal);
+      this._fileManager.setStartNewDealIndex(insertIndex);
     }
   }
 

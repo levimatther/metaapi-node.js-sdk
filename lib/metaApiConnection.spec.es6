@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import MetaApiConnection from './metaApiConnection';
 import NotSynchronizedError from './clients/notSynchronizedError';
 import randomstring from 'randomstring';
+import HistoryFileManager from './historyFileManager';
 
 /**
  * @test {MetaApiConnection}
@@ -44,6 +45,7 @@ describe('MetaApiConnection', () => {
   });
 
   beforeEach(() => {
+    sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
     api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
   });
 

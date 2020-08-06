@@ -6,6 +6,7 @@ import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccount from './metatraderAccount';
 import {NotFoundError} from './clients/errorHandler';
 import MetaApiConnection from './metaApiConnection';
+import HistoryFileManager from './historyFileManager';
 
 /**
  * @test {MetatraderAccountApi}
@@ -215,8 +216,10 @@ describe('MetatraderAccountApi', () => {
         type: 'cloud'
       });
     sandbox.stub(client, 'deleteAccount').resolves();
+    sandbox.stub(HistoryFileManager.prototype, 'deleteStorageFromDisk').returns();
     let account = await api.getAccount('id');
     await account.remove();
+    sinon.assert.calledOnce(HistoryFileManager.prototype.deleteStorageFromDisk);
     account.state.should.equal('DELETING');
     sinon.assert.calledWith(client.deleteAccount, 'id');
     sinon.assert.calledWith(client.getAccount, 'id');

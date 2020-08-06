@@ -1,3 +1,6 @@
+4.0.2
+  - save history on disk
+
 4.0.1
   - add fields to trade result to match upcoming MetaApi contract
 
