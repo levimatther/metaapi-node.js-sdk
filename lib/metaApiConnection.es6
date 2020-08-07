@@ -158,24 +158,32 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Trade options
+   * @typedef {Object} TradeOptions
+   * @property {String} {String} comment optional order comment. The sum of the line lengths of the comment and the
+   * clientId must be less than or equal to 27. For more information see
+   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @property {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
+   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
+   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
+   * comment and the clientId must be less than or equal to 27. For more information see
+   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @property {Number} magic magic (expert id) number
+   */
+
+  /**
    * Creates a market buy order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} symbol symbol to trade
    * @param {Number} volume order volume
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  createMarketBuyOrder(symbol, volume, stopLoss, takeProfit, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_BUY', symbol, volume, stopLoss,
-      takeProfit, comment, clientId});
+  createMarketBuyOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY', symbol, volume,
+      stopLoss, takeProfit}, options || {}));
   }
 
   /**
@@ -184,19 +192,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} volume order volume
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  createMarketSellOrder(symbol, volume, stopLoss, takeProfit, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_SELL', symbol, volume, stopLoss,
-      takeProfit, comment, clientId});
+  createMarketSellOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL', symbol, volume,
+      stopLoss, takeProfit}, options || {}));
   }
 
   /**
@@ -206,19 +208,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order limit price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  createLimitBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_BUY_LIMIT', symbol, volume, openPrice,
-      stopLoss, takeProfit, comment, clientId});
+  createLimitBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_LIMIT', symbol,
+      volume, openPrice, stopLoss, takeProfit}, options || {}));
   }
 
   /**
@@ -228,19 +224,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order limit price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  createLimitSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_SELL_LIMIT', symbol, volume,
-      openPrice, stopLoss, takeProfit, comment, clientId});
+  createLimitSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_LIMIT', symbol,
+      volume, openPrice, stopLoss, takeProfit}, options || {}));
   }
 
   /**
@@ -250,19 +240,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order stop price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  createStopBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_BUY_STOP', symbol, volume, openPrice,
-      stopLoss, takeProfit, comment, clientId});
+  createStopBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP', symbol,
+      volume, openPrice, stopLoss, takeProfit}, options || {}));
   }
 
   /**
@@ -272,19 +256,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order stop price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  createStopSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_TYPE_SELL_STOP', symbol, volume, openPrice,
-      stopLoss, takeProfit, comment, clientId});
+  createStopSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP', symbol,
+      volume, openPrice, stopLoss, takeProfit}, options || {}));
   }
 
   /**
@@ -293,7 +271,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
   modifyPosition(positionId, stopLoss, takeProfit) {
     return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_MODIFY', positionId, stopLoss,
@@ -304,56 +282,38 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Partially closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} positionId position id to modify
    * @param {Number} volume volume to close
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  closePositionPartially(positionId, volume, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_PARTIAL', positionId, volume, comment,
-      clientId});
+  closePositionPartially(positionId, volume, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_PARTIAL', positionId,
+      volume}, options || {}));
   }
 
   /**
    * Fully closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} positionId position id to modify
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  closePosition(positionId, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_CLOSE_ID', positionId, comment,
-      clientId});
+  closePosition(positionId, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_ID', positionId},
+      options || {}));
   }
 
   /**
    * Closes position by a symbol. Available on MT5 netting accounts only. (see
    * https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} symbol symbol to trade
-   * @param {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @param {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
-   * will be present on position, history orders and history deals related to the trade. You can use this field to bind
-   * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
-   * https://metaapi.cloud/docs/client/clientIdUsage/
+   * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
-  closePositionBySymbol(symbol, comment, clientId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'POSITION_CLOSE_SYMBOL', symbol, comment,
-      clientId});
+  closePositionBySymbol(symbol, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_SYMBOL', symbol},
+      options || {}));
   }
 
   /**
@@ -363,7 +323,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
   modifyOrder(orderId, openPrice, stopLoss, takeProfit) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_MODIFY', orderId, openPrice,
@@ -374,7 +334,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Cancels order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} orderId order id (ticket number)
    * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
   cancelOrder(orderId) {
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_CANCEL', orderId});

@@ -377,7 +377,8 @@ describe('MetaApiConnection', () => {
       orderId: 46870472
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE');
+    let actual = await api.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY', symbol: 'GBPUSD',
       volume: 0.07, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
@@ -393,7 +394,8 @@ describe('MetaApiConnection', () => {
       orderId: 46870472
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createMarketSellOrder('GBPUSD', 0.07, 2.0, 0.9, 'comment', 'TE_GBPUSD_7hyINWqAlE');
+    let actual = await api.createMarketSellOrder('GBPUSD', 0.07, 2.0, 0.9, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL', symbol: 'GBPUSD',
       volume: 0.07, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
@@ -409,7 +411,8 @@ describe('MetaApiConnection', () => {
       orderId: 46870472
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE');
+    let actual = await api.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_LIMIT',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment',
@@ -426,7 +429,8 @@ describe('MetaApiConnection', () => {
       orderId: 46870472
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createLimitSellOrder('GBPUSD', 0.07, 1.5, 2.0, 0.9, 'comment', 'TE_GBPUSD_7hyINWqAlE');
+    let actual = await api.createLimitSellOrder('GBPUSD', 0.07, 1.5, 2.0, 0.9, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_LIMIT',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment',
@@ -443,7 +447,8 @@ describe('MetaApiConnection', () => {
       orderId: 46870472
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createStopBuyOrder('GBPUSD', 0.07, 1.5, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE');
+    let actual = await api.createStopBuyOrder('GBPUSD', 0.07, 1.5, 0.9, 2.0, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_STOP',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment',
@@ -460,7 +465,8 @@ describe('MetaApiConnection', () => {
       orderId: '46870472'
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createStopSellOrder('GBPUSD', 0.07, 1.0, 2.0, 0.9, 'comment', 'TE_GBPUSD_7hyINWqAlE');
+    let actual = await api.createStopSellOrder('GBPUSD', 0.07, 1.0, 2.0, 0.9, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_STOP',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment',
@@ -493,10 +499,11 @@ describe('MetaApiConnection', () => {
       positionId: '46870472'
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closePositionPartially('46870472', 0.9);
+    let actual = await api.closePositionPartially('46870472', 0.9, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_PARTIAL',
-      positionId: '46870472', volume: 0.9}));
+      positionId: '46870472', volume: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
   });
 
   /**
@@ -509,10 +516,10 @@ describe('MetaApiConnection', () => {
       positionId: '46870472'
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closePosition('46870472');
+    let actual = await api.closePosition('46870472', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_ID',
-      positionId: '46870472'}));
+      positionId: '46870472', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
   });
 
   /**
@@ -525,10 +532,10 @@ describe('MetaApiConnection', () => {
       positionId: '46870472'
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closePositionBySymbol('EURUSD');
+    let actual = await api.closePositionBySymbol('EURUSD', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_SYMBOL',
-      symbol: 'EURUSD'}));
+      symbol: 'EURUSD', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
   });
 
   /**

@@ -267,6 +267,21 @@ connection.addSynchronizationListener(listener);
 connection.removeSynchronizationListener(listener);
 ```
 
+### Retrieve contract specifications and quotes via streaming API
+```javascript
+const connection = await account.connect();
+
+await connection.waitSynchronized();
+
+// first, subscribe to market data
+await connection.subscribeToMarketData('GBPUSD');
+
+// read constract specification
+console.log(terminalState.specification('EURUSD'));
+// read current price
+console.log(terminalState.price('EURUSD'));
+```
+
 ### Execute trades (both RPC and streaming APIs)
 ```javascript
 const connection = await account.connect();
@@ -274,12 +289,12 @@ const connection = await account.connect();
 await connection.waitSynchronized();
 
 // trade
-console.log(await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE'));
-console.log(await connection.createMarketSellOrder('GBPUSD', 0.07, 2.0, 0.9, 'comment', 'TE_GBPUSD_7hyINWqAlE'));
-console.log(await connection.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE'));
-console.log(await connection.createLimitSellOrder('GBPUSD', 0.07, 1.5, 2.0, 0.9, 'comment', 'TE_GBPUSD_7hyINWqAlE'));
-console.log(await connection.createStopBuyOrder('GBPUSD', 0.07, 1.5, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE'));
-console.log(await connection.createStopSellOrder('GBPUSD', 0.07, 1.0, 2.0, 0.9, 'comment', 'TE_GBPUSD_7hyINWqAlE'));
+console.log(await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
+console.log(await connection.createMarketSellOrder('GBPUSD', 0.07, 2.0, 0.9, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
+console.log(await connection.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
+console.log(await connection.createLimitSellOrder('GBPUSD', 0.07, 1.5, 2.0, 0.9, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
+console.log(await connection.createStopBuyOrder('GBPUSD', 0.07, 1.5, 0.9, 2.0, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
+console.log(await connection.createStopSellOrder('GBPUSD', 0.07, 1.0, 2.0, 0.9, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
 console.log(await connection.modifyPosition('46870472', 2.0, 0.9));
 console.log(await connection.closePositionPartially('46870472', 0.9));
 console.log(await connection.closePosition('46870472'));
@@ -287,8 +302,9 @@ console.log(await connection.closePositionBySymbol('EURUSD'));
 console.log(await connection.modifyOrder('46870472', 1.0, 2.0, 0.9));
 console.log(await connection.cancelOrder('46870472'));
 
-const result = await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, 'comment', 'TE_GBPUSD_7hyINWqAlE');
-    console.log('Trade successful, result code is ' + result.stringCode);
+// if you need to, check the extra result information in stringCode and numericCode properties of the response
+const result = await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
+console.log('Trade successful, result code is ' + result.stringCode);
 ```
 
 Keywords: MetaTrader API, MetaTrader REST API, MetaTrader websocket API,

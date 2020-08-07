@@ -1,3 +1,7 @@
+5.0.0
+  - breaking change: moved comment and clientId arguments from MetaApiConnection trade methods to options argument
+  - added magic trade option to let you specify distinct magic number (expert advisor id) on each trade
+
 4.0.2
   - save history on disk
 

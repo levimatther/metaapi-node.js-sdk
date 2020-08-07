@@ -431,11 +431,28 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * MetaTrader trade response
+   * @typedef {Object} MetatraderTradeResponse
+   * @property {Number} numericCode numeric response code, see
+   * https://www.mql5.com/en/docs/constants/errorswarnings/enum_trade_return_codes and
+   * https://book.mql4.com/appendix/errors. Response codes which indicate success are 0, 10008-10010, 10025. The rest
+   * codes are errors
+   * @property {String} stringCode string response code, see
+   * https://www.mql5.com/en/docs/constants/errorswarnings/enum_trade_return_codes and
+   * https://book.mql4.com/appendix/errors. Response codes which indicate success are ERR_NO_ERROR,
+   * TRADE_RETCODE_PLACED, TRADE_RETCODE_DONE, TRADE_RETCODE_DONE_PARTIAL, TRADE_RETCODE_NO_CHANGES. The rest codes are
+   * errors.
+   * @property {String} message human-readable response message
+   * @property {String} orderId order id which was created/modified during the trade
+   * @property {String} positionId position id which was modified during the trade
+   */
+
+  /**
    * Execute a trade on a connected MetaTrader account (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} accountId id of the MetaTrader account to execute trade for
    * @param {MetatraderTrade} trade trade to execute (see docs for possible trade types)
-   * @returns {Promise<TradeResponse>} promise resolving with trade result
-   * @throws {TradeError} on trade error
+   * @returns {Promise<MetatraderTradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error, check error properties for error code details
    */
   async trade(accountId, trade) {
     let response = await this._rpcRequest(accountId, {type: 'trade', trade});
