@@ -45,19 +45,49 @@ export default class MetatraderAccountClient {
    */
 
   /**
+   * MT version
+   * @typedef {4 | 5} Version
+   */
+
+  /**
+   * Account type
+   * @typedef {'cloud' | 'self-hosted'} Type
+   */
+
+  /**
+   * Account state
+   * @typedef {'CREATED' | 'DEPLOYING' | 'DEPLOYED' | 'DEPLOY_FAILED' | 'UNDEPLOYING' | 'UNDEPLOYED' |
+   * 'UNDEPLOY_FAILED' | 'DELETING' | 'DELETE_FAILED' | 'REDEPLOY_FAILED'} State
+   */
+
+  /**
+   * Account connection status
+   * @typedef {'CONNECTED' | 'DISCONNECTED' | 'DISCONNECTED_FROM_BROKER'} ConnectionStatus
+   */
+
+  /**
+   * @typedef {Object} AccountsFilter
+   * @property {Number} [offset] search offset (defaults to 0) (must be greater or equal to 0)
+   * @property {Number} [limit] search limit (defaults to 1000) 
+   * (must be greater or equal to 1 and less or equal to 1000)
+   * @property {Array<Version> | Version} [version] MT version
+   * @property {Array<Type> | Type} [type] account type
+   * @property {Array<State> | State} [state] account state
+   * @property {Array<ConnectionStatus> | ConnectionStatus} [connectionStatus] connection status
+   * @property {String} [query] searches over _id, name, server and login to match query
+   * @property {String} [provisioningProfileId] provisioning profile id
+   */
+
+  /**
    * Retrieves MetaTrader accounts owned by user (see https://metaapi.cloud/docs/provisioning/api/account/readAccounts/)
-   * @param {String} provisioningProfileId optional provisioning profile id filter
+   * @param {AccountsFilter} accountsFilter optional filter
    * @return {Promise<Array<MetatraderAccountDto>>} promise resolving with MetaTrader accounts found
    */
-  getAccounts(provisioningProfileId) {
-    let qs = {};
-    if (provisioningProfileId) {
-      qs.provisioningProfileId = provisioningProfileId;
-    }
+  getAccounts(accountsFilter = {}) {
     const opts = {
       url: `${this._host}/users/current/accounts`,
       method: 'GET',
-      qs,
+      qs: accountsFilter,
       headers: {
         'auth-token': this._token
       },

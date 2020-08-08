@@ -19,11 +19,11 @@ export default class MetatraderAccountApi {
 
   /**
    * Retrieves MetaTrader accounts
-   * @param {String} provisioningProfileId provisioning profile id
+   * @param {AccountsFilter} accountsFilter optional filter
    * @return {Promise<Array<MetatraderAccount>>} promise resolving with an array of MetaTrader account entities
    */
-  async getAccounts(provisioningProfileId) {
-    let accounts = await this._metatraderAccountClient.getAccounts(provisioningProfileId);
+  async getAccounts(accountsFilter) {
+    let accounts = await this._metatraderAccountClient.getAccounts(accountsFilter);
     if (accounts.items) {
       accounts = accounts.items;
     }
