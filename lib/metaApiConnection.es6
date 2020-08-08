@@ -511,7 +511,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     }
     if (!(await this.isSynchronized(synchronizationId))) {
       throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
-        this._account.id + ', synchronization id ' + synchronizationId);
+        this._account.id + ', synchronization id ' + (synchronizationId || this._lastSynchronizationId));
     }
   }
 

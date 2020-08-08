@@ -456,14 +456,15 @@ export default class MetaApiWebsocketClient {
    */
   async trade(accountId, trade) {
     let response = await this._rpcRequest(accountId, {type: 'trade', trade});
+    response.response = response.response || {};
+    response.response.stringCode = response.response.stringCode || response.response.description;
+    response.response.numericCode = response.response.numericCode !== undefined ? response.response.numericCode :
+      response.response.error;
     if (['ERR_NO_ERROR', 'TRADE_RETCODE_PLACED', 'TRADE_RETCODE_DONE', 'TRADE_RETCODE_DONE_PARTIAL',
       'TRADE_RETCODE_NO_CHANGES'].includes(response.response.stringCode || response.response.description)) {
-      response.response.stringCode = response.response.stringCode || response.response.description;
-      response.response.numericCode = response.response.numericCode !== undefined ? response.response.numericCode :
-        response.response.error;
       return response.response;
     } else {
-      throw new TradeError(response.response.message, response.response.error, response.response.description);
+      throw new TradeError(response.response.message, response.response.numericCode, response.response.stringCode);
     }
   }
 

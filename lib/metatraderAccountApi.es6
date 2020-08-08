@@ -24,6 +24,9 @@ export default class MetatraderAccountApi {
    */
   async getAccounts(provisioningProfileId) {
     let accounts = await this._metatraderAccountClient.getAccounts(provisioningProfileId);
+    if (accounts.items) {
+      accounts = accounts.items;
+    }
     return accounts.map(a => new MetatraderAccount(a, this._metatraderAccountClient, this._metaApiWebsocketClient));
   }
 
