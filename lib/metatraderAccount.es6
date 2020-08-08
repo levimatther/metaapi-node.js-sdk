@@ -129,6 +129,14 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns flag indicating if trades should be placed as manual trades on this account
+   * @return {Boolean} flag indicating if trades should be placed as manual trades on this account
+   */
+  get manualTrades() {
+    return !!this._data.manualTrades;
+  }
+
+  /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
