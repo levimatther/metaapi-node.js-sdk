@@ -46,10 +46,10 @@ describe('MetatraderAccountApi', () => {
    */
   it('should retrieve MT accounts', async () => {
     sandbox.stub(client, 'getAccounts').resolves([{_id: 'id'}]);
-    let accounts = await api.getAccounts('profileId');
+    let accounts = await api.getAccounts({provisioningProfileId: 'profileId'});
     accounts.map(a => a.id).should.match(['id']);
     accounts.forEach(a => (a instanceof MetatraderAccount).should.be.true());
-    sinon.assert.calledWith(client.getAccounts, 'profileId');
+    sinon.assert.calledWithMatch(client.getAccounts, {provisioningProfileId: 'profileId'});
   });
 
   /**

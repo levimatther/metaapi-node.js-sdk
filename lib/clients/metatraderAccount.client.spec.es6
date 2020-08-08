@@ -55,7 +55,9 @@ describe('MetatraderAccountClient', () => {
           return expected;
         });
     };
-    let accounts = await provisioningClient.getAccounts('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
+    let accounts = await provisioningClient.getAccounts({
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076'
+    });
     accounts.should.equal(expected);
   });
 

@@ -102,9 +102,16 @@ const account = await api.metatraderAccountApi.createAccount({
 
 ### Retrieving existing accounts via API
 ```javascript
-// specifying provisioning profile id is optional
-const provisioningProfileId = '...';
-const accounts = await api.metatraderAccountApi.getAccounts(provisioningProfileId);
+// filter and paginate accounts, see esdoc for full list of filter options available
+const accounts = await api.metatraderAccountApi.getAccounts({
+  limit: 10
+  offset: 0,
+  query: 'ICMarketsSC-MT5',
+  state: ['DEPLOYED']
+});
+// get accounts without filter (returns 1000 accounts max)
+const accounts = await api.metatraderAccountApi.getAccounts();
+
 const account = await api.metatraderAccountApi.getAccount('accountId');
 ```
 
