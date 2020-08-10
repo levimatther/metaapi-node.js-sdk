@@ -521,7 +521,7 @@ export default class MetaApiWebsocketClient {
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolSpecification/).
    * @param {String} accountId id of the MetaTrader account to retrieve symbol specification for
    * @param {String} symbol symbol to retrieve specification for
-   * @returns {Promise} promise which resolves when specification is retrieved
+   * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
    */
   async getSymbolSpecification(accountId, symbol) {
     let response = await this._rpcRequest(accountId, {type: 'getSymbolSpecification', symbol});
@@ -533,7 +533,7 @@ export default class MetaApiWebsocketClient {
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolPrice/).
    * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
    * @param {String} symbol symbol to retrieve price for
-   * @returns {Promise} promise which resolves when price is retrieved
+   * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
   async getSymbolPrice(accountId, symbol) {
     let response = await this._rpcRequest(accountId, {type: 'getSymbolPrice', symbol});
@@ -667,6 +667,13 @@ export default class MetaApiWebsocketClient {
    * @property {Number} minVolume minimum order volume for the symbol
    * @property {Number} maxVolume maximum order volume for the symbol
    * @property {Number} volumeStep order volume step for the symbol
+   * @property {Array<String>} list of allowed order filling modes. Can contain ORDER_FILLING_FOK, ORDER_FILLING_IOC or
+   * both. See https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_filling_mode for more
+   * details.
+   * @property {String} deal execution mode. Possible values are SYMBOL_TRADE_EXECUTION_REQUEST,
+   * SYMBOL_TRADE_EXECUTION_INSTANT, SYMBOL_TRADE_EXECUTION_MARKET, SYMBOL_TRADE_EXECUTION_EXCHANGE. See
+   * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_trade_execution for more
+   * details.
    */
 
   /**

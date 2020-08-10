@@ -1,6 +1,8 @@
 5.1.0
   - added pagination and more filters to getAccounts API
   - added slippage option to trades
+  - added fillingModes to symbol specification
+  - added executionMode to symbol specification
 
 5.0.2
   - minor bugfix
