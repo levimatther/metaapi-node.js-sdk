@@ -104,7 +104,7 @@ const account = await api.metatraderAccountApi.createAccount({
 ```javascript
 // filter and paginate accounts, see esdoc for full list of filter options available
 const accounts = await api.metatraderAccountApi.getAccounts({
-  limit: 10
+  limit: 10,
   offset: 0,
   query: 'ICMarketsSC-MT5',
   state: ['DEPLOYED']
@@ -305,7 +305,7 @@ console.log(await connection.createStopSellOrder('GBPUSD', 0.07, 1.0, 2.0, 0.9, 
 console.log(await connection.modifyPosition('46870472', 2.0, 0.9));
 console.log(await connection.closePositionPartially('46870472', 0.9));
 console.log(await connection.closePosition('46870472'));
-console.log(await connection.closePositionBySymbol('EURUSD'));
+console.log(await connection.closePositionsBySymbol('EURUSD'));
 console.log(await connection.modifyOrder('46870472', 1.0, 2.0, 0.9));
 console.log(await connection.cancelOrder('46870472'));
 
