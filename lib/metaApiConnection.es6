@@ -308,15 +308,14 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
-   * Closes position by a symbol. Available on MT5 netting accounts only. (see
-   * https://metaapi.cloud/docs/client/websocket/api/trade/).
+   * Closes positions by a symbol(see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} symbol symbol to trade
    * @param {TradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
-  closePositionBySymbol(symbol, options = {}) {
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_SYMBOL', symbol},
+  closePositionsBySymbol(symbol, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITIONS_CLOSE_SYMBOL', symbol},
       options || {}));
   }
 

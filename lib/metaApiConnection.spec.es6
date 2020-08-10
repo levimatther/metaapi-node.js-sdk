@@ -523,18 +523,18 @@ describe('MetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#closePositionBySymbol}
+   * @test {MetaApiConnection#closePositionsBySymbol}
    */
-  it('should close position by symbol', async () => {
+  it('should close positions by symbol', async () => {
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
       positionId: '46870472'
     };
     sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closePositionBySymbol('EURUSD', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
+    let actual = await api.closePositionsBySymbol('EURUSD', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_SYMBOL',
+    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITIONS_CLOSE_SYMBOL',
       symbol: 'EURUSD', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
   });
 

@@ -1,4 +1,5 @@
-5.1.0
+6.0.0
+  - breaking change: rename closePositionBySymbol -> closePosition**s**BySymbol
   - added pagination and more filters to getAccounts API
   - added slippage option to trades
   - added fillingModes to symbol specification
