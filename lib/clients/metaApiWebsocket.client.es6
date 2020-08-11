@@ -476,7 +476,7 @@ export default class MetaApiWebsocketClient {
   subscribe(accountId) {
     this._rpcRequest(accountId, {type: 'subscribe'}).catch((err) => {
       console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' + 
-      'subscribe response ' + err);
+      'subscribe response (this usually does not mean an error)' + err);
     });
   }
 

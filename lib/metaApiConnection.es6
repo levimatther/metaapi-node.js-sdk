@@ -4,6 +4,7 @@ import TerminalState from './terminalState';
 import MemoryHistoryStorage from './memoryHistoryStorage';
 import SynchronizationListener from './clients/synchronizationListener';
 import TimeoutError from './clients/timeoutError';
+import InvalidSynchronizationModeError from './invalidSynchronizationModeError';
 import randomstring from 'randomstring';
 
 /**
@@ -383,6 +384,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when subscription request was processed
    */
   subscribeToMarketData(symbol) {
+    if (this._account.synchronizationMode !== 'user') {
+      throw new InvalidSynchronizationModeError(this._account);
+    }
     return this._websocketClient.subscribeToMarketData(this._account.id, symbol);
   }
 
@@ -411,6 +415,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {TerminalState} local copy of terminal state
    */
   get terminalState() {
+    if (this._account.synchronizationMode !== 'user') {
+      throw new InvalidSynchronizationModeError(this._account);
+    }
     return this._terminalState;
   }
 
@@ -419,6 +426,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {HistoryStorage} local history storage
    */
   get historyStorage() {
+    if (this._account.synchronizationMode !== 'user') {
+      throw new InvalidSynchronizationModeError(this._account);
+    }
     return this._historyStorage;
   }
 
@@ -429,6 +439,8 @@ export default class MetaApiConnection extends SynchronizationListener {
   addSynchronizationListener(listener) {
     if (this._account.synchronizationMode === 'user') {
       this._websocketClient.addSynchronizationListener(this._account.id, listener);
+    } else {
+      throw new InvalidSynchronizationModeError(this._account);
     }
   }
 
@@ -439,6 +451,8 @@ export default class MetaApiConnection extends SynchronizationListener {
   removeSynchronizationListener(listener) {
     if (this._account.synchronizationMode === 'user') {
       this._websocketClient.removeSynchronizationListener(this._account.id, listener);
+    } else {
+      throw new InvalidSynchronizationModeError(this._account);
     }
   }
 

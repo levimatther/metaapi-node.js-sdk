@@ -4,6 +4,7 @@
   - added slippage option to trades
   - added fillingModes to symbol specification
   - added executionMode to symbol specification
+  - added logic to throw an error if streaming API is invoked in automatic synchronization mode
 
 5.0.2
   - minor bugfix
