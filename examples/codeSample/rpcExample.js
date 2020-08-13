@@ -1,65 +1,18 @@
-/* eslint-disable max-len */
 let MetaApi = require('metaapi.cloud-sdk').default;
 
-// Note: for information on how to use this example code please read https://metaapi.cloud/docs/client/usingCodeExamples
-
 let token = process.env.TOKEN || '<put in your token here>';
-let login = process.env.LOGIN || '<put in your MT login here>';
-let password = process.env.PASSWORD || '<put in your MT password here>';
-let serverName = process.env.SERVER || '<put in your MT server name here>';
-let serverDatFile = process.env.PATH_TO_SERVERS_DAT || '/path/to/your/servers.dat';
+let accountId = process.env.ACCOUNT_ID || '<put in your account id here>';
 
 const api = new MetaApi(token);
 
-// eslint-disable-next-line max-statements
 async function testMetaApiSynchronization() {
   try {
-    const profiles = await api.provisioningProfileApi.getProvisioningProfiles();
-
-    // create test MetaTrader account profile
-    let profile = profiles.find(p => p.name === serverName);
-    if (!profile) {
-      console.log('Creating account profile');
-      profile = await api.provisioningProfileApi.createProvisioningProfile({
-        name: serverName,
-        version: 5
-      });
-      await profile.uploadFile('servers.dat', serverDatFile);
-    }
-    if (profile && profile.statue === 'new') {
-      console.log('Uploading servers.dat');
-      await profile.uploadFile('servers.dat', serverDatFile);
-    } else {
-      console.log('Account profile already created');
-    }
-
-    // Add test MetaTrader account
-    let accounts = await api.metatraderAccountApi.getAccounts();
-    let account = accounts.find(a => a.login === login && a.synchronizationMode === 'automatic' && a.type === 'cloud');
-    if (!account) {
-      console.log('Adding MT5 account to MetaApi');
-      account = await api.metatraderAccountApi.createAccount({
-        name: 'Test account',
-        type: 'cloud',
-        login: login,
-        password: password,
-        server: serverName,
-        synchronizationMode: 'automatic',
-        provisioningProfileId: profile.id,
-        timeConverter: 'icmarkets',
-        application: 'MetaApi',
-        magic: 1000
-      });
-    } else {
-      console.log('MT5 account already added to MetaApi');
-    }
+    const account = await api.metatraderAccountApi.getAccount(accountId);
 
     // wait until account is deployed and connected to broker
-    // eslint-disable-next-line semi
-    console.log('Deploying account')
+    console.log('Deploying account');
     await account.deploy();
-    // eslint-disable-next-line semi
-    console.log('Waiting for API server to connect to broker (may take couple of minutes)')
+    console.log('Waiting for API server to connect to broker (may take couple of minutes)');
     await account.waitConnected();
 
     // connect to MetaApi API
@@ -97,7 +50,7 @@ async function testMetaApiSynchronization() {
     }
 
     // finally, undeploy account after the test
-    console.log('Undeploying MT5 account so that it does not consume any unwanted resources');
+    console.log('Undeploying account so that it does not consume any unwanted resources');
     await account.undeploy();
 
     process.exit();
