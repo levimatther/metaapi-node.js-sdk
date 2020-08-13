@@ -5,6 +5,7 @@
   - added fillingModes to symbol specification
   - added executionMode to symbol specification
   - added logic to throw an error if streaming API is invoked in automatic synchronization mode
+  - added code samples for created account
 
 5.0.2
   - minor bugfix
