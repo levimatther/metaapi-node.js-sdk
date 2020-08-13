@@ -162,12 +162,12 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Trade options
    * @typedef {Object} TradeOptions
    * @property {String} [comment] optional order comment. The sum of the line lengths of the comment and the
-   * clientId must be less than or equal to 27. For more information see
+   * clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} [clientId] optional client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
+   * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {Number} [magic] optional magic (expert id) number. If not set default value specified in account entity
    * will be used.

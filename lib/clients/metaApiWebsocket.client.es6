@@ -177,11 +177,11 @@ export default class MetaApiWebsocketClient {
    * @property {Number} swap position cumulative swap
    * @property {Number} profit position cumulative profit
    * @property {String} comment optional position comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
+   * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
+   * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {Number} unrealizedProfit profit of the part of the position which is not yet closed, including swap
    * @property {Number} realizedProfit profit of the already closed part, including commissions and swap
@@ -236,13 +236,13 @@ export default class MetaApiWebsocketClient {
    * @property {Number} currentVolume order remaining quantity, i.e. requested quantity - filled quantity
    * @property {String} positionId order position id. Present only if the order has a position attached to it
    * @property {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
+   * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} originalComment optional order original comment (present if possible to restore original comment
    * from history)
    * @property {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
+   * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} platform platform id (mt4 or mt5)
    * @property {Boolean} updatePending optional flag indicating that order client id and original comment was not
@@ -359,13 +359,13 @@ export default class MetaApiWebsocketClient {
    * @property {String} positionId optional id of position the deal relates to
    * @property {String} orderId optional id of order the deal relates to
    * @property {String} comment optional deal comment. The sum of the line lengths of the comment and the clientId
-   * must be less than or equal to 27. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
+   * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} originalComment optional deal original comment (present if possible to restore original comment
    * from history)
    * @property {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
-   * comment and the clientId must be less than or equal to 27. For more information see
+   * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} platform platform id (mt4 or mt5)
    * @property {Boolean} updatePending optional flag indicating that deal client id and original comment was not
