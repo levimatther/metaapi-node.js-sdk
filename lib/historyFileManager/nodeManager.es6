@@ -1,5 +1,6 @@
 'use strict';
 
+import FileManager from './fileManager';
 import fs from 'fs-extra';
 import { TextEncoder } from 'util';
 
@@ -7,35 +8,19 @@ import { TextEncoder } from 'util';
 /**
  * History storage file manager which saves and loads history on disk
  */
-export default class HistoryFileManager {
+module.exports = class HistoryFileManager extends FileManager {
 
   /**
    * Constructs the history file manager instance
    */
   constructor(accountId, historyStorage) {
+    super();
     this._accountId = accountId;
     this._historyStorage = historyStorage;
     this._dealsSize = [];
     this._startNewDealIndex = -1;
     this._historyOrdersSize = [];
     this._startNewOrderIndex = -1;
-  }
-
-  /**
-   * Starts a job to periodically save history on disk
-   */
-  startUpdateJob() {
-    if(!this.updateDiskStorageJob) {
-      this.updateDiskStorageJob = setInterval(this.updateDiskStorage.bind(this), 60000); 
-    }
-  }
-
-  /**
-   * Stops a job to periodically save history on disk
-   */
-  stopUpdateJob() {
-    clearInterval(this.updateDiskStorageJob);
-    delete this.updateDiskStorageJob;
   }
 
   /**
@@ -47,37 +32,17 @@ export default class HistoryFileManager {
   }
 
   /**
-   * Sets the index of the earliest changed historyOrder record
-   * @param {number} index index of the earliest changed record 
-   */
-  setStartNewOrderIndex(index) {
-    if(this._startNewOrderIndex > index || this._startNewOrderIndex === -1) {
-      this._startNewOrderIndex = index;
-    }
-  }
-
-  /**
-   * Sets the index of the earliest changed deal record
-   * @param {number} index index of the earliest changed record 
-   */
-  setStartNewDealIndex(index) {
-    if(this._startNewDealIndex > index || this._startNewDealIndex === -1) {
-      this._startNewDealIndex = index;
-    }
-  }
-
-  /**
    * Retrieves history from saved file
    * @returns {Object} object with deals and historyOrders
    */
-  getHistoryFromDisk() {
+  async getHistoryFromDisk() {
     const getItemSize = this.getItemSize;
     const accountId = this._accountId;
     const history = {deals: [], historyOrders: []};
     fs.ensureDir('./.metaapi');
     try {
-      if(fs.pathExistsSync(`./.metaapi/${accountId}-deals.bin`)) {
-        let deals = JSON.parse(fs.readFileSync(`./.metaapi/${accountId}-deals.bin`, 'utf-8').toString('utf-8'));
+      if(await fs.pathExists(`./.metaapi/${accountId}-deals.bin`)) {
+        let deals = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-deals.bin`, 'utf-8')).toString('utf-8'));
         this._dealsSize = deals.map(deal => getItemSize(deal));
         history.deals = deals.map((deal) => {
           deal.time = new Date(deal.time);
@@ -87,12 +52,12 @@ export default class HistoryFileManager {
     } catch(err) {
       console.error(`[${(new Date()).toISOString()}] Failed to read deals ` + 
       `history storage of account ${accountId}`, err);
-      fs.removeSync(`./.metaapi/${accountId}-deals.bin`);
+      await fs.remove(`./.metaapi/${accountId}-deals.bin`);
     }
     try{
-      if(fs.pathExistsSync(`./.metaapi/${accountId}-historyOrders.bin`)) {
-        let historyOrders = JSON.parse(fs.readFileSync(`./.metaapi/${accountId}-historyOrders.bin`, 
-          'utf-8').toString('utf-8'));
+      if(await fs.pathExists(`./.metaapi/${accountId}-historyOrders.bin`)) {
+        let historyOrders = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-historyOrders.bin`, 
+          'utf-8')).toString('utf-8'));
         this._historyOrdersSize = historyOrders.map(historyOrder => getItemSize(historyOrder));
         history.historyOrders = historyOrders.map((historyOrder) => {
           historyOrder.time = new Date(historyOrder.time);
@@ -103,7 +68,7 @@ export default class HistoryFileManager {
     } catch(err) {
       console.error(`[${(new Date()).toISOString()}] Failed to read historyOrders ` + 
       `history storage of account ${accountId}`, err);
-      fs.removeSync(`./.metaapi/${accountId}-historyOrders.bin`);
+      await fs.remove(`./.metaapi/${accountId}-historyOrders.bin`);
     }
     return history;
   }
@@ -170,4 +135,4 @@ export default class HistoryFileManager {
     await fs.remove(`./.metaapi/${this._accountId}-deals.bin`);
     await fs.remove(`./.metaapi/${this._accountId}-historyOrders.bin`);
   }
-}
+};

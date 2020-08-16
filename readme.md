@@ -15,13 +15,31 @@ For more information about SDK APIs please check esdoc documentation in source c
 npm install --save metaapi.cloud-sdk
 ```
 
+## Installing SDK in browser SPA applications
+```bash
+npm install --save metaapi.cloud-sdk
+```
+
+## Installing SDK in browser HTML applications
+```html
+<script src="unpkg.com/metaapi.cloud-sdk/index.js"></script>
+<script>
+    const token = '...';
+    const api = new MetaApi(token);
+</script>
+```
+
 ## Working code examples
 You can find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
 
 We have composed a [short guide explaining how to use the example code](https://metaapi.cloud/docs/client/usingCodeExamples)
 
 ## Connecting to MetaApi
-Please use [https://app.metaapi.cloud/token](https://app.metaapi.cloud/token) web UI to obtain your API token and supply it to the MetaApi class constructor.
+Please use one of these ways: 
+1. [https://app.metaapi.cloud/token](https://app.metaapi.cloud/token) web UI to obtain your API token.
+2. An account access token which grants access to a single account. See section below on instructions on how to retrieve account access token.
+
+Supply token to the MetaApi class constructor.
 
 ```javacsript
 import MetaApi from 'metaapi.cloud-sdk';
@@ -29,6 +47,17 @@ import MetaApi from 'metaapi.cloud-sdk';
 const token = '...';
 const api = new MetaApi(token);
 ```
+
+## Retrieving account access token
+Account access token grants access to a single account. You can retrieve account access token via API:
+```javascript
+let accountId = '...';
+let account = await api.accountApi.getAccount(accountId);
+let accountAccessToken = account.accessToken;
+console.log(accountAccessToken);
+```
+
+Alternatively, you can retrieve account access token via web UI on https://app.metaapi.cloud/accounts page.
 
 ## Managing MetaTrader accounts (API servers for MT accounts)
 Before you can use the API you have to add an MT account to MetaApi and start an API server for it.

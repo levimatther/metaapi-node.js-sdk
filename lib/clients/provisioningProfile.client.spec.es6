@@ -1,9 +1,7 @@
 'use strict';
 
-import should from 'should';
 import {HttpClientMock} from './httpClient';
 import ProvisioningProfileClient from './provisioningProfile.client';
-import fs from 'fs';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';
 
@@ -15,8 +13,8 @@ describe('ProvisioningProfileClient', () => {
   let provisioningClient;
   let httpClient = new HttpClientMock(() => 'empty');
 
-  before(() => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+  beforeEach(() => {
+    provisioningClient = new ProvisioningProfileClient(httpClient, 'header.payload.sign');
   });
 
   /**
@@ -41,7 +39,7 @@ describe('ProvisioningProfileClient', () => {
               status: 'active'
             },
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
@@ -50,6 +48,21 @@ describe('ProvisioningProfileClient', () => {
     };
     let profiles = await provisioningClient.getProvisioningProfiles(5, 'active');
     profiles.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#getProvisioningProfiles}
+   */
+  it('should not retrieve provisioning profiles from API with account token', async () => {
+    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    try {
+      await provisioningClient.getProvisioningProfiles(5, 'active');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke getProvisioningProfiles method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -70,7 +83,7 @@ describe('ProvisioningProfileClient', () => {
             url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
             method: 'GET',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
@@ -79,6 +92,21 @@ describe('ProvisioningProfileClient', () => {
     };
     let profile = await provisioningClient.getProvisioningProfile('id');
     profile.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#getProvisioningProfile}
+   */
+  it('should not retrieve provisioning profile from API with account token', async () => {
+    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    try {
+      await provisioningClient.getProvisioningProfile('id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke getProvisioningProfile method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -101,7 +129,7 @@ describe('ProvisioningProfileClient', () => {
             method: 'POST',
             body: profile,
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
@@ -110,6 +138,21 @@ describe('ProvisioningProfileClient', () => {
     };
     let id = await provisioningClient.createProvisioningProfile(profile);
     id.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#createProvisioningProfile}
+   */
+  it('should not create provisioning profile via API with account token', async () => {
+    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    try {
+      await provisioningClient.createProvisioningProfile({});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke createProvisioningProfile method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -125,7 +168,7 @@ describe('ProvisioningProfileClient', () => {
             url: `${provisioningApiUrl}/users/current/provisioning-profiles/id/servers.dat`,
             method: 'PUT',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             formData: {
               file
@@ -136,6 +179,21 @@ describe('ProvisioningProfileClient', () => {
         });
     };
     await provisioningClient.uploadProvisioningProfileFile('id', 'servers.dat', file);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#uploadProvisioningProfileFile}
+   */
+  it('should not upload provisioning profile file via API with account token', async () => {
+    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    try {
+      await provisioningClient.uploadProvisioningProfileFile('id', 'servers.dat', {});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke uploadProvisioningProfileFile method, because you have connected with account access' +
+        ' token. Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -150,7 +208,7 @@ describe('ProvisioningProfileClient', () => {
             url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
             method: 'DELETE',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
@@ -158,6 +216,21 @@ describe('ProvisioningProfileClient', () => {
         });
     };
     await provisioningClient.deleteProvisioningProfile('id');
+  });
+
+  /**
+   * @test {MetatraderAccountClient#deleteProvisioningProfile}
+   */
+  it('should not delete provisioning profile via API with account token', async () => {
+    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    try {
+      await provisioningClient.deleteProvisioningProfile('id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke deleteProvisioningProfile method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -172,7 +245,7 @@ describe('ProvisioningProfileClient', () => {
             url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
             method: 'PUT',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true,
             body: {
@@ -182,6 +255,21 @@ describe('ProvisioningProfileClient', () => {
         });
     };
     await provisioningClient.updateProvisioningProfile('id', {name: 'new name'});
+  });
+
+  /**
+   * @test {MetatraderAccountClient#updateProvisioningProfile}
+   */
+  it('should not update provisioning profile via API with account token', async () => {
+    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    try {
+      await provisioningClient.updateProvisioningProfile('id', {name: 'new name'});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke updateProvisioningProfile method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
 });

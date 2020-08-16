@@ -41,6 +41,15 @@ export default class MetatraderAccountApi {
   }
 
   /**
+   * Retrieves a MetaTrader account by token
+   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
+   */
+  async getAccountByToken() {
+    let account = await this._metatraderAccountClient.getAccountByToken();
+    return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient);
+  }
+
+  /**
    * Creates a MetaTrader account
    * @param {NewMetatraderAccountDto} account MetaTrader account data
    * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity

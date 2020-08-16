@@ -1,9 +1,7 @@
 'use strict';
 
-import should from 'should';
 import {HttpClientMock} from './httpClient';
 import MetatraderAccountClient from './metatraderAccount.client';
-import fs from 'fs';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';
 
@@ -12,11 +10,11 @@ const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumt
  */
 describe('MetatraderAccountClient', () => {
 
-  let provisioningClient;
+  let accountClient;
   let httpClient = new HttpClientMock(() => 'empty');
 
-  before(() => {
-    provisioningClient = new MetatraderAccountClient(httpClient, 'token');
+  beforeEach(() => {
+    accountClient = new MetatraderAccountClient(httpClient, 'header.payload.sign');
   });
 
   /**
@@ -48,17 +46,32 @@ describe('MetatraderAccountClient', () => {
               provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076'
             },
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
           return expected;
         });
     };
-    let accounts = await provisioningClient.getAccounts({
+    let accounts = await accountClient.getAccounts({
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076'
     });
     accounts.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#getAccounts}
+   */
+  it('should not retrieve MetaTrader accounts from API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.getAccounts('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke getAccounts method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -87,15 +100,65 @@ describe('MetatraderAccountClient', () => {
             url: `${provisioningApiUrl}/users/current/accounts/id`,
             method: 'GET',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
           return expected;
         });
     };
-    let account = await provisioningClient.getAccount('id');
+    let account = await accountClient.getAccount('id');
     account.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#getAccountByToken}
+   */
+  it('should retrieve MetaTrader account by token from API', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    let expected = {
+      _id: 'id',
+      login: '50194988',
+      name: 'mt5a',
+      server: 'ICMarketsSC-Demo',
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+      magic: 123456,
+      timeConverter: 'icmarkets',
+      application: 'MetaApi',
+      connectionStatus: 'DISCONNECTED',
+      state: 'DEPLOYED',
+      synchronizationMode: 'automatic',
+      type: 'cloud'
+    };
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${provisioningApiUrl}/users/current/accounts/accessToken/token`,
+            method: 'GET',
+            json: true
+          });
+          return expected;
+        });
+    };
+    let account = await accountClient.getAccountByToken();
+    account.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#createAccount}
+   */
+  it('should not retrieve MetaTrader account by token via API with api token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'header.payload.sign');
+    try {
+      await accountClient.getAccountByToken();
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke getAccountByToken method, because you have connected with API access token. ' +
+        'Please use account access token to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -126,15 +189,30 @@ describe('MetatraderAccountClient', () => {
             method: 'POST',
             body: account,
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
           return expected;
         });
     };
-    let id = await provisioningClient.createAccount(account);
+    let id = await accountClient.createAccount(account);
     id.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderAccountClient#createAccount}
+   */
+  it('should not create MetaTrader account via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.createAccount({});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke createAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -149,14 +227,29 @@ describe('MetatraderAccountClient', () => {
             url: `${provisioningApiUrl}/users/current/accounts/id/deploy`,
             method: 'POST',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
           return;
         });
     };
-    await provisioningClient.deployAccount('id');
+    await accountClient.deployAccount('id');
+  });
+
+  /**
+   * @test {MetatraderAccountClient#deployAccount}
+   */
+  it('should not deploy MetaTrader account via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.deployAccount('id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke deployAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -171,14 +264,29 @@ describe('MetatraderAccountClient', () => {
             url: `${provisioningApiUrl}/users/current/accounts/id/undeploy`,
             method: 'POST',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
           return;
         });
     };
-    await provisioningClient.undeployAccount('id');
+    await accountClient.undeployAccount('id');
+  });
+
+  /**
+   * @test {MetatraderAccountClient#undeployAccount}
+   */
+  it('should not undeploy MetaTrader account via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.undeployAccount('id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke undeployAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -193,14 +301,29 @@ describe('MetatraderAccountClient', () => {
             url: `${provisioningApiUrl}/users/current/accounts/id/redeploy`,
             method: 'POST',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
           return;
         });
     };
-    await provisioningClient.redeployAccount('id');
+    await accountClient.redeployAccount('id');
+  });
+
+  /**
+   * @test {MetatraderAccountClient#redeployAccount}
+   */
+  it('should not redeploy MetaTrader account via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.redeployAccount('id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke redeployAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -215,14 +338,29 @@ describe('MetatraderAccountClient', () => {
             url: `${provisioningApiUrl}/users/current/accounts/id`,
             method: 'DELETE',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true
           });
           return;
         });
     };
-    await provisioningClient.deleteAccount('id');
+    await accountClient.deleteAccount('id');
+  });
+
+  /**
+   * @test {MetatraderAccountClient#deleteAccount}
+   */
+  it('should not delete MetaTrader account from via with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.deleteAccount('id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke deleteAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
@@ -237,7 +375,7 @@ describe('MetatraderAccountClient', () => {
             url: `${provisioningApiUrl}/users/current/accounts/id`,
             method: 'PUT',
             headers: {
-              'auth-token': 'token'
+              'auth-token': 'header.payload.sign'
             },
             json: true,
             body: {
@@ -249,12 +387,27 @@ describe('MetatraderAccountClient', () => {
           });
         });
     };
-    await provisioningClient.updateAccount('id', {
+    await accountClient.updateAccount('id', {
       name: 'new account name',
       password: 'new_password007',
       server: 'ICMarketsSC2-Demo',
       synchronizationMode: 'user'
     });
+  });
+
+  /**
+   * @test {MetatraderAccountClient#updateAccount}
+   */
+  it('should not update MetaTrader account via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.updateAccount('id', {});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke updateAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
 });
