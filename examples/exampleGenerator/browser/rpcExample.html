@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Account example</title>
+</head>
+
+<body>
+  <div id='info'></div>
+</body>
+
+<script src="index.js"></script>
+
+<script>
+  const infoElement = document.getElementById('info');
+  function log() {
+    const el = document.createElement('div');
+    el.innerHTML = [].join.call(arguments, ' ');
+    infoElement.appendChild(el);
+    console.log(...arguments);
+  }
+
+  const token = '<put in your token here>';
+  const accountId = '<put in your account id here>';
+  const api = new MetaApi(token);
+
+  async function testMetaApiSynchronization() {
+    try {
+      const account = await api.metatraderAccountApi.getAccount(accountId);
+
+      // wait until account is deployed and connected to broker
+      log('Deploying account');
+      await account.deploy();
+      log('Waiting for API server to connect to broker (may take couple of minutes)');
+      await account.waitConnected();
+
+      // connect to MetaApi API
+      let connection = await account.connect();
+
+      // wait until terminal state synchronized to the local state
+      log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history size)');
+      await connection.waitSynchronized();
+
+      // invoke RPC API (replace ticket numbers with actual ticket numbers which exist in your MT account)
+      log('Testing MetaAPI RPC API');
+      log('account information:', await connection.getAccountInformation());
+      log('positions:', await connection.getPositions());
+      //log(await connection.getPosition('1234567'));
+      log('open orders:', await connection.getOrders());
+      //log(await connection.getOrder('1234567'));
+      log('history orders by ticket:', await connection.getHistoryOrdersByTicket('1234567'));
+      log('history orders by position:', await connection.getHistoryOrdersByPosition('1234567'));
+      log('history orders (~last 3 months):', await connection.getHistoryOrdersByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date()));
+      log('history deals by ticket:', await connection.getDealsByTicket('1234567'));
+      log('history deals by position:', await connection.getDealsByPosition('1234567'));
+      log('history deals (~last 3 months):', await connection.getDealsByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date()));
+
+      // trade
+      log('Submitting pending order');
+      try {
+        let result = await
+          connection.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, {
+            comment: 'comm',
+            clientId: 'TE_GBPUSD_7hyINWqAlE'
+          });
+        log('Trade successful, result code is ' + result.stringCode);
+      } catch (err) {
+        log('Trade failed with result code ' + err.stringCode);
+      }
+
+      // finally, undeploy account after the test
+      log('Undeploying account so that it does not consume any unwanted resources');
+      await account.undeploy();
+
+      return;
+    } catch (err) {
+      log(err);
+    }
+  }
+  testMetaApiSynchronization();
+</script>
+
+</html>

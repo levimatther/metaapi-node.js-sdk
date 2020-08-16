@@ -56,6 +56,3 @@ async function testMetaApiSynchronization() {
 }
 
 testMetaApiSynchronization();
-
-
-
