@@ -155,6 +155,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory() {
+    if (this._account.synchronizationMode === 'user') {
+      this._historyStorage.reset();
+    }
     return this._websocketClient.removeHistory(this._account.id);
   }
 
@@ -370,6 +373,16 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Initializes meta api connection
+   * @return {Promise} promise which resolves when meta api connection is initialized
+   */
+  async initialize() {
+    if (this._account.synchronizationMode === 'user') {
+      await this._historyStorage.loadDataFromDisk();
+    }
+  }
+
+  /**
    * Initiates subscription to MetaTrader terminal
    * @returns {Promise} promise which resolves when subscription is initiated
    */
@@ -477,6 +490,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async onDealSynchronizationFinished(synchronizationId) {
     this._dealsSynchronized[synchronizationId] = true;
+    if (this._account.synchronizationMode === 'user') {
+      await this._historyStorage.updateDiskStorage();
+    }
   }
 
   /**

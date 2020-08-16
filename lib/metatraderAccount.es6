@@ -2,7 +2,7 @@
 
 import TimeoutError from './clients/timeoutError';
 import MetaApiConnection from './metaApiConnection';
-import HistoryFileManager from './historyFileManager';
+import HistoryFileManager from './historyFileManager/index';
 
 /**
  * Implements a MetaTrader account entity
@@ -284,6 +284,9 @@ export default class MetatraderAccount {
    */
   async connect(historyStorage) {
     let connection = new MetaApiConnection(this._metaApiWebsocketClient, this, historyStorage);
+    if(this.synchronizationMode === 'user') {
+      await connection.initialize();
+    }
     await connection.subscribe();
     return connection;
   }

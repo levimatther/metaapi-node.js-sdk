@@ -6,7 +6,7 @@ import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccount from './metatraderAccount';
 import {NotFoundError} from './clients/errorHandler';
 import MetaApiConnection from './metaApiConnection';
-import HistoryFileManager from './historyFileManager';
+import HistoryFileManager from './historyFileManager/index';
 
 /**
  * @test {MetatraderAccountApi}
@@ -19,6 +19,7 @@ describe('MetatraderAccountApi', () => {
   let client = {
     getAccounts: () => {},
     getAccount: () => {},
+    getAccountByToken: () => {},
     createAccount: () => {},
     deleteAccount: () => {},
     deployAccount: () => {},
@@ -87,6 +88,43 @@ describe('MetatraderAccountApi', () => {
     account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
     sinon.assert.calledWith(client.getAccount, 'id');
+  });
+
+  /**
+   * @test {MetatraderAccountApi#getAccountByToken}
+   */
+  it('should retrieve MT account by token', async () => {
+    sandbox.stub(client, 'getAccountByToken').resolves({
+      _id: 'id',
+      login: '50194988',
+      name: 'mt5a',
+      server: 'ICMarketsSC-Demo',
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+      magic: 123456,
+      timeConverter: 'icmarkets',
+      application: 'MetaApi',
+      connectionStatus: 'DISCONNECTED',
+      state: 'DEPLOYED',
+      synchronizationMode: 'automatic',
+      type: 'cloud',
+      accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
+    });
+    let account = await api.getAccountByToken();
+    account.id.should.equal('id');
+    account.login.should.equal('50194988');
+    account.name.should.equal('mt5a');
+    account.server.should.equal('ICMarketsSC-Demo');
+    account.provisioningProfileId.should.equal('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
+    account.magic.should.equal(123456);
+    account.timeConverter.should.equal('icmarkets');
+    account.application.should.equal('MetaApi');
+    account.connectionStatus.should.equal('DISCONNECTED');
+    account.state.should.equal('DEPLOYED');
+    account.synchronizationMode.should.equal('automatic');
+    account.type.should.equal('cloud');
+    account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
+    (account instanceof MetatraderAccount).should.be.true();
+    sinon.assert.calledWith(client.getAccountByToken);
   });
 
   /**
@@ -655,13 +693,16 @@ describe('MetatraderAccountApi', () => {
     let account = await api.getAccount();
     let storage = {
       lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
-      lastDealTime: () => new Date('2020-01-02T00:00:00.000Z')
+      lastDealTime: () => new Date('2020-01-02T00:00:00.000Z'),
+      loadDataFromDisk: () => ({deals: [], historyOrders: []})
     };
+    sandbox.stub(MetaApiConnection.prototype, 'initialize').resolves();
     let connection = await account.connect(storage);
     (connection instanceof MetaApiConnection).should.be.true();
     connection.historyStorage.should.equal(storage);
     sinon.assert.calledWith(metaApiWebsocketClient.addSynchronizationListener, 'id', storage);
     sinon.assert.calledWith(metaApiWebsocketClient.subscribe, 'id');
+    sinon.assert.calledOnce(connection.initialize);
   });
 
   /**

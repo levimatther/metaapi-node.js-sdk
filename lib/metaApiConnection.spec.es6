@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import MetaApiConnection from './metaApiConnection';
 import NotSynchronizedError from './clients/notSynchronizedError';
 import randomstring from 'randomstring';
-import HistoryFileManager from './historyFileManager';
+import HistoryFileManager from './historyFileManager/index';
 
 /**
  * @test {MetaApiConnection}
@@ -363,8 +363,10 @@ describe('MetaApiConnection', () => {
    */
   it('should remove history', async () => {
     sandbox.stub(client, 'removeHistory').resolves();
+    sandbox.stub(api.historyStorage, 'reset').resolves();
     await api.removeHistory();
     sinon.assert.calledWith(client.removeHistory, 'accountId');
+    sinon.assert.calledOnce(api.historyStorage.reset);
   });
 
   /**
@@ -713,6 +715,7 @@ describe('MetaApiConnection', () => {
      * @test {MetaApiConnection#waitSynchronized}
      */
     it('should wait util synchronization complete in user mode', async () => {
+      sandbox.stub(api.historyStorage, 'updateDiskStorage');
       (await api.isSynchronized()).should.equal(false);
       let promise = api.waitSynchronized('synchronizationId', 1, 10);
       let startTime = Date.now();
@@ -724,6 +727,7 @@ describe('MetaApiConnection', () => {
       await promise;
       (Date.now() - startTime).should.be.approximately(0, 10);
       (await api.isSynchronized('synchronizationId')).should.equal(true);
+      sinon.assert.calledOnce(api.historyStorage.updateDiskStorage);
     });
 
     /**
@@ -769,6 +773,15 @@ describe('MetaApiConnection', () => {
     sandbox.stub(api, 'subscribe').resolves();
     await api.onReconnected();
     sinon.assert.calledWith(api.subscribe);
+  });
+
+  /**
+   * @test {MetaApiConnection#initialize}
+   */
+  it('should load data to history storage from disk', async () => {
+    sandbox.stub(api.historyStorage, 'loadDataFromDisk').resolves();
+    await api.initialize();
+    sinon.assert.calledOnce(api.historyStorage.loadDataFromDisk);
   });
 
 });

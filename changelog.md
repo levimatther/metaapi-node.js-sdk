@@ -6,6 +6,9 @@
   - added executionMode to symbol specification
   - added logic to throw an error if streaming API is invoked in automatic synchronization mode
   - added code samples for created account
+  - added the ability to work in web apps
+  - added the ability to retrieve Metatrader account by account access token
+  - added the verification access depending on the token to API
 
 5.0.2
   - minor bugfix

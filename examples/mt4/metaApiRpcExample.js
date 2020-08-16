@@ -53,9 +53,9 @@ async function testMetaApiSynchronization() {
     }
 
     // wait until account is deployed and connected to broker
-    console.log('Deploying account')
+    console.log('Deploying account');
     await account.deploy();
-    console.log('Waiting for API server to connect to broker (may take couple of minutes)')
+    console.log('Waiting for API server to connect to broker (may take couple of minutes)');
     await account.waitConnected();
 
     // connect to MetaApi API

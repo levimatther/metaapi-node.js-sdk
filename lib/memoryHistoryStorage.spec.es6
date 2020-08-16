@@ -36,12 +36,12 @@ describe('MemoryHistoryStorage', () => {
   });
   
   /**
-   * @test {MemoryHistoryStorage#constructor}
+   * @test {MemoryHistoryStorage#loadDataFromDisk}
    */
-  it('should get history from file manager on construct', async () => {
+  it('should load data from the file manager', async () => {
     sandbox.stub(HistoryFileManager.prototype, 'getHistoryFromDisk')
       .returns({deals: [testDeal], historyOrders: [testOrder]});
-    storage = new MemoryHistoryStorage('accountId');
+    await storage.loadDataFromDisk();
     await new Promise(res => setTimeout(res, 50));
     storage.deals.should.match([testDeal]);
     storage.historyOrders.should.match([testOrder]);
@@ -154,6 +154,19 @@ describe('MemoryHistoryStorage', () => {
     storage.dealSynchronizationFinished.should.be.false();
     storage.onDealSynchronizationFinished();
     storage.dealSynchronizationFinished.should.be.true();
+  });
+
+  /**
+   * @test {MemoryHistoryStorage#reset}
+   */
+  it('should reset storage', async () => {
+    sandbox.stub(storage._fileManager, 'deleteStorageFromDisk');
+    storage.onDealAdded({id: '1', time: new Date('2020-01-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
+    storage.onHistoryOrderAdded({id: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
+    storage.reset();
+    sinon.assert.match(storage.deals, []);
+    sinon.assert.match(storage.historyOrders, []);
+    sinon.assert.calledOnce(storage._fileManager.deleteStorageFromDisk);
   });
 
 });

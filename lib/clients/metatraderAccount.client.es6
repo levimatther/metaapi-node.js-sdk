@@ -1,23 +1,11 @@
 'use strict';
 
-import fs from 'fs';
+import MetaApiClient from './metaApi.client';
 
 /**
  * metaapi.cloud MetaTrader account API client (see https://metaapi.cloud/docs/provisioning/)
  */
-export default class MetatraderAccountClient {
-
-  /**
-   * Constructs MetaTrader account API client instance
-   * @param {HttpClient} httpClient HTTP client
-   * @param {String} token authorization token
-   * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
-   */
-  constructor(httpClient, token, domain = 'agiliumtrade.agiliumtrade.ai') {
-    this._httpClient = httpClient;
-    this._host = `https://mt-provisioning-api-v1.${domain}`;
-    this._token = token;
-  }
+export default class MetatraderAccountClient extends MetaApiClient {
 
   /**
    * MetaTrader account model
@@ -80,10 +68,14 @@ export default class MetatraderAccountClient {
 
   /**
    * Retrieves MetaTrader accounts owned by user (see https://metaapi.cloud/docs/provisioning/api/account/readAccounts/)
+   * Method is accessible only with API access token
    * @param {AccountsFilter} accountsFilter optional filter
    * @return {Promise<Array<MetatraderAccountDto>>} promise resolving with MetaTrader accounts found
    */
   getAccounts(accountsFilter = {}) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('getAccounts');
+    }
     const opts = {
       url: `${this._host}/users/current/accounts`,
       method: 'GET',
@@ -109,6 +101,24 @@ export default class MetatraderAccountClient {
       headers: {
         'auth-token': this._token
       },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Retrieves a MetaTrader account by token (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/).
+   * Throws an error if account is not found.
+   * Method is accessible only with account access token
+   * @return {Promise<MetatraderAccountDto>} promise resolving with MetaTrader account found
+   */
+  getAccountByToken() {
+    if (this._isNotAccountToken()) {
+      return this._handleNoAccessError('getAccountByToken');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/accessToken/${this._token}`,
+      method: 'GET',
       json: true
     };
     return this._httpClient.request(opts);
@@ -145,10 +155,14 @@ export default class MetatraderAccountClient {
    * https://metaapi.cloud/docs/provisioning/api/account/createAccount/). It takes some time to launch the terminal and
    * connect the terminal to the broker, you can use the connectionStatus field to monitor the current status of the
    * terminal.
+   * Method is accessible only with API access token
    * @param {NewMetatraderAccountDto} account MetaTrader account to create
    * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id of the MetaTrader account created
    */
   createAccount(account) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('createAccount');
+    }
     const opts = {
       url: `${this._host}/users/current/accounts`,
       method: 'POST',
@@ -168,6 +182,9 @@ export default class MetatraderAccountClient {
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deployment
    */
   deployAccount(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('deployAccount');
+    }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}/deploy`,
       method: 'POST',
@@ -186,6 +203,9 @@ export default class MetatraderAccountClient {
    * @return {Promise} promise resolving when MetaTrader account is scheduled for undeployment
    */
   undeployAccount(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('undeployAccount');
+    }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}/undeploy`,
       method: 'POST',
@@ -204,6 +224,9 @@ export default class MetatraderAccountClient {
    * @return {Promise} promise resolving when MetaTrader account is scheduled for redeployment
    */
   redeployAccount(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('redeployAccount');
+    }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}/redeploy`,
       method: 'POST',
@@ -218,11 +241,15 @@ export default class MetatraderAccountClient {
   /**
    * Stops and deletes an API server for a specified MetaTrader account. The terminal state such as downloaded market
    * data history will be deleted as well when you delete the account. (see
-   * https://metaapi.cloud/docs/provisioning/api/account/deleteAccount/)
+   * https://metaapi.cloud/docs/provisioning/api/account/deleteAccount/).
+   * Method is accessible only with API access token
    * @param {String} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
    */
   deleteAccount(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('deleteAccount');
+    }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}`,
       method: 'DELETE',
@@ -248,12 +275,16 @@ export default class MetatraderAccountClient {
 
   /**
    * Updates existing metatrader account data (see
-   * https://metaapi.cloud/docs/provisioning/api/account/updateAccount/)
+   * https://metaapi.cloud/docs/provisioning/api/account/updateAccount/).
+   * Method is accessible only with API access token
    * @param {String} id MetaTrader account id
    * @param {MetatraderAccountUpdateDto} account updated MetaTrader account
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
   updateAccount(id, account) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('updateAccount');
+    }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}`,
       method: 'PUT',

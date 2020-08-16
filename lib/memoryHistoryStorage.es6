@@ -1,7 +1,7 @@
 'use strict';
 
 import HistoryStorage from './historyStorage';
-import HistoryFileManager from './historyFileManager';
+import HistoryFileManager from './historyFileManager/index';
 
 /**
  * History storage which stores MetaTrader history in RAM
@@ -15,9 +15,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     super();
     this._accountId = accountId;
     this._fileManager = new HistoryFileManager(accountId, this);
-    const history = this._fileManager.getHistoryFromDisk();
-    this._deals = history.deals;
-    this._historyOrders = history.historyOrders;
+    this._deals = [];
+    this._historyOrders = [];
     this._fileManager.startUpdateJob();
   }
 
@@ -43,6 +42,17 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   reset() {
     this._deals = [];
     this._historyOrders = [];
+    this._fileManager.deleteStorageFromDisk();
+  }
+
+  /**
+   * Loads history data from the file manager
+   * @return {Promise} promise which resolves when the history is loaded
+   */
+  async loadDataFromDisk() {
+    const history = await this._fileManager.getHistoryFromDisk();
+    this._deals = history.deals;
+    this._historyOrders = history.historyOrders;
   }
 
   /**

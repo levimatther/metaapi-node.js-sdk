@@ -3,7 +3,7 @@
 import should from 'should';
 import fs from 'fs-extra';
 import sinon from 'sinon';
-import HistoryFileManager from './historyFileManager';
+const HistoryFileManager = require('./nodeManager');
 
 /**
  * Helper function to read saved history storage
@@ -117,7 +117,7 @@ describe('HistoryFileManager', () => {
       'utf-8');
     fs.writeFileSync('./.metaapi/accountId-historyOrders.bin', JSON.stringify([testOrder]), 
       'utf-8');
-    const history = fileManager.getHistoryFromDisk();
+    const history = await fileManager.getHistoryFromDisk();
     await new Promise(res => setTimeout(res, 50));
     history.deals.should.match([testDeal]);
     history.historyOrders.should.match([testOrder]);
