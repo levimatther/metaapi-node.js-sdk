@@ -44,17 +44,17 @@
 
       // invoke RPC API (replace ticket numbers with actual ticket numbers which exist in your MT account)
       log('Testing MetaAPI RPC API');
-      log('account information:', await connection.getAccountInformation());
-      log('positions:', await connection.getPositions());
+      log('account information:', JSON.stringify(await connection.getAccountInformation()));
+      log('positions:', JSON.stringify(await connection.getPositions()));
       //log(await connection.getPosition('1234567'));
-      log('open orders:', await connection.getOrders());
+      log('open orders:', JSON.stringify(await connection.getOrders()));
       //log(await connection.getOrder('1234567'));
-      log('history orders by ticket:', await connection.getHistoryOrdersByTicket('1234567'));
-      log('history orders by position:', await connection.getHistoryOrdersByPosition('1234567'));
-      log('history orders (~last 3 months):', await connection.getHistoryOrdersByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date()));
-      log('history deals by ticket:', await connection.getDealsByTicket('1234567'));
-      log('history deals by position:', await connection.getDealsByPosition('1234567'));
-      log('history deals (~last 3 months):', await connection.getDealsByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date()));
+      log('history orders by ticket:', JSON.stringify(await connection.getHistoryOrdersByTicket('1234567')));
+      log('history orders by position:', JSON.stringify(await connection.getHistoryOrdersByPosition('1234567')));
+      log('history orders (~last 3 months):', JSON.stringify(await connection.getHistoryOrdersByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date())));
+      log('history deals by ticket:', JSON.stringify(await connection.getDealsByTicket('1234567')));
+      log('history deals by position:', JSON.stringify(await connection.getDealsByPosition('1234567')));
+      log('history deals (~last 3 months):', JSON.stringify(await connection.getDealsByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date())));
 
       // trade
       log('Submitting pending order');
@@ -72,11 +72,10 @@
       // finally, undeploy account after the test
       log('Undeploying account so that it does not consume any unwanted resources');
       await account.undeploy();
-
-      return;
     } catch (err) {
       log(err);
     }
+    return;
   }
   testMetaApiSynchronization();
 </script>

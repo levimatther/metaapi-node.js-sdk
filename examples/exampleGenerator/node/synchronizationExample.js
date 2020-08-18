@@ -48,11 +48,10 @@ async function testMetaApiSynchronization() {
     // finally, undeploy account after the test
     console.log('Undeploying account so that it does not consume any unwanted resources');
     await account.undeploy();
-
-    process.exit();
   } catch (err) {
     console.error(err);
   }
+  process.exit();
 }
 
 testMetaApiSynchronization();

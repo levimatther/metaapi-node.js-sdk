@@ -52,7 +52,7 @@ const api = new MetaApi(token);
 Account access token grants access to a single account. You can retrieve account access token via API:
 ```javascript
 let accountId = '...';
-let account = await api.accountApi.getAccount(accountId);
+let account = await api.metatraderAccountApi.getAccount(accountId);
 let accountAccessToken = account.accessToken;
 console.log(accountAccessToken);
 ```
