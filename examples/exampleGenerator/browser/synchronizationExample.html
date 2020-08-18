@@ -46,12 +46,12 @@
       let terminalState = connection.terminalState;
       log('connected:', terminalState.connected);
       log('connected to broker:', terminalState.connectedToBroker);
-      log('account information:', terminalState.accountInformation);
-      log('positions:', terminalState.positions);
-      log('orders:', terminalState.orders);
-      log('specifications:', terminalState.specifications);
-      log('EURUSD specification:', terminalState.specification('EURUSD'));
-      log('EURUSD price:', terminalState.price('EURUSD'));
+      log('account information:', JSON.stringify(terminalState.accountInformation));
+      log('positions:', JSON.stringify(terminalState.positions));
+      log('orders:', JSON.stringify(terminalState.orders));
+      log('specifications:', JSON.stringify(terminalState.specifications));
+      log('EURUSD specification:', JSON.stringify(terminalState.specification('EURUSD')));
+      log('EURUSD price:', JSON.stringify(terminalState.price('EURUSD')));
 
       // trade
       log('Submitting pending order');
@@ -69,11 +69,10 @@
       // finally, undeploy account after the test
       log('Undeploying account so that it does not consume any unwanted resources');
       await account.undeploy();
-
-      return;
     } catch (err) {
       log(err);
     }
+    return;
   }
   testMetaApiSynchronization();
 </script>
