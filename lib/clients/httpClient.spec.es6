@@ -12,7 +12,7 @@ describe('HttpClient', () => {
 
   let httpClient;
 
-  before(() => {
+  beforeEach(() => {
     httpClient = new HttpClient();
   });
 
@@ -40,6 +40,22 @@ describe('HttpClient', () => {
     httpClient.request(opts)
       .catch((err) => {
         err.name.should.eql('NotFoundError');
+      })
+      .then(done, done);
+  }).timeout(10000);
+
+  /**
+   * @test {HttpClient#request}
+   */
+  it('should return timeout error if request is timed out', (done) => {
+    httpClient = new HttpClient(0.0001);
+    let opts = {
+      url: 'http://example.com/not-found'
+    };
+    httpClient.request(opts)
+      .catch((err) => {
+        err.name.should.eql('ApiError');
+        err.message.should.eql('ETIMEDOUT');
       })
       .then(done, done);
   }).timeout(10000);

@@ -48,7 +48,8 @@ describe('MetatraderAccountClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return expected;
         });
@@ -102,7 +103,8 @@ describe('MetatraderAccountClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return expected;
         });
@@ -137,7 +139,8 @@ describe('MetatraderAccountClient', () => {
           opts.should.eql({
             url: `${provisioningApiUrl}/users/current/accounts/accessToken/token`,
             method: 'GET',
-            json: true
+            json: true,
+            timeout: 60000
           });
           return expected;
         });
@@ -191,7 +194,8 @@ describe('MetatraderAccountClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return expected;
         });
@@ -229,7 +233,8 @@ describe('MetatraderAccountClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return;
         });
@@ -266,7 +271,8 @@ describe('MetatraderAccountClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return;
         });
@@ -303,7 +309,8 @@ describe('MetatraderAccountClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return;
         });
@@ -340,7 +347,8 @@ describe('MetatraderAccountClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return;
         });
@@ -378,6 +386,7 @@ describe('MetatraderAccountClient', () => {
               'auth-token': 'header.payload.sign'
             },
             json: true,
+            timeout: 60000,
             body: {
               name: 'new account name',
               password: 'new_password007',
