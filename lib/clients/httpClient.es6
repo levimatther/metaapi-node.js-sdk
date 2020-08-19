@@ -10,11 +10,20 @@ import {UnauthorizedError, ForbiddenError, ApiError, ConflictError,
 export default class HttpClient {
 
   /**
+   * Constructs HttpClient class instance
+   * @param timeout request timeout in seconds
+   */
+  constructor(timeout = 60) {
+    this._timeout = timeout * 1000;
+  }
+
+  /**
    * Performs a request. Response errors are returned as ApiError or subclasses.
    * @param {Object} options request options
    * @returns {Promise} promise returning request results
    */
   request(options) {
+    options.timeout = this._timeout;
     return this._makeRequest(options)
       .catch((err) => {
         throw this._convertError(err);
