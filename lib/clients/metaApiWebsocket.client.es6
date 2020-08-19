@@ -17,9 +17,13 @@ export default class MetaApiWebsocketClient {
    * Constructs MetaApi websocket API client instance
    * @param {String} token authorization token
    * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
+   * @param {Number} requestTimeout timeout for socket requests in seconds
+   * @param {Number} connectTimeout timeout for connecting to server in seconds
    */
-  constructor(token, domain = 'agiliumtrade.agiliumtrade.ai') {
+  constructor(token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60, connectTimeout = 60) {
     this._url = `https://mt-client-api-v1.${domain}`;
+    this._requestTimeout = requestTimeout * 1000;
+    this._connectTimeout = connectTimeout * 1000;
     this._token = token;
     this._requestResolves = {};
     this._synchronizationListeners = {};
@@ -54,7 +58,8 @@ export default class MetaApiWebsocketClient {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        reconnectionAttempts: Infinity
+        reconnectionAttempts: Infinity,
+        timeout: this._connectTimeout
       });
       this._socket.on('connect', async () => {
         // eslint-disable-next-line no-console
@@ -612,7 +617,11 @@ export default class MetaApiWebsocketClient {
       await this.connect();
     }
     let requestId = request.requestId || randomstring.generate(32);
-    let result = new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject});
+    let result = Promise.race([
+      new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject}),
+      new Promise((resolve, reject) => setTimeout(() => reject(new TimeoutError('MetaApi websocket client ' + 
+      `request ${request.requestId} of type ${request.type} timed out`)), this._requestTimeout))
+    ]);
     request.accountId = accountId;
     if (!request.requestId) {
       request.requestId = requestId;

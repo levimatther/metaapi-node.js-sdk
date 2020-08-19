@@ -20,7 +20,7 @@ describe('MetaApiWebsocketClient', () => {
   let sandbox;
 
   before(() => {
-    client = new MetaApiWebsocketClient('token');
+    client = new MetaApiWebsocketClient('token', '', 1.5);
     client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });
@@ -941,6 +941,24 @@ describe('MetaApiWebsocketClient', () => {
 
     afterEach(() => {
       client.removeAllListeners();
+    });
+
+    /**
+     * @test {MetaApiWebsocketClient#_rpcRequest}
+     */
+    it('should return timeout error if no server response received', async () => {
+      let trade = {
+        actionType: 'ORDER_TYPE_SELL',
+        symbol: 'AUDNZD',
+        volume: 0.07
+      };
+      server.on('request', data => {});
+      try {
+        await client.trade(trade);
+        throw new Error('TimeoutError extected');
+      } catch (err) {
+        err.name.should.equal('TimeoutError');
+      }
     });
 
     /**

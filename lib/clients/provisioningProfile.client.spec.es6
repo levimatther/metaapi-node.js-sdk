@@ -41,7 +41,8 @@ describe('ProvisioningProfileClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return expected;
         });
@@ -85,7 +86,8 @@ describe('ProvisioningProfileClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return expected;
         });
@@ -131,7 +133,8 @@ describe('ProvisioningProfileClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return expected;
         });
@@ -173,7 +176,8 @@ describe('ProvisioningProfileClient', () => {
             formData: {
               file
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return;
         });
@@ -210,7 +214,8 @@ describe('ProvisioningProfileClient', () => {
             headers: {
               'auth-token': 'header.payload.sign'
             },
-            json: true
+            json: true,
+            timeout: 60000
           });
           return;
         });
@@ -248,6 +253,7 @@ describe('ProvisioningProfileClient', () => {
               'auth-token': 'header.payload.sign'
             },
             json: true,
+            timeout: 60000,
             body: {
               name: 'new name'
             }
