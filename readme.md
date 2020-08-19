@@ -57,7 +57,7 @@ let accountAccessToken = account.accessToken;
 console.log(accountAccessToken);
 ```
 
-Alternatively, you can retrieve account access token via web UI on https://app.metaapi.cloud/accounts page.
+Alternatively, you can retrieve account access token via web UI on https://app.metaapi.cloud/accounts page (see [this video](https://youtu.be/PKYiDns6_xI)).
 
 ## Managing MetaTrader accounts (API servers for MT accounts)
 Before you can use the API you have to add an MT account to MetaApi and start an API server for it.
