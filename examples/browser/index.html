@@ -7,10 +7,10 @@
 <body>
 
 </body>
-<script src="node_modules/metaapi.cloud-sdk"></script>
+<script src="https://unpkg.com/metaapi.cloud-sdk/index.js"></script>
 <script>
-  const api = new MetaApi('eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIxM2E2M2VkN2Q0MGRiNzQyMmFiN2ZiMGM1ZDA1Yzc2OSIsInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNTk2MjY3MDAxLCJyZWFsVXNlcklkIjoiMTNhNjNlZDdkNDBkYjc0MjJhYjdmYjBjNWQwNWM3NjkifQ.R51tuq1iZVRgHcfTxNY2Mze-imKSqU48NGa7g6fqYmX89J-DoX28MuSSOS-UxFsBeU_aDrYenT7Gl06--nd3cP3FznGaZepy16g-VX3n68AgecNuzLCzIbHyFF_2wL8lrj_zgXPeAJo-nYSnuyCFGJ5uOtTH8GH_7qpa5t3lspoYCRnFRLVfFxSosYEgYBWuc759EspOtZRU3H3UhpKv_Fj8O4lSjSO23_MzQplBfAWU_f6hCts3kSn0qNEtFZF4jRctA8j21oLnGeodoegW3aYBLTBgXhY4sQH_GYAYsdNyu8cM8D-IFS-CTv1dBAlruGQX1Y9Z1st8f6xy38-e9bxo8qXW65j1Rr3hbSmD9lDOoH5xOru7_5KjjKpoLdUtrl3ZuH8XcGM78ZqDk5zsNX9agtSz3myaXMVuTkouW1kX22EMMlsxuSBv42QycyiCyRyQdHlAm6ZjjvbCDnCKr50mgF0vtDg-pfkQSiWTj00nT5GjehYRAcRcL1mvBund8fkPUQPSBvjqxK6B6vlI0AUcB0xa5ZO0XXBtzGDwOLsSh1sw4FV7SD3nyvXMQSM3UJYhWEpFFsMJ79TNG4rn83f98Bm4EYeMZ3g4qEdgpt3FPAI5gKQUC4tbYop_Wkeaa_q9TOiDuszYEctU0SwbpGdmFLQxsu_LwQ21aiEPLDk', 'project-stock.agiliumlabs.cloud');
-  api.metatraderAccountApi.getAccount('04a7cbf6-28a6-4245-a84a-818696182344')
+  const api = new MetaApi('<place your token here>');
+  api.metatraderAccountApi.getAccount('<place your account id here>')
     .then(account => {
       console.log('Waiting for API server to connect to broker (may take couple of minutes)')
       return account.deploy()

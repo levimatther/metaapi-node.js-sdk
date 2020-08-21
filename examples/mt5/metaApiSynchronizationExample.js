@@ -33,7 +33,8 @@ async function testMetaApiSynchronization() {
 
     // Add test MetaTrader account
     let accounts = await api.metatraderAccountApi.getAccounts();
-    let account = accounts.find(a => a.login === login && a.synchronizationMode === 'user' && a.type === 'cloud');
+    let account = accounts.find(a => a.login === login && a.synchronizationMode === 'user' &&
+      a.type.startsWith('cloud'));
     if (!account) {
       console.log('Adding MT5 account to MetaApi');
       account = await api.metatraderAccountApi.createAccount({
@@ -63,7 +64,7 @@ async function testMetaApiSynchronization() {
 
     // wait until terminal state synchronized to the local state
     console.log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history size)');
-    await connection.waitSynchronized();
+    await connection.waitSynchronized(undefined, 600);
 
     // access local copy of terminal state
     console.log('Testing terminal state access');
