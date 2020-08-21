@@ -1,3 +1,6 @@
+6.0.1
+  - update readme.md
+
 6.0.0
   - breaking change: rename closePositionBySymbol -> closePosition**s**BySymbol
   - added pagination and more filters to getAccounts API
