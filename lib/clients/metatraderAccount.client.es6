@@ -12,7 +12,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @typedef {Object} MetatraderAccountDto
    * @property {String} _id account unique identifier
    * @property {String} name MetaTrader account human-readable name in the MetaApi app
-   * @property {String} type account type, can be cloud or self-hosted
+   * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. Cloud and cloud-g2 are
+   * aliases.
    * @property {String} login MetaTrader account number
    * @property {String} server MetaTrader server which hosts the account
    * @property {String} synchronizationMode synchronization mode, can be automatic or user. See
@@ -128,7 +129,9 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * New MetaTrader account model
    * @typedef {Object} NewMetatraderAccountDto
    * @property {String} name MetaTrader account human-readable name in the MetaApi app
-   * @property {String} type account type, can be cloud or self-hosted
+   * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. cloud-g2 and cloud are
+   * aliases. When you create MT5 cloud account the type is automatically converted to cloud-g1 because MT5 G2 support
+   * is still experimental. You can still create MT5 G2 account by setting type to cloud-g2.
    * @property {String} login MetaTrader account number
    * @property {String} password MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
