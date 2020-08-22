@@ -1,3 +1,6 @@
+6.0.4
+  - Add code sample download video to readme
+
 6.0.3
   - fix typo in readme.md
 

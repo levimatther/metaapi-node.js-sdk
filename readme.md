@@ -35,7 +35,9 @@ npm install --save metaapi.cloud-sdk
 ```
 
 ## Working code examples
-You can find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
+Please check [this short video](https://youtu.be/dDOUWBjdfA4) to see how you can download samples via our web application.
+
+You can also find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
 
 We have composed a [short guide explaining how to use the example code](https://metaapi.cloud/docs/client/usingCodeExamples)
 
