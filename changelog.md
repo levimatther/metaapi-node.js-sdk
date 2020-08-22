@@ -1,3 +1,6 @@
+6.0.3
+  - fix typo in readme.md
+
 6.0.2
   - update readme.md
 
