@@ -162,7 +162,7 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
-   * Trade options
+   * Common trade options
    * @typedef {Object} TradeOptions
    * @property {String} [comment] optional order comment. The sum of the line lengths of the comment and the
    * clientId must be less than or equal to 26. For more information see
@@ -177,11 +177,33 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @property {Number} [slippage] optional slippage in points. Should be greater or equal to zero. In not set,
    * default value specified in account entity will be used. Slippage is ignored if execution mode set to
    * SYMBOL_TRADE_EXECUTION_MARKET in symbol specification
+   */
+
+  /**
+   * Market trade options
+   * @typedef {TradeOptions} MarketTradeOptions
    * @property {Array<String>} [fillingModes] optional allowed filling modes in the order of priority. Default is to
    * allow all filling modes and prefer ORDER_FILLING_FOK over ORDER_FILLING_IOC. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_filling for extra
-   * explanation. Note that filling modes can be specified for market orders only, i.e. createMarketBuyOrder,
-   * createMarketSellOrder, closePositionPartially, closePosition, closePositionBySymbol
+   * explanation
+   */
+
+  /**
+   * Pending order trade options
+   * @typedef {TradeOptions} PendingTradeOptions
+   * @property {ExpirationOptions} [expiration] optional pending order expiration settings. See Pending order expiration
+   * settings section
+   */
+
+  /**
+   * Pending order expiration settings
+   * @typedef {Object} ExpirationOptions
+   * @property {String} type pending order expiration type. See
+   * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_time for the list of
+   * possible options. MetaTrader4 platform supports only ORDER_TIME_SPECIFIED expiration type. One of ORDER_TIME_GTC,
+   * ORDER_TIME_DAY, ORDER_TIME_SPECIFIED, ORDER_TIME_SPECIFIED_DAY
+   * @property {Date} [time] optional pending order expiration time. Ignored if expiration type is not one of
+   * ORDER_TIME_DAY or ORDER_TIME_SPECIFIED
    */
 
   /**
@@ -190,7 +212,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} volume order volume
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {TradeOptions} options optional trade options
+   * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -205,7 +227,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} volume order volume
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {TradeOptions} options optional trade options
+   * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -221,7 +243,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order limit price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {TradeOptions} options optional trade options
+   * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -237,7 +259,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order limit price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {TradeOptions} options optional trade options
+   * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -253,7 +275,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order stop price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {TradeOptions} options optional trade options
+   * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -269,7 +291,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} openPrice order stop price
    * @param {Number} stopLoss optional stop loss price
    * @param {Number} takeProfit optional take profit price
-   * @param {TradeOptions} options optional trade options
+   * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -295,7 +317,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Partially closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} positionId position id to modify
    * @param {Number} volume volume to close
-   * @param {TradeOptions} options optional trade options
+   * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -307,7 +329,7 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Fully closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} positionId position id to modify
-   * @param {TradeOptions} options optional trade options
+   * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -319,7 +341,7 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Closes positions by a symbol(see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} symbol symbol to trade
-   * @param {TradeOptions} options optional trade options
+   * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
