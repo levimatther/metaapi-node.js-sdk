@@ -177,6 +177,11 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @property {Number} [slippage] optional slippage in points. Should be greater or equal to zero. In not set,
    * default value specified in account entity will be used. Slippage is ignored if execution mode set to
    * SYMBOL_TRADE_EXECUTION_MARKET in symbol specification
+   * @property {Array<String>} [fillingModes] optional allowed filling modes in the order of priority. Default is to
+   * allow all filling modes and prefer ORDER_FILLING_FOK over ORDER_FILLING_IOC. See
+   * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_filling for extra
+   * explanation. Note that filling modes can be specified for market orders only, i.e. createMarketBuyOrder,
+   * createMarketSellOrder, closePositionPartially, closePosition, closePositionBySymbol
    */
 
   /**
