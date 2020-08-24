@@ -176,21 +176,24 @@ export default class MetaApiWebsocketClient {
    * @property {Number} openPrice position open price
    * @property {Number} currentPrice current price
    * @property {Number} currentTickValue current tick value
-   * @property {Number} stopLoss optional position stop loss price
-   * @property {Number} takeProfit optional position take profit price
+   * @property {Number} [stopLoss] optional position stop loss price
+   * @property {Number} [takeProfit] optional position take profit price
    * @property {Number} volume position volume
    * @property {Number} swap position cumulative swap
    * @property {Number} profit position cumulative profit
-   * @property {String} comment optional position comment. The sum of the line lengths of the comment and the clientId
+   * @property {String} [comment] optional position comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @property {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
+   * @property {String} [clientId] optional client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {Number} unrealizedProfit profit of the part of the position which is not yet closed, including swap
    * @property {Number} realizedProfit profit of the already closed part, including commissions and swap
-   * @property {Number} commission optional position commission
+   * @property {Number} commission position commission
+   * @property {String} position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,
+   * POSITION_REASON_MOBILE, POSITION_REASON_WEB, POSITION_REASON_UNKNOWN. See
+   * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',
    */
 
   /**
@@ -252,6 +255,9 @@ export default class MetaApiWebsocketClient {
    * @property {String} platform platform id (mt4 or mt5)
    * @property {Boolean} updatePending optional flag indicating that order client id and original comment was not
    * identified yet and will be updated in a future synchronization packet
+   * @property {String} reason order opening reason. One of ORDER_REASON_CLIENT, ORDER_REASON_MOBILE, ORDER_REASON_WEB,
+   * ORDER_REASON_EXPERT, ORDER_REASON_SL, ORDER_REASON_TP, ORDER_REASON_SO, ORDER_REASON_UNKNOWN. See
+   * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_reason.
    */
 
   /**
@@ -375,6 +381,10 @@ export default class MetaApiWebsocketClient {
    * @property {String} platform platform id (mt4 or mt5)
    * @property {Boolean} updatePending optional flag indicating that deal client id and original comment was not
    * identified yet and will be updated in a future synchronization packet
+   * @property {String} [reason] optional deal execution reason. One of DEAL_REASON_CLIENT, DEAL_REASON_MOBILE,
+   * DEAL_REASON_WEB, DEAL_REASON_EXPERT, DEAL_REASON_SL, DEAL_REASON_TP, DEAL_REASON_SO, DEAL_REASON_ROLLOVER,
+   * DEAL_REASON_VMARGIN, DEAL_REASON_SPLIT, DEAL_REASON_UNKNOWN. See
+   * https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_reason.
    */
 
   /**
