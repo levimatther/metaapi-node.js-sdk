@@ -1,5 +1,6 @@
 6.2.0
   - added reason field to position, order and deal
+  - added fillingMode field to MetaTraderOrder model
 
 6.1.0
   - added ability to select filling mode when placing a market order, in trade options
