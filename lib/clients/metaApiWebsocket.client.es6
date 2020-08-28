@@ -261,6 +261,10 @@ export default class MetaApiWebsocketClient {
    * @property {String} fillingMode order filling mode. One of ORDER_FILLING_FOK, ORDER_FILLING_IOC,
    * ORDER_FILLING_RETURN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_filling.
+   * @property {String} expirationType order expiration type. One of ORDER_TIME_GTC, ORDER_TIME_DAY,
+   * ORDER_TIME_SPECIFIED, ORDER_TIME_SPECIFIED_DAY. See
+   * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_time
+   * @property {Date} expirationTime optional order expiration time
    */
 
   /**
