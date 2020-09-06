@@ -32,7 +32,8 @@
     "sdk",
     "cloud",
     "browser",
-    "free"
+    "free",
+    "copy trading"
   ],
   "name": "metaapi.cloud-sdk",
   "description": "SDK for MetaApi, a professional cloud forex API which includes MetaTrader REST API and MetaTrader websocket API. Supports both MetaTrader 5 (MT5) and MetaTrader 4 (MT4). (https://metaapi.cloud)",
@@ -41,7 +42,7 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "6.2.0",
+  "version": "6.3.0",
   "dependencies": {
     "babel-runtime": "~6.26.0",
     "fs-extra": "~9.0.1",
@@ -70,7 +71,7 @@
     "webpack-cli": "~3.3.12"
   },
   "scripts": {
-    "test": "mocha --require babel-register lib/*/*.spec.es6 lib/*.spec.es6",
+    "test": "mocha --require babel-register lib/*/*/*.spec.es6 lib/*/*.spec.es6 lib/*.spec.es6",
     "lint": "eslint --ext es6 ./lib",
     "lint:fix": "eslint --ext es6 ./lib --fix",
     "build": "rm -rf dist; rm -rf es; npx babel lib --out-dir dist --source-maps inline --ignore lib/templates && npx webpack --config webpack.config.js && gulp",

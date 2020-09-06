@@ -1,6 +1,6 @@
 'use strict';
 
-import {HttpClientMock} from './httpClient';
+import {HttpClientMock} from '../httpClient';
 import ProvisioningProfileClient from './provisioningProfile.client';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';

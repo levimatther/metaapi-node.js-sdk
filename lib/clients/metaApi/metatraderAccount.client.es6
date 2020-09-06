@@ -1,6 +1,6 @@
 'use strict';
 
-import MetaApiClient from './metaApi.client';
+import MetaApiClient from '../metaApi.client';
 
 /**
  * metaapi.cloud MetaTrader account API client (see https://metaapi.cloud/docs/provisioning/)

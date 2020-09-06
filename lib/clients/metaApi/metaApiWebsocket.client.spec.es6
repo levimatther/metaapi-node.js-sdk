@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import MetaApiWebsocketClient from './metaApiWebsocket.client';
 import Server from 'socket.io';
 import NotConnectedError from './notConnectedError';
-import {InternalError} from './errorHandler';
+import {InternalError} from '../errorHandler';
 
 const metaapiApiUrl = 'https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai';
 

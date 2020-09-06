@@ -3,7 +3,7 @@
 import should from 'should';
 import sinon from 'sinon';
 import MetaApiConnection from './metaApiConnection';
-import NotSynchronizedError from './clients/notSynchronizedError';
+import NotSynchronizedError from '../clients/metaApi/notSynchronizedError';
 import randomstring from 'randomstring';
 import HistoryFileManager from './historyFileManager/index';
 

@@ -4,7 +4,7 @@ import should from 'should';
 import sinon from 'sinon';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccount from './metatraderAccount';
-import {NotFoundError} from './clients/errorHandler';
+import {NotFoundError} from '../clients/errorHandler';
 import MetaApiConnection from './metaApiConnection';
 import HistoryFileManager from './historyFileManager/index';
 

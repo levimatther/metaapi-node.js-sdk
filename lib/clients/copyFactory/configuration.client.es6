@@ -1,14 +1,16 @@
 'use strict';
 
-import MetaApiClient from './metaApi.client';
+import MetaApiClient from '../metaApi.client';
+import randomstring from 'randomstring';
 
 /**
- * metaapi.cloud CopyFactory API (trade copying API) client (see https://metaapi.cloud/docs/copyFactory/)
+ * metaapi.cloud CopyFactory configuration API (trade copying configuration API) client (see
+ * https://trading-api-v1.project-stock.agiliumlabs.cloud/swagger/#/)
  */
-export default class CopyFactoryClient extends MetaApiClient {
+export default class ConfigurationClient extends MetaApiClient {
 
   /**
-   * Constructs CopyFactory API client instance
+   * Constructs CopyFactory configuration API client instance
    * @param {HttpClient} httpClient HTTP client
    * @param {String} token authorization token
    * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
@@ -42,6 +44,15 @@ export default class CopyFactoryClient extends MetaApiClient {
       json: true
     };
     return this._httpClient.request(opts);
+  }
+
+  /**
+   * Retrieves new unused strategy id. Method is accessible only with API access token. See
+   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/get_users_current_configuration_unused_strategy_id
+   * @return {Promise<StrategyId>} promise resolving with strategy id generated
+   */
+  generateAccountId() {
+    return randomstring.generate(64);
   }
 
   /**

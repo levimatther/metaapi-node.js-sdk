@@ -2,8 +2,8 @@
 
 import randomstring from 'randomstring';
 import socketIO from 'socket.io-client';
-import TimeoutError from './timeoutError';
-import {ValidationError, NotFoundError, InternalError, UnauthorizedError} from './errorHandler';
+import TimeoutError from '../timeoutError';
+import {ValidationError, NotFoundError, InternalError, UnauthorizedError} from '../errorHandler';
 import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';

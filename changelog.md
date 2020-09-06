@@ -1,3 +1,6 @@
+6.3.0
+  - added CopyFactory trade-copying API
+
 6.2.0
   - added reason field to position, order and deal
   - added fillingMode field to MetaTraderOrder model

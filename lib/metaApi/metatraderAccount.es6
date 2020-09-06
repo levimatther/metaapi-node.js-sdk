@@ -1,6 +1,6 @@
 'use strict';
 
-import TimeoutError from './clients/timeoutError';
+import TimeoutError from '../clients/timeoutError';
 import MetaApiConnection from './metaApiConnection';
 import HistoryFileManager from './historyFileManager/index';
 

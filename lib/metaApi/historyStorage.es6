@@ -1,6 +1,6 @@
 'use strict';
 
-import SynchronizationListener from './clients/synchronizationListener';
+import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 
 /**
  * Abstract class which defines MetaTrader history storage interface.

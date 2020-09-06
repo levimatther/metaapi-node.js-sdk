@@ -2,8 +2,8 @@
 
 import TerminalState from './terminalState';
 import MemoryHistoryStorage from './memoryHistoryStorage';
-import SynchronizationListener from './clients/synchronizationListener';
-import TimeoutError from './clients/timeoutError';
+import SynchronizationListener from '../clients/metaApi/synchronizationListener';
+import TimeoutError from '../clients/timeoutError';
 import InvalidSynchronizationModeError from './invalidSynchronizationModeError';
 import randomstring from 'randomstring';
 

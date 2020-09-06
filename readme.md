@@ -2,6 +2,8 @@
 
 MetaApi is a powerful, fast, cost-efficient, easy to use and standards-driven cloud forex trading API for MetaTrader 4 and MetaTrader 5 platform designed for traders, investors and forex application developers to boost forex application development process. MetaApi can be used with any broker and does not require you to be a brokerage.
 
+CopyFactory is a simple yet powerful copy-trading API which is a part of MetaApi. See below for CopyFactory readme section.
+
 MetaApi is a paid service, but API access to one MetaTrader account is free of charge.
 
 The [MetaApi pricing](https://metaapi.cloud/#pricing) was developed with the intent to make your charges less or equal to what you would have to pay
@@ -348,6 +350,167 @@ console.log(await connection.cancelOrder('46870472'));
 // if you need to, check the extra result information in stringCode and numericCode properties of the response
 const result = await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
 console.log('Trade successful, result code is ' + result.stringCode);
+```
+
+## CopyFactory copy trading API (experimental)
+
+CopyFactory is a powerful trade copying API which makes developing forex
+trade copying applications as easy as writing few lines of code.
+
+At this point this feature is experimental and we have not yet defined a final price for it.
+
+### Why do we offer CopyFactory API
+
+We found that developing reliable and flexible trade copier is a task
+which requires lots of effort, because developers have to solve a series
+of complex technical tasks to create a product.
+
+We decided to share our product as it allows developers to start with a
+powerful solution in almost no time, save on development and
+infrastructure maintenance costs.
+
+### CopyFactory features
+Features supported:
+
+- low latency trade copying
+- connect arbitrary number of strategy providers and subscribers
+- subscribe accounts to multiple strategies at once
+- select arbitrary copy ratio for each subscription
+- apply advanced risk filters on strategy provider side
+- override risk filters on subscriber side
+- provide multiple strategies from a single account based on magic or symbol filters
+- reliable trade copying
+- supports manual trading on subscriber accounts while copying trades
+- synchronize subscriber account with strategy providers
+- monitor trading history
+- calculate trade copying commissions for account managers
+
+### Configuring trade copying
+
+In order to configure trade copying you need to:
+
+- add MetaApi MetaTrader accounts with CopyFactory as application field value (see above)
+- create CopyFactory master and slave accounts and connect them to MetaApi accounts via connectionId field
+- create a strategy being copied
+- subscribe slave CopyFactory accounts to the strategy
+
+```javascript
+import MetaApi, {CopyFactory} from 'metaapi.cloud-sdk';
+
+const token = '...';
+const metaapi = new MetaApi(token);
+const copyFactory = new CopyFactory(token);
+
+// retrieve MetaApi MetaTrader accounts with CopyFactory as application field value
+const masterMetaapiAccount = await api.metatraderAccountApi.getAccount('masterMetaapiAccountId');
+if (masterMetaapiAccount.application !== 'CopyFactory') {
+  throw new Error('Please specify CopyFactory application field value in your MetaApi account in order to use it in CopyFactory API');
+}
+const slaveMetaapiAccount = await api.metatraderAccountApi.getAccount('slaveMetaapiAccountId');
+if (slaveMetaapiAccount.application !== 'CopyFactory') {
+  throw new Error('Please specify CopyFactory application field value in your MetaApi account in order to use it in CopyFactory API');
+}
+
+// create CopyFactory master and slave accounts and connect them to MetaApi accounts via connectionId field
+let configurationApi = copyFactory.configurationApi;
+let masterAccountId = configurationApi.generateAccountId();
+let slaveAccountId = configurationApi.generateAccountId();
+await configurationApi.updateAccount(masterAccountId, {
+  name: 'Demo account',
+  connectionId: masterMetaapiAccount.id,
+  subscriptions: []
+});
+
+// create a strategy being copied
+let strategyId = await configurationApi.generateStrategyId();
+await configurationApi.updateStrategy(strategyId, {
+  name: 'Test strategy',
+  positionLifecycle: 'hedging',
+  connectionId: slaveMetaapiAccount.id,
+  maxTradeRisk: 0.1,
+  stopOutRisk: {
+    value: 0.4,
+    startTime: new Date('2020-08-24T00:00:00.000Z')
+  },
+  timeSettings: {
+    lifetimeInHours: 192,
+    openingIntervalInMinutes: 5
+  }
+});
+
+// subscribe slave CopyFactory accounts to the strategy
+await configurationApi.updateAccount(masterAccountId, {
+  name: 'Demo account',
+  connectionId: masterMetaapiAccount.id,
+  subscriptions: [
+    {
+      strategyId,
+      multiplier: 1
+    }
+  ]
+});
+```
+
+See esdoc in-code documentation for full definition of possible configuration options.
+
+### Retrieving trade copying history
+
+CopyFactory allows you to monitor transactions conducted on trading accounts in real time.
+
+#### Retrieving trading history on provider side
+```javascript
+let historyApi = copyFactory.historyApi;
+
+// retrieve list of subscribers
+console.log(await historyApi.getSubscribers());
+
+// retrieve list of strategies provided
+console.log(await historyApi.getProvidedStrategies());
+
+// retrieve trading history, please note that this method support pagination and limits number of records
+console.log(await historyApi.getProvidedStrategiesTransactions(new Date('2020-08-01'), new Date('2020-09-01'));
+```
+
+#### Retrieving trading history on subscriber side
+```javascript
+let historyApi = copyFactory.historyApi;
+
+// retrieve list of providers
+console.log(await historyApi.getProviders());
+
+// retrieve list of strategies subscribed to
+console.log(await historyApi.getStrategiesSubscribed());
+
+// retrieve trading history, please note that this method support pagination and limits number of records
+console.log(await historyApi.getStrategiesSubscribedTransactions(new Date('2020-08-01'), new Date('2020-09-01'));
+```
+
+#### Resynchronizing slave accounts to maters
+Sometimes trades can not open in time due to broker errors or trading session time discrepancy.
+You can resynchronize a slave account to place such late trades. Please note that positions which were
+closed manually on a slave account will also be reopened during resynchronization.
+
+```javascript
+let accountId = '...'; // CopyFactory account id
+
+// resynchronize all strategies
+await copyFactory.tradingApi.resynchronize(accountId);
+
+// resynchronize specific strategy
+await copyFactory.tradingApi.resynchronize(accountId, ['ABCD']);
+```
+
+#### Managing stopouts
+A subscription to a strategy can be stopped if the strategy have exceeded allowed risk limit.
+```javascript
+let tradingApi = copyFactory.tradingApi;
+let accountId = '...'; // CopyFactory account id
+
+// retrieve list of strategy stopouts
+console.log(await tradingApi.getStopouts(accountId));
+
+// reset a stopout so that subscription can continue
+await tradingApi.resetStopout(accountId, 'daily-equity');
 ```
 
 Keywords: MetaTrader API, MetaTrader REST API, MetaTrader websocket API,

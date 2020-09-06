@@ -1,6 +1,6 @@
 'use strict';
 
-import SynchronizationListener from './clients/synchronizationListener';
+import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 
 /**
  * Responsible for storing a local copy of remote terminal state. Intended to be used with accounts which have user

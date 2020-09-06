@@ -2,7 +2,7 @@
 
 import fs from 'fs';
 
-import MetaApiClient from './metaApi.client';
+import MetaApiClient from '../metaApi.client';
 
 /**
  * metaapi.cloud provisioning profile API client (see https://metaapi.cloud/docs/provisioning/)
