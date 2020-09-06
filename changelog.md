@@ -1,3 +1,9 @@
+6.3.2
+  - fixes to package.json keywords
+
+6.3.1
+  - fixes to package.json keywords
+
 6.3.0
   - added CopyFactory trade-copying API
 
