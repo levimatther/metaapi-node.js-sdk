@@ -30,7 +30,10 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * DISCONNECTED_FROM_BROKER
    * @property {String} accessToken authorization token to be used for accessing single account data.
    * Intended to be used in browser API.
-   * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false
+   * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false.
+   * Supported on G2 only
+   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
+   * receive quotes on each tick. Default value is 2.5 seconds. Values less than 2.5 are not supported for G1.
    */
 
   /**
@@ -145,6 +148,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * AgiliumTrade
    * @property {Number} magic MetaTrader magic to place trades using
    * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false
+   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
+   * receive quotes on each tick. Default value is 2.5 seconds. Values less than 2.5 are not supported for G1.
    */
 
   /**
@@ -274,6 +279,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} synchronizationMode synchronization mode, can be automatic or user. See
    * https://metaapi.cloud/docs/client/websocket/synchronizationMode/ for more details.
    * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false
+   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
+   * receive quotes on each tick. Default value is 2.5 seconds. Values less than 2.5 are not supported for G1.
    */
 
   /**

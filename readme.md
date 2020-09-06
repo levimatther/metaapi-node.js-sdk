@@ -134,7 +134,8 @@ const account = await api.metatraderAccountApi.createAccount({
   // DST switch (the values will be changed soon)
   timeConverter: 'roboforex',
   application: 'MetaApi',
-  magic: 123456
+  magic: 123456,
+  quoteStreamingIntervalInSeconds: 2.5 // set to 0 to receive quote per tick
 });
 ```
 
@@ -164,7 +165,8 @@ await account.update({
   // synchronizationMode can be 'automatic' for RPC access or 'user' if you
   // want to keep track of terminal state in real-time (e.g. if you are
   // developing a EA or trading strategy)
-  synchronizationMode: 'automatic'
+  synchronizationMode: 'automatic',
+  quoteStreamingIntervalInSeconds: 2.5 // set to 0 to receive quote per tick
 });
 ```
 
