@@ -1,5 +1,6 @@
 6.4.0
   - added quoteStreamingIntervalInSeconds field to account to configure quote streaming interval
+  - added description field to CopyFactory strategy
 
 6.3.2
   - fixes to package.json keywords

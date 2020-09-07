@@ -304,6 +304,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * CopyFactory strategy update
    * @typedef {Object} CopyFactoryStrategyUpdate
    * @property {String} name strategy human-readable name
+   * @property {String} description longer strategy human-readable description
    * @property {String} positionLifecycle position detection mode. Allowed values are netting (single position per
    * strategy per symbol), hedging (multiple positions per strategy per symbol)
    * @property {String} connectionId id of the MetaApi account providing the strategy
