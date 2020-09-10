@@ -6,6 +6,7 @@ import ProvisioningProfileApi from './provisioningProfileApi';
 import MetaApiWebsocketClient from '../clients/metaApi/metaApiWebsocket.client';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
+import HttpClientWithCookies from '../clients/httpClientWithCookies';
 
 /**
  * MetaApi MetaTrader API SDK
@@ -21,7 +22,9 @@ export default class MetaApi {
    */
   constructor(token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60, connectTimeout = 60) {
     let httpClient = new HttpClient(requestTimeout);
-    this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, domain, requestTimeout, connectTimeout);
+    let httClientWithCookies = new HttpClientWithCookies();
+    this._metaApiWebsocketClient = new MetaApiWebsocketClient(httClientWithCookies, token, domain, requestTimeout,
+      connectTimeout);
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient);

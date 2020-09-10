@@ -9,6 +9,10 @@ import {InternalError} from '../errorHandler';
 
 const metaapiApiUrl = 'https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai';
 
+const httpClientWithCookies = {
+  request: async () => ({body: '', cookies: [{key: 'route'}]})
+};
+
 /**
  * @test {MetaApiWebsocketClient}
  */
@@ -20,7 +24,7 @@ describe('MetaApiWebsocketClient', () => {
   let sandbox;
 
   before(() => {
-    client = new MetaApiWebsocketClient('token', '', 1.5);
+    client = new MetaApiWebsocketClient(httpClientWithCookies, 'token', 'project-stock.agiliumlabs.cloud', 1.5);
     client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });
@@ -63,8 +67,10 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getAccountInformation' && data.accountId === 'accountId') {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId,
-          accountInformation});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId,
+          accountInformation
+        });
       }
     });
     let actual = await client.getAccountInformation('accountId');
@@ -210,8 +216,10 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getHistoryOrdersByTicket' && data.accountId === 'accountId' && data.ticket === '46214692') {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
-          synchronizing: false});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
+          synchronizing: false
+        });
       }
     });
     let actual = await client.getHistoryOrdersByTicket('accountId', '46214692');
@@ -240,8 +248,10 @@ describe('MetaApiWebsocketClient', () => {
     server.on('request', data => {
       if (data.type === 'getHistoryOrdersByPosition' && data.accountId === 'accountId' &&
         data.positionId === '46214692') {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
-          synchronizing: false});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
+          synchronizing: false
+        });
       }
     });
     let actual = await client.getHistoryOrdersByPosition('accountId', '46214692');
@@ -271,8 +281,10 @@ describe('MetaApiWebsocketClient', () => {
       if (data.type === 'getHistoryOrdersByTimeRange' && data.accountId === 'accountId' &&
         data.startTime === '2020-04-15T02:45:00.000Z' && data.endTime === '2020-04-15T02:46:00.000Z' &&
         data.offset === 1 && data.limit === 100) {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
-          synchronizing: false});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
+          synchronizing: false
+        });
       }
     });
     let actual = await client.getHistoryOrdersByTimeRange('accountId', new Date('2020-04-15T02:45:00.000Z'),
@@ -303,8 +315,10 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getDealsByTicket' && data.accountId === 'accountId' && data.ticket === '46214692') {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
-          synchronizing: false});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
+          synchronizing: false
+        });
       }
     });
     let actual = await client.getDealsByTicket('accountId', '46214692');
@@ -334,8 +348,10 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getDealsByPosition' && data.accountId === 'accountId' && data.positionId === '46214692') {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
-          synchronizing: false});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
+          synchronizing: false
+        });
       }
     });
     let actual = await client.getDealsByPosition('accountId', '46214692');
@@ -367,8 +383,10 @@ describe('MetaApiWebsocketClient', () => {
       if (data.type === 'getDealsByTimeRange' && data.accountId === 'accountId' &&
         data.startTime === '2020-04-15T02:45:00.000Z' && data.endTime === '2020-04-15T02:46:00.000Z' &&
         data.offset === 1 && data.limit === 100) {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
-          synchronizing: false});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
+          synchronizing: false
+        });
       }
     });
     let actual = await client.getDealsByTimeRange('accountId', new Date('2020-04-15T02:45:00.000Z'),
@@ -473,8 +491,10 @@ describe('MetaApiWebsocketClient', () => {
       if (data.type === 'subscribe' && data.accountId === 'accountId') {
         requestReceived = true;
       }
-      server.emit('processingError', {id: 1, error: 'NotAuthenticatedError', message: 'Error message',
-        requestId: data.requestId});
+      server.emit('processingError', {
+        id: 1, error: 'NotAuthenticatedError', message: 'Error message',
+        requestId: data.requestId
+      });
     });
     await client.subscribe('accountId');
     await new Promise(res => setTimeout(res, 50));
@@ -510,8 +530,10 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getSymbolSpecification' && data.accountId === 'accountId' && data.symbol === 'AUDNZD') {
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId,
-          specification});
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId,
+          specification
+        });
       }
     });
     let actual = await client.getSymbolSpecification('accountId', 'AUDNZD');
@@ -549,8 +571,10 @@ describe('MetaApiWebsocketClient', () => {
         symbol: 'AUDNZD'
       };
       server.on('request', data => {
-        server.emit('processingError', {id: 1, error: 'ValidationError', message: 'Validation failed',
-          details: [{parameter: 'volume', message: 'Required value.'}], requestId: data.requestId});
+        server.emit('processingError', {
+          id: 1, error: 'ValidationError', message: 'Validation failed',
+          details: [{parameter: 'volume', message: 'Required value.'}], requestId: data.requestId
+        });
       });
       try {
         await client.trade('accountId', trade);
@@ -569,8 +593,10 @@ describe('MetaApiWebsocketClient', () => {
      */
     it('should handle NotFoundError', async () => {
       server.on('request', data => {
-        server.emit('processingError', {id: 1, error: 'NotFoundError', message: 'Position id 1234 not found',
-          requestId: data.requestId});
+        server.emit('processingError', {
+          id: 1, error: 'NotFoundError', message: 'Position id 1234 not found',
+          requestId: data.requestId
+        });
       });
       try {
         await client.getPosition('accountId', '1234');
@@ -585,8 +611,10 @@ describe('MetaApiWebsocketClient', () => {
      */
     it('should handle NotSynchronizedError', async () => {
       server.on('request', data => {
-        server.emit('processingError', {id: 1, error: 'NotSynchronizedError', message: 'Error message',
-          requestId: data.requestId});
+        server.emit('processingError', {
+          id: 1, error: 'NotSynchronizedError', message: 'Error message',
+          requestId: data.requestId
+        });
       });
       try {
         await client.getPosition('accountId', '1234');
@@ -601,8 +629,10 @@ describe('MetaApiWebsocketClient', () => {
      */
     it('should handle NotConnectedError', async () => {
       server.on('request', data => {
-        server.emit('processingError', {id: 1, error: 'NotAuthenticatedError', message: 'Error message',
-          requestId: data.requestId});
+        server.emit('processingError', {
+          id: 1, error: 'NotAuthenticatedError', message: 'Error message',
+          requestId: data.requestId
+        });
       });
       try {
         await client.getPosition('accountId', '1234');
@@ -617,8 +647,10 @@ describe('MetaApiWebsocketClient', () => {
      */
     it('should handle other errors', async () => {
       server.on('request', data => {
-        server.emit('processingError', {id: 1, error: 'Error', message: 'Error message',
-          requestId: data.requestId});
+        server.emit('processingError', {
+          id: 1, error: 'Error', message: 'Error message',
+          requestId: data.requestId
+        });
       });
       try {
         await client.getPosition('accountId', '1234');
@@ -638,7 +670,8 @@ describe('MetaApiWebsocketClient', () => {
 
     it('should process authenticated synchronization event', async () => {
       let listener = {
-        onConnected: () => {}
+        onConnected: () => {
+        }
       };
       sandbox.stub(listener, 'onConnected').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -649,7 +682,8 @@ describe('MetaApiWebsocketClient', () => {
 
     it('should process broker connection status event', async () => {
       let listener = {
-        onBrokerConnectionStatusChanged: () => {}
+        onBrokerConnectionStatusChanged: () => {
+        }
       };
       sandbox.stub(listener, 'onBrokerConnectionStatusChanged').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -660,7 +694,8 @@ describe('MetaApiWebsocketClient', () => {
 
     it('should process disconnected synchronization event', async () => {
       let listener = {
-        onDisconnected: () => {}
+        onDisconnected: () => {
+        }
       };
       sandbox.stub(listener, 'onDisconnected').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -708,7 +743,8 @@ describe('MetaApiWebsocketClient', () => {
         marginLevel: 3967.58283542
       };
       let listener = {
-        onAccountInformationUpdated: () => {}
+        onAccountInformationUpdated: () => {
+        }
       };
       sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -738,7 +774,8 @@ describe('MetaApiWebsocketClient', () => {
         realizedProfit: -6.536993168992922e-13
       }];
       let listener = {
-        onPositionUpdated: () => {}
+        onPositionUpdated: () => {
+        }
       };
       sandbox.stub(listener, 'onPositionUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -763,7 +800,8 @@ describe('MetaApiWebsocketClient', () => {
         comment: 'COMMENT2'
       }];
       let listener = {
-        onOrderUpdated: () => {}
+        onOrderUpdated: () => {
+        }
       };
       sandbox.stub(listener, 'onOrderUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -789,7 +827,8 @@ describe('MetaApiWebsocketClient', () => {
         volume: 0.07
       }];
       let listener = {
-        onHistoryOrderAdded: () => {}
+        onHistoryOrderAdded: () => {
+        }
       };
       sandbox.stub(listener, 'onHistoryOrderAdded').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -817,7 +856,8 @@ describe('MetaApiWebsocketClient', () => {
         volume: 0.07
       }];
       let listener = {
-        onDealAdded: () => {}
+        onDealAdded: () => {
+        }
       };
       sandbox.stub(listener, 'onDealAdded').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -908,13 +948,20 @@ describe('MetaApiWebsocketClient', () => {
         }]
       };
       let listener = {
-        onAccountInformationUpdated: () => {},
-        onPositionUpdated: () => {},
-        onPositionRemoved: () => {},
-        onOrderUpdated: () => {},
-        onOrderCompleted: () => {},
-        onHistoryOrderAdded: () => {},
-        onDealAdded: () => {}
+        onAccountInformationUpdated: () => {
+        },
+        onPositionUpdated: () => {
+        },
+        onPositionRemoved: () => {
+        },
+        onOrderUpdated: () => {
+        },
+        onOrderCompleted: () => {
+        },
+        onHistoryOrderAdded: () => {
+        },
+        onDealAdded: () => {
+        }
       };
       sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
       sandbox.stub(listener, 'onPositionUpdated').resolves();
@@ -952,7 +999,8 @@ describe('MetaApiWebsocketClient', () => {
         symbol: 'AUDNZD',
         volume: 0.07
       };
-      server.on('request', data => {});
+      server.on('request', data => {
+      });
       try {
         await client.trade(trade);
         throw new Error('TimeoutError extected');
@@ -985,7 +1033,8 @@ describe('MetaApiWebsocketClient', () => {
         volumeStep: 0.01
       }];
       let listener = {
-        onSymbolSpecificationUpdated: () => {}
+        onSymbolSpecificationUpdated: () => {
+        }
       };
       sandbox.stub(listener, 'onSymbolSpecificationUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -1003,7 +1052,8 @@ describe('MetaApiWebsocketClient', () => {
         lossTickValue: 0.60203
       }];
       let listener = {
-        onSymbolPriceUpdated: () => {}
+        onSymbolPriceUpdated: () => {
+        }
       };
       sandbox.stub(listener, 'onSymbolPriceUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
