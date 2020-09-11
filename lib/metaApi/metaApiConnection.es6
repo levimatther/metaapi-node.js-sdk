@@ -518,7 +518,19 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async isSynchronized(synchronizationId) {
     synchronizationId = synchronizationId || this._lastSynchronizationId;
-    return !!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId];
+    synchronizationId = synchronizationId || this._lastSynchronizationId;
+    if (!!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId]) {
+      try {
+        let result = await this.getDealsByTimeRange(new Date(), new Date());
+        return !result.synchronizing;
+      } catch (err) {
+        if (err.name === 'TimeoutError') {
+          return false;
+        }
+        throw err;
+      }
+    }
+    return false;
   }
 
   /**

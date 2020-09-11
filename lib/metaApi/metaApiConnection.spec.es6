@@ -714,7 +714,12 @@ describe('MetaApiConnection', () => {
     /**
      * @test {MetaApiConnection#waitSynchronized}
      */
-    it('should wait util synchronization complete in user mode', async () => {
+    it('should wait util synchronization complete', async () => {
+      sandbox.stub(client, 'getDealsByTimeRange')
+        .onCall(0).resolves({synchronizing: true})
+        .onCall(1).resolves({synchronizing: false})
+        .onCall(2).resolves({synchronizing: false})
+        .onCall(3).resolves({synchronizing: false});
       sandbox.stub(api.historyStorage, 'updateDiskStorage');
       (await api.isSynchronized()).should.equal(false);
       let promise = api.waitSynchronized('synchronizationId', 1, 10);
@@ -725,7 +730,7 @@ describe('MetaApiConnection', () => {
       api.onDealSynchronizationFinished('synchronizationId');
       startTime = Date.now();
       await promise;
-      (Date.now() - startTime).should.be.approximately(0, 10);
+      (Date.now() - startTime).should.be.approximately(10, 10);
       (await api.isSynchronized('synchronizationId')).should.equal(true);
       sinon.assert.calledOnce(api.historyStorage.updateDiskStorage);
     });
@@ -733,7 +738,7 @@ describe('MetaApiConnection', () => {
     /**
      * @test {MetaApiConnection#waitSynchronized}
      */
-    it('should time out waiting for synchronization complete in user mode', async () => {
+    it('should time out waiting for synchronization complete', async () => {
       try {
         await api.waitSynchronized('synchronizationId', 1, 10);
         throw new Error('TimeoutError is expected');
