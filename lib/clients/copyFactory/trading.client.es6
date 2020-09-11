@@ -7,7 +7,7 @@ import randomstring from 'randomstring';
  * metaapi.cloud CopyFactory trading API (trade copying trading API) client (see
  * https://trading-api-v1.project-stock.agiliumlabs.cloud/swagger/#/)
  */
-export default class HistoryClient extends MetaApiClient {
+export default class TradingClient extends MetaApiClient {
 
   /**
    * Constructs CopyFactory trading API client instance

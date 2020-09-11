@@ -15,13 +15,12 @@ export default class CopyFactory {
    * @param {String} token authorization token
    * @param {String} domain domain to connect to
    * @param {Number} requestTimeout timeout for http requests in seconds
-   * @param {Number} connectTimeout timeout for connecting to server in seconds
    */
-  constructor(token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60, connectTimeout = 60) {
+  constructor(token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60) {
     let httpClient = new HttpClient(requestTimeout);
-    this._configurationClient = new ConfigurationClient(token, domain, requestTimeout, connectTimeout);
-    this._historyClient = new HistoryClient(token, domain, requestTimeout, connectTimeout);
-    this._tradingClient = new TradingClient(token, domain, requestTimeout, connectTimeout);
+    this._configurationClient = new ConfigurationClient(httpClient, token, domain);
+    this._historyClient = new HistoryClient(httpClient, token, domain);
+    this._tradingClient = new TradingClient(httpClient, token, domain);
   }
 
   /**

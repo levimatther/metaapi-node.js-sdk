@@ -47,9 +47,8 @@ export default class ConfigurationClient extends MetaApiClient {
   }
 
   /**
-   * Retrieves new unused strategy id. Method is accessible only with API access token. See
-   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/get_users_current_configuration_unused_strategy_id
-   * @return {Promise<StrategyId>} promise resolving with strategy id generated
+   * Generates random account id
+   * @return {String} account id
    */
   generateAccountId() {
     return randomstring.generate(64);
@@ -87,7 +86,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * stopped once total drawdown generated during specific period is exceeded. Can be specified either for balance or
    * equity drawdown
    * @property {CopyFactoryStrategyMaxStopLoss} [maxStopLoss] optional stop loss value restriction
-   * @property {Number} [maxLeverage] optional setting indicating maxumum leverage allowed when opening a new positions.
+   * @property {Number} [maxLeverage] optional setting indicating maximum leverage allowed when opening a new positions.
    * Any trade which results in a higher leverage will be discarded
    */
 
@@ -142,7 +141,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * @typedef {Object} CopyFactoryStrategyRiskLimit
    * @property {String} type restriction type. One of daily, monthly, or yearly
    * @property {String} applyTo account metric to apply limit to. One of balance, equity
-   * @property {String} maxRisk max drawdown allowed, expressed as a fraction of 1
+   * @property {Number} maxRisk max drawdown allowed, expressed as a fraction of 1
    * @property {Boolean} closePositions whether to force close positions when the risk is reached. If value is false
    * then only the new trades will be halted, but existing ones will not be closed
    * @property {Date} [startTime] optional time to start risk tracking from. All previous trades will be ignored. You
@@ -341,7 +340,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * Updates a CopyFactory strategy. See
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/put_users_current_configuration_strategies_strategyId
    * @param {String} id copy trading strategy id
-   * @param {CopyFactoryStrategyUpdate} account trading strategy update
+   * @param {CopyFactoryStrategyUpdate} strategy account trading strategy update
    * @return {Promise} promise resolving when strategy is updated
    */
   updateStrategy(id, strategy) {
