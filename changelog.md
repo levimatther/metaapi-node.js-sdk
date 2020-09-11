@@ -1,4 +1,5 @@
-6.4.0
+7.0.0
+  - Prepared for upcoming breaking change in API: added sticky session support
   - added quoteStreamingIntervalInSeconds field to account to configure quote streaming interval
   - added description field to CopyFactory strategy
 
