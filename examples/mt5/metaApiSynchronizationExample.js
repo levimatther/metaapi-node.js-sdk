@@ -33,8 +33,7 @@ async function testMetaApiSynchronization() {
 
     // Add test MetaTrader account
     let accounts = await api.metatraderAccountApi.getAccounts();
-    let account = accounts.find(a => a.login === login && a.synchronizationMode === 'user' &&
-      a.type.startsWith('cloud'));
+    let account = accounts.find(a => a.login === login && a.type.startsWith('cloud'));
     if (!account) {
       console.log('Adding MT5 account to MetaApi');
       account = await api.metatraderAccountApi.createAccount({
@@ -43,7 +42,6 @@ async function testMetaApiSynchronization() {
         login: login,
         password: password,
         server: serverName,
-        synchronizationMode: 'user',
         provisioningProfileId: profile.id,
         timeConverter: 'icmarkets',
         application: 'MetaApi',

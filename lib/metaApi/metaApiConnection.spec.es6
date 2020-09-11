@@ -46,7 +46,7 @@ describe('MetaApiConnection', () => {
 
   beforeEach(() => {
     sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
-    api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
+    api = new MetaApiConnection(client, {id: 'accountId'});
   });
 
   afterEach(() => {
@@ -595,7 +595,7 @@ describe('MetaApiConnection', () => {
   it('should synchronize state with terminal', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
+    api = new MetaApiConnection(client, {id: 'accountId'});
     api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize();
@@ -652,7 +652,7 @@ describe('MetaApiConnection', () => {
    */
   it('should initialize listeners, terminal state and history storage for accounts with user synch mode', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
+    api = new MetaApiConnection(client, {id: 'accountId'});
     should.exist(api.terminalState);
     should.exist(api.historyStorage);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api);
@@ -663,9 +663,9 @@ describe('MetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#addSynchronizationListener}
    */
-  it('should add synchronization listeners for account with user synchronization mode', async () => {
+  it('should add synchronization listeners', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
+    api = new MetaApiConnection(client, {id: 'accountId'});
     let listener = {};
     api.addSynchronizationListener(listener);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', listener);
@@ -674,9 +674,9 @@ describe('MetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#removeSynchronizationListener}
    */
-  it('should remove synchronization listeners for account with user synchronization mode', async () => {
+  it('should remove synchronization listeners', async () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
+    api = new MetaApiConnection(client, {id: 'accountId'});
     let listener = {};
     api.removeSynchronizationListener(listener);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', listener);
@@ -688,7 +688,7 @@ describe('MetaApiConnection', () => {
   it('should sychronize on connection', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
+    api = new MetaApiConnection(client, {id: 'accountId'});
     api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected();
@@ -702,7 +702,7 @@ describe('MetaApiConnection', () => {
   it('should unsubscribe from events on close', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
     sandbox.stub(client, 'removeSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'user'});
+    api = new MetaApiConnection(client, {id: 'accountId'});
     api.close();
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
@@ -741,27 +741,6 @@ describe('MetaApiConnection', () => {
         err.name.should.equal('TimeoutError');
       }
       (await api.isSynchronized('synchronizationId')).should.equal(false);
-    });
-
-    /**
-     * @test {MetaApiConnection#waitSynchronized}
-     */
-    it('should wait util synchronization complete in automatic mode', async () => {
-      api = new MetaApiConnection(client, {id: 'accountId', synchronizationMode: 'automatic'});
-      sandbox.stub(client, 'getDealsByTimeRange')
-        .onCall(0).resolves({synchronizing: true})
-        .onCall(1).resolves({synchronizing: true})
-        .onCall(2).resolves({synchronizing: true})
-        .onCall(3).resolves({synchronizing: false})
-        .onCall(4).resolves({synchronizing: false})
-        .onCall(5).resolves({synchronizing: false});
-      (await api.isSynchronized()).should.equal(false);
-      let promise = api.waitSynchronized('synchronizationId', 1, 10);
-      let startTime = Date.now();
-      await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
-      await promise;
-      (Date.now() - startTime).should.be.approximately(20, 10);
-      (await api.isSynchronized()).should.equal(true);
     });
 
   });

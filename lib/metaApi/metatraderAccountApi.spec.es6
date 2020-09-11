@@ -68,7 +68,6 @@ describe('MetatraderAccountApi', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      synchronizationMode: 'automatic',
       type: 'cloud',
       accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
     });
@@ -83,7 +82,6 @@ describe('MetatraderAccountApi', () => {
     account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
-    account.synchronizationMode.should.equal('automatic');
     account.type.should.equal('cloud');
     account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
@@ -105,7 +103,6 @@ describe('MetatraderAccountApi', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      synchronizationMode: 'automatic',
       type: 'cloud',
       accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
     });
@@ -120,7 +117,6 @@ describe('MetatraderAccountApi', () => {
     account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
-    account.synchronizationMode.should.equal('automatic');
     account.type.should.equal('cloud');
     account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
@@ -143,7 +139,6 @@ describe('MetatraderAccountApi', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      synchronizationMode: 'automatic',
       type: 'cloud',
       accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
     });
@@ -156,7 +151,6 @@ describe('MetatraderAccountApi', () => {
       magic: 123456,
       timeConverter: 'icmarkets',
       application: 'MetaApi',
-      synchronizationMode: 'automatic',
       type: 'cloud',
       accessToken: 'NyV5no9TMffJyUts2FjI80wly0so3rVCz4xOqiDx'
     };
@@ -171,7 +165,6 @@ describe('MetatraderAccountApi', () => {
     account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
-    account.synchronizationMode.should.equal('automatic');
     account.type.should.equal('cloud');
     account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
@@ -195,7 +188,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       })
       .onSecondCall().resolves({
@@ -209,7 +201,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       });
     let account = await api.getAccount('id');
@@ -236,7 +227,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       })
       .onSecondCall().resolves({
@@ -250,7 +240,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DELETING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       });
     sandbox.stub(client, 'deleteAccount').resolves();
@@ -280,7 +269,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'UNDEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       })
       .onSecondCall().resolves({
@@ -294,7 +282,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       });
     sandbox.stub(client, 'deployAccount').resolves();
@@ -322,7 +309,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       })
       .onSecondCall().resolves({
@@ -336,7 +322,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'UNDEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       });
     sandbox.stub(client, 'undeployAccount').resolves();
@@ -364,7 +349,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       })
       .onSecondCall().resolves({
@@ -378,7 +362,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'UNDEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       });
     sandbox.stub(client, 'redeployAccount').resolves();
@@ -407,7 +390,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -424,7 +406,6 @@ describe('MetatraderAccountApi', () => {
           application: 'MetaApi',
           connectionStatus: 'CONNECTED',
           state: 'DEPLOYED',
-          synchronizationMode: 'automatic',
           type: 'cloud'
         });
       let account = await api.getAccount('id');
@@ -449,7 +430,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -484,7 +464,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'UNDEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -501,7 +480,6 @@ describe('MetatraderAccountApi', () => {
           application: 'MetaApi',
           connectionStatus: 'CONNECTED',
           state: 'UNDEPLOYED',
-          synchronizationMode: 'automatic',
           type: 'cloud'
         });
       let account = await api.getAccount('id');
@@ -526,7 +504,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'UNDEPLOYING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -561,7 +538,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DELETING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -589,7 +565,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DELETING',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -623,7 +598,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -640,7 +614,6 @@ describe('MetatraderAccountApi', () => {
           application: 'MetaApi',
           connectionStatus: 'CONNECTED',
           state: 'DEPLOYED',
-          synchronizationMode: 'automatic',
           type: 'cloud'
         });
       let account = await api.getAccount('id');
@@ -665,7 +638,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       };
       sandbox.stub(client, 'getAccount')
@@ -689,7 +661,7 @@ describe('MetatraderAccountApi', () => {
   it('should connect to an MT terminal', async () => {
     sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
     sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', synchronizationMode: 'user'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id'});
     let account = await api.getAccount();
     let storage = {
       lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
@@ -722,7 +694,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'automatic',
         type: 'cloud'
       })
       .onSecondCall()
@@ -737,7 +708,6 @@ describe('MetatraderAccountApi', () => {
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',
-        synchronizationMode: 'user',
         type: 'cloud'
       });
     sandbox.stub(client, 'updateAccount').resolves();
@@ -745,17 +715,14 @@ describe('MetatraderAccountApi', () => {
     await account.update({
       name: 'mt5a__',
       password: 'moreSecurePass',
-      server: 'OtherMarkets-Demo',
-      synchronizationMode: 'user'
+      server: 'OtherMarkets-Demo'
     });
     account.name.should.equal('mt5a__');
     account.server.should.equal('OtherMarkets-Demo');
-    account.synchronizationMode.should.equal('user');
     sinon.assert.calledWith(client.updateAccount, 'id', {
       name: 'mt5a__',
       password: 'moreSecurePass',
-      server: 'OtherMarkets-Demo',
-      synchronizationMode: 'user'
+      server: 'OtherMarkets-Demo'
     });
     sinon.assert.calledWith(client.getAccount, 'id');
     sinon.assert.calledTwice(client.getAccount);

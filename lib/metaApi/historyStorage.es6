@@ -4,10 +4,6 @@ import SynchronizationListener from '../clients/metaApi/synchronizationListener'
 
 /**
  * Abstract class which defines MetaTrader history storage interface.
- *
- * This class is intended to be used when account synchronization mode is set to user. In this case the consumer is
- * responsible for locally maintaining a copy of MetaTrader terminal history, and the API will send only history changes
- * to the consumer.
  */
 export default class HistoryStorage extends SynchronizationListener {
 

@@ -62,15 +62,6 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns synchronization mode, can be automatic or user. See
-   * https://metaapi.cloud/docs/client/websocket/synchronizationMode/ for more details.
-   * @return {String} synchronization mode
-   */
-  get synchronizationMode() {
-    return this._data.synchronizationMode;
-  }
-
-  /**
    * Returns id of the account's provisioning profile
    * @return {String} id of the account's provisioning profile
    */
@@ -284,9 +275,7 @@ export default class MetatraderAccount {
    */
   async connect(historyStorage) {
     let connection = new MetaApiConnection(this._metaApiWebsocketClient, this, historyStorage);
-    if(this.synchronizationMode === 'user') {
-      await connection.initialize();
-    }
+    await connection.initialize();
     await connection.subscribe();
     return connection;
   }
