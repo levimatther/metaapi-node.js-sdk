@@ -25,13 +25,13 @@ export default class HistoryClient extends MetaApiClient {
    * @typedef {Object} CopyFactorySubscriberOrProvider
    * @property {String} id profile id
    * @property {String} name user name
-   * @property {Array<CopyFactoyStrategyIdAndName>} array of strategy IDs provided by provider or subscribed to by
+   * @property {Array<CopyFactoryStrategyIdAndName>} strategies array of strategy IDs provided by provider or subscribed to by
    * subscriber
    */
 
   /**
    * CopyFactory strategy id and name
-   * @typedef {Object} CopyFactoyStrategyIdAndName
+   * @typedef {Object} CopyFactoryStrategyIdAndName
    * @property {String} id unique strategy id
    * @property {String} name human-readable strategy name
    */
@@ -99,7 +99,7 @@ export default class HistoryClient extends MetaApiClient {
   /**
    * Returns list of strategies the current user provides to other users
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/get_users_current_provided_strategies
-   * @return {Promise<Array<CopyFactoyStrategyIdAndName>>} promise resolving with strategies found
+   * @return {Promise<Array<CopyFactoryStrategyIdAndName>>} promise resolving with strategies found
    */
   getProvidedStrategies() {
     if (this._isNotJwtToken()) {
@@ -150,10 +150,10 @@ export default class HistoryClient extends MetaApiClient {
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/get_users_current_provided_strategies_transactions
    * @param {Date} from time to load transactions from
    * @param {Date} till time to load transactions till
-   * @param {Array<String>} strategyIds optional list of strategy ids to filter transactions by
-   * @param {Array<String>} subscriberIds optional list of subscribers to filter transactions by
-   * @param {Number} offset pagination offset. Default value is 0
-   * @param {Number} limit pagination limit. Default value is 10000
+   * @param {Array<String>} [strategyIds] optional list of strategy ids to filter transactions by
+   * @param {Array<String>} [subscriberIds] optional list of subscribers to filter transactions by
+   * @param {Number} [offset] pagination offset. Default value is 0
+   * @param {Number} [limit] pagination limit. Default value is 10000
    * @return {Promise<Array<CopyFactoryTransaction>>} promise resolving with transactions found
    */
   async getProvidedStrategiesTransactions(from, till, strategyIds, subscriberIds, offset, limit) {

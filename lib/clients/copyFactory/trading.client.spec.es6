@@ -98,7 +98,7 @@ describe('TradingClient', () => {
   /**
    * @test {TradingClient#getStopouts}
    */
-  it('should not retrieve providers from API with account token', async () => {
+  it('should not retrieve stopouts from API with account token', async () => {
     tradingClient = new TradingClient(httpClient, 'token');
     try {
       await tradingClient.getStopouts('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
