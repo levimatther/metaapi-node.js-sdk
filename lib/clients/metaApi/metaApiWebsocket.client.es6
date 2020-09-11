@@ -526,8 +526,8 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
-   * Requests the terminal to start synchronization process. Use it if user synchronization mode is set to user for the
-   * account (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
+   * Requests the terminal to start synchronization process
+   * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
    * @param {String} accountId id of the MetaTrader account to synchronize
    * @param {String} synchronizationId synchronization request id
    * @param {Date} startingHistoryOrderTime from what date to start synchronizing history orders from. If not specified,

@@ -32,7 +32,6 @@ describe('MetatraderAccountClient', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      synchronizationMode: 'automatic',
       type: 'cloud'
     }];
     httpClient.requestFn = (opts) => {
@@ -90,7 +89,6 @@ describe('MetatraderAccountClient', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      synchronizationMode: 'automatic',
       type: 'cloud'
     };
     httpClient.requestFn = (opts) => {
@@ -129,7 +127,6 @@ describe('MetatraderAccountClient', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      synchronizationMode: 'automatic',
       type: 'cloud'
     };
     httpClient.requestFn = (opts) => {
@@ -180,7 +177,6 @@ describe('MetatraderAccountClient', () => {
       magic: 123456,
       timeConverter: 'icmarkets',
       application: 'MetaApi',
-      synchronizationMode: 'automatic',
       type: 'cloud'
     };
     httpClient.requestFn = (opts) => {
@@ -390,8 +386,7 @@ describe('MetatraderAccountClient', () => {
             body: {
               name: 'new account name',
               password: 'new_password007',
-              server: 'ICMarketsSC2-Demo',
-              synchronizationMode: 'user'
+              server: 'ICMarketsSC2-Demo'
             }
           });
         });
@@ -399,8 +394,7 @@ describe('MetatraderAccountClient', () => {
     await accountClient.updateAccount('id', {
       name: 'new account name',
       password: 'new_password007',
-      server: 'ICMarketsSC2-Demo',
-      synchronizationMode: 'user'
+      server: 'ICMarketsSC2-Demo'
     });
   });
 

@@ -4,7 +4,6 @@ import TerminalState from './terminalState';
 import MemoryHistoryStorage from './memoryHistoryStorage';
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 import TimeoutError from '../clients/timeoutError';
-import InvalidSynchronizationModeError from './invalidSynchronizationModeError';
 import randomstring from 'randomstring';
 
 /**
@@ -15,9 +14,9 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Constructs MetaApi MetaTrader Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
-   * @param {String} accountId MetaTrader account id to connect to
-   * @param {HistoryStorage} local terminal history storage. Use for accounts in user synchronization mode. By default
-   * an instance of MemoryHistoryStorage will be used.
+   * @param {String} account MetaTrader account id to connect to
+   * @param {HistoryStorage} historyStorage terminal history storage. By default an instance of MemoryHistoryStorage
+   * will be used.
    */
   constructor(websocketClient, account, historyStorage) {
     super();
@@ -26,14 +25,12 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._ordersSynchronized = {};
     this._dealsSynchronized = {};
     this._lastSynchronizationId = undefined;
-    if (account.synchronizationMode === 'user') {
-      this._terminalState = new TerminalState();
-      this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id);
-      this._websocketClient.addSynchronizationListener(account.id, this);
-      this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
-      this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);
-      this._websocketClient.addReconnectListener(this);
-    }
+    this._terminalState = new TerminalState();
+    this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id);
+    this._websocketClient.addSynchronizationListener(account.id, this);
+    this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
+    this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);
+    this._websocketClient.addReconnectListener(this);
   }
 
   /**
@@ -155,9 +152,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory() {
-    if (this._account.synchronizationMode === 'user') {
-      this._historyStorage.reset();
-    }
+    this._historyStorage.reset();
     return this._websocketClient.removeHistory(this._account.id);
   }
 
@@ -383,20 +378,17 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
-   * Requests the terminal to start synchronization process. Use it if user synchronization mode is set to user for the
-   * account (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/). Use only for user
-   * synchronization mode.
+   * Requests the terminal to start synchronization process
+   * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/)
    * @returns {Promise} promise which resolves when synchronization started
    */
   async synchronize() {
-    if (this._account.synchronizationMode === 'user') {
-      let startingHistoryOrderTime = await this._historyStorage.lastHistoryOrderTime();
-      let startingDealTime = await this._historyStorage.lastDealTime();
-      let synchronizationId = randomstring.generate(32);
-      this._lastSynchronizationId = synchronizationId;
-      return this._websocketClient.synchronize(this._account.id, synchronizationId, startingHistoryOrderTime,
-        startingDealTime);
-    }
+    let startingHistoryOrderTime = await this._historyStorage.lastHistoryOrderTime();
+    let startingDealTime = await this._historyStorage.lastDealTime();
+    let synchronizationId = randomstring.generate(32);
+    this._lastSynchronizationId = synchronizationId;
+    return this._websocketClient.synchronize(this._account.id, synchronizationId, startingHistoryOrderTime,
+      startingDealTime);
   }
 
   /**
@@ -404,9 +396,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise which resolves when meta api connection is initialized
    */
   async initialize() {
-    if (this._account.synchronizationMode === 'user') {
-      await this._historyStorage.loadDataFromDisk();
-    }
+    await this._historyStorage.loadDataFromDisk();
   }
 
   /**
@@ -424,9 +414,6 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when subscription request was processed
    */
   subscribeToMarketData(symbol) {
-    if (this._account.synchronizationMode !== 'user') {
-      throw new InvalidSynchronizationModeError(this._account);
-    }
     return this._websocketClient.subscribeToMarketData(this._account.id, symbol);
   }
 
@@ -451,49 +438,35 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
-   * Returns local copy of terminal state. Use this method for accounts in user synchronization mode
+   * Returns local copy of terminal state
    * @returns {TerminalState} local copy of terminal state
    */
   get terminalState() {
-    if (this._account.synchronizationMode !== 'user') {
-      throw new InvalidSynchronizationModeError(this._account);
-    }
     return this._terminalState;
   }
 
   /**
-   * Returns local history storage. Use this method for accounts in user synchronization mode
+   * Returns local history storage
    * @returns {HistoryStorage} local history storage
    */
   get historyStorage() {
-    if (this._account.synchronizationMode !== 'user') {
-      throw new InvalidSynchronizationModeError(this._account);
-    }
     return this._historyStorage;
   }
 
   /**
-   * Adds synchronization listener. Use this method for accounts in user synchronization mode
+   * Adds synchronization listener
    * @param {SynchronizationListener} listener synchronization listener to add
    */
   addSynchronizationListener(listener) {
-    if (this._account.synchronizationMode === 'user') {
-      this._websocketClient.addSynchronizationListener(this._account.id, listener);
-    } else {
-      throw new InvalidSynchronizationModeError(this._account);
-    }
+    this._websocketClient.addSynchronizationListener(this._account.id, listener);
   }
 
   /**
-   * Removes synchronization listener for specific account. Use this method for accounts in user synchronization mode
+   * Removes synchronization listener for specific account
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
   removeSynchronizationListener(listener) {
-    if (this._account.synchronizationMode === 'user') {
-      this._websocketClient.removeSynchronizationListener(this._account.id, listener);
-    } else {
-      throw new InvalidSynchronizationModeError(this._account);
-    }
+    this._websocketClient.removeSynchronizationListener(this._account.id, listener);
   }
 
   /**
@@ -517,9 +490,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async onDealSynchronizationFinished(synchronizationId) {
     this._dealsSynchronized[synchronizationId] = true;
-    if (this._account.synchronizationMode === 'user') {
-      await this._historyStorage.updateDiskStorage();
-    }
+    await this._historyStorage.updateDiskStorage();
   }
 
   /**
@@ -547,12 +518,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async isSynchronized(synchronizationId) {
     synchronizationId = synchronizationId || this._lastSynchronizationId;
-    if (this._account.synchronizationMode === 'user') {
-      return !!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId];
-    } else {
-      let result = await this.getDealsByTimeRange(new Date(), new Date());
-      return !result.synchronizing;
-    }
+    return !!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId];
   }
 
   /**
@@ -579,11 +545,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Closes the connection. The instance of the class should no longer be used after this method is invoked.
    */
   close() {
-    if (this._account.synchronizationMode === 'user') {
-      this._websocketClient.removeSynchronizationListener(this._account.id, this);
-      this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
-      this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
-    }
+    this._websocketClient.removeSynchronizationListener(this._account.id, this);
+    this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
+    this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
   }
 
 }

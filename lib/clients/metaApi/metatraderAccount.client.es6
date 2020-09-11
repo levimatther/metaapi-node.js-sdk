@@ -16,8 +16,6 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * aliases.
    * @property {String} login MetaTrader account number
    * @property {String} server MetaTrader server which hosts the account
-   * @property {String} synchronizationMode synchronization mode, can be automatic or user. See
-   * https://metaapi.cloud/docs/client/websocket/synchronizationMode/ for more details.
    * @property {String} provisioningProfileId id of the account's provisioning profile
    * @property {String} timeConverter algorithm used to parse your broker timezone. Supported values are icmarkets for
    * America/New_York DST switch and roboforex for EET DST switch (the values will be changed soon)
@@ -140,8 +138,6 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} password MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
    * @property {String} server MetaTrader server which hosts the account
-   * @property {String} synchronizationMode synchronization mode, can be automatic or user. See
-   * https://metaapi.cloud/docs/client/websocket/synchronizationMode/ for more details.
    * @property {String} provisioningProfileId id of the account's provisioning profile
    * @property {String} timeConverter algorithm used to parse your broker timezone. Supported values are icmarkets for
    * America/New_York DST switch and roboforex for EET DST switch (the values will be changed soon)
@@ -278,8 +274,6 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} password MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
    * @property {String} server MetaTrader server which hosts the account
-   * @property {String} synchronizationMode synchronization mode, can be automatic or user. See
-   * https://metaapi.cloud/docs/client/websocket/synchronizationMode/ for more details.
    * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false
    * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
