@@ -28,6 +28,8 @@ export default class MetaApi {
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient);
+    this._metaApiWebsocketClient.connect()
+      .catch(err => console.error('Failed to connect to MetaApi websocket API', err));
   }
 
   /**

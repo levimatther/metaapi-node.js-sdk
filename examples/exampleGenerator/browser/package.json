@@ -3,7 +3,7 @@
   "description": "MetaApi example scripts",
   "version": "1.0.0",
   "dependencies": {
-    "metaapi.cloud-sdk": "~6.3.0"
+    "metaapi.cloud-sdk": "~7.0.0"
   },
   "scripts": {
     "build": "npx webpack --config webpack.config.js",
