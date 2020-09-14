@@ -3,14 +3,14 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Account example</title>
+  <title>Streaming example</title>
 </head>
 
 <body>
   <div id='info'></div>
 </body>
 
-<script src="index.js"></script>
+<script src="https://unpkg.com/metaapi.cloud-sdk/index.js"></script>
 
 <script>
   const infoElement = document.getElementById('info');
@@ -31,9 +31,6 @@
   async function testMetaApiSynchronization() {
     try {
       const account = await api.metatraderAccountApi.getAccount(accountId);
-      // wait until account is deployed and connected to broker
-      log('Deploying account');
-      await account.deploy();
       log('Waiting for API server to connect to broker (may take couple of minutes)');
       await account.waitConnected();
 
@@ -69,9 +66,6 @@
         log('Trade failed with result code ' + err.stringCode);
       }
 
-      // finally, undeploy account after the test
-      log('Undeploying account so that it does not consume any unwanted resources');
-      await account.undeploy();
     } catch (err) {
       log(err);
     }

@@ -6,7 +6,7 @@
 </head>
 <body>
 <div style="padding: 20px; display: flex; flex-direction: column; width: 200px">
-  <label for="token-input" style="margin-bottom: 5px">Token</label>
+  <label for="token-input" style="margin-bottom: 5px">Terminal access token</label>
   <input id="token-input" style="margin-bottom: 10px" type="text">
   <label for="account-id-input" style="margin-bottom: 5px">Account ID</label>
   <input id="account-id-input" type="text" style="margin-bottom: 10px">
@@ -35,8 +35,7 @@
         .then(account => {
           console.log(account);
           log('Waiting for API server to connect to broker (may take couple of minutes)');
-          return account.deploy()
-            .then(() => account.waitConnected())
+          return account.waitConnected()
             .then(() => account.connect())
             .then(connection => {
               log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history size)');
@@ -64,13 +63,9 @@
                   } catch (err) {
                     log('Trade failed with result code ' + err.stringCode);
                   }
-
-                  // finally, undeploy account after the test
-                  log('Undeploying account so that it does not consume any unwanted resources');
-                  return account.undeploy();
+                  return;
                 })
-            })
-            .then(() => account.undeploy());
+            });
         })
         .catch(error => console.error(error))
     }

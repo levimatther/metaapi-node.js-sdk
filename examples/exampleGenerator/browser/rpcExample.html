@@ -3,19 +3,19 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Account example</title>
+  <title>RPC Api example</title>
 </head>
 
 <body>
   <div id='info'></div>
 </body>
 
-<script src="index.js"></script>
+<script src="https://unpkg.com/metaapi.cloud-sdk/index.js"></script>
 
 <script>
   const infoElement = document.getElementById('info');
   function log() {
-    if(typeof arguments[1] === 'object'){
+    if (typeof arguments[1] === 'object') {
       arguments[1] = JSON.stringify(arguments[1]);
     }
     const el = document.createElement('div');
@@ -32,9 +32,6 @@
     try {
       const account = await api.metatraderAccountApi.getAccount(accountId);
 
-      // wait until account is deployed and connected to broker
-      log('Deploying account');
-      await account.deploy();
       log('Waiting for API server to connect to broker (may take couple of minutes)');
       await account.waitConnected();
 
@@ -62,19 +59,15 @@
       // trade
       log('Submitting pending order');
       try {
-        let result = await
-          connection.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, {
-            comment: 'comm',
-            clientId: 'TE_GBPUSD_7hyINWqAlE'
-          });
+        let result = await connection.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, {
+          comment: 'comm',
+          clientId: 'TE_GBPUSD_7hyINWqAlE'
+        });
         log('Trade successful, result code is ' + result.stringCode);
       } catch (err) {
         log('Trade failed with result code ' + err.stringCode);
       }
 
-      // finally, undeploy account after the test
-      log('Undeploying account so that it does not consume any unwanted resources');
-      await account.undeploy();
     } catch (err) {
       log(err);
     }
