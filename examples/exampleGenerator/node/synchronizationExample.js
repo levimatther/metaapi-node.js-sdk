@@ -7,9 +7,14 @@ const api = new MetaApi(token);
 async function testMetaApiSynchronization() {
   try {
     const account = await api.metatraderAccountApi.getAccount(accountId);
-    // wait until account is deployed and connected to broker
-    console.log('Deploying account');
-    await account.deploy();
+    const initialState = account.state;
+    const deployedStates = ['DEPLOYING', 'DEPLOYED'];
+
+    if(!deployedStates.includes(initialState)) {
+      // wait until account is deployed and connected to broker
+      console.log('Deploying account');
+      await account.deploy();
+    }
     console.log('Waiting for API server to connect to broker (may take couple of minutes)');
     await account.waitConnected();
 
@@ -45,9 +50,12 @@ async function testMetaApiSynchronization() {
       console.log('Trade failed with result code ' + err.stringCode);
     }
 
-    // finally, undeploy account after the test
-    console.log('Undeploying account so that it does not consume any unwanted resources');
-    await account.undeploy();
+    if(!deployedStates.includes(initialState)) {
+      // undeploy account if it was undeployed
+      console.log('Undeploying account');
+      await account.undeploy();
+    }
+
   } catch (err) {
     console.error(err);
   }

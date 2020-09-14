@@ -6,7 +6,7 @@
 </head>
 <body>
 <div style="padding: 20px; display: flex; flex-direction: column; width: 200px">
-  <label for="token-input" style="margin-bottom: 5px">Token</label>
+  <label for="token-input" style="margin-bottom: 5px">Terminal access token</label>
   <input id="token-input" style="margin-bottom: 10px" type="text">
   <label for="account-id-input" style="margin-bottom: 5px">Account ID</label>
   <input id="account-id-input" type="text" style="margin-bottom: 10px">
@@ -35,9 +35,6 @@
         try {
           const account = await api.metatraderAccountApi.getAccount(accountId);
 
-          // wait until account is deployed and connected to broker
-          log('Deploying account');
-          await account.deploy();
           log('Waiting for API server to connect to broker (may take couple of minutes)');
           await account.waitConnected();
 
@@ -74,9 +71,6 @@
             log('Trade failed with result code ' + err.stringCode);
           }
 
-          // finally, undeploy account after the test
-          log('Undeploying account so that it does not consume any unwanted resources');
-          await account.undeploy();
         } catch (err) {
           log(err);
         }
