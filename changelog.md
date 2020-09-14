@@ -1,3 +1,6 @@
+7.1.0
+  - now only one MetaApiConnection can be created per account at the same time to avoid history storage errors
+
 7.0.0
   - Prepared for upcoming breaking change in API: added sticky session support
   - added quoteStreamingIntervalInSeconds field to account to configure quote streaming interval
