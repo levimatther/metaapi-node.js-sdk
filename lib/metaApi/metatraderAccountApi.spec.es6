@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccount from './metatraderAccount';
 import {NotFoundError} from '../clients/errorHandler';
-import MetaApiConnection from './metaApiConnection';
 import HistoryFileManager from './historyFileManager/index';
 
 /**
@@ -32,9 +31,13 @@ describe('MetatraderAccountApi', () => {
     addReconnectListener: () => {},
     subscribe: () => {}
   };
+  let connectionRegistry = {
+    connect: () => {},
+    remove: () => {}
+  };
 
   before(() => {
-    api = new MetatraderAccountApi(client, metaApiWebsocketClient);
+    api = new MetatraderAccountApi(client, metaApiWebsocketClient, connectionRegistry);
     sandbox = sinon.createSandbox();
   });
 
@@ -215,6 +218,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#remove}
    */
   it('should remove MT account', async () => {
+    sandbox.stub(connectionRegistry, 'remove').resolves();
     sandbox.stub(client, 'getAccount')
       .onFirstCall().resolves({
         _id: 'id',
@@ -246,6 +250,7 @@ describe('MetatraderAccountApi', () => {
     sandbox.stub(HistoryFileManager.prototype, 'deleteStorageFromDisk').returns();
     let account = await api.getAccount('id');
     await account.remove();
+    sinon.assert.calledWith(connectionRegistry.remove, 'id');
     sinon.assert.calledOnce(HistoryFileManager.prototype.deleteStorageFromDisk);
     account.state.should.equal('DELETING');
     sinon.assert.calledWith(client.deleteAccount, 'id');
@@ -297,6 +302,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#undeploy}
    */
   it('should undeploy MT account', async () => {
+    sandbox.stub(connectionRegistry, 'remove').resolves();
     sandbox.stub(client, 'getAccount')
       .onFirstCall().resolves({
         _id: 'id',
@@ -327,6 +333,7 @@ describe('MetatraderAccountApi', () => {
     sandbox.stub(client, 'undeployAccount').resolves();
     let account = await api.getAccount('id');
     await account.undeploy();
+    sinon.assert.calledWith(connectionRegistry.remove, 'id');
     account.state.should.equal('UNDEPLOYING');
     sinon.assert.calledWith(client.undeployAccount, 'id');
     sinon.assert.calledWith(client.getAccount, 'id');
@@ -668,13 +675,9 @@ describe('MetatraderAccountApi', () => {
       lastDealTime: () => new Date('2020-01-02T00:00:00.000Z'),
       loadDataFromDisk: () => ({deals: [], historyOrders: []})
     };
-    sandbox.stub(MetaApiConnection.prototype, 'initialize').resolves();
-    let connection = await account.connect(storage);
-    (connection instanceof MetaApiConnection).should.be.true();
-    connection.historyStorage.should.equal(storage);
-    sinon.assert.calledWith(metaApiWebsocketClient.addSynchronizationListener, 'id', storage);
-    sinon.assert.calledWith(metaApiWebsocketClient.subscribe, 'id');
-    sinon.assert.calledOnce(connection.initialize);
+    sandbox.spy(connectionRegistry, 'connect');
+    await account.connect(storage);
+    sinon.assert.calledWith(connectionRegistry.connect, account, storage);
   });
 
   /**

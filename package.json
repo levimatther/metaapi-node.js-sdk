@@ -48,6 +48,7 @@
   "version": "7.0.0",
   "dependencies": {
     "babel-runtime": "~6.26.0",
+    "dotenv": "~8.2.0",
     "fs-extra": "~9.0.1",
     "idb": "~5.0.4",
     "randomstring": "~1.1.5",
@@ -74,7 +75,7 @@
     "webpack-cli": "~3.3.12"
   },
   "scripts": {
-    "test": "mocha --require babel-register lib/*/*/*.spec.es6 lib/*/*.spec.es6 lib/*.spec.es6",
+    "test": "mocha --exit --require babel-register lib/*/*/*.spec.es6 lib/*/*.spec.es6 lib/*.spec.es6",
     "lint": "eslint --ext es6 ./lib",
     "lint:fix": "eslint --ext es6 ./lib --fix",
     "build": "rm -rf dist; rm -rf es; npx babel lib --out-dir dist --source-maps inline --ignore lib/templates && npx webpack --config webpack.config.js && gulp",

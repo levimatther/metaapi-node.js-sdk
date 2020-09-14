@@ -11,10 +11,12 @@ export default class MetatraderAccountApi {
    * Constructs a MetaTrader account API instance
    * @param {MetatraderAccountClient} metatraderAccountClient MetaTrader account REST API client
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
+   * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
    */
-  constructor(metatraderAccountClient, metaApiWebsocketClient) {
+  constructor(metatraderAccountClient, metaApiWebsocketClient, connectionRegistry) {
     this._metatraderAccountClient = metatraderAccountClient;
     this._metaApiWebsocketClient = metaApiWebsocketClient;
+    this._connectionRegistry = connectionRegistry;
   }
 
   /**
@@ -27,7 +29,8 @@ export default class MetatraderAccountApi {
     if (accounts.items) {
       accounts = accounts.items;
     }
-    return accounts.map(a => new MetatraderAccount(a, this._metatraderAccountClient, this._metaApiWebsocketClient));
+    return accounts.map(a => new MetatraderAccount(a, this._metatraderAccountClient, this._metaApiWebsocketClient, 
+      this._connectionRegistry));
   }
 
   /**
@@ -37,7 +40,8 @@ export default class MetatraderAccountApi {
    */
   async getAccount(accountId) {
     let account = await this._metatraderAccountClient.getAccount(accountId);
-    return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient);
+    return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient, 
+      this._connectionRegistry);
   }
 
   /**
@@ -46,7 +50,8 @@ export default class MetatraderAccountApi {
    */
   async getAccountByToken() {
     let account = await this._metatraderAccountClient.getAccountByToken();
-    return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient);
+    return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient, 
+      this._connectionRegistry);
   }
 
   /**
