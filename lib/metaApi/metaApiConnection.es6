@@ -14,17 +14,19 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Constructs MetaApi MetaTrader Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
-   * @param {String} account MetaTrader account id to connect to
+   * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage. By default an instance of MemoryHistoryStorage
    * will be used.
+   * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
    */
-  constructor(websocketClient, account, historyStorage) {
+  constructor(websocketClient, account, historyStorage, connectionRegistry) {
     super();
     this._websocketClient = websocketClient;
     this._account = account;
     this._ordersSynchronized = {};
     this._dealsSynchronized = {};
     this._lastSynchronizationId = undefined;
+    this._connectionRegistry = connectionRegistry;
     this._terminalState = new TerminalState();
     this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id);
     this._websocketClient.addSynchronizationListener(account.id, this);
@@ -557,9 +559,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Closes the connection. The instance of the class should no longer be used after this method is invoked.
    */
   close() {
-    this._websocketClient.removeSynchronizationListener(this._account.id, this);
-    this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
-    this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
+    if(!this._closed) {
+      this._websocketClient.removeSynchronizationListener(this._account.id, this);
+      this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
+      this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
+      this._connectionRegistry.remove(this._account.id);
+      this._closed = true;
+    }
   }
 
 }

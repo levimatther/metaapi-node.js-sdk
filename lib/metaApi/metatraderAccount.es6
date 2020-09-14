@@ -14,11 +14,13 @@ export default class MetatraderAccount {
    * @param {MetatraderAccountDto} data MetaTrader account data
    * @param {MetatraderAccountClient} metatraderAccountClient MetaTrader account REST API client
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
+   * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
    */
-  constructor(data, metatraderAccountClient, metaApiWebsocketClient) {
+  constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry) {
     this._data = data;
     this._metatraderAccountClient = metatraderAccountClient;
     this._metaApiWebsocketClient = metaApiWebsocketClient;
+    this._connectionRegistry = connectionRegistry;
   }
 
   /**
@@ -142,6 +144,7 @@ export default class MetatraderAccount {
    * @return {Promise} promise resolving when account is scheduled for deletion
    */
   async remove() {
+    this._connectionRegistry.remove(this.id);
     await this._metatraderAccountClient.deleteAccount(this.id);
     const fileManager = new HistoryFileManager(this.id);
     await fileManager.deleteStorageFromDisk();
@@ -172,6 +175,7 @@ export default class MetatraderAccount {
    * @returns {Promise} promise resolving when account is scheduled for undeployment
    */
   async undeploy() {
+    this._connectionRegistry.remove(this.id);
     await this._metatraderAccountClient.undeployAccount(this.id);
     await this.reload();
   }
@@ -269,15 +273,12 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Connects to MetaApi
+   * Connects to MetaApi. There is only one connection per account. Subsequent calls to this method will return the same connection.
    * @param {HistoryStorage} historyStorage optional history storage
    * @returns {MetaApiConnection} MetaApi connection
    */
   async connect(historyStorage) {
-    let connection = new MetaApiConnection(this._metaApiWebsocketClient, this, historyStorage);
-    await connection.initialize();
-    await connection.subscribe();
-    return connection;
+    return await this._connectionRegistry.connect(this, historyStorage);
   }
 
   /**

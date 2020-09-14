@@ -60,7 +60,7 @@
         "guard-for-in": ["error"],
         "wrap-iife": ["error"],
         "no-use-before-define": ["off"],
-        new-cap: ["error", { "properties": false }],
+        "new-cap": ["error", { "properties": false }],
         "no-caller": ["error"],
         "no-empty": ["error"],
         "no-new": ["error"],
@@ -71,7 +71,7 @@
         "max-depth": ["error", 5],
         "max-statements": ["error", 40],
         "complexity": ["error", 8],
-        "max-len": ["error", 120],
+        "max-len": ["error", {"code": 120, "comments": 140}],
         "no-var": ["off"],
 
         // Relaxing

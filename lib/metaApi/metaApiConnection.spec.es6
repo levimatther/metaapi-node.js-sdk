@@ -40,13 +40,18 @@ describe('MetaApiConnection', () => {
     getSymbolPrice: () => {}
   };
 
+  let connectionRegistry = {
+    connect: () => {},
+    remove: () => {}
+  };
+
   before(() => {
     sandbox = sinon.createSandbox();
   });
 
   beforeEach(() => {
     sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
-    api = new MetaApiConnection(client, {id: 'accountId'});
+    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
   });
 
   afterEach(() => {
@@ -702,11 +707,13 @@ describe('MetaApiConnection', () => {
   it('should unsubscribe from events on close', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
     sandbox.stub(client, 'removeSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId'});
+    sandbox.stub(connectionRegistry, 'remove').returns();
+    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
     api.close();
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.historyStorage);
+    sinon.assert.calledWith(connectionRegistry.remove, 'accountId');
   });
 
   describe('waitSynchronized', () => {

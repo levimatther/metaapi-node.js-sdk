@@ -270,8 +270,8 @@ describe('HistoryClient', () => {
       await copyFactoryClient.getProvidedStrategiesTransactions(new Date(), new Date());
     } catch (error) {
       error.message.should.equal(
-        'You can not invoke getProvidedStrategiesTransactions method, because you have connected with account access token. ' +
-        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+        'You can not invoke getProvidedStrategiesTransactions method, because you have connected with account ' + 
+        'access token. Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
   });
@@ -349,8 +349,8 @@ describe('HistoryClient', () => {
       await copyFactoryClient.getStrategiesSubscribedTransactions(new Date(), new Date());
     } catch (error) {
       error.message.should.equal(
-        'You can not invoke getStrategiesSubscribedTransactions method, because you have connected with account access token. ' +
-        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+        'You can not invoke getStrategiesSubscribedTransactions method, because you have connected with account ' + 
+        'access token. Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
   });
