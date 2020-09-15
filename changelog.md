@@ -1,3 +1,6 @@
+7.1.1
+  - fix simultaneous multiple file writes by one connection
+
 7.1.0
   - now only one MetaApiConnection can be created per account at the same time to avoid history storage errors
 

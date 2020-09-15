@@ -167,16 +167,14 @@ describe('HistoryFileManager', () => {
     storage.historyOrders = [testOrder, testOrder2];
     fileManager.setStartNewOrderIndex(0);
     fileManager.setStartNewDealIndex(0);
-    fileManager.updateDiskStorage();
-    await new Promise(res => setTimeout(res, 50));
+    await fileManager.updateDiskStorage();
     testDeal.magic = 100;
     testDeal2.magic = 100;
     testOrder.magic = 100;
     testOrder2.magic = 100;
     fileManager.setStartNewOrderIndex(0);
     fileManager.setStartNewDealIndex(0);
-    fileManager.updateDiskStorage();
-    await new Promise(res => setTimeout(res, 50));
+    await fileManager.updateDiskStorage();
     const savedData = await readHistoryStorageFile();
     savedData.deals.should.match([testDeal, testDeal2]);
     savedData.historyOrders.should.match([testOrder, testOrder2]);
@@ -190,17 +188,38 @@ describe('HistoryFileManager', () => {
     storage.historyOrders = [testOrder, testOrder2];
     fileManager.setStartNewOrderIndex(0);
     fileManager.setStartNewDealIndex(0);
-    fileManager.updateDiskStorage();
-    await new Promise(res => setTimeout(res, 50));
+    await fileManager.updateDiskStorage();
     storage.deals = [testDeal, testDeal2, testDeal3];
     storage.historyOrders = [testOrder, testOrder2, testOrder3];
     fileManager.setStartNewOrderIndex(2);
     fileManager.setStartNewDealIndex(2);
-    fileManager.updateDiskStorage();
-    await new Promise(res => setTimeout(res, 50));
+    await fileManager.updateDiskStorage();
     const savedData = await readHistoryStorageFile();
     savedData.deals.should.match([testDeal, testDeal2, testDeal3]);
     savedData.historyOrders.should.match([testOrder, testOrder2, testOrder3]);
+  });
+
+  /**
+   * @test {HistoryFileManager#updateDiskStorage}
+   */
+  it('should not corrupt the disk storage if update called multiple times', async () => {
+    storage.deals = [testDeal, testDeal2];
+    storage.historyOrders = [testOrder, testOrder2];
+    fileManager.setStartNewOrderIndex(0);
+    fileManager.setStartNewDealIndex(0);
+    await fileManager.updateDiskStorage();
+    storage.deals = [testDeal, testDeal2, testDeal3];
+    storage.historyOrders = [testOrder, testOrder2, testOrder3];
+    fileManager.setStartNewOrderIndex(2);
+    fileManager.setStartNewDealIndex(2);
+    await Promise.all([
+      fileManager.updateDiskStorage(),
+      fileManager.updateDiskStorage(),
+      fileManager.updateDiskStorage(),
+      fileManager.updateDiskStorage(),
+      fileManager.updateDiskStorage()
+    ]);
+    JSON.parse(await fs.readFile('./.metaapi/accountId-historyOrders.bin'));
   });
 
   /**
