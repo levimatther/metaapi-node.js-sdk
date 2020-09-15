@@ -21,6 +21,7 @@ module.exports = class HistoryFileManager extends FileManager {
     this._startNewDealIndex = -1;
     this._historyOrdersSize = [];
     this._startNewOrderIndex = -1;
+    this._isUpdating = false;
   }
 
   /**
@@ -97,34 +98,43 @@ module.exports = class HistoryFileManager extends FileManager {
       return sizeArray.slice(0, startIndex).concat(replaceItems.map(item => getItemSize(item)));
     }
 
-    if(this._startNewDealIndex !== -1) {
-      const filePath = `./.metaapi/${accountId}-deals.bin`;
-      if(!await fs.pathExists(filePath)) {
-        const deals = JSON.stringify(historyStorage.deals);
-        fs.writeFile(filePath, deals, 'utf-8', (err) => {
-          if(err) {console.error(`[${(new Date()).toISOString()}] Error saving deals ` +
+    if(!this._isUpdating) {
+      this._isUpdating = true;
+      try {
+        if(this._startNewDealIndex !== -1) {
+          const filePath = `./.metaapi/${accountId}-deals.bin`;
+          if(!await fs.pathExists(filePath)) {
+            const deals = JSON.stringify(historyStorage.deals);
+            fs.writeFile(filePath, deals, 'utf-8', (err) => {
+              if(err) {console.error(`[${(new Date()).toISOString()}] Error saving deals ` +
           `on disk for account ${accountId}`, err);}});
-        this._dealsSize = historyStorage.deals.map(item => getItemSize(item));
-      } else {
-        const replaceDeals = historyStorage.deals.slice(this._startNewDealIndex);
-        this._dealsSize = await replaceRecords('deals', this._startNewDealIndex, replaceDeals, this._dealsSize);
+            this._dealsSize = historyStorage.deals.map(item => getItemSize(item));
+          } else {
+            const replaceDeals = historyStorage.deals.slice(this._startNewDealIndex);
+            this._dealsSize = await replaceRecords('deals', this._startNewDealIndex, replaceDeals, this._dealsSize);
+          }
+          this._startNewDealIndex = -1;
+        }
+        if(this._startNewOrderIndex !== -1) {
+          const filePath = `./.metaapi/${accountId}-historyOrders.bin`;
+          if(!await fs.pathExists(filePath)) {
+            const historyOrders = JSON.stringify(historyStorage.historyOrders);
+            fs.writeFile(filePath, historyOrders, 'utf-8', (err) => {
+              if(err) {console.error(`[${(new Date()).toISOString()}] Error saving historyOrders ` + 
+          `on disk for account ${accountId}`, err);}});
+            this._historyOrdersSize = historyStorage.historyOrders.map(item => getItemSize(item));
+          } else {
+            const replaceOrders = historyStorage.historyOrders.slice(this._startNewOrderIndex);
+            this._historyOrdersSize = await replaceRecords('historyOrders', this._startNewOrderIndex, 
+              replaceOrders, this._historyOrdersSize);
+          }  
+          this._startNewOrderIndex = -1;
+        }
+      } catch(err) {
+        console.error(`[${(new Date()).toISOString()}] Error updating disk storage ` + 
+          `for account ${accountId}`, err);
       }
-      this._startNewDealIndex = -1;
-    }
-    if(this._startNewOrderIndex !== -1) {
-      const filePath = `./.metaapi/${accountId}-historyOrders.bin`;
-      if(!await fs.pathExists(filePath)) {
-        const historyOrders = JSON.stringify(historyStorage.historyOrders);
-        fs.writeFile(filePath, historyOrders, 'utf-8', (err) => {
-          if(err) {console.error(`[${(new Date()).toISOString()}] Error saving historyOrders ` + 
-          `on disk for account ${accountId}`, err);}});
-        this._historyOrdersSize = historyStorage.historyOrders.map(item => getItemSize(item));
-      } else {
-        const replaceOrders = historyStorage.historyOrders.slice(this._startNewOrderIndex);
-        this._historyOrdersSize = await replaceRecords('historyOrders', this._startNewOrderIndex, 
-          replaceOrders, this._historyOrdersSize);
-      }  
-      this._startNewOrderIndex = -1;
+      this._isUpdating = false;
     }
   }
 
