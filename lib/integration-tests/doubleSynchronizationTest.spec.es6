@@ -30,7 +30,7 @@ describe('MT5 double synchronization test', () => {
         });
         await profile.uploadFile('servers.dat', serverDatFile);
       }
-      if (profile && profile.statue === 'new') {
+      if (profile && profile.status === 'new') {
         await profile.uploadFile('servers.dat', serverDatFile);
       }
       let accounts = await api.metatraderAccountApi.getAccounts();

@@ -1,3 +1,7 @@
+7.1.2
+  - fix CopyFactory getter undefined values
+  - fix typos in the examples
+
 7.1.1
   - fix simultaneous multiple file writes by one connection
 

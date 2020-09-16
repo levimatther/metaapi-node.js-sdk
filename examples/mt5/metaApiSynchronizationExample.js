@@ -24,7 +24,7 @@ async function testMetaApiSynchronization() {
       });
       await profile.uploadFile('servers.dat', serverDatFile);
     }
-    if (profile && profile.statue === 'new') {
+    if (profile && profile.status === 'new') {
       console.log('Uploading servers.dat');
       await profile.uploadFile('servers.dat', serverDatFile);
     } else {
