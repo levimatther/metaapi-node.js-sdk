@@ -24,7 +24,7 @@ async function testMetaApiSynchronization() {
       });
       await profile.uploadFile('broker.srv', brokerSrvFile);
     }
-    if (profile && profile.statue === 'new') {
+    if (profile && profile.status === 'new') {
       console.log('Uploading broker.srv');
       await profile.uploadFile('broker.srv', brokerSrvFile);
     } else {
