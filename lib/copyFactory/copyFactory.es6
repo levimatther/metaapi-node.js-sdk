@@ -28,7 +28,7 @@ export default class CopyFactory {
    * @returns {ConfigurationClient} configuration API
    */
   get configurationApi() {
-    return this._configurationApi;
+    return this._configurationClient;
   }
 
   /**
@@ -36,7 +36,7 @@ export default class CopyFactory {
    * @return {HistoryClient} history API
    */
   get historyApi() {
-    return this._historyApi;
+    return this._historyClient;
   }
 
   /**
@@ -44,7 +44,7 @@ export default class CopyFactory {
    * @return {TradingClient} trading API
    */
   get tradingApi() {
-    return this._tradingApi;
+    return this._tradingClient;
   }
 
 }
