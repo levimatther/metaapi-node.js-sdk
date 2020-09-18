@@ -6,7 +6,6 @@ import ProvisioningProfileApi from './provisioningProfileApi';
 import MetaApiWebsocketClient from '../clients/metaApi/metaApiWebsocket.client';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
-import HttpClientWithCookies from '../clients/httpClientWithCookies';
 import ConnectionRegistry from './connectionRegistry';
 
 /**
@@ -23,8 +22,7 @@ export default class MetaApi {
    */
   constructor(token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60, connectTimeout = 60) {
     let httpClient = new HttpClient(requestTimeout);
-    let httClientWithCookies = new HttpClientWithCookies();
-    this._metaApiWebsocketClient = new MetaApiWebsocketClient(httClientWithCookies, token, domain, requestTimeout,
+    this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, domain, requestTimeout,
       connectTimeout);
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient);

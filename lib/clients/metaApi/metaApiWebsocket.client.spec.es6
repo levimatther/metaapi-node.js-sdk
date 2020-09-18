@@ -9,10 +9,6 @@ import {InternalError} from '../errorHandler';
 
 const metaapiApiUrl = 'https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai';
 
-const httpClientWithCookies = {
-  request: async () => ({body: '', cookies: [{key: 'route'}]})
-};
-
 /**
  * @test {MetaApiWebsocketClient}
  */
@@ -24,7 +20,7 @@ describe('MetaApiWebsocketClient', () => {
   let sandbox;
 
   before(() => {
-    client = new MetaApiWebsocketClient(httpClientWithCookies, 'token', 'project-stock.agiliumlabs.cloud', 1.5);
+    client = new MetaApiWebsocketClient('token', 'project-stock.agiliumlabs.cloud', 1.5);
     client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });

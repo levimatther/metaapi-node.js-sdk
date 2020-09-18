@@ -1,3 +1,6 @@
+7.1.3
+  - Changes to load balancing algorithm
+
 7.1.2
   - fix CopyFactory getter undefined values
   - fix typos in the examples
