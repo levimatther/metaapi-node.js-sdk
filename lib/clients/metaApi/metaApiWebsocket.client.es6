@@ -15,18 +15,16 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Constructs MetaApi websocket API client instance
-   * @param {HttpClientWithCookies} httpClientWithCookies HTTP client with cookies
    * @param {String} token authorization token
    * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
    * @param {Number} requestTimeout timeout for socket requests in seconds
    * @param {Number} connectTimeout timeout for connecting to server in seconds
    */
-  constructor(httpClientWithCookies, token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60,
+  constructor( token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60,
     connectTimeout = 60) {
     this._url = `https://mt-client-api-v1.${domain}`;
     this._requestTimeout = requestTimeout * 1000;
     this._connectTimeout = connectTimeout * 1000;
-    this._httpClientWithCookies = httpClientWithCookies;
     this._token = token;
     this._requestResolves = {};
     this._synchronizationListeners = {};
@@ -56,13 +54,6 @@ export default class MetaApiWebsocketClient {
         reject = rej;
       });
 
-      // get cookies
-      const response = await this._httpClientWithCookies.request({
-        url: `${this._url}/health`,
-        method: 'GET'
-      });
-      const routeCookie = response.cookies.find(c => c.key === 'route');
-
       let url = `${this._url}?auth-token=${this._token}`;
       this._socket = socketIO(url, {
         path: '/ws',
@@ -72,7 +63,7 @@ export default class MetaApiWebsocketClient {
         reconnectionAttempts: Infinity,
         timeout: this._connectTimeout,
         extraHeaders: {
-          Cookie: routeCookie
+          'Client-id': Math.random()
         }
       });
       this._socket.on('connect', async () => {
