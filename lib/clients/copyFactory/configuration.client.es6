@@ -187,7 +187,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * receive no sms notifications
    * @property {Number} [minTradeAmount] optional value of minimal trade size allowed, expressed in amount of account
    * currency. Can be useful if your broker charges a fixed fee per transaction so that you can skip small trades with
-   * high broker commission rates. Default is 1000
+   * high broker commission rates. Default is 100
    * @property {String} [closeOnly] optional setting wich instructs the application not to open new positions. by-symbol
    * means that it is still allowed to open new positions with a symbol equal to the symbol of an existing strategy
    * position (can be used to gracefuly exit strategies trading in netting mode or placing a series of related trades

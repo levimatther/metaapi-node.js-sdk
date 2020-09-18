@@ -1,3 +1,6 @@
+7.1.4
+  - Adjust CopyFactory defaults
+
 7.1.3
   - Changes to load balancing algorithm
 
