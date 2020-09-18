@@ -136,9 +136,9 @@ describe('ConfigurationClient', () => {
   });
 
   /**
-   * @test {ConfigurationClient#deleteAccount}
+   * @test {ConfigurationClient#removeAccount}
    */
-  it('should delete CopyFactory account via API', async () => {
+  it('should remove CopyFactory account via API', async () => {
     httpClient.requestFn = (opts) => {
       return Promise
         .resolve()
@@ -156,19 +156,19 @@ describe('ConfigurationClient', () => {
           return;
         });
     };
-    await copyFactoryClient.deleteAccount('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
+    await copyFactoryClient.removeAccount('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
   });
 
   /**
-   * @test {ConfigurationClient#deleteAccount}
+   * @test {ConfigurationClient#removeAccount}
    */
-  it('should not delete CopyFactory account from via with account token', async () => {
+  it('should not remove CopyFactory account from via with account token', async () => {
     copyFactoryClient = new ConfigurationClient(httpClient, 'token');
     try {
-      await copyFactoryClient.deleteAccount('id');
+      await copyFactoryClient.removeAccount('id');
     } catch (error) {
       error.message.should.equal(
-        'You can not invoke deleteAccount method, because you have connected with account access token. ' +
+        'You can not invoke removeAccount method, because you have connected with account access token. ' +
         'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
@@ -337,9 +337,9 @@ describe('ConfigurationClient', () => {
   });
 
   /**
-   * @test {ConfigurationClient#deleteStrategy}
+   * @test {ConfigurationClient#removeStrategy}
    */
-  it('should delete strategy via API', async () => {
+  it('should remove strategy via API', async () => {
     httpClient.requestFn = (opts) => {
       return Promise
         .resolve()
@@ -356,19 +356,19 @@ describe('ConfigurationClient', () => {
           return;
         });
     };
-    await copyFactoryClient.deleteStrategy('ABCD');
+    await copyFactoryClient.removeStrategy('ABCD');
   });
 
   /**
-   * @test {ConfigurationClient#deleteStrategy}
+   * @test {ConfigurationClient#removeStrategy}
    */
-  it('should not delete strategy from via with account token', async () => {
+  it('should not remove strategy from via with account token', async () => {
     copyFactoryClient = new ConfigurationClient(httpClient, 'token');
     try {
-      await copyFactoryClient.deleteStrategy('ABCD');
+      await copyFactoryClient.removeStrategy('ABCD');
     } catch (error) {
       error.message.should.equal(
-        'You can not invoke deleteStrategy method, because you have connected with account access token. ' +
+        'You can not invoke removeStrategy method, because you have connected with account access token. ' +
         'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }

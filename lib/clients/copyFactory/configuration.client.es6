@@ -224,11 +224,11 @@ export default class ConfigurationClient extends MetaApiClient {
    * Deletes a CopyFactory trade copying account. See
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/delete_users_current_configuration_accounts_accountId
    * @param {String} id copy trading account id
-   * @return {Promise} promise resolving when account is deleted
+   * @return {Promise} promise resolving when account is removed
    */
-  deleteAccount(id) {
+  removeAccount(id) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('deleteAccount');
+      return this._handleNoAccessError('removeAccount');
     }
     const opts = {
       url: `${this._host}/users/current/configuration/accounts/${id}`,
@@ -363,11 +363,11 @@ export default class ConfigurationClient extends MetaApiClient {
    * Deletes a CopyFactory strategy. See
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/delete_users_current_configuration_strategies_strategyId
    * @param {String} id strategy id
-   * @return {Promise} promise resolving when strategy is deleted
+   * @return {Promise} promise resolving when strategy is removed
    */
-  deleteStrategy(id) {
+  removeStrategy(id) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('deleteStrategy');
+      return this._handleNoAccessError('removeStrategy');
     }
     const opts = {
       url: `${this._host}/users/current/configuration/strategies/${id}`,
