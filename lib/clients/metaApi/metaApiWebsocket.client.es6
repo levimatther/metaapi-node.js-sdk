@@ -199,6 +199,7 @@ export default class MetaApiWebsocketClient {
    * @property {String} position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,
    * POSITION_REASON_MOBILE, POSITION_REASON_WEB, POSITION_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
    */
 
   /**
@@ -270,6 +271,7 @@ export default class MetaApiWebsocketClient {
    * ORDER_TIME_SPECIFIED, ORDER_TIME_SPECIFIED_DAY. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_time
    * @property {Date} expirationTime optional order expiration time
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
    */
 
   /**
@@ -397,6 +399,7 @@ export default class MetaApiWebsocketClient {
    * DEAL_REASON_WEB, DEAL_REASON_EXPERT, DEAL_REASON_SL, DEAL_REASON_TP, DEAL_REASON_SO, DEAL_REASON_ROLLOVER,
    * DEAL_REASON_VMARGIN, DEAL_REASON_SPLIT, DEAL_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_reason.
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
    */
 
   /**
