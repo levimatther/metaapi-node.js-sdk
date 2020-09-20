@@ -719,6 +719,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} ask ask price
    * @property {Number} profitTickValue tick value for a profitable position
    * @property {Number} lossTickValue tick value for a losing position
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
    */
 
   // eslint-disable-next-line complexity,max-statements
