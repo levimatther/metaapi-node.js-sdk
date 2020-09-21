@@ -1,3 +1,6 @@
+7.1.5
+  - Fix CopyFactory domain default value
+
 7.1.4
   - Adjust CopyFactory defaults
 
