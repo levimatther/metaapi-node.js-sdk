@@ -16,7 +16,7 @@ export default class HistoryClient extends MetaApiClient {
    * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
    */
   constructor(httpClient, token, domain = 'agiliumtrade.agiliumtrade.ai') {
-    super(httpClient, token, domain = 'agiliumtrade.agiliumtrade.ai');
+    super(httpClient, token, domain);
     this._host = `https://trading-api-v1.${domain}`;
   }
 
