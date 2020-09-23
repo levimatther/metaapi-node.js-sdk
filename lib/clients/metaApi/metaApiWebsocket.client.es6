@@ -177,6 +177,7 @@ export default class MetaApiWebsocketClient {
    * @property {String} symbol position symbol
    * @property {Number} magic position magic number, identifies the EA which opened the position
    * @property {Date} time time position was opened at
+   * @property {String} brokerTime time position was opened at, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    * @property {Date} updateTime last position modification time
    * @property {Number} openPrice position open price
    * @property {Number} currentPrice current price
@@ -238,28 +239,31 @@ export default class MetaApiWebsocketClient {
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_state
    * @property {Number} magic order magic number, identifies the EA which created the order
    * @property {Date} time time order was created at
-   * @property {Date} doneTime optional time order was executed or canceled at. Will be specified for
+   * @property {String} brokerTime time time order was created at, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   * @property {Date} [doneTime] time order was executed or canceled at. Will be specified for
    * completed orders only
+   * @property {String} [doneBrokerTime] time order was executed or canceled at, in broker timezone,
+   * YYYY-MM-DD HH:mm:ss.SSS format. Will be specified for completed orders only
    * @property {String} symbol order symbol
    * @property {Number} openPrice order open price (market price for market orders, limit price for limit orders or stop
    * price for stop orders)
    * @property {Number} currentPrice current price
-   * @property {Number} stopLoss optional order stop loss price
-   * @property {Number} takeProfit optional order take profit price
+   * @property {Number} [stopLoss] order stop loss price
+   * @property {Number} [takeProfit] order take profit price
    * @property {Number} volume order requested quantity
    * @property {Number} currentVolume order remaining quantity, i.e. requested quantity - filled quantity
    * @property {String} positionId order position id. Present only if the order has a position attached to it
-   * @property {String} comment optional order comment. The sum of the line lengths of the comment and the clientId
+   * @property {String} [comment] order comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} originalComment optional order original comment (present if possible to restore original comment
    * from history)
-   * @property {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
+   * @property {String} [clientId] client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} platform platform id (mt4 or mt5)
-   * @property {Boolean} updatePending optional flag indicating that order client id and original comment was not
+   * @property {Boolean} [updatePending] flag indicating that order client id and original comment was not
    * identified yet and will be updated in a future synchronization packet
    * @property {String} reason order opening reason. One of ORDER_REASON_CLIENT, ORDER_REASON_MOBILE, ORDER_REASON_WEB,
    * ORDER_REASON_EXPERT, ORDER_REASON_SL, ORDER_REASON_TP, ORDER_REASON_SO, ORDER_REASON_UNKNOWN. See
@@ -373,27 +377,28 @@ export default class MetaApiWebsocketClient {
    * DEAL_TAX). See https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_type
    * @property {String} entryType deal entry type (one of DEAL_ENTRY_IN, DEAL_ENTRY_OUT, DEAL_ENTRY_INOUT,
    * DEAL_ENTRY_OUT_BY). See https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_entry
-   * @property {String} symbol optional symbol deal relates to
-   * @property {Number} magic optional deal magic number, identifies the EA which initiated the deal
+   * @property {String} [symbol] symbol deal relates to
+   * @property {Number} [magic] deal magic number, identifies the EA which initiated the deal
    * @property {Date} time time the deal was conducted at
-   * @property {Number} volume optional deal volume
-   * @property {Number} price optional, the price the deal was conducted at
-   * @property {Number} commission optional deal commission
-   * @property {Number} swap optional deal swap
+   * @property {String} brokerTime time time the deal was conducted at, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   * @property {Number} [volume] deal volume
+   * @property {Number} [price] the price the deal was conducted at
+   * @property {Number} [commission] deal commission
+   * @property {Number} [swap] deal swap
    * @property {Number} profit deal profit
-   * @property {String} positionId optional id of position the deal relates to
-   * @property {String} orderId optional id of order the deal relates to
-   * @property {String} comment optional deal comment. The sum of the line lengths of the comment and the clientId
+   * @property {String} [positionId] id of position the deal relates to
+   * @property {String} [orderId] id of order the deal relates to
+   * @property {String} [comment] deal comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @property {String} originalComment optional deal original comment (present if possible to restore original comment
+   * @property {String} [originalComment] deal original comment (present if possible to restore original comment
    * from history)
-   * @property {String} clientId optional client-assigned id. The id value can be assigned when submitting a trade and
+   * @property {String} [clientId] client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} platform platform id (mt4 or mt5)
-   * @property {Boolean} updatePending optional flag indicating that deal client id and original comment was not
+   * @property {Boolean} [updatePending] flag indicating that deal client id and original comment was not
    * identified yet and will be updated in a future synchronization packet
    * @property {String} [reason] optional deal execution reason. One of DEAL_REASON_CLIENT, DEAL_REASON_MOBILE,
    * DEAL_REASON_WEB, DEAL_REASON_EXPERT, DEAL_REASON_SL, DEAL_REASON_TP, DEAL_REASON_SO, DEAL_REASON_ROLLOVER,
@@ -720,6 +725,8 @@ export default class MetaApiWebsocketClient {
    * @property {Number} profitTickValue tick value for a profitable position
    * @property {Number} lossTickValue tick value for a losing position
    * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @property {Date} time quote time, in ISO format
+   * @property {String} brokerTime time quote time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
 
   // eslint-disable-next-line complexity,max-statements

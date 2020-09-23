@@ -1,5 +1,7 @@
 7.1.5
   - Fix CopyFactory domain default value
+  - Added time fields in broker timezone to objects
+  - Added time fields to MetatraderSymbolPrice model
 
 7.1.4
   - Adjust CopyFactory defaults
