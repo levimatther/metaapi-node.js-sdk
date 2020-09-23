@@ -683,7 +683,7 @@ export default class MetaApiWebsocketClient {
     // eslint-disable-next-line guard-for-in
     for (let field in packet) {
       let value = packet[field];
-      if (typeof value === 'string' && field.match(/time|Time/)) {
+      if (typeof value === 'string' && field.match(/time|Time/) && !field.match(/brokerTime|BrokerTime/)) {
         packet[field] = new Date(value);
       }
       if (Array.isArray(value)) {
