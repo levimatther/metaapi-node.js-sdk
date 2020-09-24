@@ -1,3 +1,6 @@
+7.3.0
+  - added latency and slippage metrics to CopyFactory trade copying API
+
 7.2.0
   - Fix CopyFactory domain default value
   - Added time fields in broker timezone to objects
