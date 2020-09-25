@@ -380,4 +380,37 @@ export default class ConfigurationClient extends MetaApiClient {
     return this._httpClient.request(opts);
   }
 
+  /**
+   * Resynchronization task
+   * @typedef {Object} ResynchronizationTask
+   * @property {String} _id task unique id
+   * @property {String} type task type. One of CREATE_ACCOUNT, CREATE_STRATEGY, UPDATE_STRATEGY, REMOVE_STRATEGY
+   * @property {Date} createdAt the time task was created at
+   * @property {String} status task status. One of PLANNED, EXECUTING, SYNCHRONIZING
+   */
+  
+  /**
+   * Returns list of active resynchronization tasks for a specified connection. See
+   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/
+   * get_users_current_configuration_connections_connectionId_active_resynchronization_tasks
+   * @param {String} connectionId MetaApi account id to return tasks for
+   * @return {Promise<ResynchronizationTask>} promise resolving with list of active resynchronization tasks
+   */
+  async getActiveResynchronizationTasks(connectionId) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('getActiveResynchronizationTasks');
+    }
+    const opts = {
+      url: `${this._host}/users/current/configuration/connections/${connectionId}/active-resynchronization-tasks`,
+      method: 'GET',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    let tasks = await this._httpClient.request(opts);
+    tasks.forEach(t => t.createdAt = new Date(t.createdAt));
+    return tasks;
+  }
+
 }

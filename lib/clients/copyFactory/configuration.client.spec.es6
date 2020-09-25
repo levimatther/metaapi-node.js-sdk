@@ -2,6 +2,7 @@
 
 import {HttpClientMock} from '../httpClient';
 import ConfigurationClient from './configuration.client';
+import should from 'should';
 
 const copyFactoryApiUrl = 'https://trading-api-v1.agiliumtrade.agiliumtrade.ai';
 
@@ -370,6 +371,52 @@ describe('ConfigurationClient', () => {
       error.message.should.equal(
         'You can not invoke removeStrategy method, because you have connected with account access token. ' +
         'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {ConfigurationClient#getActiveResynchronizationTasks}
+   */
+  it('should retrieve active resynchronization tasks via API', async () => {
+    let expected = [{
+      _id: 'ABCD',
+      type: 'CREATE_STRATEGY',
+      createdAt: '2020-08-25T00:00:00.000Z',
+      status: 'EXECUTING'
+    }];
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${copyFactoryApiUrl}/users/current/configuration/connections/` 
+              + 'accountId/active-resynchronization-tasks',
+            method: 'GET',
+            headers: {
+              'auth-token': 'header.payload.sign'
+            },
+            json: true,
+            timeout: 60000
+          });
+          return expected;
+        });
+    };
+    let tasks = await copyFactoryClient.getActiveResynchronizationTasks('accountId');
+    tasks.should.equal(expected);
+  });
+
+  /**
+   * @test {ConfigurationClient#getActiveResynchronizationTasks}
+   */
+  it('should not retrieve active resynchronization tasks from API with account token', async () => {
+    copyFactoryClient = new ConfigurationClient(httpClient, 'token');
+    try {
+      await copyFactoryClient.getActiveResynchronizationTasks('accountId');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke getActiveResynchronizationTasks method, because you have connected with account ' +
+        'access token. Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
   });
