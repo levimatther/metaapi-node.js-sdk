@@ -410,7 +410,7 @@ await configurationApi.updateAccount(masterAccountId, {
 
 // create a strategy being copied
 let strategyId = await configurationApi.generateStrategyId();
-await configurationApi.updateStrategy(strategyId, {
+await configurationApi.updateStrategy(strategyId.id, {
   name: 'Test strategy',
   description: 'Some useful description about your strategy',
   positionLifecycle: 'hedging',
@@ -473,8 +473,8 @@ console.log(await historyApi.getStrategiesSubscribed());
 console.log(await historyApi.getStrategiesSubscribedTransactions(new Date('2020-08-01'), new Date('2020-09-01'));
 ```
 
-#### Resynchronizing slave accounts to maters
-Sometimes trades can not open in time due to broker errors or trading session time discrepancy.
+#### Resynchronizing slave accounts to masters
+There is a configurable time limit during which the trades can be opened. Sometimes trades can not open in time due to broker errors or trading session time discrepancy.
 You can resynchronize a slave account to place such late trades. Please note that positions which were
 closed manually on a slave account will also be reopened during resynchronization.
 
