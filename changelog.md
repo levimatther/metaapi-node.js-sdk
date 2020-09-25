@@ -1,6 +1,7 @@
 7.3.0
   - added latency and slippage metrics to CopyFactory trade copying API
   - added CopyFactory configuration client method retrieving active resynchronization tasks
+  - improved description of CopyFactory account resynchronizing in readme
 
 7.2.0
   - Fix CopyFactory domain default value
