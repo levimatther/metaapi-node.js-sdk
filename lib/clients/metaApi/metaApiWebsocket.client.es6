@@ -53,6 +53,7 @@ export default class MetaApiWebsocketClient {
         resolve = res;
         reject = rej;
       });
+      this._connectPromise = result;
 
       let url = `${this._url}?auth-token=${this._token}`;
       this._socket = socketIO(url, {
@@ -645,6 +646,8 @@ export default class MetaApiWebsocketClient {
   async _rpcRequest(accountId, request) {
     if (!this._connected) {
       await this.connect();
+    } else {
+      await this._connectPromise;
     }
     let requestId = request.requestId || randomstring.generate(32);
     let result = Promise.race([

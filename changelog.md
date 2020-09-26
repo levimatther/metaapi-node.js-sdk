@@ -2,6 +2,7 @@
   - added latency and slippage metrics to CopyFactory trade copying API
   - added CopyFactory configuration client method retrieving active resynchronization tasks
   - improved description of CopyFactory account resynchronizing in readme
+  - made it possible to use MetaApi class in interaction tests
 
 7.2.0
   - Fix CopyFactory domain default value
