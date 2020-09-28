@@ -1,3 +1,6 @@
+7.3.1
+  - renamed tradeCopyingSlippageInPercentPoints -> tradeCopyingSlippageInBasisPoints in CopyFactory history API
+
 7.3.0
   - added latency and slippage metrics to CopyFactory trade copying API
   - added CopyFactory configuration client method retrieving active resynchronization tasks

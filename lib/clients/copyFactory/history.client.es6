@@ -152,8 +152,8 @@ export default class HistoryClient extends MetaApiClient {
    * @typedef {Object} CopyFactoryTransactionMetrics
    * @property {Number} [tradeCopyingLatency] trade copying latency, measured in milliseconds based on transaction time
    * provided by broker
-   * @property {Number} [tradeCopyingSlippageInPercentPoints] trade copying slippage, measured in percent points based
-   * on transaction price provided by broker
+   * @property {Number} [tradeCopyingSlippageInBasisPoints] trade copying slippage, measured in basis points (0.01
+   * percent) based on transaction price provided by broker
    * @property {Number} [tradeCopyingSlippageInAccountCurrency] trade copying slippage, measured in account currency
    * based on transaction price provided by broker
    * @property {Number} [mtAndBrokerSignalLatency] trade signal latency introduced by broker and MT platform, measured
