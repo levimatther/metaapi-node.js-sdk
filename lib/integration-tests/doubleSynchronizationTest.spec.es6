@@ -66,8 +66,8 @@ describe('MT5 double synchronization test', () => {
       await account.undeploy();
       await accountCopy.undeploy();
       api._metaApiWebsocketClient.removeAllListeners();
-      JSON.parse(await fs.readFile(`./.metaapi/${account.id}-deals.bin`));
-      JSON.parse(await fs.readFile(`./.metaapi/${account.id}-historyOrders.bin`));
+      JSON.parse(await fs.readFile(`./.metaapi/${account.id}-MetaApi-deals.bin`));
+      JSON.parse(await fs.readFile(`./.metaapi/${account.id}-MetaApi-historyOrders.bin`));
     }
   });
 });
