@@ -62,7 +62,8 @@ describe('MetaApiWebsocketClient', () => {
       marginLevel: 3967.58283542
     };
     server.on('request', data => {
-      if (data.type === 'getAccountInformation' && data.accountId === 'accountId') {
+      if (data.type === 'getAccountInformation' && data.accountId === 'accountId' &&
+        data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId,
           accountInformation
@@ -97,7 +98,7 @@ describe('MetaApiWebsocketClient', () => {
       realizedProfit: -6.536993168992922e-13
     }];
     server.on('request', data => {
-      if (data.type === 'getPositions' && data.accountId === 'accountId') {
+      if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, positions});
       }
     });
@@ -129,7 +130,8 @@ describe('MetaApiWebsocketClient', () => {
       realizedProfit: -6.536993168992922e-13
     };
     server.on('request', data => {
-      if (data.type === 'getPosition' && data.accountId === 'accountId' && data.positionId === '46214692') {
+      if (data.type === 'getPosition' && data.accountId === 'accountId' && data.positionId === '46214692' &&
+        data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, position});
       }
     });
@@ -156,7 +158,7 @@ describe('MetaApiWebsocketClient', () => {
       comment: 'COMMENT2'
     }];
     server.on('request', data => {
-      if (data.type === 'getOrders' && data.accountId === 'accountId') {
+      if (data.type === 'getOrders' && data.accountId === 'accountId' && data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, orders});
       }
     });
@@ -183,7 +185,8 @@ describe('MetaApiWebsocketClient', () => {
       comment: 'COMMENT2'
     };
     server.on('request', data => {
-      if (data.type === 'getOrder' && data.accountId === 'accountId' && data.orderId === '46871284') {
+      if (data.type === 'getOrder' && data.accountId === 'accountId' && data.orderId === '46871284' &&
+        data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, order});
       }
     });
@@ -425,7 +428,7 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       data.trade.should.match(trade);
-      if (data.type === 'trade' && data.accountId === 'accountId') {
+      if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
       }
     });
@@ -450,7 +453,7 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       data.trade.should.match(trade);
-      if (data.type === 'trade' && data.accountId === 'accountId') {
+      if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
       }
     });
@@ -507,7 +510,7 @@ describe('MetaApiWebsocketClient', () => {
   it('should reconnect to MetaTrader terminal', async () => {
     let requestReceived = false;
     server.on('request', data => {
-      if (data.type === 'reconnect' && data.accountId === 'accountId') {
+      if (data.type === 'reconnect' && data.accountId === 'accountId' && data.application === 'application') {
         requestReceived = true;
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
       }
@@ -528,7 +531,8 @@ describe('MetaApiWebsocketClient', () => {
       volumeStep: 0.01
     };
     server.on('request', data => {
-      if (data.type === 'getSymbolSpecification' && data.accountId === 'accountId' && data.symbol === 'AUDNZD') {
+      if (data.type === 'getSymbolSpecification' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
+        data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId,
           specification
@@ -551,7 +555,8 @@ describe('MetaApiWebsocketClient', () => {
       lossTickValue: 0.59736
     };
     server.on('request', data => {
-      if (data.type === 'getSymbolPrice' && data.accountId === 'accountId' && data.symbol === 'AUDNZD') {
+      if (data.type === 'getSymbolPrice' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
+        data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, price});
       }
     });
@@ -1015,7 +1020,8 @@ describe('MetaApiWebsocketClient', () => {
     it('should subscribe to market data with MetaTrader terminal', async () => {
       let requestReceived = false;
       server.on('request', data => {
-        if (data.type === 'subscribeToMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD') {
+        if (data.type === 'subscribeToMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
+          data.application === 'application') {
           requestReceived = true;
           server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         }

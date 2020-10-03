@@ -320,8 +320,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByTicket(accountId, ticket) {
-    let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByTicket', ticket,
-      application: this._application});
+    let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByTicket', ticket});
     return {
       historyOrders: response.historyOrders,
       synchronizing: response.synchronizing
@@ -336,8 +335,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByPosition', positionId,
-      application: this._application});
+    let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByPosition', positionId});
     return {
       historyOrders: response.historyOrders,
       synchronizing: response.synchronizing
@@ -356,7 +354,7 @@ export default class MetaApiWebsocketClient {
    */
   async getHistoryOrdersByTimeRange(accountId, startTime, endTime, offset = 0, limit = 1000) {
     let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByTimeRange', startTime, endTime, offset,
-      limit, application: this._application});
+      limit});
     return {
       historyOrders: response.historyOrders,
       synchronizing: response.synchronizing
@@ -420,8 +418,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByTicket(accountId, ticket) {
-    let response = await this._rpcRequest(accountId, {type: 'getDealsByTicket', ticket,
-      application: this._application});
+    let response = await this._rpcRequest(accountId, {type: 'getDealsByTicket', ticket});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -436,8 +433,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {type: 'getDealsByPosition', positionId,
-      application: this._application});
+    let response = await this._rpcRequest(accountId, {type: 'getDealsByPosition', positionId});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -455,8 +451,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByTimeRange(accountId, startTime, endTime, offset = 0, limit = 1000) {
-    let response = await this._rpcRequest(accountId, {type: 'getDealsByTimeRange', startTime, endTime, offset, limit,
-      application: this._application});
+    let response = await this._rpcRequest(accountId, {type: 'getDealsByTimeRange', startTime, endTime, offset, limit});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -470,7 +465,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory(accountId) {
-    return this._rpcRequest(accountId, {type: 'removeHistory', application: this._application});
+    return this._rpcRequest(accountId, {type: 'removeHistory'});
   }
 
   /**
@@ -517,7 +512,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when subscription started
    */
   subscribe(accountId) {
-    this._rpcRequest(accountId, {type: 'subscribe', application: this._application}).catch((err) => {
+    this._rpcRequest(accountId, {type: 'subscribe'}).catch((err) => {
       console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
         'subscribe response (this usually does not mean an error)' + err);
     });
@@ -545,7 +540,7 @@ export default class MetaApiWebsocketClient {
    */
   synchronize(accountId, synchronizationId, startingHistoryOrderTime, startingDealTime) {
     return this._rpcRequest(accountId, {requestId: synchronizationId, type: 'synchronize',
-      startingHistoryOrderTime, startingDealTime, application: this._application});
+      startingHistoryOrderTime, startingDealTime});
   }
 
   /**
@@ -663,6 +658,7 @@ export default class MetaApiWebsocketClient {
       `request ${request.requestId} of type ${request.type} timed out`)), this._requestTimeout))
     ]);
     request.accountId = accountId;
+    request.application = this._application;
     if (!request.requestId) {
       request.requestId = requestId;
     }
