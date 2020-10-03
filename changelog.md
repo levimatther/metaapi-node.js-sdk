@@ -1,3 +1,6 @@
+7.4.0
+  - added application setting to MetaApi class to make it possible to launch several MetaApi applications in parallel on the same account
+
 7.3.1
   - renamed tradeCopyingSlippageInPercentPoints -> tradeCopyingSlippageInBasisPoints in CopyFactory history API
 

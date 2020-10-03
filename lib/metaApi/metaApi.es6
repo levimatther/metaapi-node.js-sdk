@@ -16,13 +16,15 @@ export default class MetaApi {
   /**
    * Constructs MetaApi class instance
    * @param {String} token authorization token
+   * @param {String} application id
    * @param {String} domain domain to connect to
    * @param {Number} requestTimeout timeout for http requests in seconds
    * @param {Number} connectTimeout timeout for connecting to server in seconds
    */
-  constructor(token, domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60, connectTimeout = 60) {
+  constructor(token, application = 'MetaApi', domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60,
+    connectTimeout = 60) {
     let httpClient = new HttpClient(requestTimeout);
-    this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, domain, requestTimeout,
+    this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, application, domain, requestTimeout,
       connectTimeout);
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient);

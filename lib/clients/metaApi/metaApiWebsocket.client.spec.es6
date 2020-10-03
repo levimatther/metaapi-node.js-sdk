@@ -20,7 +20,7 @@ describe('MetaApiWebsocketClient', () => {
   let sandbox;
 
   before(() => {
-    client = new MetaApiWebsocketClient('token', 'project-stock.agiliumlabs.cloud', 1.5);
+    client = new MetaApiWebsocketClient('token', 'application', 'project-stock.agiliumlabs.cloud', 1.5);
     client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });
@@ -211,7 +211,8 @@ describe('MetaApiWebsocketClient', () => {
       volume: 0.07
     }];
     server.on('request', data => {
-      if (data.type === 'getHistoryOrdersByTicket' && data.accountId === 'accountId' && data.ticket === '46214692') {
+      if (data.type === 'getHistoryOrdersByTicket' && data.accountId === 'accountId' && data.ticket === '46214692' &&
+        data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
           synchronizing: false
@@ -243,7 +244,7 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getHistoryOrdersByPosition' && data.accountId === 'accountId' &&
-        data.positionId === '46214692') {
+        data.positionId === '46214692' && data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
           synchronizing: false
@@ -276,7 +277,7 @@ describe('MetaApiWebsocketClient', () => {
     server.on('request', data => {
       if (data.type === 'getHistoryOrdersByTimeRange' && data.accountId === 'accountId' &&
         data.startTime === '2020-04-15T02:45:00.000Z' && data.endTime === '2020-04-15T02:46:00.000Z' &&
-        data.offset === 1 && data.limit === 100) {
+        data.offset === 1 && data.limit === 100 && data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
           synchronizing: false
@@ -310,7 +311,8 @@ describe('MetaApiWebsocketClient', () => {
       volume: 0.07
     }];
     server.on('request', data => {
-      if (data.type === 'getDealsByTicket' && data.accountId === 'accountId' && data.ticket === '46214692') {
+      if (data.type === 'getDealsByTicket' && data.accountId === 'accountId' && data.ticket === '46214692' &&
+        data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
           synchronizing: false
@@ -343,7 +345,8 @@ describe('MetaApiWebsocketClient', () => {
       volume: 0.07
     }];
     server.on('request', data => {
-      if (data.type === 'getDealsByPosition' && data.accountId === 'accountId' && data.positionId === '46214692') {
+      if (data.type === 'getDealsByPosition' && data.accountId === 'accountId' && data.positionId === '46214692' &&
+        data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
           synchronizing: false
@@ -378,7 +381,7 @@ describe('MetaApiWebsocketClient', () => {
     server.on('request', data => {
       if (data.type === 'getDealsByTimeRange' && data.accountId === 'accountId' &&
         data.startTime === '2020-04-15T02:45:00.000Z' && data.endTime === '2020-04-15T02:46:00.000Z' &&
-        data.offset === 1 && data.limit === 100) {
+        data.offset === 1 && data.limit === 100 && data.application === 'application') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
           synchronizing: false
@@ -396,7 +399,7 @@ describe('MetaApiWebsocketClient', () => {
   it('should remove history from API', async () => {
     let requestReceived = false;
     server.on('request', data => {
-      if (data.type === 'removeHistory' && data.accountId === 'accountId') {
+      if (data.type === 'removeHistory' && data.accountId === 'accountId' && data.application === 'application') {
         requestReceived = true;
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
       }
@@ -463,12 +466,12 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
-   * @test {MetaApiWebsocketClient#connect}
+   * @test {MetaApiWebsocketClient#subscribe}
    */
   it('should connect to MetaTrader terminal', async () => {
     let requestReceived = false;
     server.on('request', data => {
-      if (data.type === 'subscribe' && data.accountId === 'accountId') {
+      if (data.type === 'subscribe' && data.accountId === 'accountId' && data.application === 'application') {
         requestReceived = true;
       }
     });
@@ -478,13 +481,13 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
-   * @test {MetaApiWebsocketClient#connect}
+   * @test {MetaApiWebsocketClient#subscribe}
    */
   it('should return error if connect to MetaTrader terminal failed', async () => {
     let requestReceived = false;
     const spy = sinon.spy(console, 'log');
     server.on('request', data => {
-      if (data.type === 'subscribe' && data.accountId === 'accountId') {
+      if (data.type === 'subscribe' && data.accountId === 'accountId' && data.application === 'application') {
         requestReceived = true;
       }
       server.emit('processingError', {
@@ -716,7 +719,8 @@ describe('MetaApiWebsocketClient', () => {
       server.on('request', data => {
         if (data.type === 'synchronize' && data.accountId === 'accountId' &&
           data.startingHistoryOrderTime === '2020-01-01T00:00:00.000Z' &&
-          data.startingDealTime === '2020-01-02T00:00:00.000Z' && data.requestId === 'synchronizationId') {
+          data.startingDealTime === '2020-01-02T00:00:00.000Z' && data.requestId === 'synchronizationId' &&
+          data.application === 'application') {
           requestReceived = true;
           server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         }
