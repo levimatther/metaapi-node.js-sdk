@@ -12,11 +12,12 @@ module.exports = class HistoryFileManager extends FileManager {
 
   /**
    * Constructs the history file manager instance
+   * @param {String} accountId MetaApi account id
+   * @param {String} application MetaApi application id
+   * @param {HistoryStorage} historyStorage history storage
    */
-  constructor(accountId, historyStorage) {
-    super();
-    this._accountId = accountId;
-    this._historyStorage = historyStorage;
+  constructor(accountId, application, historyStorage) {
+    super(accountId, application, historyStorage);
     this._dealsSize = [];
     this._startNewDealIndex = -1;
     this._historyOrdersSize = [];
@@ -39,11 +40,13 @@ module.exports = class HistoryFileManager extends FileManager {
   async getHistoryFromDisk() {
     const getItemSize = this.getItemSize;
     const accountId = this._accountId;
+    const application = this._application;
     const history = {deals: [], historyOrders: []};
     fs.ensureDir('./.metaapi');
     try {
-      if(await fs.pathExists(`./.metaapi/${accountId}-deals.bin`)) {
-        let deals = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-deals.bin`, 'utf-8')).toString('utf-8'));
+      if(await fs.pathExists(`./.metaapi/${accountId}-${application}-deals.bin`)) {
+        let deals = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-${application}-deals.bin`, 'utf-8'))
+          .toString('utf-8'));
         this._dealsSize = deals.map(deal => getItemSize(deal));
         history.deals = deals.map((deal) => {
           deal.time = new Date(deal.time);
@@ -56,8 +59,8 @@ module.exports = class HistoryFileManager extends FileManager {
       await fs.remove(`./.metaapi/${accountId}-deals.bin`);
     }
     try{
-      if(await fs.pathExists(`./.metaapi/${accountId}-historyOrders.bin`)) {
-        let historyOrders = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-historyOrders.bin`, 
+      if(await fs.pathExists(`./.metaapi/${accountId}-${application}-historyOrders.bin`)) {
+        let historyOrders = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-${application}-historyOrders.bin`,
           'utf-8')).toString('utf-8'));
         this._historyOrdersSize = historyOrders.map(historyOrder => getItemSize(historyOrder));
         history.historyOrders = historyOrders.map((historyOrder) => {
@@ -81,9 +84,10 @@ module.exports = class HistoryFileManager extends FileManager {
     fs.ensureDir('./.metaapi');
     const getItemSize = this.getItemSize;
     const accountId = this._accountId;
+    const application = this._application;
     const historyStorage = this._historyStorage;
     async function replaceRecords(type, startIndex, replaceItems, sizeArray) {
-      const filePath = `./.metaapi/${accountId}-${type}.bin`;
+      const filePath = `./.metaapi/${accountId}-${application}-${type}.bin`;
       let fileSize = (await fs.stat(filePath)).size;
       if(startIndex === 0) {
         await fs.writeFile(filePath, JSON.stringify(replaceItems), 'utf-8');
@@ -102,7 +106,7 @@ module.exports = class HistoryFileManager extends FileManager {
       this._isUpdating = true;
       try {
         if(this._startNewDealIndex !== -1) {
-          const filePath = `./.metaapi/${accountId}-deals.bin`;
+          const filePath = `./.metaapi/${accountId}-${application}-deals.bin`;
           if(!await fs.pathExists(filePath)) {
             const deals = JSON.stringify(historyStorage.deals);
             fs.writeFile(filePath, deals, 'utf-8', (err) => {
@@ -116,7 +120,7 @@ module.exports = class HistoryFileManager extends FileManager {
           this._startNewDealIndex = -1;
         }
         if(this._startNewOrderIndex !== -1) {
-          const filePath = `./.metaapi/${accountId}-historyOrders.bin`;
+          const filePath = `./.metaapi/${accountId}-${application}-historyOrders.bin`;
           if(!await fs.pathExists(filePath)) {
             const historyOrders = JSON.stringify(historyStorage.historyOrders);
             fs.writeFile(filePath, historyOrders, 'utf-8', (err) => {
@@ -142,7 +146,7 @@ module.exports = class HistoryFileManager extends FileManager {
    * Deletes storage files from disk
    */
   async deleteStorageFromDisk(){
-    await fs.remove(`./.metaapi/${this._accountId}-deals.bin`);
-    await fs.remove(`./.metaapi/${this._accountId}-historyOrders.bin`);
+    await fs.remove(`./.metaapi/${this._accountId}-${this._application}-deals.bin`);
+    await fs.remove(`./.metaapi/${this._accountId}-${this._application}-historyOrders.bin`);
   }
 };

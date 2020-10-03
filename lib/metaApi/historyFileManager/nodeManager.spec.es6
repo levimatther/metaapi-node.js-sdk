@@ -10,9 +10,9 @@ const HistoryFileManager = require('./nodeManager');
  */
 async function readHistoryStorageFile() {
   const storage = {deals: [], historyOrders: []};
-  const isDealsExists = fs.pathExistsSync('./.metaapi/accountId-deals.bin');
+  const isDealsExists = fs.pathExistsSync('./.metaapi/accountId-application-deals.bin');
   if(isDealsExists) {
-    let deals = JSON.parse(fs.readFileSync('./.metaapi/accountId-deals.bin', 'utf-8').toString('utf-8'));
+    let deals = JSON.parse(fs.readFileSync('./.metaapi/accountId-application-deals.bin', 'utf-8').toString('utf-8'));
     if(deals.length){
       storage.deals = deals.map((deal) => {
         deal.time = new Date(deal.time);
@@ -20,9 +20,9 @@ async function readHistoryStorageFile() {
       });
     }
   }
-  const isOrdersExists = fs.pathExistsSync('./.metaapi/accountId-historyOrders.bin');
+  const isOrdersExists = fs.pathExistsSync('./.metaapi/accountId-application-historyOrders.bin');
   if(isOrdersExists) {
-    let historyOrders = JSON.parse(fs.readFileSync('./.metaapi/accountId-historyOrders.bin', 
+    let historyOrders = JSON.parse(fs.readFileSync('./.metaapi/accountId-application-historyOrders.bin',
       'utf-8').toString('utf-8'));
     if(historyOrders.length) {
       storage.historyOrders = historyOrders.map((historyOrder) => {
@@ -57,7 +57,7 @@ describe('HistoryFileManager', () => {
 
   beforeEach(async () => {
     storage = {};
-    fileManager = new HistoryFileManager('accountId', storage);
+    fileManager = new HistoryFileManager('accountId', 'application', storage);
     sandbox.stub(fileManager, 'startUpdateJob').returns();
     testDeal = {id:'37863643', type:'DEAL_TYPE_BALANCE', magic:0, time: new Date(100), commission:0, 
       swap:0, profit:10000, platform:'mt5', comment:'Demo deposit 1'};
@@ -82,8 +82,8 @@ describe('HistoryFileManager', () => {
 
   afterEach(() => {
     sandbox.restore();
-    fs.removeSync('./.metaapi/accountId-deals.bin');
-    fs.removeSync('./.metaapi/accountId-historyOrders.bin');
+    fs.removeSync('./.metaapi/accountId-application-deals.bin');
+    fs.removeSync('./.metaapi/accountId-application-historyOrders.bin');
   });
   
   /**
@@ -113,9 +113,9 @@ describe('HistoryFileManager', () => {
    * @test {HistoryFileManager#getHistoryFromDisk}
    */
   it('should read history from file', async () => {
-    fs.writeFileSync('./.metaapi/accountId-deals.bin', JSON.stringify([testDeal]), 
+    fs.writeFileSync('./.metaapi/accountId-application-deals.bin', JSON.stringify([testDeal]),
       'utf-8');
-    fs.writeFileSync('./.metaapi/accountId-historyOrders.bin', JSON.stringify([testOrder]), 
+    fs.writeFileSync('./.metaapi/accountId-application-historyOrders.bin', JSON.stringify([testOrder]),
       'utf-8');
     const history = await fileManager.getHistoryFromDisk();
     await new Promise(res => setTimeout(res, 50));
@@ -219,20 +219,20 @@ describe('HistoryFileManager', () => {
       fileManager.updateDiskStorage(),
       fileManager.updateDiskStorage()
     ]);
-    JSON.parse(await fs.readFile('./.metaapi/accountId-historyOrders.bin'));
+    JSON.parse(await fs.readFile('./.metaapi/accountId-application-historyOrders.bin'));
   });
 
   /**
    * @test {HistoryFileManager#deleteStorageFromDisk}
    */
   it('should remove history from disk', async () => {
-    await fs.ensureFile('./.metaapi/accountId-historyOrders.bin');
-    await fs.ensureFile('./.metaapi/accountId-deals.bin');
-    fs.pathExistsSync('./.metaapi/accountId-historyOrders.bin').should.equal(true);
-    fs.pathExistsSync('./.metaapi/accountId-deals.bin').should.equal(true);
+    await fs.ensureFile('./.metaapi/accountId-application-historyOrders.bin');
+    await fs.ensureFile('./.metaapi/accountId-application-deals.bin');
+    fs.pathExistsSync('./.metaapi/accountId-application-historyOrders.bin').should.equal(true);
+    fs.pathExistsSync('./.metaapi/accountId-application-deals.bin').should.equal(true);
     await fileManager.deleteStorageFromDisk();
-    fs.pathExistsSync('./.metaapi/accountId-historyOrders.bin').should.equal(false);
-    fs.pathExistsSync('./.metaapi/accountId-deals.bin').should.equal(false);
+    fs.pathExistsSync('./.metaapi/accountId-application-historyOrders.bin').should.equal(false);
+    fs.pathExistsSync('./.metaapi/accountId-application-deals.bin').should.equal(false);
   });
 
 });

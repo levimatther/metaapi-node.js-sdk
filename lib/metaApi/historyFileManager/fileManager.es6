@@ -7,9 +7,13 @@ module.exports = class FileManager {
 
   /**
    * Constructs the history storage
+   * @param {String} accountId MetaApi account id
+   * @param {String} application MetaApi application id
+   * @param {HistoryStorage} historyStorage history storage
    */
-  constructor(accountId, historyStorage) {
+  constructor(accountId, application, historyStorage) {
     this._accountId = accountId;
+    this._application = application;
     this._historyStorage = historyStorage;
     this._startNewDealIndex = -1;
     this._startNewOrderIndex = -1;

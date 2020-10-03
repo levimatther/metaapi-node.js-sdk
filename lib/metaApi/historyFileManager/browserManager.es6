@@ -8,11 +8,12 @@ module.exports = class BrowserHistoryManager extends FileManager {
 
   /**
    * Constructs the history file manager instance
+   * @param {String} accountId MetaApi account id
+   * @param {String} application MetaApi application id
+   * @param {HistoryStorage} historyStorage history storage
    */
-  constructor(accountId, historyStorage) {
-    super();
-    this._accountId = accountId;
-    this._historyStorage = historyStorage;
+  constructor(accountId, application, historyStorage) {
+    super(accountId, application, historyStorage);
   }
 
   /**
@@ -23,9 +24,9 @@ module.exports = class BrowserHistoryManager extends FileManager {
     try {
       const history = {deals: [], historyOrders: []};
       const db = await this._getDatabase();
-      const deals = await db.get('deals', this._accountId);
+      const deals = await db.get('deals', this._accountId + '-' + this._application);
       history.deals = deals && deals.items || [];
-      const historyOrders = await db.get('historyOrders', this._accountId);
+      const historyOrders = await db.get('historyOrders', this._accountId + '-' + this._application);
       history.historyOrders = historyOrders && historyOrders.items || [];
       db.close();
       return history;
@@ -41,8 +42,10 @@ module.exports = class BrowserHistoryManager extends FileManager {
   async updateDiskStorage() {
     try {
       const db = await this._getDatabase();
-      await db.put('deals', {accountId: this._accountId, items: this._historyStorage.deals});
-      await db.put('historyOrders', {accountId: this._accountId, items: this._historyStorage.historyOrders});
+      await db.put('deals', {accountIdAndApplication: this._accountId + '-' + this._application,
+        items: this._historyStorage.deals});
+      await db.put('historyOrders', {accountIdAndApplication: this._accountId + '-' + this._application,
+        items: this._historyStorage.historyOrders});
       db.close();
     } catch(err) {
       console.error(`[${(new Date()).toISOString()}] Failed to save history into ` + 
@@ -56,8 +59,8 @@ module.exports = class BrowserHistoryManager extends FileManager {
   async deleteStorageFromDisk(){
     try {
       const db = await this._getDatabase();
-      await db.delete('deals', this._accountId);
-      await db.delete('historyOrders', this._accountId);
+      await db.delete('deals', this._accountId + '-' + this._application);
+      await db.delete('historyOrders', this._accountId + '-' + this._application);
       db.close();
     } catch(err) {
       console.error(`[${(new Date()).toISOString()}] Failed to delete history from ` + 
@@ -70,7 +73,7 @@ module.exports = class BrowserHistoryManager extends FileManager {
    * @returns {IndexedDB} indexed db
    */
   async _getDatabase() {
-    const keyPath = 'accountId';
+    const keyPath = 'accountIdAndApplication';
     const db = await openDB('metaapi', 1, {
       upgrade(database, oldVersion, newVersion, transaction) {
         if (!database.objectStoreNames.contains('deals')) {

@@ -13,10 +13,10 @@ async function getTestDb() {
   const db = await openDB('metaapi', 1, {
     upgrade(database) {
       if (!database.objectStoreNames.contains('deals')) {
-        database.createObjectStore('deals', {keyPath: 'accountId'});
+        database.createObjectStore('deals', {keyPath: 'accountIdAndApplication'});
       }
       if (!database.objectStoreNames.contains('historyOrders')) {
-        database.createObjectStore('historyOrders', {keyPath: 'accountId'});
+        database.createObjectStore('historyOrders', {keyPath: 'accountIdAndApplication'});
       }
     },
   });
@@ -30,8 +30,8 @@ async function getTestDb() {
 async function readHistoryStorageFile() {
   const history = {deals: [], historyOrders: []};
   const db = await getTestDb();
-  history.deals = await db.get('deals', 'accountId');
-  history.historyOrders = await db.get('historyOrders', 'accountId');
+  history.deals = await db.get('deals', 'accountId-application');
+  history.historyOrders = await db.get('historyOrders', 'accountId-application');
   db.close();
   return history;
 }
@@ -43,8 +43,8 @@ async function readHistoryStorageFile() {
  */
 async function createTestData(deals, historyOrders) {
   const db = await getTestDb();
-  await db.put('deals', {accountId: 'accountId', items: deals});
-  await db.put('historyOrders', {accountId: 'accountId', items: historyOrders}); 
+  await db.put('deals', {accountIdAndApplication: 'accountId-application', items: deals});
+  await db.put('historyOrders', {accountIdAndApplication: 'accountId-application', items: historyOrders});
   db.close();
 }
 
@@ -67,7 +67,7 @@ describe('BrowserHistoryManger', () => {
 
   beforeEach(async () => {
     storage = {};
-    fileManager = new BrowserHistoryManager('accountId', storage);
+    fileManager = new BrowserHistoryManager('accountId', 'application', storage);
     sandbox.stub(fileManager, 'startUpdateJob').returns();
     testDeal = {id:'37863643', type:'DEAL_TYPE_BALANCE', magic:0, time: new Date(100), commission:0, 
       swap:0, profit:10000, platform:'mt5', comment:'Demo deposit 1'};
@@ -204,7 +204,7 @@ describe('BrowserHistoryManger', () => {
       await deleteDB('metaapi');
       const db = await openDB('metaapi', 1, {
         upgrade(database, oldVersion, newVersion, transaction) {
-          database.createObjectStore('wrong', {keyPath: 'accountId'});
+          database.createObjectStore('wrong', {keyPath: 'accountIdAndApplication'});
         },
       });
       db.close();
