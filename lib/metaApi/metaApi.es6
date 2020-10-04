@@ -7,6 +7,7 @@ import MetaApiWebsocketClient from '../clients/metaApi/metaApiWebsocket.client';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
 import ConnectionRegistry from './connectionRegistry';
+import {ValidationError} from '../clients/errorHandler.es6';
 
 /**
  * MetaApi MetaTrader API SDK
@@ -23,6 +24,9 @@ export default class MetaApi {
    */
   constructor(token, application = 'MetaApi', domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60,
     connectTimeout = 60) {
+    if (!application.match(/[a-zA-Z0-9_]+/)) {
+      throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
+    }
     let httpClient = new HttpClient(requestTimeout);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, application, domain, requestTimeout,
       connectTimeout);
