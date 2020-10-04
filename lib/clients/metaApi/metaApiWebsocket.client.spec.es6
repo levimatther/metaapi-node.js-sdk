@@ -412,6 +412,21 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#removeApplication}
+   */
+  it('should remove application from API', async () => {
+    let requestReceived = false;
+    server.on('request', data => {
+      if (data.type === 'removeApplication' && data.accountId === 'accountId' && data.application === 'application') {
+        requestReceived = true;
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+      }
+    });
+    await client.removeApplication('accountId');
+    requestReceived.should.be.true();
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#trade}
    */
   it('should execute a trade via new API version', async () => {

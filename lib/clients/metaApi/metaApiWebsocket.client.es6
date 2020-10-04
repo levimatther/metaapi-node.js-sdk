@@ -459,13 +459,23 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
-   * Clears the order and transaction history of a specified account so that it can be synchronized from scratch (see
-   * https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
+   * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
+   * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
    * @param {String} accountId id of the MetaTrader account to remove history for
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory(accountId) {
     return this._rpcRequest(accountId, {type: 'removeHistory'});
+  }
+
+  /**
+   * Clears the order and transaction history of a specified application and removes the application (see
+   * https://metaapi.cloud/docs/client/websocket/api/removeApplication/).
+   * @param {String} accountId id of the MetaTrader account to remove history and application for
+   * @return {Promise} promise resolving when the history is cleared
+   */
+  removeApplication(accountId) {
+    return this._rpcRequest(accountId, {type: 'removeApplication'});
   }
 
   /**
