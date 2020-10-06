@@ -7,7 +7,7 @@ import MetaApiWebsocketClient from '../clients/metaApi/metaApiWebsocket.client';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
 import ConnectionRegistry from './connectionRegistry';
-import {ValidationError} from '../clients/errorHandler.es6';
+import {ValidationError} from '../clients/errorHandler';
 
 /**
  * MetaApi MetaTrader API SDK
