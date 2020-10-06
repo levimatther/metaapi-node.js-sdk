@@ -11,10 +11,10 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Constructs the in-memory history store instance
    */
-  constructor(accountId) {
+  constructor(accountId, application = 'MetaApi') {
     super();
     this._accountId = accountId;
-    this._fileManager = new HistoryFileManager(accountId, this);
+    this._fileManager = new HistoryFileManager(accountId, application, this);
     this._deals = [];
     this._historyOrders = [];
     this._fileManager.startUpdateJob();

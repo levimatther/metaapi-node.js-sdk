@@ -26,9 +26,10 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._ordersSynchronized = {};
     this._dealsSynchronized = {};
     this._lastSynchronizationId = undefined;
+    this._lastDisconnectedSynchronizationId = undefined;
     this._connectionRegistry = connectionRegistry;
     this._terminalState = new TerminalState();
-    this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id);
+    this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id, connectionRegistry.application);
     this._websocketClient.addSynchronizationListener(account.id, this);
     this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
     this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);
@@ -493,6 +494,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Invoked when connection to MetaTrader terminal terminated
    */
   onDisconnected() {
+    this._lastDisconnectedSynchronizationId = this._lastSynchronizationId;
     this._lastSynchronizationId = undefined;
   }
 
@@ -530,7 +532,6 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async isSynchronized(synchronizationId) {
     synchronizationId = synchronizationId || this._lastSynchronizationId;
-    synchronizationId = synchronizationId || this._lastSynchronizationId;
     if (!!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId]) {
       try {
         let result = await this.getDealsByTimeRange(new Date(), new Date());
@@ -561,7 +562,8 @@ export default class MetaApiConnection extends SynchronizationListener {
     }
     if (!(await this.isSynchronized(synchronizationId))) {
       throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
-        this._account.id + ', synchronization id ' + (synchronizationId || this._lastSynchronizationId));
+        this._account.id + ', synchronization id ' + (synchronizationId || this._lastSynchronizationId || 
+          this._lastDisconnectedSynchronizationId));
     }
   }
 

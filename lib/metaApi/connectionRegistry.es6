@@ -9,8 +9,9 @@ export default class ConnectionRegistry {
    * Constructs a MetaTrader connection registry instance
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
    */
-  constructor(metaApiWebsocketClient) {
+  constructor(metaApiWebsocketClient, application = 'MetaApi') {
     this._metaApiWebsocketClient = metaApiWebsocketClient;
+    this._application = application;
     this._connections = {};
   }
   
@@ -39,5 +40,13 @@ export default class ConnectionRegistry {
     if (this._connections[accountId]) {
       delete this._connections[accountId];
     }
+  }
+
+  /**
+   * Returns application type
+   * @return {String} application type
+   */
+  get application() {
+    return this._application;
   }
 }

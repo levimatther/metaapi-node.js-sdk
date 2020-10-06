@@ -7,7 +7,7 @@ import MetaApiWebsocketClient from '../clients/metaApi/metaApiWebsocket.client';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
 import ConnectionRegistry from './connectionRegistry';
-import {ValidationError} from '../clients/errorHandler.es6';
+import {ValidationError} from '../clients/errorHandler';
 
 /**
  * MetaApi MetaTrader API SDK
@@ -31,7 +31,7 @@ export default class MetaApi {
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, application, domain, requestTimeout,
       connectTimeout);
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
-    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient);
+    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient, this._connectionRegistry);
   }
