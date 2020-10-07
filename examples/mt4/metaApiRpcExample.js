@@ -20,7 +20,9 @@ async function testMetaApiSynchronization() {
       console.log('Creating account profile');
       profile = await api.provisioningProfileApi.createProvisioningProfile({
         name: serverName,
-        version: 4
+        version: 4,
+        brokerTimeZone: 'EET',
+        brokerDSTTimeZone: 'EET'
       });
       await profile.uploadFile('broker.srv', brokerSrvFile);
     }

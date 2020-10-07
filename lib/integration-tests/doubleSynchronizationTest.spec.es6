@@ -43,7 +43,6 @@ describe('MT5 double synchronization test', () => {
           password: password,
           server: serverName,
           provisioningProfileId: profile.id,
-          timeConverter: 'icmarkets',
           application: 'MetaApi',
           magic: 1000
         });

@@ -22,7 +22,9 @@ async function testMetaApiSynchronization() {
       console.log('Creating account profile');
       profile = await api.provisioningProfileApi.createProvisioningProfile({
         name: serverName,
-        version: 5
+        version: 5,
+        brokerTimeZone: 'EET',
+        brokerDSTTimeZone: 'EET'
       });
       await profile.uploadFile('servers.dat', serverDatFile);
     }
@@ -45,7 +47,6 @@ async function testMetaApiSynchronization() {
         password: password,
         server: serverName,
         provisioningProfileId: profile.id,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         magic: 1000
       });

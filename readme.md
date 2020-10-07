@@ -82,7 +82,11 @@ You can manage provisioning profiles here: [https://app.metaapi.cloud/provisioni
 // you should do it before creating an account
 const provisioningProfile = await api.provisioningProfileApi.createProvisioningProfile({
   name: 'My profile',
-  version: 5
+  version: 5,
+  // TODO: description
+  brokerTimeZone: 'EET',
+  // TODO: description
+  brokerDSTTimezone: 'EET'
 });
 // servers.dat file is required for MT5 profile and can be found inside
 // config directory of your MetaTrader terminal data folder. It contains
@@ -125,10 +129,6 @@ const account = await api.metatraderAccountApi.createAccount({
   password: 'qwerty',
   server: 'ICMarketsSC-Demo',
   provisioningProfileId: provisioningProfile.id,
-  //algorithm used to parse your broker timezone. Supported values are
-  // icmarkets for America/New_York DST switch and roboforex for EET
-  // DST switch (the values will be changed soon)
-  timeConverter: 'roboforex',
   application: 'MetaApi',
   magic: 123456,
   quoteStreamingIntervalInSeconds: 2.5 // set to 0 to receive quote per tick

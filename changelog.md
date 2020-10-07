@@ -1,3 +1,6 @@
+8.0.0
+  - breaking change: removed the `timeConverter` field from the account, replaced it with `brokerTimeZone` and `brokerDSTTimezone` fields in the provisioning profile instead
+
 7.4.0
   - added application setting to MetaApi class to make it possible to launch several MetaApi applications in parallel on the same account
 
