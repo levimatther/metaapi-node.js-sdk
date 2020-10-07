@@ -67,7 +67,6 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
@@ -81,7 +80,6 @@ describe('MetatraderAccountApi', () => {
     account.server.should.equal('ICMarketsSC-Demo');
     account.provisioningProfileId.should.equal('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
     account.magic.should.equal(123456);
-    account.timeConverter.should.equal('icmarkets');
     account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
@@ -102,7 +100,6 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
@@ -116,7 +113,6 @@ describe('MetatraderAccountApi', () => {
     account.server.should.equal('ICMarketsSC-Demo');
     account.provisioningProfileId.should.equal('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
     account.magic.should.equal(123456);
-    account.timeConverter.should.equal('icmarkets');
     account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
@@ -138,7 +134,6 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
@@ -152,7 +147,6 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       type: 'cloud',
       accessToken: 'NyV5no9TMffJyUts2FjI80wly0so3rVCz4xOqiDx'
@@ -164,7 +158,6 @@ describe('MetatraderAccountApi', () => {
     account.server.should.equal('ICMarketsSC-Demo');
     account.provisioningProfileId.should.equal('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
     account.magic.should.equal(123456);
-    account.timeConverter.should.equal('icmarkets');
     account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
@@ -187,7 +180,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYING',
@@ -200,7 +192,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',
@@ -227,7 +218,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',
@@ -240,7 +230,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DELETING',
@@ -270,7 +259,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'UNDEPLOYED',
@@ -283,7 +271,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYING',
@@ -311,7 +298,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
@@ -324,7 +310,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'UNDEPLOYING',
@@ -352,7 +337,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
@@ -365,7 +349,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'UNDEPLOYING',
@@ -393,7 +376,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYING',
@@ -409,7 +391,6 @@ describe('MetatraderAccountApi', () => {
           server: 'ICMarketsSC-Demo',
           provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
           magic: 123456,
-          timeConverter: 'icmarkets',
           application: 'MetaApi',
           connectionStatus: 'CONNECTED',
           state: 'DEPLOYED',
@@ -433,7 +414,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYING',
@@ -467,7 +447,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'UNDEPLOYING',
@@ -483,7 +462,6 @@ describe('MetatraderAccountApi', () => {
           server: 'ICMarketsSC-Demo',
           provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
           magic: 123456,
-          timeConverter: 'icmarkets',
           application: 'MetaApi',
           connectionStatus: 'CONNECTED',
           state: 'UNDEPLOYED',
@@ -507,7 +485,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'UNDEPLOYING',
@@ -541,7 +518,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DELETING',
@@ -568,7 +544,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DELETING',
@@ -601,7 +576,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
@@ -617,7 +591,6 @@ describe('MetatraderAccountApi', () => {
           server: 'ICMarketsSC-Demo',
           provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
           magic: 123456,
-          timeConverter: 'icmarkets',
           application: 'MetaApi',
           connectionStatus: 'CONNECTED',
           state: 'DEPLOYED',
@@ -641,7 +614,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
@@ -693,7 +665,6 @@ describe('MetatraderAccountApi', () => {
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',
@@ -707,7 +678,6 @@ describe('MetatraderAccountApi', () => {
         server: 'OtherMarkets-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         connectionStatus: 'CONNECTED',
         state: 'DEPLOYED',

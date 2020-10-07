@@ -48,6 +48,22 @@ export default class ProvisioningProfile {
   }
 
   /**
+   * Returns broker timezone name from Time Zone Database
+   * @return {String} broker timezone name
+   */
+  get brokerTimeZone() {
+    return this._data.brokerTimeZone;
+  }
+
+  /**
+   * Returns broker DST timezone name from Time Zone Database
+   * @return {String} broker DST timezone name
+   */
+  get brokerDSTTimezone() {
+    return this._data.brokerDSTTimezone;
+  }
+
+  /**
    * Reloads provisioning profile from API
    * @return {Promise} promise resolving when provisioning profile is updated
    */

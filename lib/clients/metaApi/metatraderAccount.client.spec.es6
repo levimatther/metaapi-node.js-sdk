@@ -28,7 +28,6 @@ describe('MetatraderAccountClient', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
@@ -85,7 +84,6 @@ describe('MetatraderAccountClient', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
@@ -123,7 +121,6 @@ describe('MetatraderAccountClient', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
@@ -175,7 +172,6 @@ describe('MetatraderAccountClient', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      timeConverter: 'icmarkets',
       application: 'MetaApi',
       type: 'cloud'
     };

@@ -17,8 +17,6 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} login MetaTrader account number
    * @property {String} server MetaTrader server which hosts the account
    * @property {String} provisioningProfileId id of the account's provisioning profile
-   * @property {String} timeConverter algorithm used to parse your broker timezone. Supported values are icmarkets for
-   * America/New_York DST switch and roboforex for EET DST switch (the values will be changed soon)
    * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
    * @property {Number} magic MetaTrader magic to place trades using
@@ -139,8 +137,6 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * access or master password to enable trading features. Required for cloud account
    * @property {String} server MetaTrader server which hosts the account
    * @property {String} provisioningProfileId id of the account's provisioning profile
-   * @property {String} timeConverter algorithm used to parse your broker timezone. Supported values are icmarkets for
-   * America/New_York DST switch and roboforex for EET DST switch (the values will be changed soon)
    * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
    * @property {Number} magic MetaTrader magic to place trades using
