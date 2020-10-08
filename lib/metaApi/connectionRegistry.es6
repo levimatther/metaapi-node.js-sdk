@@ -8,6 +8,7 @@ export default class ConnectionRegistry {
   /**
    * Constructs a MetaTrader connection registry instance
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
+   * @param {String} application application id
    */
   constructor(metaApiWebsocketClient, application = 'MetaApi') {
     this._metaApiWebsocketClient = metaApiWebsocketClient;

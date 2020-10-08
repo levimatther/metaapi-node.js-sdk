@@ -84,7 +84,7 @@ const provisioningProfile = await api.provisioningProfileApi.createProvisioningP
   name: 'My profile',
   version: 5,
   // TODO: description
-  brokerTimeZone: 'EET',
+  brokerTimezone: 'EET',
   // TODO: description
   brokerDSTTimezone: 'EET'
 });

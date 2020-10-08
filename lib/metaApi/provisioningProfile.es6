@@ -51,8 +51,8 @@ export default class ProvisioningProfile {
    * Returns broker timezone name from Time Zone Database
    * @return {String} broker timezone name
    */
-  get brokerTimeZone() {
-    return this._data.brokerTimeZone;
+  get brokerTimezone() {
+    return this._data.brokerTimezone;
   }
 
   /**

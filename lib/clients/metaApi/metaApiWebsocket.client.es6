@@ -200,7 +200,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} unrealizedProfit profit of the part of the position which is not yet closed, including swap
    * @property {Number} realizedProfit profit of the already closed part, including commissions and swap
    * @property {Number} commission position commission
-   * @property {String} position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,
+   * @property {String} reason position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,
    * POSITION_REASON_MOBILE, POSITION_REASON_WEB, POSITION_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',
    * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD

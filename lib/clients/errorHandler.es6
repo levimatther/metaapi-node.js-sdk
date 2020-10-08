@@ -44,7 +44,7 @@ export class ApiError extends Error {
 
   /**
    * Set message arguments for i18n
-   * @param {Array<Object>} arguments arguments for i18n
+   * @param {Array<Object>} args arguments for i18n
    */
   set arguments(args) {
     this._args = args;
