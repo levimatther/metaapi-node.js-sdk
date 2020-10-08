@@ -1,5 +1,5 @@
 8.0.0
-  - breaking change: removed the `timeConverter` field from the account, replaced it with `brokerTimeZone` and `brokerDSTTimezone` fields in the provisioning profile instead
+  - breaking change: removed the `timeConverter` field from the account, replaced it with `brokerTimezone` and `brokerDSTTimezone` fields in the provisioning profile instead
   - added originalComment and clientId fields to MetatraderPosition
 
 7.4.0

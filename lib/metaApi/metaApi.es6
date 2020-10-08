@@ -17,7 +17,7 @@ export default class MetaApi {
   /**
    * Constructs MetaApi class instance
    * @param {String} token authorization token
-   * @param {String} application id
+   * @param {String} application application id
    * @param {String} domain domain to connect to
    * @param {Number} requestTimeout timeout for http requests in seconds
    * @param {Number} connectTimeout timeout for connecting to server in seconds

@@ -69,7 +69,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readOrders/).
    * @return {Promise<Array<MetatraderOrder>>} promise resolving with open MetaTrader orders
    */
-  getOrders(accountId) {
+  getOrders() {
     return this._websocketClient.getOrders(this._account.id);
   }
 

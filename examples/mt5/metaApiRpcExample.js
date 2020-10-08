@@ -23,8 +23,8 @@ async function testMetaApiSynchronization() {
       profile = await api.provisioningProfileApi.createProvisioningProfile({
         name: serverName,
         version: 5,
-        brokerTimeZone: 'EET',
-        brokerDSTTimeZone: 'EET'
+        brokerTimezone: 'EET',
+        brokerDSTTimezone: 'EET'
       });
       await profile.uploadFile('servers.dat', serverDatFile);
     }
