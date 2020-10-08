@@ -204,6 +204,9 @@ export default class MetaApiWebsocketClient {
    * POSITION_REASON_MOBILE, POSITION_REASON_WEB, POSITION_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',
    * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @property {String} [originalComment] position original comment (present if possible to restore from history)
+   * @property {String} [updatePending] flag indicating that position original comment and clientId was not identified
+   * yet and will be updated in a future packet
    */
 
   /**
