@@ -557,10 +557,11 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async waitSynchronized(synchronizationId = undefined, timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
-    while (!(await this.isSynchronized(synchronizationId)) && (startTime + timeoutInSeconds * 1000) > Date.now()) {
+    let synchronized = await this.isSynchronized(synchronizationId);
+    while (!synchronized && (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await new Promise(res => setTimeout(res, intervalInMilliseconds));
     }
-    if (!(await this.isSynchronized(synchronizationId))) {
+    if (!synchronized) {
       throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
         this._account.id + ', synchronization id ' + (synchronizationId || this._lastSynchronizationId || 
           this._lastDisconnectedSynchronizationId));
