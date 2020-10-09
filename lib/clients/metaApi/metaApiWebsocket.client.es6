@@ -665,7 +665,8 @@ export default class MetaApiWebsocketClient {
     let result = Promise.race([
       new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject}),
       new Promise((resolve, reject) => setTimeout(() => reject(new TimeoutError('MetaApi websocket client ' + 
-      `request ${request.requestId} of type ${request.type} timed out`)), this._requestTimeout))
+      `request ${request.requestId} of type ${request.type} timed out. Please make sure your account is connected ` +
+        'to broker before retrying your request.')), this._requestTimeout))
     ]);
     request.accountId = accountId;
     request.application = this._application;
