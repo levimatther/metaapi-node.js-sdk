@@ -557,8 +557,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async waitSynchronized(synchronizationId = undefined, timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
-    let synchronized = await this.isSynchronized(synchronizationId);
-    while (!synchronized && (startTime + timeoutInSeconds * 1000) > Date.now()) {
+    let synchronized;
+    while (!(synchronized = await this.isSynchronized(synchronizationId)) &&
+      (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await new Promise(res => setTimeout(res, intervalInMilliseconds));
     }
     if (!synchronized) {
