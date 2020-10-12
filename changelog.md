@@ -3,6 +3,7 @@
   - added originalComment and clientId fields to MetatraderPosition
   - fixed occasional fake synchronization timeouts in waitSynchronized method
   - breaking change: changed API contract of MetaApiConnection.waitSynchronized method
+  - added tags for MetaApi accounts
 
 7.4.0
   - added application setting to MetaApi class to make it possible to launch several MetaApi applications in parallel on the same account

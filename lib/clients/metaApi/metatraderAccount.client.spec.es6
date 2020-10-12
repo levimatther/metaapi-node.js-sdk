@@ -31,7 +31,8 @@ describe('MetatraderAccountClient', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      type: 'cloud'
+      type: 'cloud',
+      tags: ['tag1', 'tag2']
     }];
     httpClient.requestFn = (opts) => {
       return Promise
@@ -87,7 +88,8 @@ describe('MetatraderAccountClient', () => {
       application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
-      type: 'cloud'
+      type: 'cloud',
+      tags: ['tag1', 'tag2']
     };
     httpClient.requestFn = (opts) => {
       return Promise
@@ -173,7 +175,8 @@ describe('MetatraderAccountClient', () => {
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
       application: 'MetaApi',
-      type: 'cloud'
+      type: 'cloud',
+      tags: ['tag1']
     };
     httpClient.requestFn = (opts) => {
       return Promise
@@ -382,7 +385,8 @@ describe('MetatraderAccountClient', () => {
             body: {
               name: 'new account name',
               password: 'new_password007',
-              server: 'ICMarketsSC2-Demo'
+              server: 'ICMarketsSC2-Demo',
+              tags: ['tag1']
             }
           });
         });
@@ -390,7 +394,8 @@ describe('MetatraderAccountClient', () => {
     await accountClient.updateAccount('id', {
       name: 'new account name',
       password: 'new_password007',
-      server: 'ICMarketsSC2-Demo'
+      server: 'ICMarketsSC2-Demo',
+      tags: ['tag1']
     });
   });
 
