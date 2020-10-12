@@ -38,7 +38,8 @@ describe('MetaApiConnection', () => {
     addReconnectListener: () => {},
     removeSynchronizationListener: () => {},
     getSymbolSpecification: () => {},
-    getSymbolPrice: () => {}
+    getSymbolPrice: () => {},
+    waitSynchronized: () => {}
   };
 
   let connectionRegistry = {
@@ -735,14 +736,11 @@ describe('MetaApiConnection', () => {
      * @test {MetaApiConnection#waitSynchronized}
      */
     it('should wait util synchronization complete', async () => {
-      sandbox.stub(client, 'getDealsByTimeRange')
-        .onCall(0).resolves({synchronizing: true})
-        .onCall(1).resolves({synchronizing: false})
-        .onCall(2).resolves({synchronizing: false})
-        .onCall(3).resolves({synchronizing: false});
+      sandbox.stub(client, 'waitSynchronized').resolves();
       sandbox.stub(api.historyStorage, 'updateDiskStorage');
       (await api.isSynchronized()).should.equal(false);
-      let promise = api.waitSynchronized('synchronizationId', 1, 10);
+      let promise = api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
+        timeoutInSeconds: 1, intervalInMilliseconds: 10});
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
       (Date.now() - startTime).should.be.approximately(50, 10);
@@ -760,7 +758,8 @@ describe('MetaApiConnection', () => {
      */
     it('should time out waiting for synchronization complete', async () => {
       try {
-        await api.waitSynchronized('synchronizationId', 1, 10);
+        await api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
+          timeoutInSeconds: 1, intervalInMilliseconds: 10});
         throw new Error('TimeoutError is expected');
       } catch (err) {
         err.name.should.equal('TimeoutError');

@@ -1085,4 +1085,30 @@ describe('MetaApiWebsocketClient', () => {
 
   });
 
+  describe('wait for server-side terminal state synchronization', () => {
+
+    afterEach(() => {
+      client.removeAllListeners();
+    });
+
+    /**
+     * @test {MetaApiWebsocketClient#waitSynchronized}
+     */
+    it('should wait for server-side terminal state synchronization', async () => {
+      let requestReceived = false;
+      server.on('request', data => {
+        if (data.type === 'waitSynchronized' && data.accountId === 'accountId' &&
+          data.applicationPattern === 'app.*' &&
+          data.timeoutInSeconds === 10 &&
+          data.application === 'application') {
+          requestReceived = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      await client.waitSynchronized('accountId', 'app.*', 10);
+      requestReceived.should.be.true();
+    });
+
+  });
+
 });

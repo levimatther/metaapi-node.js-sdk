@@ -532,30 +532,29 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async isSynchronized(synchronizationId) {
     synchronizationId = synchronizationId || this._lastSynchronizationId;
-    if (!!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId]) {
-      try {
-        let result = await this.getDealsByTimeRange(new Date(), new Date());
-        return !result.synchronizing;
-      } catch (err) {
-        if (err.name === 'TimeoutError') {
-          return false;
-        }
-        throw err;
-      }
-    }
-    return false;
+    return !!this._ordersSynchronized[synchronizationId] && !!this._dealsSynchronized[synchronizationId];
   }
 
   /**
-   * Waits until synchronization to MetaTrader terminal is completed
-   * @param {String} synchronizationId optional synchronization id, last synchronization request id will be used by
+   * @typedef {Object} SynchronizationOptions
+   * @property {String} [applicationPattern] application regular expression pattern, default is .*
+   * @property {String} [synchronizationId] synchronization id, last synchronization request id will be used by
    * default
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {Number} [timeoutInSeconds] wait timeout in seconds, default is 5m
+   * @param {Number} [intervalInMilliseconds] interval between account reloads while waiting for a change, default is 1s
+   */
+
+  /**
+   * Waits until synchronization to MetaTrader terminal is completed
+   * @param {SynchronizationOptions} synchronization options
    * @return {Promise} promise which resolves when synchronization to MetaTrader terminal is completed
    * @throws {TimeoutError} if application failed to synchronize with the teminal withing timeout allowed
    */
-  async waitSynchronized(synchronizationId = undefined, timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
+  // eslint-disable-next-line complexity
+  async waitSynchronized(opts) {
+    let synchronizationId = opts.synchronizationId;
+    let timeoutInSeconds = opts.timeoutInSeconds || 300;
+    let intervalInMilliseconds = opts.intervalInMilliseconds || 1000;
     let startTime = Date.now();
     let synchronized;
     while (!(synchronized = await this.isSynchronized(synchronizationId)) &&
@@ -564,9 +563,11 @@ export default class MetaApiConnection extends SynchronizationListener {
     }
     if (!synchronized) {
       throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
-        this._account.id + ', synchronization id ' + (synchronizationId || this._lastSynchronizationId || 
+        this._account.id + ', synchronization id ' + (synchronizationId || this._lastSynchronizationId ||
           this._lastDisconnectedSynchronizationId));
     }
+    let timeLeftInSeconds = Math.max(0, timeoutInSeconds - (Date.now() - startTime) / 1000);
+    this._websocketClient.waitSynchronized(this._account.id, opts.applicationPattern || '.*', timeoutInSeconds);
   }
 
   /**

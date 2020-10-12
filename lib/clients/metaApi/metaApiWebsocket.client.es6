@@ -557,6 +557,19 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Waits for server-side terminal state synchronization to complete.
+   * (see https://metaapi.cloud/docs/client/websocket/synchronizing/waitSynchronized/).
+   * @param {String} accountId id of the MetaTrader account to synchronize
+   * @param {String} applicationPattern MetaApi application regular expression pattern, default is .*
+   * @param {Number} timeoutInSeconds timeout in seconds, default is 300 seconds
+   * @returns {Promise} promise which resolves when synchronization started
+   */
+  waitSynchronized(accountId, applicationPattern, timeoutInSeconds) {
+    return this._rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds},
+      timeoutInSeconds + 1);
+  }
+
+  /**
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
    * @param {String} accountId id of the MetaTrader account
@@ -658,7 +671,7 @@ export default class MetaApiWebsocketClient {
     }, 1000));
   }
 
-  async _rpcRequest(accountId, request) {
+  async _rpcRequest(accountId, request, timeoutInSeconds) {
     if (!this._connected) {
       await this.connect();
     } else {
@@ -669,7 +682,7 @@ export default class MetaApiWebsocketClient {
       new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject}),
       new Promise((resolve, reject) => setTimeout(() => reject(new TimeoutError('MetaApi websocket client ' + 
       `request ${request.requestId} of type ${request.type} timed out. Please make sure your account is connected ` +
-        'to broker before retrying your request.')), this._requestTimeout))
+        'to broker before retrying your request.')), (timeoutInSeconds * 1000) || this._requestTimeout))
     ]);
     request.accountId = accountId;
     request.application = this._application;
@@ -687,6 +700,8 @@ export default class MetaApiWebsocketClient {
       return new NotFoundError(data.message);
     } else if (data.error === 'NotSynchronizedError') {
       return new NotSynchronizedError(data.message);
+    } else if (data.error === 'TimeoutError') {
+      return new TimeoutError(data.message);
     } else if (data.error === 'NotAuthenticatedError') {
       return new NotConnectedError(data.message);
     } else if (data.error === 'TradeError') {
