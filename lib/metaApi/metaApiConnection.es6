@@ -552,6 +552,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   // eslint-disable-next-line complexity
   async waitSynchronized(opts) {
+    opts = opts || {};
     let synchronizationId = opts.synchronizationId;
     let timeoutInSeconds = opts.timeoutInSeconds || 300;
     let intervalInMilliseconds = opts.intervalInMilliseconds || 1000;
