@@ -20,12 +20,14 @@ export default class ConnectionRegistry {
    * Creates and returns a new account connection if doesnt exist, otherwise returns old
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage
+   * @param {Date} [historyStartTime] history start time
    */
-  async connect(account, historyStorage) {
+  async connect(account, historyStorage, historyStartTime) {
     if (this._connections[account.id]) {
       return this._connections[account.id];
     } else {
-      const connection = new MetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this);
+      const connection = new MetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
+        historyStartTime);
       await connection.initialize();
       await connection.subscribe();
       this._connections[account.id] = connection;

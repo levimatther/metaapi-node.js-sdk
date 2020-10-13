@@ -18,8 +18,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {HistoryStorage} historyStorage terminal history storage. By default an instance of MemoryHistoryStorage
    * will be used.
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
+   * @param {Date} [historyStartTime] history start sync time
    */
-  constructor(websocketClient, account, historyStorage, connectionRegistry) {
+  constructor(websocketClient, account, historyStorage, connectionRegistry, historyStartTime) {
     super();
     this._websocketClient = websocketClient;
     this._account = account;
@@ -28,6 +29,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._lastSynchronizationId = undefined;
     this._lastDisconnectedSynchronizationId = undefined;
     this._connectionRegistry = connectionRegistry;
+    this._historyStartTime = historyStartTime;
     this._terminalState = new TerminalState();
     this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id, connectionRegistry.application);
     this._websocketClient.addSynchronizationListener(account.id, this);
@@ -396,8 +398,14 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when synchronization started
    */
   async synchronize() {
-    let startingHistoryOrderTime = await this._historyStorage.lastHistoryOrderTime();
-    let startingDealTime = await this._historyStorage.lastDealTime();
+    let startingHistoryOrderTime = new Date(Math.max(
+      (this._historyStartTime || new Date(0)).getTime(),
+      await this._historyStorage.lastHistoryOrderTime().getTime()
+    ));
+    let startingDealTime = new Date(Math.max(
+      (this._historyStartTime || new Date(0)).getTime(),
+      await this._historyStorage.lastDealTime().getTime()
+    ));
     let synchronizationId = randomstring.generate(32);
     this._lastSynchronizationId = synchronizationId;
     return this._websocketClient.synchronize(this._account.id, synchronizationId, startingHistoryOrderTime,

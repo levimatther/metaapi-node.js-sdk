@@ -623,6 +623,21 @@ describe('MetaApiConnection', () => {
   });
 
   /**
+   * @test {MetaApiConnection#synchronize}
+   */
+  it('should synchronize state with terminal from specified time', async () => {
+    sandbox.stub(client, 'synchronize').resolves();
+    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
+    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry,
+      new Date('2020-10-07T00:00:00.000Z'));
+    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.synchronize();
+    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId', new Date('2020-10-07T00:00:00.000Z'),
+      new Date('2020-10-07T00:00:00.000Z'));
+  });
+
+  /**
    * @test {MetaApiConnection#subscribeToMarketData}
    */
   it('should subscribe to market data', async () => {

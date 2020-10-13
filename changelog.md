@@ -5,6 +5,7 @@
   - breaking change: changed API contract of MetaApiConnection.waitSynchronized method
   - added tags for MetaApi accounts
   - minor adjustments to equity calculation algorithm
+  - added the ability to set the start time for synchronization, used for tests
 
 7.4.0
   - added application setting to MetaApi class to make it possible to launch several MetaApi applications in parallel on the same account
