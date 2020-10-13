@@ -3,6 +3,7 @@
   - added originalComment and clientId fields to MetatraderPosition
   - fixed occasional fake synchronization timeouts in waitSynchronized method
   - breaking change: changed API contract of MetaApiConnection.waitSynchronized method
+  - added tags for MetaApi accounts
   - minor adjustments to equity calculation algorithm
 
 7.4.0

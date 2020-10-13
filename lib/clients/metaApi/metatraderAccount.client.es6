@@ -31,6 +31,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
+   * @property {Array<string>} [tags] MetaTrader account tags
    */
 
   /**
@@ -144,6 +145,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
+   * @property {Array<string>} [tags] MetaTrader account tags
    */
 
   /**
@@ -274,6 +276,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
+   * @property {Array<string>} [tags] MetaTrader account tags
    */
 
   /**
