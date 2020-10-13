@@ -131,7 +131,7 @@ describe('TerminalState', () => {
    * @test {TerminalState#positions}
    */
   it('should update account equity and position profit on price update', () => {
-    state.onAccountInformationUpdated({equity: 1000});
+    state.onAccountInformationUpdated({equity: 1000, balance: 800});
     state.onPositionUpdated({
       id: '1',
       symbol: 'EURUSD',

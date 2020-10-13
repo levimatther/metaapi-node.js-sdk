@@ -212,19 +212,14 @@ export default class TerminalState extends SynchronizationListener {
         position.profit = position.unrealizedProfit + position.realizedProfit;
         position.currentPrice = newPositionPrice;
         position.currentTickValue = currentTickValue;
-        if (this._accountInformation) {
-          this._accountInformation.equity += increment;
-          this._accountInformation.updateCount = (this._accountInformation.updateCount || 0) + 1;
-        }
       }
       for (let order of orders) {
         order.currentPrice = order.type === 'ORDER_TYPE_BUY_LIMIT' || order.type === 'ORDER_TYPE_BUY_STOP' ||
           order.type === 'ORDER_TYPE_BUY_STOP_LIMIT' ? price.ask : price.bid;
       }
-      if ((this._accountInformation || {}).updateCount > 100) {
+      if (this._accountInformation) {
         this._accountInformation.equity = this._accountInformation.balance +
           this._positions.reduce((acc, p) => acc + p.profit, 0);
-        this._accountInformation.updateCount = 0;
       }
     }
   }
