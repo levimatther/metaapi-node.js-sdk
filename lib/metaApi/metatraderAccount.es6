@@ -266,10 +266,11 @@ export default class MetatraderAccount {
   /**
    * Connects to MetaApi. There is only one connection per account. Subsequent calls to this method will return the same connection.
    * @param {HistoryStorage} historyStorage optional history storage
+   * @param {Date} [historyStartTime] history start time. Used for tests
    * @returns {MetaApiConnection} MetaApi connection
    */
-  async connect(historyStorage) {
-    return await this._connectionRegistry.connect(this, historyStorage);
+  async connect(historyStorage, historyStartTime) {
+    return await this._connectionRegistry.connect(this, historyStorage, historyStartTime);
   }
 
   /**
