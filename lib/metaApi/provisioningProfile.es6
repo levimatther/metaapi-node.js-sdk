@@ -57,10 +57,10 @@ export default class ProvisioningProfile {
 
   /**
    * Returns broker DST timezone name from Time Zone Database
-   * @return {String} broker DST timezone name
+   * @return {String} broker DST switch timezone name
    */
-  get brokerDSTTimezone() {
-    return this._data.brokerDSTTimezone;
+  get brokerDSTSwitchTimezone() {
+    return this._data.brokerDSTSwitchTimezone;
   }
 
   /**

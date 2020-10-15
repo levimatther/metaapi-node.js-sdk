@@ -1,5 +1,5 @@
 8.0.0
-  - breaking change: removed the `timeConverter` field from the account, replaced it with `brokerTimezone` and `brokerDSTTimezone` fields in the provisioning profile instead
+  - breaking change: removed the `timeConverter` field from the account, replaced it with `brokerTimezone` and `brokerDSTSwitchTimezone` fields in the provisioning profile instead
   - added originalComment and clientId fields to MetatraderPosition
   - fixed occasional fake synchronization timeouts in waitSynchronized method
   - breaking change: changed API contract of MetaApiConnection.waitSynchronized method

@@ -83,10 +83,8 @@ You can manage provisioning profiles here: [https://app.metaapi.cloud/provisioni
 const provisioningProfile = await api.provisioningProfileApi.createProvisioningProfile({
   name: 'My profile',
   version: 5,
-  // TODO: description
   brokerTimezone: 'EET',
-  // TODO: description
-  brokerDSTTimezone: 'EET'
+  brokerDSTSwitchTimezone: 'EET'
 });
 // servers.dat file is required for MT5 profile and can be found inside
 // config directory of your MetaTrader terminal data folder. It contains
