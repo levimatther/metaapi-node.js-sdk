@@ -54,7 +54,7 @@ describe('ProvisioningProfileApi', () => {
   it('should retrieve provisioning profile by id', async () => {
     sandbox.stub(client, 'getProvisioningProfile').resolves({
       _id: 'id', name: 'name', version: 4,
-      status: 'new', brokerTimezone: 'EET', brokerDSTTimezone: 'EET'
+      status: 'new', brokerTimezone: 'EET', brokerDSTSwitchTimezone: 'EET'
     });
     let profile = await api.getProvisioningProfile('id');
     profile.id.should.equal('id');
@@ -62,7 +62,7 @@ describe('ProvisioningProfileApi', () => {
     profile.version.should.equal(4);
     profile.status.should.equal('new');
     profile.brokerTimezone.should.equal('EET');
-    profile.brokerDSTTimezone.should.equal('EET');
+    profile.brokerDSTSwitchTimezone.should.equal('EET');
     (profile instanceof ProvisioningProfile).should.be.true();
     sinon.assert.calledWith(client.getProvisioningProfile, 'id');
   });
@@ -74,18 +74,18 @@ describe('ProvisioningProfileApi', () => {
     sandbox.stub(client, 'createProvisioningProfile').resolves({id: 'id'});
     let profile = await api.createProvisioningProfile({
       name: 'name', version: 4,
-      brokerTimezone: 'EET', brokerDSTTimezone: 'EET'
+      brokerTimezone: 'EET', brokerDSTSwitchTimezone: 'EET'
     });
     profile.id.should.equal('id');
     profile.name.should.equal('name');
     profile.version.should.equal(4);
     profile.status.should.equal('new');
     profile.brokerTimezone.should.equal('EET');
-    profile.brokerDSTTimezone.should.equal('EET');
+    profile.brokerDSTSwitchTimezone.should.equal('EET');
     (profile instanceof ProvisioningProfile).should.be.true();
     sinon.assert.calledWith(client.createProvisioningProfile, {
       name: 'name', version: 4,
-      brokerTimezone: 'EET', brokerDSTTimezone: 'EET'
+      brokerTimezone: 'EET', brokerDSTSwitchTimezone: 'EET'
     });
   });
 
@@ -95,10 +95,10 @@ describe('ProvisioningProfileApi', () => {
   it('should reload provisioning profile', async () => {
     sandbox.stub(client, 'getProvisioningProfile').onFirstCall().resolves({
       _id: 'id', name: 'name', version: 4, status: 'new',
-      brokerTimezone: 'EET', brokerDSTTimezone: 'EET'
+      brokerTimezone: 'EET', brokerDSTSwitchTimezone: 'EET'
     }).onSecondCall().resolves({
       _id: 'id', name: 'name', version: 4, status: 'active',
-      brokerTimezone: 'EET', brokerDSTTimezone: 'EET'
+      brokerTimezone: 'EET', brokerDSTSwitchTimezone: 'EET'
     });
     let profile = await api.getProvisioningProfile('id');
     await profile.reload();
@@ -112,7 +112,8 @@ describe('ProvisioningProfileApi', () => {
    */
   it('should remove provisioning profile', async () => {
     sandbox.stub(client, 'getProvisioningProfile')
-      .resolves({_id: 'id', name: 'name', version: 4, status: 'new', brokerTimezone: 'EET', brokerDSTTimezone: 'EET'});
+      .resolves({_id: 'id', name: 'name', version: 4, status: 'new', brokerTimezone: 'EET',
+        brokerDSTSwitchTimezone: 'EET'});
     sandbox.stub(client, 'deleteProvisioningProfile').resolves();
     let profile = await api.getProvisioningProfile('id');
     await profile.remove();
@@ -124,7 +125,8 @@ describe('ProvisioningProfileApi', () => {
    */
   it('should upload a file to provisioning profile', async () => {
     sandbox.stub(client, 'getProvisioningProfile')
-      .resolves({_id: 'id', name: 'name', version: 4, status: 'new', brokerTimezone: 'EET', brokerDSTTimezone: 'EET'});
+      .resolves({_id: 'id', name: 'name', version: 4, status: 'new', brokerTimezone: 'EET',
+        brokerDSTSwitchTimezone: 'EET'});
     sandbox.stub(client, 'uploadProvisioningProfileFile').resolves();
     let profile = await api.getProvisioningProfile('id');
     await profile.uploadFile('broker.srv', '/path/to/file.srv');
@@ -136,7 +138,8 @@ describe('ProvisioningProfileApi', () => {
    */
   it('should update provisioning profile', async () => {
     sandbox.stub(client, 'getProvisioningProfile')
-      .resolves({_id: 'id', name: 'name', version: 4, status: 'new', brokerTimezone: 'EET', brokerDSTTimezone: 'EET'});
+      .resolves({_id: 'id', name: 'name', version: 4, status: 'new', brokerTimezone: 'EET',
+        brokerDSTSwitchTimezone: 'EET'});
     sandbox.stub(client, 'updateProvisioningProfile').resolves();
     let profile = await api.getProvisioningProfile('id');
     await profile.update({name: 'name'});

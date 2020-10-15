@@ -17,7 +17,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
    * @property {Number} version MetaTrader version (allowed values are 4 and 5)
    * @property {String} status provisioning profile status (allowed values are new and active)
    * @property {String} brokerTimezone broker timezone name from Time Zone Database
-   * @property {String} brokerDSTTimezone broker DST timezone name from Time Zone Database
+   * @property {String} brokerDSTSwitchTimezone broker DST switch timezone name from Time Zone Database
    */
 
   /**
@@ -80,7 +80,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
    * @property {String} name provisioning profile name
    * @property {Number} version MetaTrader version (allowed values are 4 and 5)
    * @property {String} brokerTimezone broker timezone name from Time Zone Database
-   * @property {String} brokerDSTTimezone broker DST timezone name from Time Zone Database
+   * @property {String} brokerDSTSwitchTimezone broker DST switch timezone name from Time Zone Database
    */
 
   /**

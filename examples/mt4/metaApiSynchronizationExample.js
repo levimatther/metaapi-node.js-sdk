@@ -22,7 +22,7 @@ async function testMetaApiSynchronization() {
         name: serverName,
         version: 4,
         brokerTimezone: 'EET',
-        brokerDSTTimezone: 'EET'
+        brokerDSTSwitchTimezone: 'EET'
       });
       await profile.uploadFile('broker.srv', brokerSrvFile);
     }
