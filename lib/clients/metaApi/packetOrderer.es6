@@ -13,6 +13,7 @@ export default class PacketOrderer {
   constructor(outOfOrderListener, orderingTimeoutInSeconds = 10) {
     this._outOfOrderListener = outOfOrderListener;
     this._orderingTimeoutInSeconds = orderingTimeoutInSeconds;
+    this._isOutOfOrderEmitted = {};
   }
 
   /**
@@ -45,6 +46,7 @@ export default class PacketOrderer {
     }
     if (packet.type === 'specifications' && packet.synchronizationId) {
       // synchronization packet sequence just started
+      this._isOutOfOrderEmitted[packet.accountId] = false;
       this._sequenceNumberByAccount[packet.accountId] = packet.sequenceNumber;
       delete this._packetsByAccountId[packet.accountId];
       return [packet];
@@ -59,16 +61,19 @@ export default class PacketOrderer {
       this._sequenceNumberByAccount[packet.accountId]++;
       let result = [packet];
       let waitList = this._packetsByAccountId[packet.accountId] || [];
-      while (waitList.length && waitList[0].sequenceNumber === this._sequenceNumberByAccount[packet.accountId] + 1) {
-        this._sequenceNumberByAccount[packet.accountId]++;
+      while (waitList.length && [this._sequenceNumberByAccount[packet.accountId], 
+        this._sequenceNumberByAccount[packet.accountId] + 1].includes(waitList[0].sequenceNumber)) {
         result.push(waitList[0].packet);
-        waitList.splice(1);
+        if(waitList[0].sequenceNumber === this._sequenceNumberByAccount[packet.accountId] + 1) {
+          this._sequenceNumberByAccount[packet.accountId]++;
+        }
+        waitList.splice(0, 1);
       }
       if (!waitList.length) {
         delete this._packetsByAccountId[packet.accountId];
       }
       return result;
-    } else {
+    } else if (this._sequenceNumberByAccount[packet.accountId]) {
       // out-of-order packet was received, add it to the wait list
       this._packetsByAccountId[packet.accountId] = this._packetsByAccountId[packet.accountId] || [];
       let waitList = this._packetsByAccountId[packet.accountId];
@@ -80,6 +85,8 @@ export default class PacketOrderer {
       });
       waitList.sort((e1, e2) => e1.sequenceNumber > e2.sequenceNumber);
       return [];
+    } else {
+      return [packet];
     }
   }
 
@@ -87,9 +94,13 @@ export default class PacketOrderer {
   _emitOutOfOrderEvents() {
     for (let waitList of Object.values(this._packetsByAccountId)) {
       if (waitList.length && waitList[0].receivedAt.getTime() + this._orderingTimeoutInSeconds * 1000 < Date.now()) {
-        this._outOfOrderListener.onOutOfOrderPacket(waitList[0].accountId,
-          this._sequenceNumberByAccount[waitList[0].accountId] + 1, waitList[0].sequenceNumber, waitList[0].packet,
-          waitList[0].receivedAt);
+        const accountId = waitList[0].accountId;
+        if(!this._isOutOfOrderEmitted[accountId]) {
+          this._isOutOfOrderEmitted[accountId] = true;
+          this._outOfOrderListener.onOutOfOrderPacket(waitList[0].accountId,
+            this._sequenceNumberByAccount[accountId] + 1, waitList[0].sequenceNumber, waitList[0].packet,
+            waitList[0].receivedAt);
+        }
       }
     }
   }
