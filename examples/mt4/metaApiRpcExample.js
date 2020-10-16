@@ -45,7 +45,6 @@ async function testMetaApiSynchronization() {
         password: password,
         server: serverName,
         provisioningProfileId: profile.id,
-        timeConverter: 'icmarkets',
         application: 'MetaApi',
         magic: 1000
       });
