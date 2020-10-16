@@ -495,7 +495,11 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onConnected() {
-    await this.synchronize();
+    try {
+      await this.synchronize();
+    } catch(err) {
+      console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to synchronize', err);
+    }
   }
 
   /**
@@ -576,7 +580,7 @@ export default class MetaApiConnection extends SynchronizationListener {
           this._lastDisconnectedSynchronizationId));
     }
     let timeLeftInSeconds = Math.max(0, timeoutInSeconds - (Date.now() - startTime) / 1000);
-    this._websocketClient.waitSynchronized(this._account.id, opts.applicationPattern || '.*', timeoutInSeconds);
+    await this._websocketClient.waitSynchronized(this._account.id, opts.applicationPattern || '.*', timeoutInSeconds);
   }
 
   /**
