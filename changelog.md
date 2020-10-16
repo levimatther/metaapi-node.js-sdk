@@ -6,6 +6,7 @@
   - added tags for MetaApi accounts
   - minor adjustments to equity calculation algorithm
   - added the ability to set the start time for synchronization, used for tests
+  - resynchronize on lost synchronization packet to ensure local terminal state consistency
 
 7.4.0
   - added application setting to MetaApi class to make it possible to launch several MetaApi applications in parallel on the same account

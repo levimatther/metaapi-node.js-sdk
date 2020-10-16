@@ -7,6 +7,7 @@ import {ValidationError, NotFoundError, InternalError, UnauthorizedError} from '
 import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';
+import PacketOrderer from './packetOrderer';
 
 /**
  * MetaApi websocket API client (see https://metaapi.cloud/docs/client/websocket/overview/)
@@ -31,6 +32,22 @@ export default class MetaApiWebsocketClient {
     this._requestResolves = {};
     this._synchronizationListeners = {};
     this._reconnectListeners = [];
+    this._packetOrderer = new PacketOrderer(this);
+  }
+
+  /**
+   * Restarts the account synchronization process on an out of order packet
+   * @param {String} accountId account id
+   * @param {Number} expectedSequenceNumber expected s/n
+   * @param {Number} actualSequenceNumber actual s/n
+   * @param {Object} packet packet data
+   * @param {Date} receivedAt time the packet was received at
+   */
+  onOutOfOrderPacket(accountId, expectedSequenceNumber, actualSequenceNumber, packet, receivedAt) {
+    console.error(`[${(new Date()).toISOString()}] MetaApi websocket client received an out of order ` +
+      `packet type ${packet.type} for account id ${accountId}. Expected s/n is ${expectedSequenceNumber} does ` +
+      `not match the actual of ${actualSequenceNumber}`);
+    this.subscribe(accountId);
   }
 
   /**
@@ -56,6 +73,7 @@ export default class MetaApiWebsocketClient {
         reject = rej;
       });
       this._connectPromise = result;
+      this._packetOrderer.start();
 
       let url = `${this._url}?auth-token=${this._token}`;
       this._socket = socketIO(url, {
@@ -143,6 +161,7 @@ export default class MetaApiWebsocketClient {
       }
       this._requestResolves = {};
       this._synchronizationListeners = {};
+      this._packetOrderer.stop();
     }
   }
 
@@ -718,7 +737,7 @@ export default class MetaApiWebsocketClient {
     // eslint-disable-next-line guard-for-in
     for (let field in packet) {
       let value = packet[field];
-      if (typeof value === 'string' && field.match(/time|Time/) && !field.match(/brokerTime|BrokerTime/)) {
+      if (typeof value === 'string' && field.match(/time$|Time$/) && !field.match(/brokerTime$|BrokerTime$/)) {
         packet[field] = new Date(value);
       }
       if (Array.isArray(value)) {
@@ -765,226 +784,230 @@ export default class MetaApiWebsocketClient {
    */
 
   // eslint-disable-next-line complexity,max-statements
-  async _processSynchronizationPacket(data) {
+  async _processSynchronizationPacket(packet) {
     try {
-      if (data.type === 'authenticated') {
-        const onConnectedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onConnectedPromises.push(
-            Promise.resolve(listener.onConnected())
+      let packets = this._packetOrderer.restoreOrder(packet);
+      for (let data of packets) {
+        if (data.type === 'authenticated') {
+          const onConnectedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onConnectedPromises.push(
+              Promise.resolve(listener.onConnected())
               // eslint-disable-next-line no-console
-              .catch(err => console.error(`${data.accountId}: Failed to notify listener about connected event`, err))
-          );
-        }
-        await Promise.all(onConnectedPromises);
-      } else if (data.type === 'disconnected') {
-        const onDisconnectedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onDisconnectedPromises.push(
-            Promise.resolve(listener.onDisconnected())
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about connected event`, err))
+            );
+          }
+          await Promise.all(onConnectedPromises);
+        } else if (data.type === 'disconnected') {
+          const onDisconnectedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onDisconnectedPromises.push(
+              Promise.resolve(listener.onDisconnected())
               // eslint-disable-next-line no-console
-              .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
-                err))
-          );
-        }
-        await Promise.all(onDisconnectedPromises);
-      } else if (data.type === 'accountInformation') {
-        if (data.accountInformation) {
-          const onAccountInformationUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onAccountInformationUpdatedPromises.push(
-              Promise.resolve(listener.onAccountInformationUpdated(data.accountInformation))
-                // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about accountInformation `+
-                  'event', err))
-            );
-          }
-          await Promise.all(onAccountInformationUpdatedPromises);
-        }
-      } else if (data.type === 'deals') {
-        for (let deal of (data.deals || [])) {
-          const onDealAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onDealAddedPromises.push(
-              Promise.resolve(listener.onDealAdded(deal))
-                // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about deals event`, err))
-            );
-          }
-          await Promise.all(onDealAddedPromises);
-        }
-      } else if (data.type === 'orders') {
-        for (let order of (data.orders || [])) {
-          const onOrderUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onOrderUpdatedPromises.push(
-              Promise.resolve(listener.onOrderUpdated(order))
-                // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about orders event`, err))
-            );
-          }
-          await Promise.all(onOrderUpdatedPromises);
-        }
-      } else if (data.type === 'historyOrders') {
-        for (let historyOrder of (data.historyOrders || [])) {
-          const onHistoryOrderAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onHistoryOrderAddedPromises.push(
-              Promise.resolve(listener.onHistoryOrderAdded(historyOrder))
-                // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about historyOrders event`,
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
                   err))
             );
           }
-          await Promise.all(onHistoryOrderAddedPromises);
-        }
-      } else if (data.type === 'positions') {
-        for (let position of (data.positions || [])) {
-          const onPositionUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onPositionUpdatedPromises.push(
-              Promise.resolve(listener.onPositionUpdated(position))
+          await Promise.all(onDisconnectedPromises);
+        } else if (data.type === 'accountInformation') {
+          if (data.accountInformation) {
+            const onAccountInformationUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onAccountInformationUpdatedPromises.push(
+                Promise.resolve(listener.onAccountInformationUpdated(data.accountInformation))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about positions event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about accountInformation ` +
+                    'event', err))
+              );
+            }
+            await Promise.all(onAccountInformationUpdatedPromises);
           }
-          await Promise.all(onPositionUpdatedPromises);
-        }
-      } else if (data.type === 'update') {
-        if (data.accountInformation) {
-          const onAccountInformationUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onAccountInformationUpdatedPromises.push(
-              Promise.resolve(listener.onAccountInformationUpdated(data.accountInformation))
+        } else if (data.type === 'deals') {
+          for (let deal of (data.deals || [])) {
+            const onDealAddedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onDealAddedPromises.push(
+                Promise.resolve(listener.onDealAdded(deal))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about deals event`, err))
+              );
+            }
+            await Promise.all(onDealAddedPromises);
           }
-          await Promise.all(onAccountInformationUpdatedPromises);
-        }
-        for (let position of (data.updatedPositions || [])) {
-          const onPositionUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onPositionUpdatedPromises.push(
-              Promise.resolve(listener.onPositionUpdated(position))
+        } else if (data.type === 'orders') {
+          for (let order of (data.orders || [])) {
+            const onOrderUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onOrderUpdatedPromises.push(
+                Promise.resolve(listener.onOrderUpdated(order))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about orders event`, err))
+              );
+            }
+            await Promise.all(onOrderUpdatedPromises);
           }
-          await Promise.all(onPositionUpdatedPromises);
-        }
-        for (let positionId of (data.removedPositionIds || [])) {
-          const onPositionRemovedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onPositionRemovedPromises.push(
-              Promise.resolve(listener.onPositionRemoved(positionId))
+        } else if (data.type === 'historyOrders') {
+          for (let historyOrder of (data.historyOrders || [])) {
+            const onHistoryOrderAddedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onHistoryOrderAddedPromises.push(
+                Promise.resolve(listener.onHistoryOrderAdded(historyOrder))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about historyOrders event`,
+                    err))
+              );
+            }
+            await Promise.all(onHistoryOrderAddedPromises);
           }
-          await Promise.all(onPositionRemovedPromises);
-        }
-        for (let order of (data.updatedOrders || [])) {
-          const onOrderUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onOrderUpdatedPromises.push(
-              Promise.resolve(listener.onOrderUpdated(order))
+        } else if (data.type === 'positions') {
+          for (let position of (data.positions || [])) {
+            const onPositionUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onPositionUpdatedPromises.push(
+                Promise.resolve(listener.onPositionUpdated(position))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about positions event`,
+                    err))
+              );
+            }
+            await Promise.all(onPositionUpdatedPromises);
           }
-          await Promise.all(onOrderUpdatedPromises);
-        }
-        for (let orderId of (data.completedOrderIds || [])) {
-          const onOrderCompletedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onOrderCompletedPromises.push(
-              Promise.resolve(listener.onOrderCompleted(orderId))
+        } else if (data.type === 'update') {
+          if (data.accountInformation) {
+            const onAccountInformationUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onAccountInformationUpdatedPromises.push(
+                Promise.resolve(listener.onAccountInformationUpdated(data.accountInformation))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+              );
+            }
+            await Promise.all(onAccountInformationUpdatedPromises);
           }
-          await Promise.all(onOrderCompletedPromises);
-        }
-        for (let historyOrder of (data.historyOrders || [])) {
-          const onHistoryOrderAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onHistoryOrderAddedPromises.push(
-              Promise.resolve(listener.onHistoryOrderAdded(historyOrder))
+          for (let position of (data.updatedPositions || [])) {
+            const onPositionUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onPositionUpdatedPromises.push(
+                Promise.resolve(listener.onPositionUpdated(position))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+              );
+            }
+            await Promise.all(onPositionUpdatedPromises);
           }
-          await Promise.all(onHistoryOrderAddedPromises);
-        }
-        for (let deal of (data.deals || [])) {
-          const onDealAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onDealAddedPromises.push(
-              Promise.resolve(listener.onDealAdded(deal))
+          for (let positionId of (data.removedPositionIds || [])) {
+            const onPositionRemovedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onPositionRemovedPromises.push(
+                Promise.resolve(listener.onPositionRemoved(positionId))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
-            );
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+              );
+            }
+            await Promise.all(onPositionRemovedPromises);
           }
-          await Promise.all(onDealAddedPromises);
-        }
-      } else if (data.type === 'dealSynchronizationFinished') {
-        const onDealSynchronizationFinishedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onDealSynchronizationFinishedPromises.push(
-            Promise.resolve(listener.onDealSynchronizationFinished(data.synchronizationId))
+          for (let order of (data.updatedOrders || [])) {
+            const onOrderUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onOrderUpdatedPromises.push(
+                Promise.resolve(listener.onOrderUpdated(order))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+              );
+            }
+            await Promise.all(onOrderUpdatedPromises);
+          }
+          for (let orderId of (data.completedOrderIds || [])) {
+            const onOrderCompletedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onOrderCompletedPromises.push(
+                Promise.resolve(listener.onOrderCompleted(orderId))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+              );
+            }
+            await Promise.all(onOrderCompletedPromises);
+          }
+          for (let historyOrder of (data.historyOrders || [])) {
+            const onHistoryOrderAddedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onHistoryOrderAddedPromises.push(
+                Promise.resolve(listener.onHistoryOrderAdded(historyOrder))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+              );
+            }
+            await Promise.all(onHistoryOrderAddedPromises);
+          }
+          for (let deal of (data.deals || [])) {
+            const onDealAddedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onDealAddedPromises.push(
+                Promise.resolve(listener.onDealAdded(deal))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+              );
+            }
+            await Promise.all(onDealAddedPromises);
+          }
+        } else if (data.type === 'dealSynchronizationFinished') {
+          const onDealSynchronizationFinishedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onDealSynchronizationFinishedPromises.push(
+              Promise.resolve(listener.onDealSynchronizationFinished(data.synchronizationId))
               // eslint-disable-next-line no-console
-              .catch(err => console.error(`${data.accountId}: Failed to notify listener about `+
-              'dealSynchronizationFinished event', err))
-          );
-        }
-        await Promise.all(onDealSynchronizationFinishedPromises);
-      } else if (data.type === 'orderSynchronizationFinished') {
-        const onOrderSynchronizationFinishedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onOrderSynchronizationFinishedPromises.push(
-            Promise.resolve(listener.onOrderSynchronizationFinished(data.synchronizationId))
-              // eslint-disable-next-line no-console
-              .catch(err => console.error(`${data.accountId}: Failed to notify listener about `+
-                'orderSynchronizationFinished event', err))
-          );
-        }
-        await Promise.all(onOrderSynchronizationFinishedPromises);
-      } else if (data.type === 'status') {
-        const onBrokerConnectionStatusChangedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onBrokerConnectionStatusChangedPromises.push(
-            Promise.resolve(listener.onBrokerConnectionStatusChanged(!!data.connected))
-              // eslint-disable-next-line no-console
-              .catch(err => console.error(`${data.accountId}: Failed to notify listener about `+
-              'brokerConnectionStatusChanged event', err))
-          );
-        }
-        await Promise.all(onBrokerConnectionStatusChangedPromises);
-      } else if (data.type === 'specifications') {
-        for (let specification of (data.specifications || [])) {
-          const onSymbolSpecificationUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onSymbolSpecificationUpdatedPromises.push(
-              Promise.resolve(listener.onSymbolSpecificationUpdated(specification))
-                // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about specifications event`,
-                  err))
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                  'dealSynchronizationFinished event', err))
             );
           }
-          await Promise.all(onSymbolSpecificationUpdatedPromises);
-        }
-      } else if (data.type === 'prices') {
-        for (let price of (data.prices || [])) {
-          const onSymbolPriceUpdatedPromises = [];
+          await Promise.all(onDealSynchronizationFinishedPromises);
+        } else if (data.type === 'orderSynchronizationFinished') {
+          const onOrderSynchronizationFinishedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onSymbolPriceUpdatedPromises.push(
-              Promise.resolve(listener.onSymbolPriceUpdated(price))
-                // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
+            onOrderSynchronizationFinishedPromises.push(
+              Promise.resolve(listener.onOrderSynchronizationFinished(data.synchronizationId))
+              // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                  'orderSynchronizationFinished event', err))
             );
           }
-          await Promise.all(onSymbolPriceUpdatedPromises);
+          await Promise.all(onOrderSynchronizationFinishedPromises);
+        } else if (data.type === 'status') {
+          const onBrokerConnectionStatusChangedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onBrokerConnectionStatusChangedPromises.push(
+              Promise.resolve(listener.onBrokerConnectionStatusChanged(!!data.connected))
+              // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                  'brokerConnectionStatusChanged event', err))
+            );
+          }
+          await Promise.all(onBrokerConnectionStatusChangedPromises);
+        } else if (data.type === 'specifications') {
+          for (let specification of (data.specifications || [])) {
+            const onSymbolSpecificationUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onSymbolSpecificationUpdatedPromises.push(
+                Promise.resolve(listener.onSymbolSpecificationUpdated(specification))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about specifications event`,
+                    err))
+              );
+            }
+            await Promise.all(onSymbolSpecificationUpdatedPromises);
+          }
+        } else if (data.type === 'prices') {
+          for (let price of (data.prices || [])) {
+            const onSymbolPriceUpdatedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onSymbolPriceUpdatedPromises.push(
+                Promise.resolve(listener.onSymbolPriceUpdated(price))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
+              );
+            }
+            await Promise.all(onSymbolPriceUpdatedPromises);
+          }
         }
       }
     } catch (err) {
