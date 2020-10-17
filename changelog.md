@@ -5,6 +5,7 @@
   - breaking change: changed API contract of MetaApiConnection.waitSynchronized method
   - added tags for MetaApi accounts
   - minor adjustments to equity calculation algorithm
+  - added method to wait for active resynchronization tasks are completed in configuration CopyFactory api
   - added the ability to set the start time for synchronization, used for tests
   - resynchronize on lost synchronization packet to ensure local terminal state consistency
 

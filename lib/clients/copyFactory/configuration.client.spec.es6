@@ -1,8 +1,9 @@
 'use strict';
 
+import should from 'should';
+import sinon from 'sinon';
 import {HttpClientMock} from '../httpClient';
 import ConfigurationClient from './configuration.client';
-import should from 'should';
 
 const copyFactoryApiUrl = 'https://trading-api-v1.agiliumtrade.agiliumtrade.ai';
 
@@ -11,11 +12,20 @@ const copyFactoryApiUrl = 'https://trading-api-v1.agiliumtrade.agiliumtrade.ai';
  */
 describe('ConfigurationClient', () => {
 
+  let sandbox;
   let copyFactoryClient;
   let httpClient = new HttpClientMock(() => 'empty');
 
+  before(() => {
+    sandbox = sinon.createSandbox();
+  });
+
   beforeEach(() => {
     copyFactoryClient = new ConfigurationClient(httpClient, 'header.payload.sign');
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   /**
@@ -419,6 +429,66 @@ describe('ConfigurationClient', () => {
         'access token. Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
+  });
+
+  describe('ConfigurationClient.waitResynchronizationTasksCompleted', () => {
+
+    /**
+     * @test {ConfigurationClient#waitResynchronizationTasksCompleted}
+     */
+    it('should wait until active resynchronization tasks are completed', async () => {
+      let activeTasks = [{
+        _id: 'ABCD',
+        type: 'CREATE_STRATEGY',
+        createdAt: '2020-08-25T00:00:00.000Z',
+        status: 'EXECUTING'
+      }];
+      sandbox.stub(httpClient, 'request')
+        .onFirstCall().resolves(activeTasks)
+        .onSecondCall().resolves(activeTasks)
+        .onThirdCall().resolves([]);
+
+      await copyFactoryClient.waitResynchronizationTasksCompleted('accountId', 1, 50);
+      sinon.assert.calledWith(httpClient.request, {
+        url: `${copyFactoryApiUrl}/users/current/configuration/connections/`
+          + 'accountId/active-resynchronization-tasks',
+        method: 'GET',
+        headers: {
+          'auth-token': 'header.payload.sign'
+        },
+        json: true
+      });
+      sinon.assert.calledThrice(httpClient.request);
+    });
+
+    /**
+     * @test {ConfigurationClient#waitResynchronizationTasksCompleted}
+     */
+    it('should time out waiting for active resynchronization tasks are completed', async () => {
+      let activeTasks = [{
+        _id: 'ABCD',
+        type: 'CREATE_STRATEGY',
+        createdAt: '2020-08-25T00:00:00.000Z',
+        status: 'EXECUTING'
+      }];
+      sandbox.stub(httpClient, 'request').resolves(activeTasks);
+      try {
+        await copyFactoryClient.waitResynchronizationTasksCompleted('accountId', 1, 50);
+        throw new Error('TimeoutError is expected');
+      } catch (err) {
+        err.name.should.equal('TimeoutError');
+      }
+      sinon.assert.calledWith(httpClient.request, {
+        url: `${copyFactoryApiUrl}/users/current/configuration/connections/`
+          + 'accountId/active-resynchronization-tasks',
+        method: 'GET',
+        headers: {
+          'auth-token': 'header.payload.sign'
+        },
+        json: true
+      });
+    });
+
   });
 
 });
