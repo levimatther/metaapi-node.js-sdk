@@ -1,6 +1,7 @@
 'use strict';
 
 import MetaApiClient from '../metaApi.client';
+import TimeoutError from '../timeoutError';
 import randomstring from 'randomstring';
 
 /**
@@ -394,7 +395,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/
    * get_users_current_configuration_connections_connectionId_active_resynchronization_tasks
    * @param {String} connectionId MetaApi account id to return tasks for
-   * @return {Promise<ResynchronizationTask>} promise resolving with list of active resynchronization tasks
+   * @return {Promise<Array<ResynchronizationTask>>} promise resolving with list of active resynchronization tasks
    */
   async getActiveResynchronizationTasks(connectionId) {
     if (this._isNotJwtToken()) {
@@ -413,4 +414,24 @@ export default class ConfigurationClient extends MetaApiClient {
     return tasks;
   }
 
+  /**
+   * Waits until active resynchronization tasks are completed
+   * @param {String} connectionId MetaApi account id to wait tasks completed for
+   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {Number} intervalInMilliseconds interval between tasks reload while waiting for a change, default is 1s
+   * @return {Promise} promise which resolves when tasks are completed
+   * @throws {TimeoutError} if tasks have not completed withing timeout allowed
+   */
+  async waitResynchronizationTasksCompleted(connectionId, timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
+    let startTime = Date.now();
+    let tasks = await this.getActiveResynchronizationTasks(connectionId);
+    while (tasks.length !== 0 && (startTime + timeoutInSeconds * 1000) > Date.now()) {
+      await new Promise(res => setTimeout(res, intervalInMilliseconds));
+      tasks = await this.getActiveResynchronizationTasks(connectionId);
+    }
+    if (tasks.length !== 0) {
+      throw new TimeoutError('Timed out waiting for resynchronization tasks for account '
+        + connectionId + ' to be completed');
+    }
+  }
 }

@@ -568,7 +568,7 @@ describe('MetatraderAccountApi', () => {
     /**
      * @test {MetatraderAccount#waitConnected}
      */
-    it('should wait util broker connection', async () => {
+    it('should wait until broker connection', async () => {
       let disconnectedAccount = {
         _id: 'id',
         login: '50194988',
