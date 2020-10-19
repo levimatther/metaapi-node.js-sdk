@@ -45,7 +45,7 @@ export default class MetaApiWebsocketClient {
    */
   onOutOfOrderPacket(accountId, expectedSequenceNumber, actualSequenceNumber, packet, receivedAt) {
     console.error(`[${(new Date()).toISOString()}] MetaApi websocket client received an out of order ` +
-      `packet type ${packet.type} for account id ${accountId}. Expected s/n is ${expectedSequenceNumber} does ` +
+      `packet type ${packet.type} for account id ${accountId}. Expected s/n ${expectedSequenceNumber} does ` +
       `not match the actual of ${actualSequenceNumber}`);
     this.subscribe(accountId);
   }

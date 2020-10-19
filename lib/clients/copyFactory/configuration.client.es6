@@ -253,10 +253,10 @@ export default class ConfigurationClient extends MetaApiClient {
 
   /**
    * CopyFactory strategy commission scheme
-   * @typedef {Object} CopyFactoryStrategyComissionScheme
+   * @typedef {Object} CopyFactoryStrategyCommissionScheme
    * @property {String} type commission type. One of flat-fee, lots-traded, lots-won, amount-traded, amount-won,
    * high-water-mark
-   * @property {String} billingPeriod billing period. One of week, month, quater
+   * @property {String} billingPeriod billing period. One of week, month, quarter
    * @property {Number} commissionRate commission rate. Should be greater than or equal to zero if commission type is
    * flat-fee, lots-traded or lots-won, should be greater than or equal to zero and less than or equal to 1 if
    * commission type is amount-traded, amount-won, high-water-mark.
@@ -310,7 +310,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {String} connectionId id of the MetaApi account providing the strategy
    * @property {Boolean} [skipPendingOrders] optional flag indicating that pending orders should not be copied.
    * Default is to copy pending orders
-   * @property {CopyFactoryStrategyComissionScheme} [commissionScheme] commission scheme allowed by this strategy
+   * @property {CopyFactoryStrategyCommissionScheme} [commissionScheme] commission scheme allowed by this strategy
    * @property {Number} platformCommissionRate commission rate the platform charges for strategy copying, applied to
    * commissions charged by provider. This commission applies only to accounts not managed directly by provider. Should
    * be fraction of 1
