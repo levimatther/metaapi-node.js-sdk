@@ -83,7 +83,7 @@ export default class PacketOrderer {
         packet: packet,
         receivedAt: new Date()
       });
-      waitList.sort((e1, e2) => e1.sequenceNumber > e2.sequenceNumber);
+      waitList.sort((e1, e2) => e1.sequenceNumber - e2.sequenceNumber);
       return [];
     } else {
       return [packet];
