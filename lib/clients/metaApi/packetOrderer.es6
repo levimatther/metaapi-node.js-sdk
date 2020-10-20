@@ -14,6 +14,7 @@ export default class PacketOrderer {
     this._outOfOrderListener = outOfOrderListener;
     this._orderingTimeoutInSeconds = orderingTimeoutInSeconds;
     this._isOutOfOrderEmitted = {};
+    this._waitListSizeLimit = 100;
   }
 
   /**
@@ -21,6 +22,7 @@ export default class PacketOrderer {
    */
   start() {
     this._sequenceNumberByAccount = {};
+    this._lastSessionStartTimestamp = {};
     this._packetsByAccountId = {};
     if (!this._outOfOrderInterval) {
       this._outOfOrderInterval = setInterval(() => this._emitOutOfOrderEvents(), 1000);
@@ -48,9 +50,11 @@ export default class PacketOrderer {
       // synchronization packet sequence just started
       this._isOutOfOrderEmitted[packet.accountId] = false;
       this._sequenceNumberByAccount[packet.accountId] = packet.sequenceNumber;
-      delete this._packetsByAccountId[packet.accountId];
-      return [packet];
-    } else if (packet.sequenceNumber < this._sequenceNumberByAccount[packet.accountId]) {
+      this._lastSessionStartTimestamp[packet.accountId] = packet.sequenceTimestamp;
+      this._packetsByAccountId[packet.accountId] = (this._packetsByAccountId[packet.accountId] || [])
+        .filter(waitPacket => waitPacket.packet.sequenceTimestamp >= packet.sequenceTimestamp);
+      return [packet].concat(this._findNextPacketsFromWaitList(packet.accountId));
+    } else if (packet.sequenceTimestamp < this._lastSessionStartTimestamp[packet.accountId]) {
       // filter out previous packets
       return [];
     } else if (packet.sequenceNumber === this._sequenceNumberByAccount[packet.accountId]) {
@@ -59,21 +63,8 @@ export default class PacketOrderer {
     } else if (packet.sequenceNumber === this._sequenceNumberByAccount[packet.accountId] + 1) {
       // in-order packet was received
       this._sequenceNumberByAccount[packet.accountId]++;
-      let result = [packet];
-      let waitList = this._packetsByAccountId[packet.accountId] || [];
-      while (waitList.length && [this._sequenceNumberByAccount[packet.accountId], 
-        this._sequenceNumberByAccount[packet.accountId] + 1].includes(waitList[0].sequenceNumber)) {
-        result.push(waitList[0].packet);
-        if(waitList[0].sequenceNumber === this._sequenceNumberByAccount[packet.accountId] + 1) {
-          this._sequenceNumberByAccount[packet.accountId]++;
-        }
-        waitList.splice(0, 1);
-      }
-      if (!waitList.length) {
-        delete this._packetsByAccountId[packet.accountId];
-      }
-      return result;
-    } else if (this._sequenceNumberByAccount[packet.accountId]) {
+      return [packet].concat(this._findNextPacketsFromWaitList(packet.accountId));
+    } else {
       // out-of-order packet was received, add it to the wait list
       this._packetsByAccountId[packet.accountId] = this._packetsByAccountId[packet.accountId] || [];
       let waitList = this._packetsByAccountId[packet.accountId];
@@ -84,12 +75,29 @@ export default class PacketOrderer {
         receivedAt: new Date()
       });
       waitList.sort((e1, e2) => e1.sequenceNumber - e2.sequenceNumber);
+      while (waitList.length > this._waitListSizeLimit) {
+        waitList.shift();
+      }
       return [];
-    } else {
-      return [packet];
     }
   }
 
+  _findNextPacketsFromWaitList(accountId) {
+    let result = [];
+    let waitList = this._packetsByAccountId[accountId] || [];
+    while (waitList.length && [this._sequenceNumberByAccount[accountId],
+      this._sequenceNumberByAccount[accountId] + 1].includes(waitList[0].sequenceNumber)) {
+      result.push(waitList[0].packet);
+      if (waitList[0].sequenceNumber === this._sequenceNumberByAccount[accountId] + 1) {
+        this._sequenceNumberByAccount[accountId]++;
+      }
+      waitList.splice(0, 1);
+    }
+    if (!waitList.length) {
+      delete this._packetsByAccountId[accountId];
+    }
+    return result;
+  }
 
   _emitOutOfOrderEvents() {
     for (let waitList of Object.values(this._packetsByAccountId)) {
@@ -98,7 +106,7 @@ export default class PacketOrderer {
         if(!this._isOutOfOrderEmitted[accountId]) {
           this._isOutOfOrderEmitted[accountId] = true;
           this._outOfOrderListener.onOutOfOrderPacket(waitList[0].accountId,
-            this._sequenceNumberByAccount[accountId] + 1, waitList[0].sequenceNumber, waitList[0].packet,
+            (this._sequenceNumberByAccount[accountId] || 0) + 1, waitList[0].sequenceNumber, waitList[0].packet,
             waitList[0].receivedAt);
         }
       }
