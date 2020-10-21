@@ -59,8 +59,8 @@ describe('MT5 double synchronization test', () => {
       let connection = await account.connect();
       let connectionCopy = await accountCopy.connect();
       await Promise.all([
-        connection.waitSynchronized(undefined, 600),
-        connectionCopy.waitSynchronized(undefined, 600)
+        connection.waitSynchronized({timeoutInSeconds: 600}),
+        connectionCopy.waitSynchronized({timeoutInSeconds: 600})
       ]);
       await account.undeploy();
       await accountCopy.undeploy();

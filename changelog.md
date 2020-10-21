@@ -1,3 +1,6 @@
+8.0.1
+  - bugfix packet ordering algorithm
+
 8.0.0
   - breaking change: removed the `timeConverter` field from the account, replaced it with `brokerTimezone` and `brokerDSTSwitchTimezone` fields in the provisioning profile instead
   - added originalComment and clientId fields to MetatraderPosition
