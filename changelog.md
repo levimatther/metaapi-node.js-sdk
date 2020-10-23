@@ -1,3 +1,6 @@
+8.0.2
+  - bugfix packet ordering algorithm
+
 8.0.1
   - bugfix packet ordering algorithm
 

@@ -43,7 +43,7 @@ export default class PacketOrderer {
    */
   // eslint-disable-next-line complexity
   restoreOrder(packet) {
-    if (!packet.sequenceNumber) {
+    if (packet.sequenceNumber === undefined) {
       return [packet];
     }
     if (packet.type === 'specifications' && packet.synchronizationId) {
