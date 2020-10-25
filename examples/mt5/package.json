@@ -3,7 +3,7 @@
   "description": "MetaApi example scripts",
   "version": "1.0.0",
   "dependencies": {
-    "metaapi.cloud-sdk": "^8.0.0"
+    "metaapi.cloud-sdk": "^8.1.0"
   },
   "scripts": {}
 }

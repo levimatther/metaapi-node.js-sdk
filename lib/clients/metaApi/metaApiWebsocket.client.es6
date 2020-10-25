@@ -767,6 +767,88 @@ export default class MetaApiWebsocketClient {
    * SYMBOL_TRADE_EXECUTION_INSTANT, SYMBOL_TRADE_EXECUTION_MARKET, SYMBOL_TRADE_EXECUTION_EXCHANGE. See
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_trade_execution for more
    * details.
+   * @property {Number} contractSize trade contract size
+   * @property {MetatraderSessions} quoteSessions quote sessions, indexed by day of week
+   * @property {MetatraderSessions} tradeSessions trade sessions, indexed by day of week
+   * @property {String} [tradeMode] order execution type. Possible values are SYMBOL_TRADE_MODE_DISABLED,
+   * SYMBOL_TRADE_MODE_LONGONLY, SYMBOL_TRADE_MODE_SHORTONLY, SYMBOL_TRADE_MODE_CLOSEONLY, SYMBOL_TRADE_MODE_FULL. See
+   * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_trade_mode for more
+   * details
+   * @property {Number} [bondAccruedInterest] accrued interest – accumulated coupon interest, i.e. part of the coupon
+   * interest calculated in proportion to the number of days since the coupon bond issuance or the last coupon interest
+   * payment
+   * @property {Number} [bondFaceValue] face value – initial bond value set by the issuer
+   * @property {Number} [optionStrike] the strike price of an option. The price at which an option buyer can buy (in a
+   * Call option) or sell (in a Put option) the underlying asset, and the option seller is obliged to sell or buy the
+   * appropriate amount of the underlying asset.
+   * @property {Number} [optionPriceSensivity] option/warrant sensitivity shows by how many points the price of the
+   * option's underlying asset should change so that the price of the option changes by one point
+   * @property {Number} [liquidityRate] liquidity Rate is the share of the asset that can be used for the margin
+   * @property {Number} initialMargin initial margin means the amount in the margin currency required for opening a
+   * position with the volume of one lot. It is used for checking a client's assets when he or she enters the market
+   * @property {Number} maintenanceMargin the maintenance margin. If it is set, it sets the margin amount in the margin
+   * currency of the symbol, charged from one lot. It is used for checking a client's assets when his/her account state
+   * changes. If the maintenance margin is equal to 0, the initial margin is used
+   * @property {Number} hedgedMargin contract size or margin value per one lot of hedged positions (oppositely directed
+   * positions of one symbol). Two margin calculation methods are possible for hedged positions. The calculation method
+   * is defined by the broker
+   * @property {Boolean} [hedgedMarginUsesLargerLeg] calculating hedging margin using the larger leg (Buy or Sell)
+   * @properties {String} marginCurrency margin currency
+   * @property {String} priceCalculationMode contract price calculation mode. One of SYMBOL_CALC_MODE_UNKNOWN,
+   * SYMBOL_CALC_MODE_FOREX, SYMBOL_CALC_MODE_FOREX_NO_LEVERAGE, SYMBOL_CALC_MODE_FUTURES, SYMBOL_CALC_MODE_CFD,
+   * SYMBOL_CALC_MODE_CFDINDEX, SYMBOL_CALC_MODE_CFDLEVERAGE, SYMBOL_CALC_MODE_EXCH_STOCKS,
+   * SYMBOL_CALC_MODE_EXCH_FUTURES, SYMBOL_CALC_MODE_EXCH_FUTURES_FORTS, SYMBOL_CALC_MODE_EXCH_BONDS,
+   * SYMBOL_CALC_MODE_EXCH_STOCKS_MOEX, SYMBOL_CALC_MODE_EXCH_BONDS_MOEX, SYMBOL_CALC_MODE_SERV_COLLATERAL. See
+   * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_calc_mode for more details
+   * @property {String} baseCurrency base currency
+   * @property {String} [profitCurrency] profit currency
+   * @property {String} swapMode swap calculation model. Allowed values are SYMBOL_SWAP_MODE_DISABLED,
+   * SYMBOL_SWAP_MODE_POINTS, SYMBOL_SWAP_MODE_CURRENCY_SYMBOL, SYMBOL_SWAP_MODE_CURRENCY_MARGIN,
+   * SYMBOL_SWAP_MODE_CURRENCY_DEPOSIT, SYMBOL_SWAP_MODE_INTEREST_CURRENT, SYMBOL_SWAP_MODE_INTEREST_OPEN,
+   * SYMBOL_SWAP_MODE_REOPEN_CURRENT, SYMBOL_SWAP_MODE_REOPEN_BID. See
+   * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_swap_mode for more details
+   * @property {Number} [swapLong] long swap value
+   * @property {Number} [swapShort] short swap value
+   * @property {String} [swapRollover3Days] day of week to charge 3 days swap rollover. Allowed values are SUNDAY,
+   * MONDAY, TUESDAY, WEDNESDAY, THURDAY, FRIDAY, SATURDAY
+   * @property {Array<String>} allowedExpirationModes allowed order expiration modes. Allowed values are
+   * SYMBOL_EXPIRATION_GTC, SYMBOL_EXPIRATION_DAY, SYMBOL_EXPIRATION_SPECIFIED, SYMBOL_EXPIRATION_SPECIFIED_DAY.
+   * See https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_expiration_mode for more
+   * details
+   * @property {Array<Strign>} allowedOrderTypes allowed order types. Allowed values are SYMBOL_ORDER_MARKET,
+   * SYMBOL_ORDER_LIMIT, SYMBOL_ORDER_STOP, SYMBOL_ORDER_STOP_LIMIT, SYMBOL_ORDER_SL, SYMBOL_ORDER_TP,
+   * SYMBOL_ORDER_CLOSEBY. See
+   * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_order_mode for more details
+   * @property {String} orderGTCMode if the expirationMode property is set to SYMBOL_EXPIRATION_GTC (good till
+   * canceled), the expiration of pending orders, as well as of Stop Loss/Take Profit orders should be additionally set
+   * using this enumeration. Allowed values are SYMBOL_ORDERS_GTC, SYMBOL_ORDERS_DAILY,
+   * SYMBOL_ORDERS_DAILY_EXCLUDING_STOPS. See
+   * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_order_gtc_mode for more
+   * details
+   * @property {Number} digits digits after a decimal point
+   * @property {String} [path] path in the symbol tree
+   * @property {String} description symbol description
+   * @property {Date} [startTime] date of the symbol trade beginning (usually used for futures)
+   * @property {Date} [expirationTime] date of the symbol trade end (usually used for futures)
+   */
+
+  /**
+   * Metatrader trade or quote session container, indexed by weekday
+   * @typedef {Object} MetatraderSessions
+   * @property {Array<MetatraderSession>} [SUNDAY] array of sessions for SUNDAY
+   * @property {Array<MetatraderSession>} [MONDAY] array of sessions for MONDAY
+   * @property {Array<MetatraderSession>} [TUESDAY] array of sessions for TUESDAY
+   * @property {Array<MetatraderSession>} [WEDNESDAY] array of sessions for WEDNESDAY
+   * @property {Array<MetatraderSession>} [THURSDAY] array of sessions for THURSDAY
+   * @property {Array<MetatraderSession>} [FRIDAY] array of sessions for FRIDAY
+   * @property {Array<MetatraderSession>} [SATURDAY] array of sessions for SATURDAY
+   */
+
+  /**
+   * Metatrader trade or quote session
+   * @typedef {Object} MetatraderSession
+   * @property {String} from session start time, in hh.mm.ss.SSS format
+   * @property {String} to session end time, in hh.mm.ss.SSS format
    */
 
   /**

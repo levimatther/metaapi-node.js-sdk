@@ -1,3 +1,8 @@
+8.1.0
+  - added contractSize field to MetatraderSymbolSpecification model
+  - added quoteSessions and tradeSessions to MetatraderSymbolSpecification model
+  - added more fields to MetatraderSymbolSpecification model
+
 8.0.2
   - bugfix packet ordering algorithm
 
