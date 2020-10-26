@@ -32,6 +32,13 @@ export default class SynchronizationListener {
   async onAccountInformationUpdated(accountInformation) {}
 
   /**
+   * Invoked when the positions are replaced as a result of initial terminal state synchronization
+   * @param {Array<MetatraderPosition>} positions updated array of positions
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onPositionsReplaced(positions) {}
+
+  /**
    * Invoked when MetaTrader position is updated
    * @param {MetatraderPosition} position updated MetaTrader position
    * @return {Promise} promise which resolves when the asynchronous event is processed
@@ -44,6 +51,13 @@ export default class SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onPositionRemoved(positionId) {}
+
+  /**
+   * Invoked when the orders are replaced as a result of initial terminal state synchronization
+   * @param {Array<MetatraderOrder>} orders updated array of orders
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onOrdersReplaced(orders) {}
 
   /**
    * Invoked when MetaTrader order is updated

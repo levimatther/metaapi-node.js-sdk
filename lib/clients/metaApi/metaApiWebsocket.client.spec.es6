@@ -794,14 +794,14 @@ describe('MetaApiWebsocketClient', () => {
         realizedProfit: -6.536993168992922e-13
       }];
       let listener = {
-        onPositionUpdated: () => {
+        onPositionsReplaced: () => {
         }
       };
-      sandbox.stub(listener, 'onPositionUpdated').resolves();
+      sandbox.stub(listener, 'onPositionsReplaced').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'positions', accountId: 'accountId', positions});
       await new Promise(res => setTimeout(res, 50));
-      sinon.assert.calledWith(listener.onPositionUpdated, positions[0]);
+      sinon.assert.calledWith(listener.onPositionsReplaced, positions);
     });
 
     it('should synchronize orders', async () => {
@@ -820,14 +820,14 @@ describe('MetaApiWebsocketClient', () => {
         comment: 'COMMENT2'
       }];
       let listener = {
-        onOrderUpdated: () => {
+        onOrdersReplaced: () => {
         }
       };
-      sandbox.stub(listener, 'onOrderUpdated').resolves();
+      sandbox.stub(listener, 'onOrdersReplaced').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders});
       await new Promise(res => setTimeout(res, 50));
-      sinon.assert.calledWith(listener.onOrderUpdated, orders[0]);
+      sinon.assert.calledWith(listener.onOrdersReplaced, orders);
     });
 
     it('should synchronize history orders', async () => {

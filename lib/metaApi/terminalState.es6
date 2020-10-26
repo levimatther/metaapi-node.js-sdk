@@ -128,6 +128,15 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
+   * Invoked when the positions are replaced as a result of initial terminal state synchronization
+   * @param {Array<MetatraderPosition>} positions updated array of positions
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onPositionsReplaced(positions) {
+    this._positions = positions;
+  }
+
+  /**
    * Invoked when MetaTrader position is updated
    * @param {MetatraderPosition} position updated MetaTrader position
    */
@@ -146,6 +155,15 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPositionRemoved(positionId) {
     this._positions = this._positions.filter(p => p.id !== positionId);
+  }
+
+  /**
+   * Invoked when the orders are replaced as a result of initial terminal state synchronization
+   * @param {Array<MetatraderOrder>} orders updated array of orders
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onOrdersReplaced(orders) {
+    this._orders = orders;
   }
 
   /**
