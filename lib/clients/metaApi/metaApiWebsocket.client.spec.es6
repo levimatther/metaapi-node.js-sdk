@@ -503,7 +503,7 @@ describe('MetaApiWebsocketClient', () => {
    */
   it('should return error if connect to MetaTrader terminal failed', async () => {
     let requestReceived = false;
-    const spy = sinon.spy(console, 'log');
+    const spy = sinon.spy(console, 'error');
     server.on('request', data => {
       if (data.type === 'subscribe' && data.accountId === 'accountId' && data.application === 'application') {
         requestReceived = true;

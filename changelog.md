@@ -3,6 +3,7 @@
   - added quoteSessions and tradeSessions to MetatraderSymbolSpecification model
   - added more fields to MetatraderSymbolSpecification model
   - breaking change: add onPositionsReplaced and onOrderReplaced events into SynchronizationListener and no longer invoke onPositionUpdated and onOrderUpdated during initial synchronization
+  - removed excessive log message from subscribe API
 
 8.0.2
   - bugfix packet ordering algorithm
