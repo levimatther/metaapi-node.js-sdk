@@ -498,7 +498,8 @@ export default class MetaApiConnection extends SynchronizationListener {
     try {
       await this.synchronize();
     } catch(err) {
-      console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to synchronize', err);
+      console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
+        ' failed to synchronize', err);
     }
   }
 
