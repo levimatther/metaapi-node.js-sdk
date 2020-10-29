@@ -4,6 +4,7 @@
   - added more fields to MetatraderSymbolSpecification model
   - breaking change: add onPositionsReplaced and onOrderReplaced events into SynchronizationListener and no longer invoke onPositionUpdated and onOrderUpdated during initial synchronization
   - removed excessive log message from subscribe API
+  - fixed wrong expected sequence number of synchronization packet in the log message
   - added positionId field to CopyFactoryTransaction model
 
 8.0.2
