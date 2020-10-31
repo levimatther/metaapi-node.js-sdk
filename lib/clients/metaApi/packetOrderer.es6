@@ -105,8 +105,10 @@ export default class PacketOrderer {
         const accountId = waitList[0].accountId;
         if(!this._isOutOfOrderEmitted[accountId]) {
           this._isOutOfOrderEmitted[accountId] = true;
+          let expectedSequenceNumber = this._sequenceNumberByAccount[accountId] !== undefined ?
+            (this._sequenceNumberByAccount[accountId] + 1) : -1;
           this._outOfOrderListener.onOutOfOrderPacket(waitList[0].accountId,
-            (this._sequenceNumberByAccount[accountId] || 0) + 1, waitList[0].sequenceNumber, waitList[0].packet,
+            expectedSequenceNumber, waitList[0].sequenceNumber, waitList[0].packet,
             waitList[0].receivedAt);
         }
       }

@@ -5,6 +5,8 @@
   - breaking change: add onPositionsReplaced and onOrderReplaced events into SynchronizationListener and no longer invoke onPositionUpdated and onOrderUpdated during initial synchronization
   - removed excessive log message from subscribe API
   - breaking change: introduced synchronizationStated event to increase synchronization stability
+  - fixed wrong expected sequence number of synchronization packet in the log message
+  - added positionId field to CopyFactoryTransaction model
 
 8.0.2
   - bugfix packet ordering algorithm

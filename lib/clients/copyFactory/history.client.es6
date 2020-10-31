@@ -133,6 +133,7 @@ export default class HistoryClient extends MetaApiClient {
    * @property {Boolean} demo demo account flag
    * @property {CopyFactorySubscriberOrProvider} provider strategy provider
    * @property {CopyFactoryStrategyIdAndName} strategy strategy
+   * @property {String} [positionId] source position id
    * @property {Number} improvement high-water mark strategy balance improvement
    * @property {Number} providerCommission provider commission
    * @property {Number} platformCommission platform commission

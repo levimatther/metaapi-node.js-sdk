@@ -224,7 +224,7 @@ describe('PacketOrderer', () => {
     ];
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledWith(outOfOrderListener.onOutOfOrderPacket,
-      'accountId', 1, 11, timedOutPacket.packet);
+      'accountId', -1, 11, timedOutPacket.packet);
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledOnce(outOfOrderListener.onOutOfOrderPacket);
   }).timeout(3000);
