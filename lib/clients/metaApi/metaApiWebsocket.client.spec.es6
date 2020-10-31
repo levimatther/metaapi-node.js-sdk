@@ -750,6 +750,18 @@ describe('MetaApiWebsocketClient', () => {
       requestReceived.should.be.true();
     });
 
+    it('should process synchronization started event', async () => {
+      let listener = {
+        onSynchronizationStarted: () => {
+        }
+      };
+      sandbox.stub(listener, 'onSynchronizationStarted').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId'});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledWith(listener.onSynchronizationStarted);
+    });
+
     it('should synchronize account information', async () => {
       let accountInformation = {
         broker: 'True ECN Trading Ltd',

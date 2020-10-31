@@ -25,6 +25,12 @@ export default class SynchronizationListener {
   async onBrokerConnectionStatusChanged(connected) {}
 
   /**
+   * Invoked when MetaTrader terminal state synchronization is started
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onSynchronizationStarted() {}
+
+  /**
    * Invoked when MetaTrader account information is updated
    * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
    * @return {Promise} promise which resolves when the asynchronous event is processed

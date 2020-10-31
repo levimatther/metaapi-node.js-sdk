@@ -46,7 +46,7 @@ describe('PacketOrderer', () => {
    */
   it('should restore packet order starting from packet of specifications type', () => {
     let firstPacket = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267178,
       sequenceNumber: 13,
       synchronizationId: 'synchronizationId'
@@ -77,7 +77,7 @@ describe('PacketOrderer', () => {
    */
   it('should filter out packets from previous synchronization attempt that includes specifications', () => {
     let previousSpecifications = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267178,
       sequenceNumber: 13,
       synchronizationId: 'synchronizationId'
@@ -88,7 +88,7 @@ describe('PacketOrderer', () => {
       sequenceNumber: 15,
     };
     let thisSpecifications = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267198,
       sequenceNumber: 1,
       synchronizationId: 'synchronizationId'
@@ -114,7 +114,7 @@ describe('PacketOrderer', () => {
       sequenceNumber: 15,
     };
     let thisSpecifications = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267198,
       sequenceNumber: 16,
       synchronizationId: 'synchronizationId'
@@ -134,7 +134,7 @@ describe('PacketOrderer', () => {
    */
   it('should pass trough duplicate packets', () => {
     let specificationsPacket = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267198,
       sequenceNumber: 16,
       synchronizationId: 'synchronizationId'
@@ -154,7 +154,7 @@ describe('PacketOrderer', () => {
    */
   it('should return in-order packets immediately', () => {
     let firstPacket = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267178,
       sequenceNumber: 13,
       synchronizationId: 'synchronizationId'
@@ -180,7 +180,7 @@ describe('PacketOrderer', () => {
   it('should call on-out-of-order listener only once per synchronzation attempt', async () => {
     sandbox.stub(outOfOrderListener, 'onOutOfOrderPacket').returns();
     let firstPacket = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267178,
       sequenceNumber: 13,
       synchronizationId: 'synchronizationId',
@@ -282,7 +282,7 @@ describe('PacketOrderer', () => {
    */
   it('should count specification packets with undefined synchronziationId as out-of-order', () => {
     let specificationsPacket = {
-      type: 'specifications',
+      type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267198,
       sequenceNumber: 16,
       accountId: 'accountId'

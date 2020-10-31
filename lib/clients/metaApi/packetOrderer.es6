@@ -46,7 +46,7 @@ export default class PacketOrderer {
     if (packet.sequenceNumber === undefined) {
       return [packet];
     }
-    if (packet.type === 'specifications' && packet.synchronizationId) {
+    if (packet.type === 'synchronizationStarted' && packet.synchronizationId) {
       // synchronization packet sequence just started
       this._isOutOfOrderEmitted[packet.accountId] = false;
       this._sequenceNumberByAccount[packet.accountId] = packet.sequenceNumber;

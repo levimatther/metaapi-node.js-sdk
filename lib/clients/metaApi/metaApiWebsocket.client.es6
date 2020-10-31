@@ -893,6 +893,17 @@ export default class MetaApiWebsocketClient {
             );
           }
           await Promise.all(onDisconnectedPromises);
+        } else if (data.type === 'synchronizationStarted') {
+          const promises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            promises.push(
+              Promise.resolve(listener.onSynchronizationStarted())
+              // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about synchronization ` +
+                  'started event', err))
+            );
+          }
+          await Promise.all(promises);
         } else if (data.type === 'accountInformation') {
           if (data.accountInformation) {
             const onAccountInformationUpdatedPromises = [];

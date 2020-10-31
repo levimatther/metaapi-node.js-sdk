@@ -120,6 +120,19 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
+   * Invoked when MetaTrader terminal state synchronization is started
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onSynchronizationStarted() {
+    this._accountInformation = undefined;
+    this._positions = [];
+    this._orders = [];
+    this._specifications = [];
+    this._specificationsBySymbol = {};
+    this._pricesBySymbol = {};
+  }
+
+  /**
    * Invoked when MetaTrader account information is updated
    * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
    */
