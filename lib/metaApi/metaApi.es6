@@ -6,6 +6,8 @@ import ProvisioningProfileApi from './provisioningProfileApi';
 import MetaApiWebsocketClient from '../clients/metaApi/metaApiWebsocket.client';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
+import MetatraderDemoAccountApi from './metatraderDemoAccountApi';
+import MetatraderDemoAccountClient from '../clients/metaApi/metatraderDemoAccount.client';
 import ConnectionRegistry from './connectionRegistry';
 import {ValidationError} from '../clients/errorHandler';
 
@@ -34,6 +36,8 @@ export default class MetaApi {
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient, this._connectionRegistry);
+    this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
+      new MetatraderDemoAccountClient(httpClient, token, domain));
   }
 
   /**
@@ -50,6 +54,14 @@ export default class MetaApi {
    */
   get metatraderAccountApi() {
     return this._metatraderAccountApi;
+  }
+
+  /**
+   * Returns MetaTrader demo account API
+   * @return {MetatraderDemoAccountApi} MetaTrader demo account API
+   */
+  get metatraderDemoAccountApi() {
+    return this._metatraderDemoAccountApi;
   }
 
   /**
