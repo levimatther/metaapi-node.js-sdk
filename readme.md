@@ -337,6 +337,26 @@ const result = await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, {
 console.log('Trade successful, result code is ' + result.stringCode);
 ```
 
+## Managing MetaTrader demo accounts via API
+### Create a MetaTrader 4 demo account
+```javascript
+const demoAccount = await api.metatraderDemoAccountApi.createMT4DemoAccount({
+  balance: 10,
+  email: 'example@example.com',
+  leverage: 10
+  }, provisioningProfile.id);
+```
+
+### Create a MetaTrader 5 demo account
+```javascript
+const demoAccount = await api.metatraderDemoAccountApi.createMT5DemoAccount({
+  balance: 10,
+  email: 'example@example.com',
+  leverage: 10,
+  serverName: 'ICMarketsSC-Demo'
+  }, provisioningProfile.id);
+```
+
 ## CopyFactory copy trading API (experimental)
 
 CopyFactory is a powerful trade copying API which makes developing forex
