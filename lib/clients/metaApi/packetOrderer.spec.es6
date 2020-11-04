@@ -44,7 +44,7 @@ describe('PacketOrderer', () => {
   /**
    * @test {PacketOrderer#restoreOrder}
    */
-  it('should restore packet order starting from packet of specifications type', () => {
+  it('should restore packet order', () => {
     let firstPacket = {
       type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267178,
@@ -75,8 +75,8 @@ describe('PacketOrderer', () => {
   /**
    * @test {PacketOrderer#restoreOrder}
    */
-  it('should filter out packets from previous synchronization attempt that includes specifications', () => {
-    let previousSpecifications = {
+  it('should filter out packets from previous synchronization attempt that includes synchronization start', () => {
+    let previousStart = {
       type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267178,
       sequenceNumber: 13,
@@ -98,7 +98,7 @@ describe('PacketOrderer', () => {
       sequenceTimestamp: 1603124268198,
       sequenceNumber: 2,
     };
-    packetOrderer.restoreOrder(previousSpecifications).should.deepEqual([previousSpecifications]);
+    packetOrderer.restoreOrder(previousStart).should.deepEqual([previousStart]);
     packetOrderer.restoreOrder(oneOfPreviousPackets).should.deepEqual([]);
     packetOrderer.restoreOrder(thisSecondPacket).should.deepEqual([]);
     packetOrderer.restoreOrder(thisSpecifications).should.deepEqual([thisSpecifications, thisSecondPacket]);
@@ -107,13 +107,13 @@ describe('PacketOrderer', () => {
   /**
    * @test {PacketOrderer#restoreOrder}
    */
-  it('should filter out packets from previous synchronization attempt that does not includes specifications', () => {
+  it('should filter out packets from previous synchronization attempt that does not include the start', () => {
     let oneOfPreviousPackets = {
       type: 'positions',
       sequenceTimestamp: 1603124267188,
       sequenceNumber: 15,
     };
-    let thisSpecifications = {
+    let thisStart = {
       type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267198,
       sequenceNumber: 16,
@@ -126,7 +126,7 @@ describe('PacketOrderer', () => {
     };
     packetOrderer.restoreOrder(oneOfPreviousPackets).should.deepEqual([]);
     packetOrderer.restoreOrder(thisSecondPacket).should.deepEqual([]);
-    packetOrderer.restoreOrder(thisSpecifications).should.deepEqual([thisSpecifications, thisSecondPacket]);
+    packetOrderer.restoreOrder(thisStart).should.deepEqual([thisStart, thisSecondPacket]);
   });
 
   /**
@@ -218,13 +218,14 @@ describe('PacketOrderer', () => {
       packet: {},
       receivedAt: new Date('3015-10-19T09:58:56.000Z')
     };
+    packetOrderer._sequenceNumberByAccount.accountId = 1;
     packetOrderer._packetsByAccountId.accountId = [
       timedOutPacket,
       notTimedOutPacket
     ];
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledWith(outOfOrderListener.onOutOfOrderPacket,
-      'accountId', -1, 11, timedOutPacket.packet);
+      'accountId', 2, 11, timedOutPacket.packet);
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledOnce(outOfOrderListener.onOutOfOrderPacket);
   }).timeout(3000);
@@ -244,10 +245,31 @@ describe('PacketOrderer', () => {
       packet: {},
       receivedAt: new Date('3015-10-19T09:58:56.000Z')
     };
+    packetOrderer._sequenceNumberByAccount.accountId = 1;
     packetOrderer._packetsByAccountId.accountId = [
       notTimedOutPacket,
       timedOutPacket
     ];
+    await new Promise(res => setTimeout(res, 1000));
+    sinon.assert.notCalled(outOfOrderListener.onOutOfOrderPacket);
+  }).timeout(3000);
+
+  /**
+   * @test {PacketOrderer#restoreOrder}
+   */
+  it('should not call on-out-of-order listener for packets that come before synchronization start', async () => {
+    sandbox.stub(outOfOrderListener, 'onOutOfOrderPacket').returns();
+    let outOfOrderPacket = {
+      accountId: 'accountId',
+      sequenceNumber: 11,
+      packet: {},
+      receivedAt: new Date('2010-10-19T09:58:56.000Z')
+    };
+
+    // There were no synchronization start packets
+    packetOrderer._sequenceNumberByAccount.accountId = undefined;
+
+    packetOrderer._packetsByAccountId.accountId = [outOfOrderPacket];
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.notCalled(outOfOrderListener.onOutOfOrderPacket);
   }).timeout(3000);
@@ -280,15 +302,15 @@ describe('PacketOrderer', () => {
   /**
    * @test {PacketOrderer#restoreOrder}
    */
-  it('should count specification packets with undefined synchronziationId as out-of-order', () => {
-    let specificationsPacket = {
+  it('should count start packets with undefined synchronziationId as out-of-order', () => {
+    let startPacket = {
       type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267198,
       sequenceNumber: 16,
       accountId: 'accountId'
     };
-    packetOrderer.restoreOrder(specificationsPacket).should.deepEqual([]);
+    packetOrderer.restoreOrder(startPacket).should.deepEqual([]);
     packetOrderer._packetsByAccountId.accountId.length.should.equal(1);
-    packetOrderer._packetsByAccountId.accountId[0].packet.should.deepEqual(specificationsPacket);
+    packetOrderer._packetsByAccountId.accountId[0].packet.should.deepEqual(startPacket);
   });
 });
