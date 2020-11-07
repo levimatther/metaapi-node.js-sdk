@@ -79,19 +79,22 @@ export default class TradingClient extends MetaApiClient {
   }
 
   /**
-   * Resets account stopout. See
-   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/post_users_current_accounts_accountId_stopouts_reason_reset
+   * Resets strategy stopouts. See
+   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/post_users_current_accounts_accountId_
+   * strategies_subscribed_strategyId_stopouts_reason_reset
    * @param {String} accountId account id
+   * @param {String} strategyId strategy id
    * @param {String} reason stopout reason to reset. One of yearly-balance, monthly-balance, daily-balance,
    * yearly-equity, monthly-equity, daily-equity, max-drawdown
-   * @return {Promise} promise which resolves when the stopout is reset
+   * @return {Promise} promise which resolves when the stopouts are reset
    */
-  async resetStopout(accountId, reason) {
+  async resetStopouts(accountId, strategyId, reason) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('resetStopout');
+      return this._handleNoAccessError('resetStopouts');
     }
     const opts = {
-      url: `${this._host}/users/current/accounts/${accountId}/stopouts/${reason}/reset`,
+      url: `${this._host}/users/current/accounts/${accountId}/strategies-subscribed/${strategyId}/stopouts/${reason}` +
+        '/reset',
       method: 'POST',
       headers: {
         'auth-token': this._token

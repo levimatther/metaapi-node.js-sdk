@@ -111,16 +111,17 @@ describe('TradingClient', () => {
   });
 
   /**
-   * @test {TradingClient#resetStopout}
+   * @test {TradingClient#resetStopouts}
    */
-  it('should reset stopout', async () => {
+  it('should reset stopouts', async () => {
     httpClient.requestFn = (opts) => {
       return Promise
         .resolve()
         .then(() => {
           opts.should.eql({
             url: `${copyFactoryApiUrl}/users/current/accounts/` +
-            '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/stopouts/daily-equity/reset',
+              '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/strategies-subscribed/' +
+              'ABCD/stopouts/daily-equity/reset',
             method: 'POST',
             headers: {
               'auth-token': 'header.payload.sign'
@@ -131,21 +132,21 @@ describe('TradingClient', () => {
           return;
         });
     };
-    await tradingClient.resetStopout('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-      'daily-equity');
+    await tradingClient.resetStopouts('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      'ABCD', 'daily-equity');
   });
 
   /**
-   * @test {TradingClient#resetStopout}
+   * @test {TradingClient#resetStopouts}
    */
-  it('should not reset stopout with account token', async () => {
+  it('should not reset stopouts with account token', async () => {
     tradingClient = new TradingClient(httpClient, 'token');
     try {
-      await tradingClient.resetStopout('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        'daily-equity');
+      await tradingClient.resetStopouts('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+        'ABCD', 'daily-equity');
     } catch (error) {
       error.message.should.equal(
-        'You can not invoke resetStopout method, because you have connected with account access token. ' +
+        'You can not invoke resetStopouts method, because you have connected with account access token. ' +
         'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
