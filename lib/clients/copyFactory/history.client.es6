@@ -137,7 +137,8 @@ export default class HistoryClient extends MetaApiClient {
    * @property {Number} improvement high-water mark strategy balance improvement
    * @property {Number} providerCommission provider commission
    * @property {Number} platformCommission platform commission
-   * @property {Number} [quantity] trade volume
+   * @property {Number} [incomingProviderCommission] commission paid by provider to underlying providers
+   * @property {Number} [incomingPlatformCommission] platform commission paid by provider to underlying providers
    * @property {Number} [lotPrice] trade lot price
    * @property {Number} [tickPrice] trade tick price
    * @property {Number} [amount] trade amount

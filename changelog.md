@@ -1,3 +1,6 @@
+9.2.0
+  - added incoming commissions to CopyFactory history API
+
 9.1.0
   - added API to register MetaTrader demo accounts
   - fixed packet orderer to do not cause unnecessary resynchronization
