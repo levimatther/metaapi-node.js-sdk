@@ -731,6 +731,39 @@ describe('MetaApiConnection', () => {
   });
 
   /**
+   * @test {MetaApiConnection#onConnected}
+   */
+  it('should maintain synchronization if connection has failed', async () => {
+    let stub = sandbox.stub(client, 'synchronize');
+    stub.onFirstCall().throws(new Error('test error'));
+    stub.onSecondCall().resolves();
+    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
+    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.onConnected();
+    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId',
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+  });
+
+  /**
+   * @test {MetaApiConnection#onConnected}
+   */
+  it.only('should restore market data subscriptions on sychronization', async () => {
+    sandbox.stub(client, 'synchronize').resolves();
+    sandbox.stub(client, 'subscribeToMarketData').resolves();
+    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
+    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.subscribeToMarketData('EURUSD');
+    await api.onConnected();
+    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId',
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+    sinon.assert.calledTwice(client.subscribeToMarketData);
+  });
+
+  /**
    * @test {MetaApiConnection#close}
    */
   it('should unsubscribe from events on close', async () => {

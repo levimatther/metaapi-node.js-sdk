@@ -1,6 +1,8 @@
 10.0.0
   - added incoming commissions to CopyFactory history API
   - breaking change: refactored resetStopout method in CopyFactory trading API. Changed method name, added strategyId parameter.
+  - retry synchronization if synchronization attempt have failed
+  - restore market data subscriptions on successful synchronization
 
 9.1.0
   - added API to register MetaTrader demo accounts

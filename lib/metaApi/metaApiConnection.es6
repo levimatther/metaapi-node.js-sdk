@@ -36,6 +36,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
     this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);
     this._websocketClient.addReconnectListener(this);
+    this._subscriptions = {};
   }
 
   /**
@@ -435,6 +436,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when subscription request was processed
    */
   subscribeToMarketData(symbol) {
+    this._subscriptions[symbol] = true;
     return this._websocketClient.subscribeToMarketData(this._account.id, symbol);
   }
 
@@ -495,12 +497,10 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onConnected() {
-    try {
-      await this.synchronize();
-    } catch(err) {
-      console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
-        ' failed to synchronize', err);
-    }
+    let key = randomstring.generate(32);
+    this._shouldResynchronize = key;
+    this._synchronizationRetryIntervalInSeconds = 1;
+    await this._ensureSynchronized(key);
   }
 
   /**
@@ -509,6 +509,7 @@ export default class MetaApiConnection extends SynchronizationListener {
   onDisconnected() {
     this._lastDisconnectedSynchronizationId = this._lastSynchronizationId;
     this._lastSynchronizationId = undefined;
+    this._shouldResynchronize = undefined;
   }
 
   /**
@@ -594,6 +595,22 @@ export default class MetaApiConnection extends SynchronizationListener {
       this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
       this._connectionRegistry.remove(this._account.id);
       this._closed = true;
+    }
+  }
+
+  async _ensureSynchronized(key) {
+    try {
+      await this.synchronize();
+      for (let symbol of Object.keys(this._subscriptions)) {
+        await this.subscribeToMarketData(symbol);
+      }
+    } catch(err) {
+      console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
+        ' failed to synchronize', err);
+      if (this._shouldSynchronize === key) {
+        setTimeout(this._ensureSynchronized.bind(this, key), this._synchronizationRetryIntervalInSeconds);
+        this._synchronizationRetryIntervalInSeconds = Math.min(this._synchronizationRetryIntervalInSeconds * 2, 300);
+      }
     }
   }
 
