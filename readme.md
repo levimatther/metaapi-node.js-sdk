@@ -392,6 +392,8 @@ Features supported:
 - monitor trading history
 - calculate trade copying commissions for account managers
 
+Please note that trade copying to MT5 netting accounts is not supported in the current API version
+
 ### Configuring trade copying
 
 In order to configure trade copying you need to:
