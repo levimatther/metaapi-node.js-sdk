@@ -5,5 +5,5 @@
 4. Update SDK version in example generator to the one that is being published
 5. Make sure CI build passes
 6. Run npm run build && npm publish
-7. Create git tag
-8. Verify examples are in working condition
+7. Verify examples are in working condition
+8. Create git tag and push it to master
