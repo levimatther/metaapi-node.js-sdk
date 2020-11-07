@@ -338,21 +338,23 @@ console.log('Trade successful, result code is ' + result.stringCode);
 ```
 
 ## Managing MetaTrader demo accounts via API
+Please note that not all MT4/MT5 servers allows you to create demo accounts using the method below.
 ### Create a MetaTrader 4 demo account
 ```javascript
 const demoAccount = await api.metatraderDemoAccountApi.createMT4DemoAccount({
-  balance: 10,
+  balance: 100000,
   email: 'example@example.com',
-  leverage: 10
+  leverage: 100,
+  serverName: 'Exness-Trial4'
   }, provisioningProfile.id);
 ```
 
 ### Create a MetaTrader 5 demo account
 ```javascript
 const demoAccount = await api.metatraderDemoAccountApi.createMT5DemoAccount({
-  balance: 10,
+  balance: 100000,
   email: 'example@example.com',
-  leverage: 10,
+  leverage: 100,
   serverName: 'ICMarketsSC-Demo'
   }, provisioningProfile.id);
 ```
