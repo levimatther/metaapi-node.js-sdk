@@ -31,10 +31,18 @@ export default class MetatraderDemoAccount {
 
   /**
    * Returns account serverName
-   * @return {String} account login
+   * @return {String} account serverName
    */
   get serverName() {
     return this._data.serverName;
+  }
+
+  /**
+   * Returns account investor password
+   * @return {String} account investor password
+   */
+  get investorPassword() {
+    return this._data.investorPassword;
   }
 
 }

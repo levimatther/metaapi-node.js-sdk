@@ -19,6 +19,7 @@ export default class MetatraderDemoAccountClient extends MetaApiClient {
    * @property {Number} leverage account leverage
    * @property {String} [name] account holder's name
    * @property {String} [phone] account holder's phone
+   * @property {String} serverName server name
    * @property {String} [state] account holder's state
    * @property {String} [zip] zip address
    */
@@ -35,25 +36,26 @@ export default class MetatraderDemoAccountClient extends MetaApiClient {
    * @property {Number} leverage account leverage
    * @property {String} [name] account holder's name
    * @property {String} [phone] account holder's phone
-   * @property {String} [serverName] server name
+   * @property {String} serverName server name
    * @property {String} [state] account holder's state
    * @property {String} [zip] zip address
    */
 
   /**
    * MetaTrader demo account model
-   * @typedef {Object} MetatraderDemoAccount
+   * @typedef {Object} MetatraderDemoAccountDto
    * @property {String} login account login
    * @property {String} password account password
    * @property {String} serverName MetaTrader server name
+   * @property {String} investorPassword account investor (read-only) password
    */
 
   /**
-   * Creates new MetaTrader 5 demo account
+   * Creates new MetaTrader 4 demo account
    * Method is accessible only with API access token
    * @param {String} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT4DemoAccount} account demo account to create
-   * @return {Promise<MetatraderDemoAccount>} promise resolving with MetaTrader demo account created
+   * @return {Promise<MetatraderDemoAccountDto>} promise resolving with MetaTrader demo account created
    */
   createMT4DemoAccount(profileId, account) {
     if (this._isNotJwtToken()) {
@@ -76,7 +78,7 @@ export default class MetatraderDemoAccountClient extends MetaApiClient {
    * Method is accessible only with API access token
    * @param {String} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT5DemoAccount} account demo account to create
-   * @return {Promise<MetatraderDemoAccount>} promise resolving with MetaTrader demo account created
+   * @return {Promise<MetatraderDemoAccountDto>} promise resolving with MetaTrader demo account created
    */
   createMT5DemoAccount(profileId, account) {
     if (this._isNotJwtToken()) {

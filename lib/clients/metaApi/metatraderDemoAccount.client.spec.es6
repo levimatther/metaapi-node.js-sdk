@@ -18,10 +18,10 @@ describe('MetatraderDemoAccountClient', () => {
   });
 
   /**
-   * @test {MetatraderDemoAccountClient#getAccounts}
+   * @test {MetatraderDemoAccountClient#createMT4DemoAccount}
    */
   it('should create new MetaTrader 4 demo from API', async () => {
-    let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3'};
+    let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
     httpClient.requestFn = async (opts) => {
       await Promise.resolve();
       opts.should.eql({
@@ -33,7 +33,8 @@ describe('MetatraderDemoAccountClient', () => {
         body: {
           balance: 10,
           email: 'test@test.com',
-          leverage: 15
+          leverage: 15,
+          serverName: 'server'
         },
         json: true,
         timeout: 60000
@@ -45,16 +46,32 @@ describe('MetatraderDemoAccountClient', () => {
       {
         balance: 10,
         email: 'test@test.com',
-        leverage: 15
+        leverage: 15,
+        serverName: 'server'
       });
     account.should.equal(expected);
+  });
+
+  /**
+   * @test {MetatraderDemoAccountClient#createMT4DemoAccount}
+   */
+  it('should not create MetaTrader 4 account via API with account token', async () => {
+    demoAccountClient = new MetatraderDemoAccountClient(httpClient, 'token');
+    try {
+      await demoAccountClient.createMT4DemoAccount('profileId1', {});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke createMT4DemoAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
   });
 
   /**
    * @test {MetatraderDemoAccountClient#getAccounts}
    */
   it('should create new MetaTrader 5 demo from API', async () => {
-    let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3'};
+    let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
     httpClient.requestFn = async (opts) => {
       await Promise.resolve();
       opts.should.eql({
@@ -84,4 +101,20 @@ describe('MetatraderDemoAccountClient', () => {
       });
     account.should.equal(expected);
   });
+  
+  /**
+   * @test {MetatraderDemoAccountClient#createMT5DemoAccount}
+   */
+  it('should not create MetaTrader 5 account via API with account token', async () => {
+    demoAccountClient = new MetatraderDemoAccountClient(httpClient, 'token');
+    try {
+      await demoAccountClient.createMT5DemoAccount('profileId1', {});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke createMT5DemoAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
 });

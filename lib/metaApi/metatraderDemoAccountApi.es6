@@ -18,7 +18,7 @@ export default class MetatraderDemoAccountApi {
   /**
    * Creates new MetaTrader 4 demo account
    * @param {String} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT5DemoAccount} account demo account to create
+   * @param {NewMT4DemoAccount} account demo account to create
    * @return {Promise<MetatraderDemoAccount>} promise resolving with MetaTrader demo account entity
    */
   async createMT4DemoAccount(profileId, account) {
