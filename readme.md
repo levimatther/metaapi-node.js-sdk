@@ -337,6 +337,16 @@ const result = await connection.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, {
 console.log('Trade successful, result code is ' + result.stringCode);
 ```
 
+## Monitoring account connection health and uptime
+You can monitor account connection health using MetaApiConnection.healthMonitor API.
+```javascript
+let monitor = connection.healthMonitor;
+// retrieve detailed connection health status
+console.log(monitor.healthStatus);
+// retrieve account connection update measured over last 7 days
+console.log(monitor.uptime);
+```
+
 ## Managing MetaTrader demo accounts via API
 Please note that not all MT4/MT5 servers allows you to create demo accounts using the method below.
 ### Create a MetaTrader 4 demo account

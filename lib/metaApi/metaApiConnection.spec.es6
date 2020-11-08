@@ -749,7 +749,7 @@ describe('MetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#onConnected}
    */
-  it.only('should restore market data subscriptions on sychronization', async () => {
+  it('should restore market data subscriptions on sychronization', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');

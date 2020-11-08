@@ -5,6 +5,7 @@ import MemoryHistoryStorage from './memoryHistoryStorage';
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 import TimeoutError from '../clients/timeoutError';
 import randomstring from 'randomstring';
+import ConnectionHealthMonitor from './connectionHealthMonitor';
 
 /**
  * Exposes MetaApi MetaTrader API connection to consumers
@@ -32,11 +33,14 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._historyStartTime = historyStartTime;
     this._terminalState = new TerminalState();
     this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id, connectionRegistry.application);
+    this._healthMonitor = new ConnectionHealthMonitor(this);
     this._websocketClient.addSynchronizationListener(account.id, this);
     this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
     this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);
+    this._websocketClient.addSynchronizationListener(account.id, this._healthStatus);
     this._websocketClient.addReconnectListener(this);
     this._subscriptions = {};
+    this._synchronized = false;
   }
 
   /**
@@ -441,6 +445,14 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Returns list of the symbols connection is subscribed to
+   * @returns {Array<String>} list of the symbols connection is subscribed to
+   */
+  get subscribedSymbols() {
+    return Object.keys(this._subscriptions);
+  }
+
+  /**
    * Retrieves specification for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolSpecification/).
    * @param {String} symbol symbol to retrieve specification for
@@ -500,6 +512,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     let key = randomstring.generate(32);
     this._shouldResynchronize = key;
     this._synchronizationRetryIntervalInSeconds = 1;
+    this._synchronized = false;
     await this._ensureSynchronized(key);
   }
 
@@ -510,6 +523,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._lastDisconnectedSynchronizationId = this._lastSynchronizationId;
     this._lastSynchronizationId = undefined;
     this._shouldResynchronize = undefined;
+    this._synchronized = false;
   }
 
   /**
@@ -598,12 +612,37 @@ export default class MetaApiConnection extends SynchronizationListener {
     }
   }
 
+  /**
+   * Returns synchronization status
+   * @return {boolean} synchronization status
+   */
+  get synchronized() {
+    return this._synchronized;
+  }
+
+  /**
+   * Returns MetaApi account
+   * @return {MetatraderAccount} MetaApi account
+   */
+  get account() {
+    return this._account;
+  }
+
+  /**
+   * Returns connection health monitor instance
+   * @return {ConnectionHealthMonitor} connection health monitor instance
+   */
+  get heathMonitor() {
+    return this._healthMonitor;
+  }
+
   async _ensureSynchronized(key) {
     try {
       await this.synchronize();
       for (let symbol of Object.keys(this._subscriptions)) {
         await this.subscribeToMarketData(symbol);
       }
+      this._synchronized = true;
     } catch(err) {
       console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
         ' failed to synchronize', err);

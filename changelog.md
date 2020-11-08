@@ -3,6 +3,7 @@
   - breaking change: refactored resetStopout method in CopyFactory trading API. Changed method name, added strategyId parameter.
   - retry synchronization if synchronization attempt have failed
   - restore market data subscriptions on successful synchronization
+  - added capability to monitor terminal connection health and measure terminal connection uptime
 
 9.1.0
   - added API to register MetaTrader demo accounts

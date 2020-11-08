@@ -51,6 +51,7 @@
     "dotenv": "~8.2.0",
     "fs-extra": "~9.0.1",
     "idb": "~5.0.4",
+    "moment": "~2.29.1",
     "randomstring": "~1.1.5",
     "request": "~2.88.2",
     "request-promise-any": "~1.0.8",
