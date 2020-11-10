@@ -632,7 +632,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Returns connection health monitor instance
    * @return {ConnectionHealthMonitor} connection health monitor instance
    */
-  get heathMonitor() {
+  get healthMonitor() {
     return this._healthMonitor;
   }
 

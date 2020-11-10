@@ -62,7 +62,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
       quoteStreamingHealthy: this._quotesHealthy,
       synchronized: this._connection.synchronized
     };
-    status.healthy = status.connected && status.connectedToBroker && status.quoteStreamingHelathy &&
+    status.healthy = status.connected && status.connectedToBroker && status.quoteStreamingHealthy &&
       status.synchronized;
     let message;
     if (status.healthy) {
