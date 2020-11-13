@@ -21,9 +21,10 @@ export default class MetaApiWebsocketClient {
    * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
    * @param {Number} requestTimeout timeout for socket requests in seconds
    * @param {Number} connectTimeout timeout for connecting to server in seconds
+   * @param {Number} packetOrderingTimeout packet ordering timeout in seconds
    */
   constructor(token, application = 'MetaApi', domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60,
-    connectTimeout = 60) {
+    connectTimeout = 60, packetOrdereringTimeout = 60) {
     this._application = application;
     this._url = `https://mt-client-api-v1.${domain}`;
     this._requestTimeout = requestTimeout * 1000;
@@ -32,7 +33,7 @@ export default class MetaApiWebsocketClient {
     this._requestResolves = {};
     this._synchronizationListeners = {};
     this._reconnectListeners = [];
-    this._packetOrderer = new PacketOrderer(this);
+    this._packetOrderer = new PacketOrderer(this, packetOrdereringTimeout);
   }
 
   /**
