@@ -10,7 +10,7 @@ export default class PacketOrderer {
    * @param {Function} outOfOrderListener function which will receive out of order packet events
    * @param {Number} orderingTimeoutInSeconds packet ordering timeout
    */
-  constructor(outOfOrderListener, orderingTimeoutInSeconds = 10) {
+  constructor(outOfOrderListener, orderingTimeoutInSeconds = 60) {
     this._outOfOrderListener = outOfOrderListener;
     this._orderingTimeoutInSeconds = orderingTimeoutInSeconds;
     this._isOutOfOrderEmitted = {};

@@ -4,6 +4,7 @@
   - retry synchronization if synchronization attempt have failed
   - restore market data subscriptions on successful synchronization
   - added capability to monitor terminal connection health and measure terminal connection uptime
+  - change packet orderer timeout from 10 seconds to 1 minute to accomodate for slower connections
 
 9.1.0
   - added API to register MetaTrader demo accounts
