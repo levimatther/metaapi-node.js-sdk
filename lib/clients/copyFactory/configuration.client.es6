@@ -415,6 +415,25 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {Array<CopyFactoryPortfolioMember>} members array of portfolio memebers
    * @property {CopyFactoryStrategyCommissionScheme} [commissionScheme] commission scheme allowed by this strategy. By
    * default monthly billing period with no commission is being used
+   * @property {Boolean} [skipPendingOrders] optional flag indicating that pending orders should not be copied.
+   * Default is to copy pending orders
+   * @property {Number} [maxTradeRisk] optional max risk per trade, expressed as a fraction of 1. If trade has a SL, the
+   * trade size will be adjusted to match the risk limit. If not, the trade SL will be applied according to the risk
+   * limit
+   * @property {String} [reduceCorrelations] optional setting indicating whether to enable automatic trade correlation
+   * reduction. Possible settings are not specified (disable correlation risk restrictions), by-strategy (limit
+   * correlations on strategy level) or by-symbol (limit correlations on symbol level)
+   * @property {CopyFactoryStrategyStopOut} [stopOutRisk] optional stop out setting. All trading will be terminated and
+   * positions closed once equity drawdown reaches this value
+   * @property {CopyFactoryStrategySymbolFilter} [symbolFilter] symbol filters which can be used to copy only specific
+   * symbols or exclude some symbols from copying
+   * @property {CopyFactoryStrategyNewsFilter} [newsFilter] news risk filter configuration
+   * @property {Array<CopyFactoryStrategyRiskLimit>} [riskLimits] optional strategy risk limits. You can configure
+   * trading to be stopped once total drawdown generated during specific period is exceeded. Can be specified either for
+   * balance or equity drawdown
+   * @property {CopyFactoryStrategyMaxStopLoss} [maxStopLoss] optional stop loss value restriction
+   * @property {Number} [maxLeverage] optional max leverage risk restriction. All trades resulting in a leverage value
+   * higher than specified will be skipped
    */
 
   /**
