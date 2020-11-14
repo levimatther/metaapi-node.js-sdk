@@ -1,3 +1,6 @@
+10.0.1
+  - bugfix health monitor
+
 10.0.0
   - added incoming commissions to CopyFactory history API
   - breaking change: refactored resetStopout method in CopyFactory trading API. Changed method name, added strategyId parameter.
