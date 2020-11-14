@@ -386,6 +386,161 @@ describe('ConfigurationClient', () => {
   });
 
   /**
+   * @test {ConfigurationClient#getPortfolioStrategies}
+   */
+  it('should retrieve portfolio strategies from API', async () => {
+    let expected = [{
+      _id: 'ABCD',
+      providerId: 'providerId',
+      platformCommissionRate: 0.01,
+      name: 'Test strategy',
+      members: [
+        {
+          strategyId: 'BCDE'
+        }
+      ],
+      maxTradeRisk: 0.1,
+      stopOutRisk: {
+        value: 0.4,
+        startTime: '2020-08-24T00:00:00.000Z'
+      }
+    }];
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${copyFactoryApiUrl}/users/current/configuration/portfolio-strategies`,
+            method: 'GET',
+            headers: {
+              'auth-token': 'header.payload.sign'
+            },
+            json: true,
+            timeout: 60000
+          });
+          return expected;
+        });
+    };
+    let strategies = await copyFactoryClient.getPortfolioStrategies();
+    strategies.should.equal(expected);
+  });
+
+  /**
+   * @test {ConfigurationClient#getPortfolioStrategies}
+   */
+  it('should not retrieve portfolio strategies from API with account token', async () => {
+    copyFactoryClient = new ConfigurationClient(httpClient, 'token');
+    try {
+      await copyFactoryClient.getPortfolioStrategies();
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke getPortfolioStrategies method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {ConfigurationClient#updatePortfolioStrategy}
+   */
+  it('should update portfolio strategy via API', async () => {
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${copyFactoryApiUrl}/users/current/configuration/portfolio-strategies/ABCD`,
+            method: 'PUT',
+            headers: {
+              'auth-token': 'header.payload.sign'
+            },
+            json: true,
+            timeout: 60000,
+            body: {
+              name: 'Test strategy',
+              members: [
+                {
+                  strategyId: 'BCDE'
+                }
+              ],
+              maxTradeRisk: 0.1,
+              stopOutRisk: {
+                value: 0.4,
+                startTime: '2020-08-24T00:00:00.000Z'
+              }
+            }
+          });
+        });
+    };
+    await copyFactoryClient.updatePortfolioStrategy('ABCD', {
+      name: 'Test strategy',
+      members: [
+        {
+          strategyId: 'BCDE'
+        }
+      ],
+      maxTradeRisk: 0.1,
+      stopOutRisk: {
+        value: 0.4,
+        startTime: '2020-08-24T00:00:00.000Z'
+      }
+    });
+  });
+
+  /**
+   * @test {ConfigurationClient#updatePortfolioStrategy}
+   */
+  it('should not update portfolio strategy via API with account token', async () => {
+    copyFactoryClient = new ConfigurationClient(httpClient, 'token');
+    try {
+      await copyFactoryClient.updatePortfolioStrategy('ABCD', {});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke updatePortfolioStrategy method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {ConfigurationClient#removePortfolioStrategy}
+   */
+  it('should remove portfolio strategy via API', async () => {
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${copyFactoryApiUrl}/users/current/configuration/portfolio-strategies/ABCD`,
+            method: 'DELETE',
+            headers: {
+              'auth-token': 'header.payload.sign'
+            },
+            json: true,
+            timeout: 60000
+          });
+          return;
+        });
+    };
+    await copyFactoryClient.removePortfolioStrategy('ABCD');
+  });
+
+  /**
+   * @test {ConfigurationClient#removePortfolioStrategy}
+   */
+  it('should not remove portfolio strategy from via with account token', async () => {
+    copyFactoryClient = new ConfigurationClient(httpClient, 'token');
+    try {
+      await copyFactoryClient.removePortfolioStrategy('ABCD');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke removePortfolioStrategy method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
    * @test {ConfigurationClient#getActiveResynchronizationTasks}
    */
   it('should retrieve active resynchronization tasks via API', async () => {

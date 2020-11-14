@@ -341,7 +341,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * Updates a CopyFactory strategy. See
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/put_users_current_configuration_strategies_strategyId
    * @param {String} id copy trading strategy id
-   * @param {CopyFactoryStrategyUpdate} strategy account trading strategy update
+   * @param {CopyFactoryStrategyUpdate} strategy trading strategy update
    * @return {Promise} promise resolving when strategy is updated
    */
   updateStrategy(id, strategy) {
@@ -372,6 +372,116 @@ export default class ConfigurationClient extends MetaApiClient {
     }
     const opts = {
       url: `${this._host}/users/current/configuration/strategies/${id}`,
+      method: 'DELETE',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Portfolio strategy member
+   * @typedef {Object} CopyFactoryPortfolioMember
+   * @property {String} strategyId member strategy id
+   * @property {Number} multiplier copying multiplier (weight in the portfolio)
+   * @property {Boolean} [skipPendingOrders] optional flag indicating that pending orders should not be copied.
+   * Default is to copy pending orders
+   * @property {Number} [maxTradeRisk] optional max risk per trade, expressed as a fraction of 1. If trade has a SL, the
+   * trade size will be adjusted to match the risk limit. If not, the trade SL will be applied according to the risk
+   * limit
+   * @property {String} [reduceCorrelations] optional setting indicating whether to enable automatic trade correlation
+   * reduction. Possible settings are not specified (disable correlation risk restrictions), by-strategy (limit
+   * correlations on strategy level) or by-symbol (limit correlations on symbol level)
+   * @property {CopyFactoryStrategyStopOut} [stopOutRisk] optional stop out setting. All trading will be terminated and
+   * positions closed once equity drawdown reaches this value
+   * @property {CopyFactoryStrategySymbolFilter} [symbolFilter] symbol filters which can be used to copy only specific
+   * symbols or exclude some symbols from copying
+   * @property {CopyFactoryStrategyNewsFilter} [newsFilter] news risk filter configuration
+   * @property {Array<CopyFactoryStrategyRiskLimit>} [riskLimits] optional strategy risk limits. You can configure
+   * trading to be stopped once total drawdown generated during specific period is exceeded. Can be specified either for
+   * balance or equity drawdown
+   * @property {CopyFactoryStrategyMaxStopLoss} [maxStopLoss] optional stop loss value restriction
+   * @property {Number} [maxLeverage] optional max leverage risk restriction. All trades resulting in a leverage value
+   * higher than specified will be skipped
+   */
+
+  /**
+   * Portfolio strategy update
+   * @typedef {Object} CopyFactoryPortfolioStrategyUpdate
+   * @property {String} name strategy human-readable name
+   * @property {String} description longer strategy human-readable description
+   * @property {Array<CopyFactoryPortfolioMember>} members array of portfolio memebers
+   * @property {CopyFactoryStrategyCommissionScheme} [commissionScheme] commission scheme allowed by this strategy. By
+   * default monthly billing period with no commission is being used
+   */
+
+  /**
+   * Portfolio strategy, i.e. the strategy which includes a set of other strategies
+   * @typedef {CopyFactoryPortfolioStrategyUpdate} CopyFactoryPortfolioStrategy
+   * @property {String} _id unique strategy id
+   * @property {Number} platformCommissionRate commission rate the platform charges for strategy copying, applied to
+   * commissions charged by provider. This commission applies only to accounts not managed directly by provider. Should
+   * be fraction of 1
+   */
+
+  /**
+   * Retrieves CopyFactory copy portfolio strategies. See
+   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/get_users_current_configuration_portfolio_strategies
+   * @return {Promise<CopyFactoryPortfolioStrategy>} promise resolving with CopyFactory portfolio strategies found
+   */
+  getPortfolioStrategies() {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('getPortfolioStrategies');
+    }
+    const opts = {
+      url: `${this._host}/users/current/configuration/portfolio-strategies`,
+      method: 'GET',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Updates a CopyFactory portfolio strategy. See
+   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/put_users_current_configuration_portfolio_strategies_portfolioId
+   * @param {String} id copy trading portfolio strategy id
+   * @param {CopyFactoryPortfolioStrategyUpdate} strategy portfolio strategy update
+   * @return {Promise} promise resolving when portfolio strategy is updated
+   */
+  updatePortfolioStrategy(id, strategy) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('updatePortfolioStrategy');
+    }
+    const opts = {
+      url: `${this._host}/users/current/configuration/portfolio-strategies/${id}`,
+      method: 'PUT',
+      headers: {
+        'auth-token': this._token
+      },
+      body: strategy,
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Deletes a CopyFactory portfolio strategy. See
+   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/
+   * #!/default/delete_users_current_configuration_portfolio_strategies_portfolioId
+   * @param {String} id portfolio strategy id
+   * @return {Promise} promise resolving when portfolio strategy is removed
+   */
+  removePortfolioStrategy(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('removePortfolioStrategy');
+    }
+    const opts = {
+      url: `${this._host}/users/current/configuration/portfolio-strategies/${id}`,
       method: 'DELETE',
       headers: {
         'auth-token': this._token
