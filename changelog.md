@@ -1,3 +1,6 @@
+10.1.1
+  - bugfix synchronization failover logic
+
 10.1.0
   - added support for portfolio strategies (i.e. the strategies which include several other member strategies) to CopyFactory API
 

@@ -510,7 +510,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async onConnected() {
     let key = randomstring.generate(32);
-    this._shouldResynchronize = key;
+    this._shouldSynchronize = key;
     this._synchronizationRetryIntervalInSeconds = 1;
     this._synchronized = false;
     await this._ensureSynchronized(key);
@@ -522,7 +522,7 @@ export default class MetaApiConnection extends SynchronizationListener {
   onDisconnected() {
     this._lastDisconnectedSynchronizationId = this._lastSynchronizationId;
     this._lastSynchronizationId = undefined;
-    this._shouldResynchronize = undefined;
+    this._shouldSynchronize = undefined;
     this._synchronized = false;
   }
 
