@@ -20,7 +20,8 @@ describe('MetaApiWebsocketClient', () => {
   let sandbox;
 
   before(() => {
-    client = new MetaApiWebsocketClient('token', 'application', 'project-stock.agiliumlabs.cloud', 1.5);
+    client = new MetaApiWebsocketClient('token', {application: 'application', 
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5});
     client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });
