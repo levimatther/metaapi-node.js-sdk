@@ -325,9 +325,12 @@ console.log(await connection.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, 
 console.log(await connection.createLimitSellOrder('GBPUSD', 0.07, 1.5, 2.0, 0.9, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
 console.log(await connection.createStopBuyOrder('GBPUSD', 0.07, 1.5, 0.9, 2.0, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
 console.log(await connection.createStopSellOrder('GBPUSD', 0.07, 1.0, 2.0, 0.9, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
+console.log(await connection.createStopLimitBuyOrder('GBPUSD', 0.07, 1.5, 1.4, 0.9, 2.0, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
+console.log(await connection.createStopLimitSellOrder('GBPUSD', 0.07, 1.0, 1.1, 2.0, 0.9, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAl'}));
 console.log(await connection.modifyPosition('46870472', 2.0, 0.9));
 console.log(await connection.closePositionPartially('46870472', 0.9));
 console.log(await connection.closePosition('46870472'));
+console.log(await connection.closeBy('46870472', '46870482'));
 console.log(await connection.closePositionsBySymbol('EURUSD'));
 console.log(await connection.modifyOrder('46870472', 1.0, 2.0, 0.9));
 console.log(await connection.cancelOrder('46870472'));
