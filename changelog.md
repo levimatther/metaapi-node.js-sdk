@@ -1,3 +1,7 @@
+11.0.0
+  - breaking change: MetaApi options are now specified via an object
+  - added packet logger
+  
 10.1.1
   - bugfix synchronization failover logic
 

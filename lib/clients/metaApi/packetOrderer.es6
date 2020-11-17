@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Class which orders the synchronization packerts
+ * Class which orders the synchronization packets
  */
 export default class PacketOrderer {
 
