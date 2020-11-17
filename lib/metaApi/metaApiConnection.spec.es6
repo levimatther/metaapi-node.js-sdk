@@ -495,6 +495,42 @@ describe('MetaApiConnection', () => {
   });
 
   /**
+   * @test {MetaApiConnection#createStopLimitBuyOrder}
+   */
+  it('should create stop limit buy order', async () => {
+    let tradeResult = {
+      error: 10009,
+      description: 'TRADE_RETCODE_DONE',
+      orderId: 46870472
+    };
+    sandbox.stub(client, 'trade').resolves(tradeResult);
+    let actual = await api.createStopLimitBuyOrder('GBPUSD', 0.07, 1.5, 1.4, 0.9, 2.0, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
+    actual.should.match(tradeResult);
+    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
+      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLimitPrice: 1.4, stopLoss: 0.9, takeProfit: 2.0,
+      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+  });
+
+  /**
+   * @test {MetaApiConnection#createStopLimitSellOrder}
+   */
+  it('should create stop limit sell order', async () => {
+    let tradeResult = {
+      error: 10009,
+      description: 'TRADE_RETCODE_DONE',
+      orderId: '46870472'
+    };
+    sandbox.stub(client, 'trade').resolves(tradeResult);
+    let actual = await api.createStopLimitSellOrder('GBPUSD', 0.07, 1.0, 1.1, 2.0, 0.9, {comment: 'comment',
+      clientId: 'TE_GBPUSD_7hyINWqAlE'});
+    actual.should.match(tradeResult);
+    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
+      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLimitPrice: 1.1, stopLoss: 2.0, takeProfit: 0.9,
+      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+  });
+
+  /**
    * @test {MetaApiConnection#modifyPosition}
    */
   it('should modify position', async () => {

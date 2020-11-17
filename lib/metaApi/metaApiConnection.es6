@@ -316,6 +316,40 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Creates a stop limit buy order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
+   * @param {String} symbol symbol to trade
+   * @param {Number} volume order volume
+   * @param {Number} openPrice order stop price
+   * @param {Number} stopLimitPrice the limit order price for the stop limit order
+   * @param {Number} stopLoss optional stop loss price
+   * @param {Number} takeProfit optional take profit price
+   * @param {PendingTradeOptions} options optional trade options
+   * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error, check error properties for error code details
+   */
+  createStopLimitBuyOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
+      symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit}, options || {}));
+  }
+
+  /**
+   * Creates a stop limit sell order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
+   * @param {String} symbol symbol to trade
+   * @param {Number} volume order volume
+   * @param {Number} openPrice order stop price
+   * @param {Number} stopLimitPrice the limit order price for the stop limit order
+   * @param {Number} stopLoss optional stop loss price
+   * @param {Number} takeProfit optional take profit price
+   * @param {PendingTradeOptions} options optional trade options
+   * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error, check error properties for error code details
+   */
+  createStopLimitSellOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
+      symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit}, options || {}));
+  }
+
+  /**
    * Modifies a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} positionId position id to modify
    * @param {Number} stopLoss optional stop loss price

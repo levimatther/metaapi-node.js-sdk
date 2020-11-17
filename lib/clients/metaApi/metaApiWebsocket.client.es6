@@ -307,6 +307,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
    * @property {String} [closeByPositionId] identifier of an opposite position used for closing by order
    * ORDER_TYPE_CLOSE_BY
+   * @property {Number} [stopLimitPrice] the Limit order price for the StopLimit order
    */
 
   /**

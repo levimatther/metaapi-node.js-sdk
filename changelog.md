@@ -2,6 +2,7 @@
   - breaking change: MetaApi options are now specified via an object
   - added traffic logger
   - added close by order support
+  - added stop limit order support
 
 10.1.1
   - bugfix synchronization failover logic
