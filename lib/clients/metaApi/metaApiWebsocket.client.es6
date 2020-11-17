@@ -302,6 +302,8 @@ export default class MetaApiWebsocketClient {
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_time
    * @property {Date} expirationTime optional order expiration time
    * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @property {String} [closeByPositionId] identifier of an opposite position used for closing by order
+   * ORDER_TYPE_CLOSE_BY
    */
 
   /**

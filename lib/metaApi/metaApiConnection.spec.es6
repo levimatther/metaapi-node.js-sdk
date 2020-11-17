@@ -544,6 +544,23 @@ describe('MetaApiConnection', () => {
   });
 
   /**
+   * @test {MetaApiConnection#closeBy}
+   */
+  it('should close position by an opposite one', async () => {
+    let tradeResult = {
+      error: 10009,
+      description: 'TRADE_RETCODE_DONE',
+      positionId: '46870472',
+      closeByPositionId: '46870482'
+    };
+    sandbox.stub(client, 'trade').resolves(tradeResult);
+    let actual = await api.closeBy('46870472', '46870482', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
+    actual.should.match(tradeResult);
+    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_BY',
+      positionId: '46870472', closeByPositionId: '46870482', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+  });
+
+  /**
    * @test {MetaApiConnection#closePositionsBySymbol}
    */
   it('should close positions by symbol', async () => {

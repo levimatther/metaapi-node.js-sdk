@@ -1,3 +1,6 @@
+10.2.0
+  - added close by order support
+
 10.1.1
   - bugfix synchronization failover logic
 

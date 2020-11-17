@@ -191,7 +191,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * will be used.
    * @property {Number} [slippage] optional slippage in points. Should be greater or equal to zero. In not set,
    * default value specified in account entity will be used. Slippage is ignored if execution mode set to
-   * SYMBOL_TRADE_EXECUTION_MARKET in symbol specification
+   * SYMBOL_TRADE_EXECUTION_MARKET in symbol specification. Not used for close by orders.
    */
 
   /**
@@ -351,6 +351,19 @@ export default class MetaApiConnection extends SynchronizationListener {
   closePosition(positionId, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_ID', positionId},
       options || {}));
+  }
+
+  /**
+   * Fully closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
+   * @param {String} positionId position id to close by opposite position
+   * @param {String} oppositePositionId opposite position id to close
+   * @param {MarketTradeOptions} options optional trade options
+   * @returns {Promise<TradeResponse>} promise resolving with trade result
+   * @throws {TradeError} on trade error, check error properties for error code details
+   */
+  closeBy(positionId, oppositePositionId, options = {}) {
+    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_BY', positionId,
+      closeByPositionId: oppositePositionId}, options || {}));
   }
 
   /**
