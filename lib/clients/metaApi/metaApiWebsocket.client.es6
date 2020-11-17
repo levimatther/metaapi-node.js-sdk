@@ -8,6 +8,7 @@ import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';
 import PacketOrderer from './packetOrderer';
+import PacketLogger from './packetLogger';
 
 /**
  * MetaApi websocket API client (see https://metaapi.cloud/docs/client/websocket/overview/)
@@ -17,23 +18,25 @@ export default class MetaApiWebsocketClient {
   /**
    * Constructs MetaApi websocket API client instance
    * @param {String} token authorization token
-   * @param {String} application application id
-   * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
-   * @param {Number} requestTimeout timeout for socket requests in seconds
-   * @param {Number} connectTimeout timeout for connecting to server in seconds
-   * @param {Number} packetOrderingTimeout packet ordering timeout in seconds
+   * @param {Object} opts websocket client options
    */
-  constructor(token, application = 'MetaApi', domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60,
-    connectTimeout = 60, packetOrdereringTimeout = 60) {
-    this._application = application;
-    this._url = `https://mt-client-api-v1.${domain}`;
-    this._requestTimeout = requestTimeout * 1000;
-    this._connectTimeout = connectTimeout * 1000;
+  // eslint-disable-next-line complexity
+  constructor(token, opts) {
+    opts = opts || {};
+    opts.packetOrderingTimeout = opts.packetOrderingTimeout || 60;
+    this._application = opts.application || 'MetaApi';
+    this._url = `https://mt-client-api-v1.${opts.domain || 'agiliumtrade.agiliumtrade.ai'}`;
+    this._requestTimeout = (opts.requestTimeout || 60) * 1000;
+    this._connectTimeout = (opts.connectTimeout || 60) * 1000;
     this._token = token;
     this._requestResolves = {};
     this._synchronizationListeners = {};
     this._reconnectListeners = [];
-    this._packetOrderer = new PacketOrderer(this, packetOrdereringTimeout);
+    this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
+    if(opts.packetLogger && opts.packetLogger.enabled) {
+      this._packetLogger = new PacketLogger(opts.packetLogger);
+      this._packetLogger.start();
+    }
   }
 
   /**
@@ -873,6 +876,9 @@ export default class MetaApiWebsocketClient {
   // eslint-disable-next-line complexity,max-statements
   async _processSynchronizationPacket(packet) {
     try {
+      if(this._packetLogger) {
+        await this._packetLogger.logPacket(packet);
+      }
       let packets = this._packetOrderer.restoreOrder(packet);
       for (let data of packets) {
         if (data.type === 'authenticated') {

@@ -1,4 +1,6 @@
-10.2.0
+11.0.0
+  - breaking change: MetaApi options are now specified via an object
+  - added traffic logger
   - added close by order support
 
 10.1.1

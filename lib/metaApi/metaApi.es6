@@ -19,20 +19,23 @@ export default class MetaApi {
   /**
    * Constructs MetaApi class instance
    * @param {String} token authorization token
-   * @param {String} application application id
-   * @param {String} domain domain to connect to
-   * @param {Number} requestTimeout timeout for http requests in seconds
-   * @param {Number} connectTimeout timeout for connecting to server in seconds
-   * @param {Number} packetOrderingTimeout packet ordering timeout in seconds
+   * @param {Object} opts application options
    */
-  constructor(token, application = 'MetaApi', domain = 'agiliumtrade.agiliumtrade.ai', requestTimeout = 60,
-    connectTimeout = 60, packetOrderingTimeout = 60) {
+  // eslint-disable-next-line complexity
+  constructor(token, opts) {
+    opts = opts || {};
+    const application = opts.application || 'MetaApi';
+    const domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
+    const requestTimeout = opts.requestTimeout || 60;
+    const connectTimeout = opts.connectTimeout || 60;
+    const packetOrderingTimeout = opts.packetOrderingTimeout || 60;
+    const packetLogger = opts.packetLogger || {};
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
     let httpClient = new HttpClient(requestTimeout);
-    this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, application, domain, requestTimeout,
-      connectTimeout, packetOrderingTimeout);
+    this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, {application, domain, requestTimeout,
+      connectTimeout, packetLogger, packetOrderingTimeout});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
