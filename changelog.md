@@ -3,6 +3,7 @@
   - added traffic logger
   - added close by order support
   - added stop limit order support
+  - bugfix MetatraderAccount.connect method to throw an error to avoid creating broken connections
 
 10.1.1
   - bugfix synchronization failover logic

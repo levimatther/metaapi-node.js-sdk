@@ -491,6 +491,7 @@ describe('MetaApiWebsocketClient', () => {
     let requestReceived = false;
     server.on('request', data => {
       if (data.type === 'subscribe' && data.accountId === 'accountId' && data.application === 'application') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         requestReceived = true;
       }
     });
@@ -504,7 +505,6 @@ describe('MetaApiWebsocketClient', () => {
    */
   it('should return error if connect to MetaTrader terminal failed', async () => {
     let requestReceived = false;
-    const spy = sinon.spy(console, 'error');
     server.on('request', data => {
       if (data.type === 'subscribe' && data.accountId === 'accountId' && data.application === 'application') {
         requestReceived = true;
@@ -514,9 +514,14 @@ describe('MetaApiWebsocketClient', () => {
         requestId: data.requestId
       });
     });
-    await client.subscribe('accountId');
-    await new Promise(res => setTimeout(res, 50));
-    sinon.assert.calledWith(spy, sinon.match('MetaApi websocket client failed to receive subscribe response'));
+    let success = true;
+    try {
+      await client.subscribe('accountId');
+      success = false;
+    } catch (err) {
+      err.name.should.equal('NotConnectedError');
+    }
+    success.should.be.true();
     requestReceived.should.be.true();
   });
 

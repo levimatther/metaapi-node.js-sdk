@@ -51,7 +51,12 @@ export default class MetaApiWebsocketClient {
     console.error(`[${(new Date()).toISOString()}] MetaApi websocket client received an out of order ` +
       `packet type ${packet.type} for account id ${accountId}. Expected s/n ${expectedSequenceNumber} ` +
       `does not match the actual of ${actualSequenceNumber}`);
-    this.subscribe(accountId);
+    this.subscribe(accountId).catch(err => {
+      if (err.name !== 'TimeoutError') {
+        console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
+          'subscribe response' + err);
+      }
+    });
   }
 
   /**
@@ -551,12 +556,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when subscription started
    */
   subscribe(accountId) {
-    this._rpcRequest(accountId, {type: 'subscribe'}).catch(err => {
-      if (err.name !== 'TimeoutError') {
-        console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-          'subscribe response' + err);
-      }
-    });
+    return this._rpcRequest(accountId, {type: 'subscribe'});
   }
 
   /**

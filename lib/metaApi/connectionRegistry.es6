@@ -14,6 +14,7 @@ export default class ConnectionRegistry {
     this._metaApiWebsocketClient = metaApiWebsocketClient;
     this._application = application;
     this._connections = {};
+    this._connectionLocks = {};
   }
   
   /**
@@ -28,9 +29,22 @@ export default class ConnectionRegistry {
     } else {
       const connection = new MetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
         historyStartTime);
-      await connection.initialize();
-      await connection.subscribe();
-      this._connections[account.id] = connection;
+      while (this._connectionLocks[account.id]) {
+        await this._connectionLocks[account.id].promise;
+      }
+      if (this._connections[account.id]) {
+        return this._connections[account.id];
+      }
+      let connectionLockResolve;
+      this._connectionLocks[account.id] = {promise: new Promise(res => connectionLockResolve = res)};
+      try {
+        await connection.initialize();
+        await connection.subscribe();
+        this._connections[account.id] = connection;
+      } finally {
+        delete this._connectionLocks[account.id];
+        connectionLockResolve();
+      }
       return connection;
     }
   }

@@ -477,7 +477,11 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when subscription is initiated
    */
   async subscribe() {
-    return this._websocketClient.subscribe(this._account.id);
+    return this._websocketClient.subscribe(this._account.id).catch(err => {
+      if (err.name !== 'TimeoutError') {
+        throw err;
+      }
+    });
   }
 
   /**
