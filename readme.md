@@ -450,7 +450,7 @@ await configurationApi.updateStrategy(strategyId.id, {
   name: 'Test strategy',
   description: 'Some useful description about your strategy',
   positionLifecycle: 'hedging',
-  connectionId: slaveMetaapiAccount.id,
+  connectionId: masterMetaapiAccount.id,
   maxTradeRisk: 0.1,
   stopOutRisk: {
     value: 0.4,
@@ -463,9 +463,9 @@ await configurationApi.updateStrategy(strategyId.id, {
 });
 
 // subscribe slave CopyFactory accounts to the strategy
-await configurationApi.updateAccount(masterAccountId, {
+await configurationApi.updateAccount(slaveAccountId, {
   name: 'Demo account',
-  connectionId: masterMetaapiAccount.id,
+  connectionId: slaveMetaapiAccount.id,
   subscriptions: [
     {
       strategyId,
