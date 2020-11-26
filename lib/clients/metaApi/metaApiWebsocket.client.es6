@@ -187,6 +187,10 @@ export default class MetaApiWebsocketClient {
    * @property {Number} freeMargin free margin
    * @property {Number} leverage account leverage coefficient
    * @property {Number} marginLevel margin level calculated as % of equity/margin
+   * @property {Boolean} tradeAllowed flag indicating that trading is allowed
+   * @property {Boolean} [investorMode] flag indicating that investor password was used (supported for g2 only)
+   * @property {String} marginMode margin calculation mode, one of ACCOUNT_MARGIN_MODE_EXCHANGE,
+   * ACCOUNT_MARGIN_MODE_RETAIL_NETTING, ACCOUNT_MARGIN_MODE_RETAIL_HEDGING
    */
 
   /**

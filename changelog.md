@@ -5,6 +5,7 @@
   - added close by order support
   - added stop limit order support
   - bugfix MetatraderAccount.connect method to throw an error to avoid creating broken connections
+  - add marginMode, tradeAllowed, investorMode fields to account information
 
 10.1.1
   - bugfix synchronization failover logic
