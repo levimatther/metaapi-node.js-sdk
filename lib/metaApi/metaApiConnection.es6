@@ -635,6 +635,8 @@ export default class MetaApiConnection extends SynchronizationListener {
     let synchronizationId = opts.synchronizationId;
     let timeoutInSeconds = opts.timeoutInSeconds || 300;
     let intervalInMilliseconds = opts.intervalInMilliseconds || 1000;
+    let applicationPattern = opts.applicationPattern ||
+      (this._account.application === 'CopyFactory' ? 'CopyFactory.*|RPC' : 'RPC');
     let startTime = Date.now();
     let synchronized;
     while (!(synchronized = await this.isSynchronized(synchronizationId)) &&
@@ -647,7 +649,7 @@ export default class MetaApiConnection extends SynchronizationListener {
           this._lastDisconnectedSynchronizationId));
     }
     let timeLeftInSeconds = Math.max(0, timeoutInSeconds - (Date.now() - startTime) / 1000);
-    await this._websocketClient.waitSynchronized(this._account.id, opts.applicationPattern || '.*', timeoutInSeconds);
+    await this._websocketClient.waitSynchronized(this._account.id, applicationPattern, timeoutInSeconds);
   }
 
   /**
