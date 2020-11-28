@@ -1097,10 +1097,11 @@ describe('MetaApiWebsocketClient', () => {
       sandbox.stub(listener, 'onSymbolPriceUpdated').resolves();
       sandbox.stub(listener, 'onSymbolPricesUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
-      server.emit('synchronization', {type: 'prices', accountId: 'accountId', prices});
+      server.emit('synchronization', {type: 'prices', accountId: 'accountId', prices, equity: 100, margin: 200,
+        freeMargin: 400, marginLevel: 40000});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onSymbolPriceUpdated, prices[0]);
-      sinon.assert.calledWith(listener.onSymbolPricesUpdated, prices);
+      sinon.assert.calledWith(listener.onSymbolPricesUpdated, prices, 100, 200, 400, 40000);
     });
 
   });

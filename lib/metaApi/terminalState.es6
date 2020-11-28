@@ -221,9 +221,13 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when prices for several symbols were updated
    * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
+   * @param {Number} equity account liquidation value
+   * @param {Number} margin margin used
+   * @param {Number} freeMargin free margin
+   * @param {Number} marginLevel margin level calculated as % of equity/margin
    */
   // eslint-disable-next-line complexity
-  onSymbolPricesUpdated(prices) {
+  onSymbolPricesUpdated(prices, equity, margin, freeMargin, marginLevel) {
     let pricesInitialized = false;
     for (let price of prices || []) {
       this._pricesBySymbol[price.symbol] = price;
@@ -253,7 +257,13 @@ export default class TerminalState extends SynchronizationListener {
       if (this._positionsInitialized && pricesInitialized) {
         this._accountInformation.equity = this._accountInformation.balance +
           this._positions.reduce((acc, p) => acc + p.unrealizedProfit, 0);
+      } else {
+        this._accountInformation.equity = equity !== undefined ? equity : this._accountInformation.equity;
       }
+      this._accountInformation.margin = margin !== undefined ? margin : this._accountInformation.margin;
+      this._accountInformation.freeMargin = freeMargin !== undefined ? freeMargin : this._accountInformation.freeMargin;
+      this._accountInformation.marginLevel = freeMargin !== undefined ? marginLevel :
+        this._accountInformation.marginLevel;
     }
   }
 

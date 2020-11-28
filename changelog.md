@@ -8,6 +8,7 @@
   - add marginMode, tradeAllowed, investorMode fields to account information
   - breaking change: waitSynchronized to synchronize CopyFactory and RPC applications by default
   - improvements to position profit and acount equity tracking on client side
+  - real-time updates for margin fields in account information
 
 10.1.1
   - bugfix synchronization failover logic

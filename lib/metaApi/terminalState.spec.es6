@@ -177,6 +177,20 @@ describe('TerminalState', () => {
   });
 
   /**
+   * @test {TerminalState#onSymbolPricesUpdated}
+   * @test {TerminalState#accountInformation}
+   * @test {TerminalState#positions}
+   */
+  it('should update margin fields on price update', () => {
+    state.onAccountInformationUpdated({equity: 1000, balance: 800});
+    state.onSymbolPricesUpdated([], 100, 200, 400, 40000);
+    state.accountInformation.equity.should.equal(100);
+    state.accountInformation.margin.should.equal(200);
+    state.accountInformation.freeMargin.should.equal(400);
+    state.accountInformation.marginLevel.should.equal(40000);
+  });
+
+  /**
    * @test {TerminalState#onSymbolPriceUpdated}
    * @test {TerminalState#orders}
    */

@@ -124,8 +124,12 @@ export default class SynchronizationListener {
   /**
    * Invoked when prices for several symbols were updated
    * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
+   * @param {Number} equity account liquidation value
+   * @param {Number} margin margin used
+   * @param {Number} freeMargin free margin
+   * @param {Number} marginLevel margin level calculated as % of equity/margin
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onSymbolPricesUpdated(prices) {}
+  async onSymbolPricesUpdated(prices, equity, margin, freeMargin, marginLevel) {}
 
 }

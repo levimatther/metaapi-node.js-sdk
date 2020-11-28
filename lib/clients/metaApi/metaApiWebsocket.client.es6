@@ -1106,7 +1106,8 @@ export default class MetaApiWebsocketClient {
           const onSymbolPricesUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onSymbolPricesUpdatedPromises.push(
-              Promise.resolve(listener.onSymbolPricesUpdated(prices))
+              Promise.resolve(listener.onSymbolPricesUpdated(prices, data.equity, data.margin, data.freeMargin,
+                data.marginLevel))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
             );
