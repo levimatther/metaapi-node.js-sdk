@@ -114,25 +114,25 @@ describe('TerminalState', () => {
   });
 
   /**
-   * @test {TerminalState#onSymbolPriceUpdated}
+   * @test {TerminalState#onSymbolPricesUpdated}
    * @test {TerminalState#price}
    */
   it('should return price', () => {
     should.not.exist(state.price('EURUSD'));
-    state.onSymbolPriceUpdated({symbol: 'EURUSD', bid: 1, ask: 1.1});
-    state.onSymbolPriceUpdated({symbol: 'GBPUSD'});
-    state.onSymbolPriceUpdated({symbol: 'EURUSD', bid: 1, ask: 1.2});
+    state.onSymbolPricesUpdated([{symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    state.onSymbolPricesUpdated([{symbol: 'GBPUSD'}]);
+    state.onSymbolPricesUpdated([{symbol: 'EURUSD', bid: 1, ask: 1.2}]);
     state.price('EURUSD').should.match({symbol: 'EURUSD', bid: 1, ask: 1.2});
   });
 
   /**
-   * @test {TerminalState#onSymbolPriceUpdated}
+   * @test {TerminalState#onSymbolPricesUpdated}
    * @test {TerminalState#accountInformation}
    * @test {TerminalState#positions}
    */
   it('should update account equity and position profit on price update', () => {
     state.onAccountInformationUpdated({equity: 1000, balance: 800});
-    state.onPositionUpdated({
+    state.onPositionsReplaced([{
       id: '1',
       symbol: 'EURUSD',
       type: 'POSITION_TYPE_BUY',
@@ -141,7 +141,7 @@ describe('TerminalState', () => {
       openPrice: 8,
       profit: 100,
       volume: 2
-    });
+    }]);
     state.onPositionUpdated({
       id: '2',
       symbol: 'AUDUSD',
@@ -150,19 +150,30 @@ describe('TerminalState', () => {
       currentTickValue: 0.5,
       openPrice: 8,
       profit: 100,
-      volume: 10
+      volume: 2
     });
     state.onSymbolSpecificationUpdated({symbol: 'EURUSD', tickSize: 0.01});
-    state.onSymbolPriceUpdated({
-      symbol: 'EURUSD',
-      profitTickValue: 0.5,
-      lossTickValue: 0.5,
-      bid: 10,
-      ask: 11
-    });
-    state.positions.map(p => p.profit).should.match([200, 100]);
-    state.positions.map(p => p.currentPrice).should.match([10, 9]);
-    state.accountInformation.equity.should.equal(1100);
+    state.onSymbolSpecificationUpdated({symbol: 'AUDUSD', tickSize: 0.01});
+    state.onSymbolPricesUpdated([
+      {
+        symbol: 'EURUSD',
+        profitTickValue: 0.5,
+        lossTickValue: 0.5,
+        bid: 10,
+        ask: 11
+      },
+      {
+        symbol: 'AUDUSD',
+        profitTickValue: 0.5,
+        lossTickValue: 0.5,
+        bid: 10,
+        ask: 11
+      }
+    ]);
+    state.positions.map(p => p.profit).should.match([200, 200]);
+    state.positions.map(p => p.unrealizedProfit).should.match([200, 200]);
+    state.positions.map(p => p.currentPrice).should.match([10, 10]);
+    state.accountInformation.equity.should.equal(1200);
   });
 
   /**
@@ -183,13 +194,13 @@ describe('TerminalState', () => {
       currentPrice: 9
     });
     state.onSymbolSpecificationUpdated({symbol: 'EURUSD', tickSize: 0.01});
-    state.onSymbolPriceUpdated({
+    state.onSymbolPricesUpdated([{
       symbol: 'EURUSD',
       profitTickValue: 0.5,
       lossTickValue: 0.5,
       bid: 10,
       ask: 11
-    });
+    }]);
     state.orders.map(o => o.currentPrice).should.match([11, 9]);
   });
 

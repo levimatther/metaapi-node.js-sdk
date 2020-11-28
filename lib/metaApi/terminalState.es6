@@ -130,6 +130,8 @@ export default class TerminalState extends SynchronizationListener {
     this._specifications = [];
     this._specificationsBySymbol = {};
     this._pricesBySymbol = {};
+    this._ordersInitialized = false;
+    this._positionsInitialized = false;
   }
 
   /**
@@ -147,6 +149,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPositionsReplaced(positions) {
     this._positions = positions;
+    this._positionsInitialized = true;
   }
 
   /**
@@ -177,6 +180,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onOrdersReplaced(orders) {
     this._orders = orders;
+    this._ordersInitialized = true;
   }
 
   /**
@@ -215,43 +219,64 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
-   * Invoked when a symbol price was updated
-   * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price
+   * Invoked when prices for several symbols were updated
+   * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
    */
   // eslint-disable-next-line complexity
-  onSymbolPriceUpdated(price) {
-    this._pricesBySymbol[price.symbol] = price;
-    let positions = this._positions.filter(p => p.symbol === price.symbol);
-    let orders = this._orders.filter(o => o.symbol === price.symbol);
-    let specification = this.specification(price.symbol);
-    if (specification) {
-      for (let position of positions) {
-        if (!position.unrealizedProfit || !position.realizedProfit) {
-          position.unrealizedProfit = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) *
-            (position.currentPrice - position.openPrice) * position.currentTickValue *
-            position.volume / specification.tickSize;
-          position.realizedProfit = position.profit - position.unrealizedProfit;
+  onSymbolPricesUpdated(prices) {
+    let pricesInitialized = false;
+    for (let price of prices || []) {
+      this._pricesBySymbol[price.symbol] = price;
+      let positions = this._positions.filter(p => p.symbol === price.symbol);
+      let otherPositions = this._positions.filter(p => p.symbol !== price.symbol);
+      let orders = this._orders.filter(o => o.symbol === price.symbol);
+      pricesInitialized = true;
+      for (let position of otherPositions) {
+        let p = this._pricesBySymbol[position.symbol];
+        if (p) {
+          if (position.unrealizedProfit === undefined) {
+            this._updatePositionProfits(position, p);
+          }
+        } else {
+          pricesInitialized = false;
         }
-        let newPositionPrice = position.type === 'POSITION_TYPE_BUY' ? price.bid : price.ask;
-        let isProfitable = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) * (newPositionPrice - position.openPrice);
-        let currentTickValue = (isProfitable > 0 ? price.profitTickValue : price.lossTickValue);
-        let unrealizedProfit = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) *
-          (newPositionPrice - position.openPrice) * currentTickValue *
-          position.volume / specification.tickSize;
-        let increment = unrealizedProfit - position.unrealizedProfit;
-        position.unrealizedProfit = unrealizedProfit;
-        position.profit = position.unrealizedProfit + position.realizedProfit;
-        position.currentPrice = newPositionPrice;
-        position.currentTickValue = currentTickValue;
+      }
+      for (let position of positions) {
+        this._updatePositionProfits(position, price);
       }
       for (let order of orders) {
-        order.currentPrice = order.type === 'ORDER_TYPE_BUY_LIMIT' || order.type === 'ORDER_TYPE_BUY_STOP' ||
-          order.type === 'ORDER_TYPE_BUY_STOP_LIMIT' ? price.ask : price.bid;
+        order.currentPrice = order.type === 'ORDER_TYPE_BUY' || order.type === 'ORDER_TYPE_BUY_LIMIT' ||
+          order.type === 'ORDER_TYPE_BUY_STOP' || order.type === 'ORDER_TYPE_BUY_STOP_LIMIT' ? price.ask : price.bid;
       }
-      if (this._accountInformation) {
+    }
+    if (this._accountInformation) {
+      if (this._positionsInitialized && pricesInitialized) {
         this._accountInformation.equity = this._accountInformation.balance +
-          this._positions.reduce((acc, p) => acc + p.profit, 0);
+          this._positions.reduce((acc, p) => acc + p.unrealizedProfit, 0);
       }
+    }
+  }
+
+  // eslint-disable-next-line complexity
+  _updatePositionProfits(position, price) {
+    let specification = this.specification(position.symbol);
+    if (specification) {
+      if (position.unrealizedProfit === undefined || position.realizedProfit === undefined) {
+        position.unrealizedProfit = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) *
+          (position.currentPrice - position.openPrice) * position.currentTickValue *
+          position.volume / specification.tickSize;
+        position.realizedProfit = position.profit - position.unrealizedProfit;
+      }
+      let newPositionPrice = position.type === 'POSITION_TYPE_BUY' ? price.bid : price.ask;
+      let isProfitable = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) * (newPositionPrice - position.openPrice);
+      let currentTickValue = (isProfitable > 0 ? price.profitTickValue : price.lossTickValue);
+      let unrealizedProfit = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) *
+        (newPositionPrice - position.openPrice) * currentTickValue *
+        position.volume / specification.tickSize;
+      position.unrealizedProfit = unrealizedProfit;
+      position.profit = position.unrealizedProfit + position.realizedProfit;
+      position.currentPrice = newPositionPrice;
+      position.currentTickValue = currentTickValue;
     }
   }
 

@@ -121,4 +121,11 @@ export default class SynchronizationListener {
    */
   async onSymbolPriceUpdated(price) {}
 
+  /**
+   * Invoked when prices for several symbols were updated
+   * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onSymbolPricesUpdated(prices) {}
+
 }

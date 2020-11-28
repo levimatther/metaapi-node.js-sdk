@@ -1102,13 +1102,23 @@ export default class MetaApiWebsocketClient {
             await Promise.all(onSymbolSpecificationUpdatedPromises);
           }
         } else if (data.type === 'prices') {
-          for (let price of (data.prices || [])) {
+          let prices = data.prices || [];
+          const onSymbolPricesUpdatedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onSymbolPricesUpdatedPromises.push(
+              Promise.resolve(listener.onSymbolPricesUpdated(prices))
+              // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
+            );
+          }
+          await Promise.all(onSymbolPricesUpdatedPromises);
+          for (let price of prices) {
             const onSymbolPriceUpdatedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onSymbolPriceUpdatedPromises.push(
                 Promise.resolve(listener.onSymbolPriceUpdated(price))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about price event`, err))
               );
             }
             await Promise.all(onSymbolPriceUpdatedPromises);
