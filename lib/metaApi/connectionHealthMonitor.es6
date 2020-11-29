@@ -21,7 +21,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
     this._minQuoteInterval = 60000;
     this._uptimeReservoirs = {
       '5m': new Reservoir(300, 5 * 60 * 1000),
-      '1h': new Reservoir(60, 60 * 60 * 1000),
+      '1h': new Reservoir(600, 60 * 60 * 1000),
       '1d': new Reservoir(24 * 60, 24 * 60 * 60 * 1000),
       '1w': new Reservoir(24 * 7, 7 * 24 * 60 * 60 * 1000),
     };
