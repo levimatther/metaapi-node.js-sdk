@@ -19,7 +19,11 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
     setInterval(this._updateQuoteHealthStatus.bind(this), 1000);
     setInterval(this._measureUptime.bind(this), 1000);
     this._minQuoteInterval = 60000;
-    this._uptimeReservoir = new Reservoir(24 * 7, 7 * 24 * 60 * 60 * 1000);
+    this._uptimeReservoirs = {
+      '1h': new Reservoir(60, 60 * 60 * 1000),
+      '1d': new Reservoir(24 * 60, 24 * 60 * 60 * 1000),
+      '1w': new Reservoir(24 * 7, 7 * 24 * 60 * 60 * 1000),
+    };
   }
 
   /**
@@ -89,18 +93,22 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
   }
 
   /**
-   * Returns uptime in percents measured over a period of one week
-   * @returns {number} uptime in percents measured over a period of one week
+   * Returns uptime in percents measured over specific periods of time
+   * @returns {Object} uptime in percents measured over specific periods of time
    */
   get uptime() {
-    return this._uptimeReservoir.getStatistics().average;
+    let uptime = {};
+    for (let e of Object.entries(this._uptimeReservoirs)) {
+      uptime[e[0]] = e[1].getStatistics().average;
+    }
+    return uptime;
   }
 
   _measureUptime() {
     try {
-      this._uptimeReservoir.pushMeasurement(this._connection.terminalState.connected &&
+      Object.values(this._uptimeReservoir).forEach(r => r.pushMeasurement(this._connection.terminalState.connected &&
         this._connection.terminalState.connectedToBroker && this._connection.synchronized &&
-        this._quotesHealthy ? 100 : 0);
+        this._quotesHealthy ? 100 : 0));
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('[' + (new Date()).toISOString() + '] failed to measure uptime for account ' +
