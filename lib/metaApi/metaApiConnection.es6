@@ -661,6 +661,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
       this._connectionRegistry.remove(this._account.id);
+      this._healthMonitor.stop();
       this._closed = true;
     }
   }

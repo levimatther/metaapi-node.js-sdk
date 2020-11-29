@@ -16,14 +16,22 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
   constructor(connection) {
     super();
     this._connection = connection;
-    setInterval(this._updateQuoteHealthStatus.bind(this), 1000);
-    setInterval(this._measureUptime.bind(this), 1000);
+    this._updateQuoteHealthStatusInterval = setInterval(this._updateQuoteHealthStatus.bind(this), 1000);
+    this._measureUptimeInterval = setInterval(this._measureUptime.bind(this), 1000);
     this._minQuoteInterval = 60000;
     this._uptimeReservoirs = {
       '1h': new Reservoir(60, 60 * 60 * 1000),
       '1d': new Reservoir(24 * 60, 24 * 60 * 60 * 1000),
       '1w': new Reservoir(24 * 7, 7 * 24 * 60 * 60 * 1000),
     };
+  }
+
+  /**
+   * Stops health monitor
+   */
+  stop() {
+    clearInterval(this._updateQuoteHealthStatusInterval);
+    clearInterval(this._measureUptimeInterval);
   }
 
   /**
@@ -106,7 +114,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 
   _measureUptime() {
     try {
-      Object.values(this._uptimeReservoir).forEach(r => r.pushMeasurement(this._connection.terminalState.connected &&
+      Object.values(this._uptimeReservoirs).forEach(r => r.pushMeasurement(this._connection.terminalState.connected &&
         this._connection.terminalState.connectedToBroker && this._connection.synchronized &&
         this._quotesHealthy ? 100 : 0));
     } catch (err) {

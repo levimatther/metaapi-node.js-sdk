@@ -58,7 +58,7 @@ describe('ConnectionHealthMonitor', () => {
     it('should return 100 uptime', async () => {
       healthMonitor.onSymbolPriceUpdated(prices[0]);
       await clock.tickAsync(10000);
-      sinon.assert.match(healthMonitor.uptime, 100);
+      sinon.assert.match(healthMonitor.uptime, {'1h': 100, '1d': 100, '1w': 100});
     });
 
     /**
@@ -67,7 +67,7 @@ describe('ConnectionHealthMonitor', () => {
     it('should return average uptime', async () => {
       healthMonitor.onSymbolPriceUpdated(prices[0]);
       await clock.tickAsync(100000);
-      sinon.assert.match(healthMonitor.uptime, 59);
+      sinon.assert.match(healthMonitor.uptime, {'1h': 59, '1d': 59, '1w': 59});
     });
 
     /**
@@ -76,21 +76,21 @@ describe('ConnectionHealthMonitor', () => {
     it('should check connection for downtime', async () => {
       healthMonitor.onSymbolPriceUpdated(prices[0]);
       await clock.tickAsync(4000);
-      sinon.assert.match(healthMonitor.uptime, 100);
+      sinon.assert.match(healthMonitor.uptime, {'1h': 100, '1d': 100, '1w': 100});
       connection.terminalState.connected = false;
       await clock.tickAsync(4000);
-      sinon.assert.match(healthMonitor.uptime, 50);
+      sinon.assert.match(healthMonitor.uptime, {'1h': 50, '1d': 50, '1w': 50});
       connection.terminalState.connected = true;
       connection.terminalState.connectedToBroker = false;
       await clock.tickAsync(8000);
-      sinon.assert.match(healthMonitor.uptime, 25);
+      sinon.assert.match(healthMonitor.uptime, {'1h': 25, '1d': 25, '1w': 25});
       connection.terminalState.connectedToBroker = true;
       connection.synchronized = false;
       await clock.tickAsync(4000);
-      sinon.assert.match(healthMonitor.uptime, 20);
+      sinon.assert.match(healthMonitor.uptime, {'1h': 20, '1d': 20, '1w': 20});
       connection.synchronized = true;
       await clock.tickAsync(12000);
-      sinon.assert.match(healthMonitor.uptime, 50);
+      sinon.assert.match(healthMonitor.uptime, {'1h': 50, '1d': 50, '1w': 50});
     });
 
   });
