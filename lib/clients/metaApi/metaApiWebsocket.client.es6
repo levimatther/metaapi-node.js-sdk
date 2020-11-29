@@ -637,6 +637,16 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Sends client uptime stats to the server.
+   * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
+   * @param {Object} uptime uptime statistics to send to the server
+   * @returns {Promise} promise which resolves when uptime statistics is submitted
+   */
+  saveUptime(accountId, uptime) {
+    return this._rpcRequest(accountId, {type: 'saveUptime', uptime});
+  }
+
+  /**
    * Adds synchronization listener for specific account
    * @param {String} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add

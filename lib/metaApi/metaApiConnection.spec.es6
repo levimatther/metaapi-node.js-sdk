@@ -39,6 +39,7 @@ describe('MetaApiConnection', () => {
     removeSynchronizationListener: () => {},
     getSymbolSpecification: () => {},
     getSymbolPrice: () => {},
+    saveUptime: () => {},
     waitSynchronized: () => {}
   };
 
@@ -731,6 +732,15 @@ describe('MetaApiConnection', () => {
     let actual = await api.getSymbolPrice('AUDNZD');
     actual.should.match(price);
     sinon.assert.calledWith(client.getSymbolPrice, 'accountId', 'AUDNZD');
+  });
+
+  /**
+   * @test {MetaApiConnection#saveUptime}
+   */
+  it('should save uptime stats to the server', async () => {
+    sandbox.stub(client, 'saveUptime').resolves();
+    await api.saveUptime({'1h': 100});
+    sinon.assert.calledWith(client.saveUptime, 'accountId', {'1h': 100});
   });
 
   /**

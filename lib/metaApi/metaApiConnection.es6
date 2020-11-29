@@ -524,6 +524,15 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Sends client uptime stats to the server.
+   * @param {Object} uptime uptime statistics to send to the server
+   * @returns {Promise} promise which resolves when uptime statistics is submitted
+   */
+  saveUptime(uptime) {
+    return this._websocketClient.saveUptime(this._account.id, uptime);
+  }
+
+  /**
    * Returns local copy of terminal state
    * @returns {TerminalState} local copy of terminal state
    */

@@ -585,6 +585,20 @@ describe('MetaApiWebsocketClient', () => {
     actual.should.match(price);
   });
 
+  /**
+   * @test {MetaApiWebsocketClient#sendUptime}
+   */
+  it('should sent uptime stats to the server', async () => {
+    server.on('request', data => {
+      if (data.type === 'saveUptime' && data.accountId === 'accountId' &&
+        JSON.stringify(data.uptime) === JSON.stringify({'1h': 100}) &&
+        data.application === 'application') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+      }
+    });
+    await client.saveUptime('accountId', {'1h': 100});
+  });
+
   describe('error handling', () => {
 
     /**
