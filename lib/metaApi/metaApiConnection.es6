@@ -666,6 +666,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   close() {
     if(!this._closed) {
+      this._shouldSynchronize = undefined;
       this._websocketClient.removeSynchronizationListener(this._account.id, this);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);

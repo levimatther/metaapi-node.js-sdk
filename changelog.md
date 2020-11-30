@@ -10,6 +10,7 @@
   - improvements to position profit and acount equity tracking on client side
   - real-time updates for margin fields in account information
   - breaking change: uptime now returns uptime measurements over several timeframes (1h, 1d, 1w)
+  - do not retry synchronization after MetaApiConnection is closed
 
 10.1.1
   - bugfix synchronization failover logic
