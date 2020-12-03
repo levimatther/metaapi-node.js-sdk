@@ -11,6 +11,7 @@
   - real-time updates for margin fields in account information
   - breaking change: uptime now returns uptime measurements over several timeframes (1h, 1d, 1w)
   - do not retry synchronization after MetaApiConnection is closed
+  - added option for reverse copying in CopyFactory API
 
 10.1.1
   - bugfix synchronization failover logic

@@ -75,6 +75,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {Number} [maxTradeRisk] optional max risk per trade, expressed as a fraction of 1. If trade has a SL, the
    * trade size will be adjusted to match the risk limit. If not, the trade SL will be applied according to the risk
    * limit
+   * @property {Boolean} [reverse] flag indicating that the strategy should be copied in a reverse direction
    * @property {String} [reduceCorrelations] optional setting indicating whether to enable automatic trade correlation
    * reduction. Possible settings are not specified (disable correlation risk restrictions), by-strategy (limit
    * correlations on strategy level) or by-symbol (limit correlations on symbol level).
@@ -317,6 +318,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {Number} [maxTradeRisk] optional max risk per trade, expressed as a fraction of 1. If trade has a SL, the
    * trade size will be adjusted to match the risk limit. If not, the trade SL will be applied according to the risk
    * limit
+   * @property {Boolean} [reverse] flag indicating that the strategy should be copied in a reverse direction
    * @property {String} [reduceCorrelations] optional setting indicating whether to enable automatic trade correlation
    * reduction. Possible settings are not specified (disable correlation risk restrictions), by-strategy (limit
    * correlations on strategy level) or by-symbol (limit correlations on symbol level)
@@ -391,6 +393,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {Number} [maxTradeRisk] optional max risk per trade, expressed as a fraction of 1. If trade has a SL, the
    * trade size will be adjusted to match the risk limit. If not, the trade SL will be applied according to the risk
    * limit
+   * @property {Boolean} [reverse] flag indicating that the strategy should be copied in a reverse direction
    * @property {String} [reduceCorrelations] optional setting indicating whether to enable automatic trade correlation
    * reduction. Possible settings are not specified (disable correlation risk restrictions), by-strategy (limit
    * correlations on strategy level) or by-symbol (limit correlations on symbol level)
@@ -420,6 +423,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {Number} [maxTradeRisk] optional max risk per trade, expressed as a fraction of 1. If trade has a SL, the
    * trade size will be adjusted to match the risk limit. If not, the trade SL will be applied according to the risk
    * limit
+   * @property {Boolean} [reverse] flag indicating that the strategy should be copied in a reverse direction
    * @property {String} [reduceCorrelations] optional setting indicating whether to enable automatic trade correlation
    * reduction. Possible settings are not specified (disable correlation risk restrictions), by-strategy (limit
    * correlations on strategy level) or by-symbol (limit correlations on symbol level)
