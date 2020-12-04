@@ -529,12 +529,13 @@ A subscription to a strategy can be stopped if the strategy have exceeded allowe
 ```javascript
 let tradingApi = copyFactory.tradingApi;
 let accountId = '...'; // CopyFactory account id
+let strategyId = '...'; // CopyFactory strategy id
 
 // retrieve list of strategy stopouts
 console.log(await tradingApi.getStopouts(accountId));
 
 // reset a stopout so that subscription can continue
-await tradingApi.resetStopout(accountId, 'daily-equity');
+await tradingApi.resetStopout(accountId, strategyId, 'daily-equity');
 ```
 
 Keywords: MetaTrader API, MetaTrader REST API, MetaTrader websocket API,
