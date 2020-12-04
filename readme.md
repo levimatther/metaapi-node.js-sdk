@@ -404,7 +404,7 @@ Features supported:
 - synchronize subscriber account with strategy providers
 - monitor trading history
 - calculate trade copying commissions for account managers
-- [coming soon] support portfolio strategies as trading signal source, i.e. the strategies which include signals of several other strategies (also known as combos on some platforms)
+- support portfolio strategies as trading signal source, i.e. the strategies which include signals of several other strategies (also known as combos on some platforms)
 
 Please note that trade copying to MT5 netting accounts is not supported in the current API version
 
