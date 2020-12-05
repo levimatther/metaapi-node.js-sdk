@@ -52,6 +52,23 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
   }
 
   /**
+   * Invoked when a server-side application health status is received from MetaApi
+   * @param {HealthStatus} status server-side application health status
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onHealthStatus(status) {
+    this._serverHealthStatus = status;
+  }
+
+  /**
+   * Returns server-side application health status
+   * @return {HealthStatus} server-side application health status
+   */
+  get serverHealthStatus() {
+    return this._serverHealthStatus;
+  }
+
+  /**
    * Connection health status
    * @typedef {Object} ConnectionHealthStatus
    * @property {Boolean} connected flag indicating successful connection to API server

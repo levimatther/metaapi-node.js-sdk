@@ -12,6 +12,7 @@
   - breaking change: uptime now returns uptime measurements over several timeframes (1h, 1d, 1w)
   - do not retry synchronization after MetaApiConnection is closed
   - added option for reverse copying in CopyFactory API
+  - added ConnectionHealthMonitor.serverHealthStatus API to retrieve health status of server-side applications
 
 10.1.1
   - bugfix synchronization failover logic

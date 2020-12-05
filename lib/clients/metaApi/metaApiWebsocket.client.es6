@@ -1098,6 +1098,18 @@ export default class MetaApiWebsocketClient {
             );
           }
           await Promise.all(onBrokerConnectionStatusChangedPromises);
+          if (data.healthStatus) {
+            const onHealthStatusPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onHealthStatusPromises.push(
+                Promise.resolve(listener.onHealthStatus(data.healthStatus))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                    'server-side healthStatus event', err))
+              );
+            }
+            await Promise.all(onHealthStatusPromises);
+          }
         } else if (data.type === 'specifications') {
           for (let specification of (data.specifications || [])) {
             const onSymbolSpecificationUpdatedPromises = [];

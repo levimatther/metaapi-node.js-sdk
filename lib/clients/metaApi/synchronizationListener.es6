@@ -12,6 +12,21 @@ export default class SynchronizationListener {
   async onConnected() {}
 
   /**
+   * Server-side application health status
+   * @typedef {Object} healthStatus
+   * @property {boolean} [restApiHealthy] flag indicating that REST API is healthy
+   * @property {boolean} [copyFactorySubscriberHealthy] flag indicating that CopyFactory subscriber is healthy
+   * @property {boolean} [copyFactoryProviderHealthy] flag indicating that CopyFactory provider is healthy
+   */
+
+  /**
+   * Invoked when a server-side application health status is received from MetaApi
+   * @param {HealthStatus} status server-side application health status
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onHealthStatus(status) {}
+
+  /**
    * Invoked when connection to MetaTrader terminal terminated
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */

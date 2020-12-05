@@ -731,6 +731,19 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onBrokerConnectionStatusChanged, true);
     });
 
+    it('should process server-side health status event', async () => {
+      let listener = {
+        onBrokerConnectionStatusChanged: () => {},
+        onHealthStatus: () => {}
+      };
+      sandbox.stub(listener, 'onHealthStatus').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'status', accountId: 'accountId', connected: true,
+        healthStatus: {restApiHealthy: true}});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledWith(listener.onHealthStatus, {restApiHealthy: true});
+    });
+
     it('should process disconnected synchronization event', async () => {
       let listener = {
         onDisconnected: () => {
