@@ -194,6 +194,11 @@ export default class ConfigurationClient extends MetaApiClient {
    * means that it is still allowed to open new positions with a symbol equal to the symbol of an existing strategy
    * position (can be used to gracefuly exit strategies trading in netting mode or placing a series of related trades
    * per symbol). One of by-position, by-symbol or leave empty to disable this setting.
+   * @property {CopyFactoryStrategyStopOut} [stopOutRisk] optional stop out setting. All trading will be terminated and positions closed
+   * once equity drawdown reaches this value
+   * @property {Array<CopyFactoryStrategyRiskLimit>} [riskLimits] optional account risk limits. You can configure trading to be
+   * stopped once total drawdown generated during specific period is exceeded. Can be specified either for balance or
+   * equity drawdown
    * @property {Number} [maxLeverage] optional setting indicating maxumum leverage allowed when opening a new positions.
    * Any trade which results in a higher leverage will be discarded.
    * @property {Array<CopyFactoryStrategySubscription>} subscriptions strategy subscriptions

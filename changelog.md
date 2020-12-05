@@ -13,6 +13,7 @@
   - do not retry synchronization after MetaApiConnection is closed
   - added option for reverse copying in CopyFactory API
   - added ConnectionHealthMonitor.serverHealthStatus API to retrieve health status of server-side applications
+  - added option to specify account-wide stopout and risk limits in CopyFactory API
 
 10.1.1
   - bugfix synchronization failover logic
