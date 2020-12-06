@@ -1159,4 +1159,46 @@ describe('MetaApiWebsocketClient', () => {
 
   });
 
+  describe('latency monitoring', () => {
+
+    /**
+     * @test {LatencyListener#onResponse}
+     */
+    it('should invoke latency listener on response', async () => {
+      let accountId;
+      let requestType;
+      let actualTimestamps;
+      let listener = {
+        onResponse: (aid, type, ts) => {
+          accountId = aid;
+          requestType = type;
+          actualTimestamps = ts;
+        }
+      };
+      client.addLatencyListener(listener);
+      let price = {};
+      let timestamps;
+      server.on('request', data => {
+        if (data.type === 'getSymbolPrice' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
+          data.application === 'application' && data.timestamps.clientProcessingStarted) {
+          timestamps = Object.assign(data.timestamps, {serverProcessingStarted: new Date(),
+            serverProcessingFinished: new Date()});
+          timestamps.clientProcessingStarted = new Date(timestamps.clientProcessingStarted);
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, price,
+            timestamps});
+        }
+      });
+      await client.getSymbolPrice('accountId', 'AUDNZD');
+      await new Promise(res => setTimeout(res, 100));
+      accountId.should.equal('accountId');
+      requestType.should.equal('getSymbolPrice');
+      actualTimestamps.should.match(timestamps);
+      should.exist(actualTimestamps.clientProcessingStarted);
+      should.exist(actualTimestamps.clientProcessingFinished);
+      should.exist(actualTimestamps.serverProcessingStarted);
+      should.exist(actualTimestamps.serverProcessingFinished);
+    });
+
+  });
+
 });

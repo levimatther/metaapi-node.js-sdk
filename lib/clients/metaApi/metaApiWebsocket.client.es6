@@ -31,6 +31,7 @@ export default class MetaApiWebsocketClient {
     this._token = token;
     this._requestResolves = {};
     this._synchronizationListeners = {};
+    this._latencyListeners = [];
     this._reconnectListeners = [];
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
@@ -144,6 +145,15 @@ export default class MetaApiWebsocketClient {
         delete this._requestResolves[data.requestId];
         this._convertIsoTimeToDate(data);
         requestResolve.resolve(data);
+        if (data.timestamps && requestResolve.type) {
+          data.timestamps.clientProcessingFinished = new Date();
+          for (let listener of this._latencyListeners) {
+            Promise.resolve()
+              .then(() => listener.onResponse(data.accountId, requestResolve.type, data.timestamps))
+              .catch(error => console.error('[' + (new Date()).toISOString() + '] Failed to process onResponse ' +
+                'event for account ' + data.accountId + ', request type ' + requestResolve.type, error));
+          }
+        }
       });
       this._socket.on('processingError', data => {
         let requestResolve = (this._requestResolves[data.requestId] || {resolve: () => {}, reject: () => {}});
@@ -170,6 +180,7 @@ export default class MetaApiWebsocketClient {
       }
       this._requestResolves = {};
       this._synchronizationListeners = {};
+      this._latencyListeners = [];
       this._packetOrderer.stop();
     }
   }
@@ -675,6 +686,22 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Adds latency listener
+   * @param {LatencyListener} listener latency listener to add
+   */
+  addLatencyListener(listener) {
+    this._latencyListeners.push(listener);
+  }
+
+  /**
+   * Removes latency listener
+   * @param {LatencyListener} listener latency listener to remove
+   */
+  removeLatencyListener(listener) {
+    this._latencyListeners = this._latencyListeners.filter(l => l !== listener);
+  }
+
+  /**
    * Adds reconnect listener
    * @param {ReconnectListener} listener reconnect listener to add
    */
@@ -720,8 +747,9 @@ export default class MetaApiWebsocketClient {
       await this._connectPromise;
     }
     let requestId = request.requestId || randomstring.generate(32);
+    request.timestamps = {clientProcessingStarted: new Date()};
     let result = Promise.race([
-      new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject}),
+      new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject, type: request.type}),
       new Promise((resolve, reject) => setTimeout(() => reject(new TimeoutError('MetaApi websocket client ' + 
       `request ${request.requestId} of type ${request.type} timed out. Please make sure your account is connected ` +
         'to broker before retrying your request.')), (timeoutInSeconds * 1000) || this._requestTimeout))
@@ -770,6 +798,12 @@ export default class MetaApiWebsocketClient {
       }
       if (typeof value === 'object') {
         this._convertIsoTimeToDate(value);
+      }
+    }
+    if (packet.timestamps) {
+      // eslint-disable-next-line guard-for-in
+      for (let field in packet.timestamps) {
+        packet.timestamps[field] = new Date(packet.timestamps[field]);
       }
     }
   }
