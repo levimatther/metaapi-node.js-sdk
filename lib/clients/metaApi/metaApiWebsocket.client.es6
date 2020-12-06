@@ -1110,6 +1110,20 @@ export default class MetaApiWebsocketClient {
             }
             await Promise.all(onDealAddedPromises);
           }
+          if (data.timestamps) {
+            data.timestamps.clientProcessingFinished = new Date();
+            const onUpdatePromises = [];
+            // eslint-disable-next-line max-depth
+            for (let listener of this._latencyListeners || []) {
+              onUpdatePromises.push(
+                Promise.resolve(listener.onUpdate(data.accountId, data.timestamps))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify latency listener about ` +
+                    'update event', err))
+              );
+            }
+            await Promise.all(onUpdatePromises);
+          }
         } else if (data.type === 'dealSynchronizationFinished') {
           const onDealSynchronizationFinishedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {

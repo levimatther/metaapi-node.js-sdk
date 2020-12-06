@@ -1228,6 +1228,30 @@ describe('MetaApiWebsocketClient', () => {
       should.exist(actualTimestamps.clientProcessingFinished);
     });
 
+    it('should measure update latencies', async () => {
+      let update = {
+        timestamps: {
+          eventGenerated: new Date(),
+          serverProcessingStarted: new Date(),
+          serverProcessingFinished: new Date()
+        }
+      };
+      let accountId;
+      let actualTimestamps;
+      let listener = {
+        onUpdate: (aid, ts) => {
+          accountId = aid;
+          actualTimestamps = ts;
+        }
+      };
+      client.addLatencyListener(listener);
+      server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId'}, update));
+      await new Promise(res => setTimeout(res, 50));
+      accountId.should.equal('accountId');
+      actualTimestamps.should.match(update.timestamps);
+      should.exist(actualTimestamps.clientProcessingFinished);
+    });
+
   });
 
 });

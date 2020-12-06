@@ -40,4 +40,21 @@ export default class LatencyListener {
    */
   async onSymbolPrice(accountId, symbol, timestamps) {}
 
+  /**
+   * Timestamps object containing latency information about update streaming
+   * @typedef {Object} UpdateTimestamps
+   * @property {Date} eventGenerated time the event was generated on exchange side
+   * @property {Date} serverProcessingStarted time the event processing have started on server side
+   * @property {Date} serverProcessingFinished time the event processing have finished on server side
+   * @property {Date} clientProcessingFinished time the event processing have finished on client side
+   */
+
+  /**
+   * Invoked with latency information when application receives update event
+   * @param {string} accountId account id
+   * @param {UpdateTimestamps} timestamps timestamps object containing latency information about update streaming
+   * @return {Promise} promise which resolves when latency information is processed
+   */
+  async onUpdate(accountId, timestamps) {}
+
 }
