@@ -149,7 +149,9 @@ export default class MetaApiWebsocketClient {
           data.timestamps.clientProcessingFinished = new Date();
           for (let listener of this._latencyListeners) {
             Promise.resolve()
-              .then(() => listener.onResponse(data.accountId, requestResolve.type, data.timestamps))
+              .then(() => requestResolve.type === 'trade' ?
+                listener.onTrade(data.accountId, data.timestamps) :
+                listener.onResponse(data.accountId, requestResolve.type, data.timestamps))
               .catch(error => console.error('[' + (new Date()).toISOString() + '] Failed to process onResponse ' +
                 'event for account ' + data.accountId + ', request type ' + requestResolve.type, error));
           }

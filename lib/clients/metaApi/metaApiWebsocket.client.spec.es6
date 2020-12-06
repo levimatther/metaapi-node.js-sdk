@@ -1199,6 +1199,9 @@ describe('MetaApiWebsocketClient', () => {
       should.exist(actualTimestamps.serverProcessingFinished);
     });
 
+    /**
+     * @test {LatencyListener#onSymbolPrice}
+     */
     it('should measure price streaming latencies', async () => {
       let prices = [{
         symbol: 'AUDNZD',
@@ -1228,6 +1231,9 @@ describe('MetaApiWebsocketClient', () => {
       should.exist(actualTimestamps.clientProcessingFinished);
     });
 
+    /**
+     * @test {LatencyListener#onUpdate}
+     */
     it('should measure update latencies', async () => {
       let update = {
         timestamps: {
@@ -1249,6 +1255,45 @@ describe('MetaApiWebsocketClient', () => {
       await new Promise(res => setTimeout(res, 50));
       accountId.should.equal('accountId');
       actualTimestamps.should.match(update.timestamps);
+      should.exist(actualTimestamps.clientProcessingFinished);
+    });
+
+    /**
+     * @test {LatencyListener#onTrade}
+     */
+    it('should proces trade latency', async () => {
+      let trade = {};
+      let response = {
+        numericCode: 10009,
+        stringCode: 'TRADE_RETCODE_DONE',
+        message: 'Request completed',
+        orderId: '46870472'
+      };
+      let timestamps = {
+        clientExecutionStarted: new Date(),
+        serverExecutionStarted: new Date(),
+        serverExecutionFinished: new Date(),
+        tradeExecuted: new Date()
+      };
+      let accountId;
+      let actualTimestamps;
+      let listener = {
+        onTrade: (aid, ts) => {
+          accountId = aid;
+          actualTimestamps = ts;
+        }
+      };
+      client.addLatencyListener(listener);
+      server.on('request', data => {
+        data.trade.should.match(trade);
+        if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response,
+            timestamps});
+        }
+      });
+      await client.trade('accountId', trade);
+      accountId.should.equal('accountId');
+      actualTimestamps.should.match(timestamps);
       should.exist(actualTimestamps.clientProcessingFinished);
     });
 

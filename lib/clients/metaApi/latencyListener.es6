@@ -8,10 +8,10 @@ export default class LatencyListener {
   /**
    * Object containing request latency information
    * @typedef {Object} ResponseTimestamps
-   * @param {Date} clientProcessingStarted time when request processing have started on client side
-   * @param {Date} serverProcessingStarted time when request processing have started on server side
-   * @param {Date} serverProcessingFinished time when request processing have finished on server side
-   * @param {Date} clientProcessingFinished time when request processing have finished on client side
+   * @property {Date} clientProcessingStarted time when request processing have started on client side
+   * @property {Date} serverProcessingStarted time when request processing have started on server side
+   * @property {Date} serverProcessingFinished time when request processing have finished on server side
+   * @property {Date} clientProcessingFinished time when request processing have finished on client side
    */
 
   /**
@@ -56,5 +56,23 @@ export default class LatencyListener {
    * @return {Promise} promise which resolves when latency information is processed
    */
   async onUpdate(accountId, timestamps) {}
+
+  /**
+   * Timestamps object containing latency information about a trade
+   * @typedef {Object} TradeTimestamps
+   * @property {Date} clientProcessingStarted time when request processing have started on client side
+   * @property {Date} serverProcessingStarted time the event processing have started on server side
+   * @property {Date} serverProcessingFinished time the event processing have finished on server side
+   * @property {Date} clientProcessingFinished time the event processing have finished on client side
+   * @property {Date} tradeExecuted time the trade was executed on exchange side
+   */
+
+  /**
+   * Invoked with latency information when application receives trade response
+   * @param {string} accountId account id
+   * @param {UpdateTimestamps} timestamps timestamps object containing latency information about a trade
+   * @return {Promise} promise which resolves when latency information is processed
+   */
+  async onTrade(accountId, timestamps) {}
 
 }
