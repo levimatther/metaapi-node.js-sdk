@@ -81,7 +81,7 @@ describe('PacketLogger', () => {
   it('should record packet', async () => {
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(1000);
-    await new Promise(res => setTimeout(res, 50));
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match(JSON.parse(result[0].message), packets.accountInformation);
   });
@@ -92,7 +92,7 @@ describe('PacketLogger', () => {
   it('should not record status', async () => {
     packetLogger.logPacket(packets.status);
     await clock.tickAsync(1000);
-    await new Promise(res => setTimeout(res, 50));
+    await new Promise(res => setTimeout(res, 100));
     const exists = await fs.pathExists(filePath);
     sinon.assert.match(exists, false);
   });
@@ -103,6 +103,7 @@ describe('PacketLogger', () => {
   it('should record shortened specifications', async () => {
     packetLogger.logPacket(packets.specifications);
     await clock.tickAsync(1000);
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match({type: 'specifications', sequenceNumber: 1}, JSON.parse(result[0].message));
   });
@@ -116,6 +117,7 @@ describe('PacketLogger', () => {
     packetLogger.start();
     packetLogger.logPacket(packets.specifications);
     await clock.tickAsync(1000);
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match({
       accountId: 'accountId', 
@@ -132,6 +134,7 @@ describe('PacketLogger', () => {
     packetLogger.logPacket(packets.prices);
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(1000);
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match(packets.prices, JSON.parse(result[0].message));
     sinon.assert.match(packets.accountInformation, JSON.parse(result[1].message));
@@ -148,6 +151,7 @@ describe('PacketLogger', () => {
     packetLogger.logPacket(changeSN(packets.prices, 5));
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(1000);
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match(packets.prices, JSON.parse(result[0].message));
     sinon.assert.match(changeSN(packets.prices, 5), JSON.parse(result[1].message));
@@ -169,6 +173,7 @@ describe('PacketLogger', () => {
     packetLogger.logPacket(changeSN(packets.prices, 5));
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(1000);
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match(packets.prices, JSON.parse(result[0].message));
     sinon.assert.match(changeSN(packets.prices, 2), JSON.parse(result[1].message));
@@ -188,6 +193,7 @@ describe('PacketLogger', () => {
     packetLogger.logPacket(changeSN(packets.prices, 4));
     packetLogger.logPacket(changeSN(packets.prices, 6));
     await clock.tickAsync(1000);
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match(packets.prices, JSON.parse(result[0].message));
     sinon.assert.match(changeSN(packets.prices, 4), JSON.parse(result[1].message));
@@ -202,16 +208,19 @@ describe('PacketLogger', () => {
     packetLogger.logPacket(packets.accountInformation);
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(60 * 60 * 1000);
+    await new Promise(res => setTimeout(res, 100));
     packetLogger.logPacket(packets.accountInformation);
     packetLogger.logPacket(packets.accountInformation);
     packetLogger.logPacket(packets.accountInformation);
     packetLogger.logPacket(packets.accountInformation);
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(60 * 60 * 1000);
+    await new Promise(res => setTimeout(res, 100));
     packetLogger.logPacket(packets.accountInformation);
     packetLogger.logPacket(packets.accountInformation);
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(2000);
+    await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId', 
       new Date('2020-10-10 00:30:00.000'), new Date('2020-10-10 01:30:00.000'));
     sinon.assert.match(result.length, 5);
@@ -229,25 +238,25 @@ describe('PacketLogger', () => {
   it('should delete expired folders', async () => {
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(11000);
-    await new Promise(res => setTimeout(res, 50));
+    await new Promise(res => setTimeout(res, 100));
     sinon.assert.match(await fs.readdir(folder), ['2020-10-10-00']);
 
     clock.tick(4 * 60 * 60 * 1000);
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(11000);
-    await new Promise(res => setTimeout(res, 50));
+    await new Promise(res => setTimeout(res, 100));
     sinon.assert.match(await fs.readdir(folder), ['2020-10-10-00', '2020-10-10-01']);
 
     clock.tick(4 * 60 * 60 * 1000);
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(11000);
-    await new Promise(res => setTimeout(res, 50));
+    await new Promise(res => setTimeout(res, 100));
     sinon.assert.match(await fs.readdir(folder), ['2020-10-10-00', '2020-10-10-01', '2020-10-10-02']);
 
     clock.tick(4 * 60 * 60 * 1000);
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(10000);
-    await new Promise(res => setTimeout(res, 50));
+    await new Promise(res => setTimeout(res, 100));
     sinon.assert.match(await fs.readdir(folder), ['2020-10-10-01', '2020-10-10-02', '2020-10-10-03']);
   });
 
