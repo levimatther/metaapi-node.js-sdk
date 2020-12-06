@@ -27,8 +27,6 @@ export default class ConnectionRegistry {
     if (this._connections[account.id]) {
       return this._connections[account.id];
     } else {
-      const connection = new MetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
-        historyStartTime);
       while (this._connectionLocks[account.id]) {
         await this._connectionLocks[account.id].promise;
       }
@@ -37,6 +35,8 @@ export default class ConnectionRegistry {
       }
       let connectionLockResolve;
       this._connectionLocks[account.id] = {promise: new Promise(res => connectionLockResolve = res)};
+      const connection = new MetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
+        historyStartTime);
       try {
         await connection.initialize();
         await connection.subscribe();
