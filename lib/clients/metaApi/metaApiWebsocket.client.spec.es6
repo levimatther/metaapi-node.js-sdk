@@ -1199,6 +1199,35 @@ describe('MetaApiWebsocketClient', () => {
       should.exist(actualTimestamps.serverProcessingFinished);
     });
 
+    it('should measure price streaming latencies', async () => {
+      let prices = [{
+        symbol: 'AUDNZD',
+        timestamps: {
+          eventGenerated: new Date(),
+          serverProcessingStarted: new Date(),
+          serverProcessingFinished: new Date()
+        }
+      }];
+      let accountId;
+      let symbol;
+      let actualTimestamps;
+      let listener = {
+        onSymbolPrice: (aid, sym, ts) => {
+          accountId = aid;
+          symbol = sym;
+          actualTimestamps = ts;
+        }
+      };
+      client.addLatencyListener(listener);
+      server.emit('synchronization', {type: 'prices', accountId: 'accountId', prices, equity: 100, margin: 200,
+        freeMargin: 400, marginLevel: 40000});
+      await new Promise(res => setTimeout(res, 50));
+      accountId.should.equal('accountId');
+      symbol.should.equal('AUDNZD');
+      actualTimestamps.should.match(prices[0].timestamps);
+      should.exist(actualTimestamps.clientProcessingFinished);
+    });
+
   });
 
 });

@@ -784,6 +784,7 @@ export default class MetaApiWebsocketClient {
     }
   }
 
+  // eslint-disable-next-line complexity
   _convertIsoTimeToDate(packet) {
     // eslint-disable-next-line guard-for-in
     for (let field in packet) {
@@ -804,6 +805,16 @@ export default class MetaApiWebsocketClient {
       // eslint-disable-next-line guard-for-in
       for (let field in packet.timestamps) {
         packet.timestamps[field] = new Date(packet.timestamps[field]);
+      }
+    }
+    if (packet.type === 'prices') {
+      for (let price of packet.prices || []) {
+        if (price.timestamps) {
+          // eslint-disable-next-line guard-for-in
+          for (let field in price.timestamps) {
+            price.timestamps[field] = new Date(price.timestamps[field]);
+          }
+        }
       }
     }
   }
@@ -1179,6 +1190,22 @@ export default class MetaApiWebsocketClient {
               );
             }
             await Promise.all(onSymbolPriceUpdatedPromises);
+          }
+          for (let price of prices) {
+            if (price.timestamps) {
+              price.timestamps.clientProcessingFinished = new Date();
+              const onSymbolPricePromises = [];
+              // eslint-disable-next-line max-depth
+              for (let listener of this._latencyListeners || []) {
+                onSymbolPricePromises.push(
+                  Promise.resolve(listener.onSymbolPrice(data.accountId, price.symbol, price.timestamps))
+                  // eslint-disable-next-line no-console
+                    .catch(err => console.error(`${data.accountId}: Failed to notify latency listener about ` +
+                      'price event', err))
+                );
+              }
+              await Promise.all(onSymbolPricePromises);
+            }
           }
         }
       }
