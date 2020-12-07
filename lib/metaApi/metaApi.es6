@@ -76,7 +76,7 @@ export default class MetaApi {
    * @return {LatencyMonitor} latency monitor
    */
   get latencyMonitor() {
-    this._latencyMonitor;
+    return this._latencyMonitor;
   }
 
   /**
