@@ -10,6 +10,7 @@ import MetatraderDemoAccountApi from './metatraderDemoAccountApi';
 import MetatraderDemoAccountClient from '../clients/metaApi/metatraderDemoAccount.client';
 import ConnectionRegistry from './connectionRegistry';
 import {ValidationError} from '../clients/errorHandler';
+import LatencyMonitor from './latencyMonitor';
 
 /**
  * MetaApi MetaTrader API SDK
@@ -42,6 +43,8 @@ export default class MetaApi {
       this._metaApiWebsocketClient, this._connectionRegistry);
     this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
       new MetatraderDemoAccountClient(httpClient, token, domain));
+    this._latencyMonitor = new LatencyMonitor();
+    this._metaApiWebsocketClient.addLatencyListener(this._latencyMonitor);
   }
 
   /**
@@ -69,9 +72,18 @@ export default class MetaApi {
   }
 
   /**
+   * Returns MetaApi application latency monitor
+   * @return {LatencyMonitor} latency monitor
+   */
+  get latencyMonitor() {
+    this._latencyMonitor;
+  }
+
+  /**
    * Closes all clients and connections
    */
   close() {
+    this._metaApiWebsocketClient.removeLatencyListener(this._latencyMonitor);
     this._metaApiWebsocketClient.close();
   }
 

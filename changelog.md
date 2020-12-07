@@ -14,6 +14,7 @@
   - added option for reverse copying in CopyFactory API
   - added ConnectionHealthMonitor.serverHealthStatus API to retrieve health status of server-side applications
   - added option to specify account-wide stopout and risk limits in CopyFactory API
+  - track MetaApi application latencies
 
 10.1.1
   - bugfix synchronization failover logic

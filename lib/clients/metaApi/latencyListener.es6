@@ -64,6 +64,7 @@ export default class LatencyListener {
    * @property {Date} serverProcessingStarted time the event processing have started on server side
    * @property {Date} serverProcessingFinished time the event processing have finished on server side
    * @property {Date} clientProcessingFinished time the event processing have finished on client side
+   * @property {Date} tradeStarted time the trade execution was started on server side
    * @property {Date} tradeExecuted time the trade was executed on exchange side
    */
 

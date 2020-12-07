@@ -50,7 +50,7 @@ describe('HttpClient', () => {
   it('should return timeout error if request is timed out', (done) => {
     httpClient = new HttpClient(0.0001);
     let opts = {
-      url: 'http://example.com/not-found'
+      url: 'http://agiliumlabs.cloud/not-found'
     };
     httpClient.request(opts)
       .catch((err) => {
