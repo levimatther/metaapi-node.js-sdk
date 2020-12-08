@@ -173,7 +173,7 @@ describe('PacketLogger', () => {
     packetLogger.logPacket(changeSN(packets.prices, 5));
     packetLogger.logPacket(packets.accountInformation);
     await clock.tickAsync(1000);
-    await new Promise(res => setTimeout(res, 100));
+    await new Promise(res => setTimeout(res, 200));
     const result = await packetLogger.readLogs('accountId');
     sinon.assert.match(packets.prices, JSON.parse(result[0].message));
     sinon.assert.match(changeSN(packets.prices, 2), JSON.parse(result[1].message));
