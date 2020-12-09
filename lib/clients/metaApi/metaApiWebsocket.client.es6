@@ -803,13 +803,13 @@ export default class MetaApiWebsocketClient {
         this._convertIsoTimeToDate(value);
       }
     }
-    if (packet.timestamps) {
+    if (packet && packet.timestamps) {
       // eslint-disable-next-line guard-for-in
       for (let field in packet.timestamps) {
         packet.timestamps[field] = new Date(packet.timestamps[field]);
       }
     }
-    if (packet.type === 'prices') {
+    if (packet && packet.type === 'prices') {
       for (let price of packet.prices || []) {
         if (price.timestamps) {
           // eslint-disable-next-line guard-for-in
