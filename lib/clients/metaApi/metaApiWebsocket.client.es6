@@ -213,7 +213,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderAccountInformation>} promise resolving with account information
    */
   async getAccountInformation(accountId) {
-    let response = await this._rpcRequest(accountId, {type: 'getAccountInformation'});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getAccountInformation'});
     return response.accountInformation;
   }
 
@@ -261,7 +261,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<Array<MetatraderPosition>} promise resolving with array of open positions
    */
   async getPositions(accountId) {
-    let response = await this._rpcRequest(accountId, {type: 'getPositions'});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getPositions'});
     return response.positions;
   }
 
@@ -273,7 +273,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise<MetatraderPosition>} promise resolving with MetaTrader position found
    */
   async getPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {type: 'getPosition', positionId});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getPosition', positionId});
     return response.position;
   }
 
@@ -339,7 +339,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise<Array<MetatraderOrder>>} promise resolving with open MetaTrader orders
    */
   async getOrders(accountId) {
-    let response = await this._rpcRequest(accountId, {type: 'getOrders'});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getOrders'});
     return response.orders;
   }
 
@@ -351,7 +351,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise<MetatraderOrder>} promise resolving with metatrader order found
    */
   async getOrder(accountId, orderId) {
-    let response = await this._rpcRequest(accountId, {type: 'getOrder', orderId});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getOrder', orderId});
     return response.order;
   }
 
@@ -371,7 +371,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByTicket(accountId, ticket) {
-    let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByTicket', ticket});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByTicket', ticket});
     return {
       historyOrders: response.historyOrders,
       synchronizing: response.synchronizing
@@ -386,7 +386,8 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByPosition', positionId});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByPosition',
+      positionId});
     return {
       historyOrders: response.historyOrders,
       synchronizing: response.synchronizing
@@ -404,8 +405,8 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByTimeRange(accountId, startTime, endTime, offset = 0, limit = 1000) {
-    let response = await this._rpcRequest(accountId, {type: 'getHistoryOrdersByTimeRange', startTime, endTime, offset,
-      limit});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByTimeRange',
+      startTime, endTime, offset, limit});
     return {
       historyOrders: response.historyOrders,
       synchronizing: response.synchronizing
@@ -469,7 +470,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByTicket(accountId, ticket) {
-    let response = await this._rpcRequest(accountId, {type: 'getDealsByTicket', ticket});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getDealsByTicket', ticket});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -484,7 +485,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {type: 'getDealsByPosition', positionId});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getDealsByPosition', positionId});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -502,7 +503,8 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByTimeRange(accountId, startTime, endTime, offset = 0, limit = 1000) {
-    let response = await this._rpcRequest(accountId, {type: 'getDealsByTimeRange', startTime, endTime, offset, limit});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getDealsByTimeRange', startTime,
+      endTime, offset, limit});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -513,10 +515,11 @@ export default class MetaApiWebsocketClient {
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
    * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
    * @param {String} accountId id of the MetaTrader account to remove history for
+   * @param {String} [application] application to remove history for
    * @return {Promise} promise resolving when the history is cleared
    */
-  removeHistory(accountId) {
-    return this._rpcRequest(accountId, {type: 'removeHistory'});
+  removeHistory(accountId, application) {
+    return this._rpcRequest(accountId, {application, type: 'removeHistory'});
   }
 
   /**
@@ -633,7 +636,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
    */
   async getSymbolSpecification(accountId, symbol) {
-    let response = await this._rpcRequest(accountId, {type: 'getSymbolSpecification', symbol});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbolSpecification', symbol});
     return response.specification;
   }
 
@@ -645,7 +648,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
   async getSymbolPrice(accountId, symbol) {
-    let response = await this._rpcRequest(accountId, {type: 'getSymbolPrice', symbol});
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbolPrice', symbol});
     return response.price;
   }
 
@@ -757,7 +760,7 @@ export default class MetaApiWebsocketClient {
         'to broker before retrying your request.')), (timeoutInSeconds * 1000) || this._requestTimeout))
     ]);
     request.accountId = accountId;
-    request.application = this._application;
+    request.application = request.application || this._application;
     if (!request.requestId) {
       request.requestId = requestId;
     }

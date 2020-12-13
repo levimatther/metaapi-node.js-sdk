@@ -159,11 +159,12 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
    * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
+   * @param {String} [application] application to remove history for
    * @return {Promise} promise resolving when the history is cleared
    */
-  removeHistory() {
+  removeHistory(application) {
     this._historyStorage.reset();
-    return this._websocketClient.removeHistory(this._account.id);
+    return this._websocketClient.removeHistory(this._account.id, application);
   }
 
   /**

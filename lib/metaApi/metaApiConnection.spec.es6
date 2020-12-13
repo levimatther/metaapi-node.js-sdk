@@ -373,8 +373,8 @@ describe('MetaApiConnection', () => {
   it('should remove history', async () => {
     sandbox.stub(client, 'removeHistory').resolves();
     sandbox.stub(api.historyStorage, 'reset').resolves();
-    await api.removeHistory();
-    sinon.assert.calledWith(client.removeHistory, 'accountId');
+    await api.removeHistory('app');
+    sinon.assert.calledWith(client.removeHistory, 'accountId', 'app');
     sinon.assert.calledOnce(api.historyStorage.reset);
   });
 

@@ -64,7 +64,7 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getAccountInformation' && data.accountId === 'accountId' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId,
           accountInformation
@@ -99,7 +99,7 @@ describe('MetaApiWebsocketClient', () => {
       realizedProfit: -6.536993168992922e-13
     }];
     server.on('request', data => {
-      if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'application') {
+      if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'RPC') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, positions});
       }
     });
@@ -132,7 +132,7 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getPosition' && data.accountId === 'accountId' && data.positionId === '46214692' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, position});
       }
     });
@@ -159,7 +159,7 @@ describe('MetaApiWebsocketClient', () => {
       comment: 'COMMENT2'
     }];
     server.on('request', data => {
-      if (data.type === 'getOrders' && data.accountId === 'accountId' && data.application === 'application') {
+      if (data.type === 'getOrders' && data.accountId === 'accountId' && data.application === 'RPC') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, orders});
       }
     });
@@ -187,7 +187,7 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getOrder' && data.accountId === 'accountId' && data.orderId === '46871284' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, order});
       }
     });
@@ -216,7 +216,7 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getHistoryOrdersByTicket' && data.accountId === 'accountId' && data.ticket === '46214692' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
           synchronizing: false
@@ -248,7 +248,7 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getHistoryOrdersByPosition' && data.accountId === 'accountId' &&
-        data.positionId === '46214692' && data.application === 'application') {
+        data.positionId === '46214692' && data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
           synchronizing: false
@@ -281,7 +281,7 @@ describe('MetaApiWebsocketClient', () => {
     server.on('request', data => {
       if (data.type === 'getHistoryOrdersByTimeRange' && data.accountId === 'accountId' &&
         data.startTime === '2020-04-15T02:45:00.000Z' && data.endTime === '2020-04-15T02:46:00.000Z' &&
-        data.offset === 1 && data.limit === 100 && data.application === 'application') {
+        data.offset === 1 && data.limit === 100 && data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, historyOrders,
           synchronizing: false
@@ -316,7 +316,7 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getDealsByTicket' && data.accountId === 'accountId' && data.ticket === '46214692' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
           synchronizing: false
@@ -350,7 +350,7 @@ describe('MetaApiWebsocketClient', () => {
     }];
     server.on('request', data => {
       if (data.type === 'getDealsByPosition' && data.accountId === 'accountId' && data.positionId === '46214692' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
           synchronizing: false
@@ -385,7 +385,7 @@ describe('MetaApiWebsocketClient', () => {
     server.on('request', data => {
       if (data.type === 'getDealsByTimeRange' && data.accountId === 'accountId' &&
         data.startTime === '2020-04-15T02:45:00.000Z' && data.endTime === '2020-04-15T02:46:00.000Z' &&
-        data.offset === 1 && data.limit === 100 && data.application === 'application') {
+        data.offset === 1 && data.limit === 100 && data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId, deals,
           synchronizing: false
@@ -403,12 +403,12 @@ describe('MetaApiWebsocketClient', () => {
   it('should remove history from API', async () => {
     let requestReceived = false;
     server.on('request', data => {
-      if (data.type === 'removeHistory' && data.accountId === 'accountId' && data.application === 'application') {
+      if (data.type === 'removeHistory' && data.accountId === 'accountId' && data.application === 'app') {
         requestReceived = true;
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
       }
     });
-    await client.removeHistory('accountId');
+    await client.removeHistory('accountId', 'app');
     requestReceived.should.be.true();
   });
 
@@ -553,7 +553,7 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getSymbolSpecification' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {
           type: 'response', accountId: data.accountId, requestId: data.requestId,
           specification
@@ -577,7 +577,7 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getSymbolPrice' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
-        data.application === 'application') {
+        data.application === 'RPC') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, price});
       }
     });
@@ -1180,7 +1180,7 @@ describe('MetaApiWebsocketClient', () => {
       let timestamps;
       server.on('request', data => {
         if (data.type === 'getSymbolPrice' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
-          data.application === 'application' && data.timestamps.clientProcessingStarted) {
+          data.application === 'RPC' && data.timestamps.clientProcessingStarted) {
           timestamps = Object.assign(data.timestamps, {serverProcessingStarted: new Date(),
             serverProcessingFinished: new Date()});
           timestamps.clientProcessingStarted = new Date(timestamps.clientProcessingStarted);
