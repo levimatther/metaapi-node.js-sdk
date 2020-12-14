@@ -1169,6 +1169,7 @@ export default class MetaApiWebsocketClient {
             await Promise.all(onBrokerConnectionStatusChangedPromises);
             if (data.healthStatus) {
               const onHealthStatusPromises = [];
+              // eslint-disable-next-line max-depth
               for (let listener of this._synchronizationListeners[data.accountId] || []) {
                 onHealthStatusPromises.push(
                   Promise.resolve(listener.onHealthStatus(data.healthStatus))
