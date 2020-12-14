@@ -17,6 +17,8 @@
   - track MetaApi application latencies
   - send RPC requests via RPC application
   - increased synchronization stability
+  - added extensions for accounts
+  - added metadata field for accounts
 
 10.1.1
   - bugfix synchronization failover logic

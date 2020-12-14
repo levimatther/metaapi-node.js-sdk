@@ -8,6 +8,13 @@ import MetaApiClient from '../metaApi.client';
 export default class MetatraderAccountClient extends MetaApiClient {
 
   /**
+   * Extension model
+   * @typedef Extension
+   * @property {String} id extension id
+   * @property {Object} configuration extension configuration
+   */
+
+  /**
    * MetaTrader account model
    * @typedef {Object} MetatraderAccountDto
    * @property {String} _id account unique identifier
@@ -32,6 +39,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
+   * @property {Array<Extension>} extensions API extensions
+   * @property {Object} metadata extra information which can be stored together with your account
    */
 
   /**
@@ -146,6 +155,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
+   * @property {Array<Extension>} extensions API extensions
+   * @property {Object} metadata extra information which can be stored together with your account
    */
 
   /**
@@ -277,6 +288,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
+   * @property {Array<Extension>} extensions API extensions
+   * @property {Object} metadata extra information which can be stored together with your account
    */
 
   /**
