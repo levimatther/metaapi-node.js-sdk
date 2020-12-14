@@ -121,6 +121,22 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns API extensions
+   * @return {Array<Extension>} API extensions
+   */
+  get extensions() {
+    return this._data.extensions;
+  }
+
+  /**
+   * Returns extra information which can be stored together with your account
+   * @return {Object} extra information which can be stored together with your account
+   */
+  get metadata() {
+    return this._data.metadata;
+  }
+
+  /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
