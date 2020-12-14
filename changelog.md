@@ -16,6 +16,7 @@
   - added option to specify account-wide stopout and risk limits in CopyFactory API
   - track MetaApi application latencies
   - send RPC requests via RPC application
+  - increased synchronization stability
 
 10.1.1
   - bugfix synchronization failover logic

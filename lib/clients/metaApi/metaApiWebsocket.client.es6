@@ -33,6 +33,7 @@ export default class MetaApiWebsocketClient {
     this._synchronizationListeners = {};
     this._latencyListeners = [];
     this._reconnectListeners = [];
+    this._connectedHosts = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
@@ -947,6 +948,7 @@ export default class MetaApiWebsocketClient {
       let packets = this._packetOrderer.restoreOrder(packet);
       for (let data of packets) {
         if (data.type === 'authenticated') {
+          this._connectedHosts[data.accountId] = data.host;
           const onConnectedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onConnectedPromises.push(
@@ -957,16 +959,18 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onConnectedPromises);
         } else if (data.type === 'disconnected') {
-          const onDisconnectedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onDisconnectedPromises.push(
-              Promise.resolve(listener.onDisconnected())
-              // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
-                  err))
-            );
+          if (this._connectedHosts[data.accountId] === data.host) {
+            const onDisconnectedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onDisconnectedPromises.push(
+                Promise.resolve(listener.onDisconnected())
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
+                    err))
+              );
+            }
+            await Promise.all(onDisconnectedPromises);
           }
-          await Promise.all(onDisconnectedPromises);
         } else if (data.type === 'synchronizationStarted') {
           const promises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1152,27 +1156,29 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onOrderSynchronizationFinishedPromises);
         } else if (data.type === 'status') {
-          const onBrokerConnectionStatusChangedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onBrokerConnectionStatusChangedPromises.push(
-              Promise.resolve(listener.onBrokerConnectionStatusChanged(!!data.connected))
-              // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
-                  'brokerConnectionStatusChanged event', err))
-            );
-          }
-          await Promise.all(onBrokerConnectionStatusChangedPromises);
-          if (data.healthStatus) {
-            const onHealthStatusPromises = [];
+          if (this._connectedHosts[data.accountId] === data.host) {
+            const onBrokerConnectionStatusChangedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onHealthStatusPromises.push(
-                Promise.resolve(listener.onHealthStatus(data.healthStatus))
+              onBrokerConnectionStatusChangedPromises.push(
+                Promise.resolve(listener.onBrokerConnectionStatusChanged(!!data.connected))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
-                    'server-side healthStatus event', err))
+                    'brokerConnectionStatusChanged event', err))
               );
             }
-            await Promise.all(onHealthStatusPromises);
+            await Promise.all(onBrokerConnectionStatusChangedPromises);
+            if (data.healthStatus) {
+              const onHealthStatusPromises = [];
+              for (let listener of this._synchronizationListeners[data.accountId] || []) {
+                onHealthStatusPromises.push(
+                  Promise.resolve(listener.onHealthStatus(data.healthStatus))
+                  // eslint-disable-next-line no-console
+                    .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                      'server-side healthStatus event', err))
+                );
+              }
+              await Promise.all(onHealthStatusPromises);
+            }
           }
         } else if (data.type === 'specifications') {
           for (let specification of (data.specifications || [])) {
