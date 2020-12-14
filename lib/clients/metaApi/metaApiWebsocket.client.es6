@@ -34,6 +34,7 @@ export default class MetaApiWebsocketClient {
     this._latencyListeners = [];
     this._reconnectListeners = [];
     this._connectedHosts = {};
+    this._resubscriptionTriggerTimes = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
@@ -1158,16 +1159,22 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onOrderSynchronizationFinishedPromises);
         } else if (data.type === 'status') {
           if (!this._connectedHosts[data.accountId]) {
-            // eslint-disable-next-line no-console
-            console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
-              'server yet, retrying subscription ' + data.accountId);
-            this.subscribe(data.accountId).catch(err => {
-              if (err.name !== 'TimeoutError') {
-                console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-                  'subscribe response for account id ' + data.accountId, err);
-              }
-            });
+            if (!this._resubscriptionTriggerTimes[data.accountId]) {
+              this._resubscriptionTriggerTimes[data.accountId] = new Date();
+            } else if (this._resubscriptionTriggerTimes[data.accountId].getTime() + 2 * 60 * 1000 < Date.now()) {
+              delete this._resubscriptionTriggerTimes[data.accountId];
+              // eslint-disable-next-line no-console
+              console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
+                'server yet, retrying subscription for account ' + data.accountId);
+              this.subscribe(data.accountId).catch(err => {
+                if (err.name !== 'TimeoutError') {
+                  console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
+                    'subscribe response for account id ' + data.accountId, err);
+                }
+              });
+            }
           } else if (this._connectedHosts[data.accountId] === data.host) {
+            delete this._resubscriptionTriggerTimes[data.accountId];
             const onBrokerConnectionStatusChangedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onBrokerConnectionStatusChangedPromises.push(
