@@ -709,6 +709,7 @@ export default class MetaApiConnection extends SynchronizationListener {
         await this.subscribeToMarketData(symbol);
       }
       this._synchronized = true;
+      this._synchronizationRetryIntervalInSeconds = 1;
     } catch(err) {
       console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
         ' failed to synchronize', err);
