@@ -726,7 +726,8 @@ describe('MetaApiWebsocketClient', () => {
       };
       sandbox.stub(listener, 'onBrokerConnectionStatusChanged').resolves();
       client.addSynchronizationListener('accountId', listener);
-      server.emit('synchronization', {type: 'status', accountId: 'accountId', connected: true});
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1'});
+      server.emit('synchronization', {type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onBrokerConnectionStatusChanged, true);
     });
@@ -738,7 +739,8 @@ describe('MetaApiWebsocketClient', () => {
       };
       sandbox.stub(listener, 'onHealthStatus').resolves();
       client.addSynchronizationListener('accountId', listener);
-      server.emit('synchronization', {type: 'status', accountId: 'accountId', connected: true,
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1'});
+      server.emit('synchronization', {type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
         healthStatus: {restApiHealthy: true}});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onHealthStatus, {restApiHealthy: true});
@@ -751,7 +753,8 @@ describe('MetaApiWebsocketClient', () => {
       };
       sandbox.stub(listener, 'onDisconnected').resolves();
       client.addSynchronizationListener('accountId', listener);
-      server.emit('synchronization', {type: 'disconnected', accountId: 'accountId'});
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1'});
+      server.emit('synchronization', {type: 'disconnected', accountId: 'accountId', host: 'ps-mpa-1'});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onDisconnected);
     });

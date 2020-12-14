@@ -56,7 +56,7 @@ export default class MetaApiWebsocketClient {
     this.subscribe(accountId).catch(err => {
       if (err.name !== 'TimeoutError') {
         console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-          'subscribe response' + err);
+          'subscribe response for account id ' + accountId, err);
       }
     });
   }
@@ -970,6 +970,7 @@ export default class MetaApiWebsocketClient {
               );
             }
             await Promise.all(onDisconnectedPromises);
+            delete this._connectedHosts[data.accountId];
           }
         } else if (data.type === 'synchronizationStarted') {
           const promises = [];
@@ -1156,7 +1157,17 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onOrderSynchronizationFinishedPromises);
         } else if (data.type === 'status') {
-          if (this._connectedHosts[data.accountId] === data.host) {
+          if (!this._connectedHosts[data.accountId]) {
+            // eslint-disable-next-line no-console
+            console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
+              'server yet, retrying subscription ' + data.accountId);
+            this.subscribe(data.accountId).catch(err => {
+              if (err.name !== 'TimeoutError') {
+                console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
+                  'subscribe response for account id ' + data.accountId, err);
+              }
+            });
+          } else if (this._connectedHosts[data.accountId] === data.host) {
             const onBrokerConnectionStatusChangedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onBrokerConnectionStatusChangedPromises.push(
