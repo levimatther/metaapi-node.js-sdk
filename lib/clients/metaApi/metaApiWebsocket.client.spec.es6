@@ -599,6 +599,17 @@ describe('MetaApiWebsocketClient', () => {
     await client.saveUptime('accountId', {'1h': 100});
   });
 
+  it('should unsubscribe from account data', async () => {
+    let response = {type: 'response', accountId: 'accountId'};
+    server.on('request', data => {
+      if (data.type === 'unsubscribe' && data.accountId === 'accountId') {
+        server.emit('response', Object.assign({requestId: data.requestId}, response));
+      }
+    });
+    let actual = await client.unsubscribe('accountId');
+    actual.should.match(response);
+  });
+
   describe('error handling', () => {
 
     /**

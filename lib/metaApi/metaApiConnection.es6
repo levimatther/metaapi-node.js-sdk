@@ -665,9 +665,10 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Closes the connection. The instance of the class should no longer be used after this method is invoked.
    */
-  close() {
+  async close() {
     if(!this._closed) {
       this._shouldSynchronize = undefined;
+      await this._websocketClient.unsubscribe(this._account.id);
       this._websocketClient.removeSynchronizationListener(this._account.id, this);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
