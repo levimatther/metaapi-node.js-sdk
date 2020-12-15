@@ -665,6 +665,16 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Unsubscribe from account (see
+   * https://metaapi.cloud/docs/client/websocket/api/synchronizing/unsubscribe).
+   * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
+   * @returns {Promise} promise which resolves when socket unsubscribed
+   */
+  async unsubscribe(accountId) {
+    return this._rpcRequest(accountId, {type: 'unsubscribe'});
+  }
+
+  /**
    * Adds synchronization listener for specific account
    * @param {String} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add

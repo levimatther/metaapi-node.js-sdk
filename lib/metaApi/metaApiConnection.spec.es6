@@ -40,7 +40,8 @@ describe('MetaApiConnection', () => {
     getSymbolSpecification: () => {},
     getSymbolPrice: () => {},
     saveUptime: () => {},
-    waitSynchronized: () => {}
+    waitSynchronized: () => {},
+    unsubscribe: () => {}
   };
 
   let connectionRegistry = {
@@ -832,9 +833,11 @@ describe('MetaApiConnection', () => {
   it('should unsubscribe from events on close', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
     sandbox.stub(client, 'removeSynchronizationListener').returns();
+    sandbox.stub(client, 'unsubscribe').resolves();
     sandbox.stub(connectionRegistry, 'remove').returns();
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.close();
+    await api.close();
+    sinon.assert.calledWith(client.unsubscribe, 'accountId');
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.historyStorage);
