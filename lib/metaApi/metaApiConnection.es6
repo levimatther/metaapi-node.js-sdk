@@ -715,7 +715,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
         ' failed to synchronize', err);
       if (this._shouldSynchronize === key) {
-        setTimeout(this._ensureSynchronized.bind(this, key), this._synchronizationRetryIntervalInSeconds);
+        setTimeout(this._ensureSynchronized.bind(this, key), this._synchronizationRetryIntervalInSeconds * 1000);
         this._synchronizationRetryIntervalInSeconds = Math.min(this._synchronizationRetryIntervalInSeconds * 2, 300);
       }
     }
