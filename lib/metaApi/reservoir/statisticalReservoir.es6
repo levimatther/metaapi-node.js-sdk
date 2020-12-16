@@ -10,8 +10,8 @@ export default class StatisticalReservoir {
   /**
    * Constructs reservoir
    * @param {number} size Reservoir size
-   * @param {Function} customRandomGenerator custom random generator
    * @param {number} interval reservoir interval in milliseconds
+   * @param {Function} randomNumberGen custom random generator
    */
   constructor(size, interval, randomNumberGen) {
     this.reservoir = reservoir(size, interval, randomNumberGen);

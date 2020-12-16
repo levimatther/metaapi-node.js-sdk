@@ -42,7 +42,8 @@ export default class PacketLogger {
         this._recordPrices(packet.accountId);
       }
       if(packet.type === 'specifications' && this._compressSpecifications) {
-        queue.push(JSON.stringify({type: packet.type, sequenceNumber: packet.sequenceNumber}));
+        queue.push(JSON.stringify({type: packet.type, sequenceNumber: packet.sequenceNumber, 
+          sequenceTimestamp: packet.sequenceTimestamp}));
       } else {
         queue.push(JSON.stringify(packet));
       }

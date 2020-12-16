@@ -35,6 +35,7 @@ export default class LatencyListener {
   /**
    * Invoked with latency information when application receives symbol price update event
    * @param {string} accountId account id
+   * @param {string} symbol price symbol
    * @param {SymbolPriceTimestamps} timestamps timestamps object containing latency information about price streaming
    * @return {Promise} promise which resolves when latency information is processed
    */
@@ -71,7 +72,7 @@ export default class LatencyListener {
   /**
    * Invoked with latency information when application receives trade response
    * @param {string} accountId account id
-   * @param {UpdateTimestamps} timestamps timestamps object containing latency information about a trade
+   * @param {TradeTimestamps} timestamps timestamps object containing latency information about a trade
    * @return {Promise} promise which resolves when latency information is processed
    */
   async onTrade(accountId, timestamps) {}

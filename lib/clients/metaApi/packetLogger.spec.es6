@@ -36,6 +36,7 @@ describe('PacketLogger', () => {
           balance: 20000,
           equity: 25000
         },
+        sequenceTimestamp: 100000,
         accountId: 'accountId'
       },
       prices: {
@@ -51,17 +52,20 @@ describe('PacketLogger', () => {
           ask: 103.25
         }],
         accountId: 'accountId',
+        sequenceTimestamp: 100000,
         sequenceNumber: 1
       },
       status: {
         status: 'connected',
         type: 'status',
-        accountId: 'accountId'
+        accountId: 'accountId',
+        sequenceTimestamp: 100000
       },
       specifications: {
         specifications: [],
         type: 'specifications',
         accountId: 'accountId',
+        sequenceTimestamp: 100000,
         sequenceNumber: 1
       }
     };
@@ -105,7 +109,8 @@ describe('PacketLogger', () => {
     await clock.tickAsync(1000);
     await new Promise(res => setTimeout(res, 100));
     const result = await packetLogger.readLogs('accountId');
-    sinon.assert.match({type: 'specifications', sequenceNumber: 1}, JSON.parse(result[0].message));
+    sinon.assert.match({type: 'specifications', sequenceNumber: 1, sequenceTimestamp: 100000}, 
+      JSON.parse(result[0].message));
   });
 
   /**
@@ -122,7 +127,8 @@ describe('PacketLogger', () => {
     sinon.assert.match({
       accountId: 'accountId', 
       type: 'specifications', 
-      sequenceNumber: 1, 
+      sequenceNumber: 1,
+      sequenceTimestamp: 100000, 
       specifications: []
     }, JSON.parse(result[0].message));
   });

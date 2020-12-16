@@ -120,7 +120,7 @@ function toValueArray_(p) {
 
 
 var AVLTree = function(comparer) {
-  if (comparer) comparer_ = comparer;
+  if (!comparer) comparer = comparer_;
   var AVL = {
     root: null,
     comparer_: comparer,
