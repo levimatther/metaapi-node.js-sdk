@@ -72,6 +72,7 @@ export default class LatencyMonitor extends LatencyListener {
   /**
    * Invoked with latency information when application receives symbol price update event
    * @param {string} accountId account id
+   * @param {string} symbol price symbol
    * @param {SymbolPriceTimestamps} timestamps timestamps object containing latency information about price streaming
    */
   onSymbolPrice(accountId, symbol, timestamps) {
@@ -128,7 +129,7 @@ export default class LatencyMonitor extends LatencyListener {
   /**
    * Invoked with latency information when application receives trade response
    * @param {string} accountId account id
-   * @param {UpdateTimestamps} timestamps timestamps object containing latency information about a trade
+   * @param {TradeTimestamps} timestamps timestamps object containing latency information about a trade
    */
   onTrade(accountId, timestamps) {
     if (timestamps.clientProcessingStarted && timestamps.serverProcessingStarted) {
@@ -188,16 +189,16 @@ export default class LatencyMonitor extends LatencyListener {
     return {
       branch: true,
       '1h': {
-        percentiles: new StatisticalReservoir(1000, 60 * 60 * 1000 * 1000),
-        reservoir: new Reservoir(60, 60 * 60 * 1000 * 1000)
+        percentiles: new StatisticalReservoir(1000, 60 * 60 * 1000),
+        reservoir: new Reservoir(60, 60 * 60 * 1000)
       },
       '1d': {
-        percentiles: new StatisticalReservoir(1000, 60 * 60 * 1000 * 1000),
-        reservoir: new Reservoir(60, 60 * 60 * 1000 * 1000)
+        percentiles: new StatisticalReservoir(1000, 24 * 60 * 60 * 1000),
+        reservoir: new Reservoir(60, 24 * 60 * 60 * 1000)
       },
       '1w': {
-        percentiles: new StatisticalReservoir(1000, 60 * 60 * 1000 * 1000),
-        reservoir: new Reservoir(60, 60 * 60 * 1000 * 1000)
+        percentiles: new StatisticalReservoir(1000, 7 * 24 * 60 * 60 * 1000),
+        reservoir: new Reservoir(60, 7 * 24 * 60 * 60 * 1000)
       }
     };
   }

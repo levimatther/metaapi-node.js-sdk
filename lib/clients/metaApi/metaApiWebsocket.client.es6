@@ -670,7 +670,7 @@ export default class MetaApiWebsocketClient {
    * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
    * @returns {Promise} promise which resolves when socket unsubscribed
    */
-  async unsubscribe(accountId) {
+  unsubscribe(accountId) {
     return this._rpcRequest(accountId, {type: 'unsubscribe'});
   }
 
