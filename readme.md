@@ -344,10 +344,27 @@ console.log('Trade successful, result code is ' + result.stringCode);
 You can monitor account connection health using MetaApiConnection.healthMonitor API.
 ```javascript
 let monitor = connection.healthMonitor;
+// retrieve server-side app health status
+console.log(monitor.serverHealthStatus);
 // retrieve detailed connection health status
 console.log(monitor.healthStatus);
 // retrieve account connection update measured over last 7 days
 console.log(monitor.uptime);
+```
+
+## Tracking latencies
+You can track latencies uring MetaApi.latencyMonitor API. Client-side latencies include network communication delays, thus the lowest client-side latencies are achieved if you host your app in AWS Ohio region.
+```javascript
+let api = new MetaApi('token', {enableLatencyTracking: true});
+let monitor = api.latencyMonitor;
+// retrieve trade latecy stats
+console.log(monitor.tradeLatencies);
+// retrieve update streaming latency stats
+console.log(monitor.updateLatencies);
+// retrieve quote streaming latency stats
+console.log(monitor.priceLatencies);
+// retrieve request latency stats
+console.log(monitor.requestLatencies);
 ```
 
 ## Managing MetaTrader demo accounts via API
