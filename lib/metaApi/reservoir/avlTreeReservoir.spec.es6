@@ -70,15 +70,32 @@ describe('Reservoir', () => {
     clock.restore();
   });
 
-  xit('load test', () => {
+  it('should run X algorithm', () => {
     let clock = sinon.useFakeTimers();
     var res = reservoir(15, 60000);
     for (let i = 0; i < 1000; i++) {
       let item = Math.random();
       res.pushSome(item);
-      console.log(i);
       clock.tick(1001);
     }
+    sinon.assert.match(res.size(), 15);
+    const max = res.max();
+    sinon.assert.match(max, {index: 999, time: 999999});
+    clock.tick(60000);
+    res.getPercentile(0);
+    sinon.assert.match(res.size(), 0);
+    clock.restore();
+  });
+
+  it('should run Z algorithm', () => {
+    let clock = sinon.useFakeTimers();
+    var res = reservoir(10, 60000);
+    for (let i = 0; i < 3000; i++) {
+      let item = Math.random();
+      res.pushSome(item);
+      clock.tick(100);
+    }
+    sinon.assert.match(res.size(), 10);
     clock.restore();
   });
 
