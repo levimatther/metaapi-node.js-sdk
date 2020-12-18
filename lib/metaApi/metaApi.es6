@@ -43,8 +43,10 @@ export default class MetaApi {
       this._metaApiWebsocketClient, this._connectionRegistry);
     this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
       new MetatraderDemoAccountClient(httpClient, token, domain));
-    this._latencyMonitor = new LatencyMonitor();
-    this._metaApiWebsocketClient.addLatencyListener(this._latencyMonitor);
+    if (process.env.ENABLE_LATENCY_TRACKING) {
+      this._latencyMonitor = new LatencyMonitor();
+      this._metaApiWebsocketClient.addLatencyListener(this._latencyMonitor);
+    }
   }
 
   /**

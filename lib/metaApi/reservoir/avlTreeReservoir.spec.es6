@@ -69,4 +69,17 @@ describe('Reservoir', () => {
     pers50.should.eql(35);
     clock.restore();
   });
+
+  xit('load test', () => {
+    let clock = sinon.useFakeTimers();
+    var res = reservoir(15, 60000);
+    for (let i = 0; i < 1000; i++) {
+      let item = Math.random();
+      res.pushSome(item);
+      console.log(i);
+      clock.tick(1001);
+    }
+    clock.restore();
+  });
+
 });
