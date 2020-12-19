@@ -18,7 +18,7 @@
   - send RPC requests via RPC application
   - increased synchronization stability
   - added extensions for accounts
-  - added metadata field for accounts
+  - added metadata field for accounts to store extra information together with account
 
 10.1.1
   - bugfix synchronization failover logic
