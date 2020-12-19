@@ -27,6 +27,7 @@ import avlTree from './avlTree';
     var rng = randomNumberGen || Math.random;
     var reservoirSize = Math.max(1, (Math.floor(reservoirSize) >> 0) || 1);
     var totalItemCount = 0;
+    var lastDeletedIndex = -1;
     var numToSkip = -1;
     var currentAlgorithm = algorithmX;
     var switchThreshold =
@@ -58,9 +59,11 @@ import avlTree from './avlTree';
         let element = this.at(0);
         if (element !== null && Date.now() > element.time + interval) {
           this.removeAt(0);
+          var deletedIndexDiff = element.index - lastDeletedIndex;
+          lastDeletedIndex = element.index;
           valueTree.remove(element.data);
-          totalItemCount -= 1;
-          algorithmXCount = Math.max(0, algorithmXCount - 1);
+          totalItemCount -= deletedIndexDiff;
+          algorithmXCount = Math.max(0, algorithmXCount - deletedIndexDiff);
         } else {
           break;
         }
@@ -81,7 +84,7 @@ import avlTree from './avlTree';
     };
 
     indexTree.pushSome = function() {
-      let len = Math.min(this.length, reservoirSize);
+      let len = Math.min(this.size(), reservoirSize);
       for (var i = 0; i < arguments.length; i++) {
         this.removeOldRecords();
         var value = { index: initialIndex, time: Date.now(), data: arguments[i] }
@@ -92,7 +95,7 @@ import avlTree from './avlTree';
     };
 
     indexTree.fromPlainObject = function() {
-      let len = Math.min(this.length, reservoirSize);
+      let len = Math.min(this.size(), reservoirSize);
       for (var i = 0; i < arguments.length; i++) {
         var value = { index: arguments[i].index, time: arguments[i].time, data: arguments[i].data }
         addSample.call(this, value);
@@ -102,7 +105,7 @@ import avlTree from './avlTree';
     };
 
     var addSample = function(sample) {
-      if (totalItemCount < reservoirSize) {
+      if (this.size() < reservoirSize) {
         this.insert(sample);
         valueTree.insert(sample.data);
       } else {
