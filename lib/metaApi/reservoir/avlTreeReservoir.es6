@@ -1,17 +1,10 @@
+'use strict';
+
+import AvlTree from './avlTree';
+
 /* jscs:disable */
 /* eslint-disable */
-import avlTree from './avlTree';
-(function(root, factory) {
-  'use strict';
-  if (typeof exports === 'object') {
-    module.exports = factory();
-  } else if (typeof define === 'function' && define.amd) {
-    define(factory);
-  } else {
-    root.Reservoir = factory();
-  }
-}(this, function() {
-  'use strict';
+const Reservoir = (function () {
 
   var switchToAlgorithmZConstant = 22;
   var debug = 'none';
@@ -45,16 +38,16 @@ import avlTree from './avlTree';
     var W = Math.exp(-Math.log(rng()) / reservoirSize);
     var evictNext = null;
 
-    let indexTree = new avlTree(function(a, b) {
+    let indexTree = new AvlTree(function (a, b) {
       return a.index - b.index;
     });
 
-    let valueTree = new avlTree(function(a, b) {
+    let valueTree = new AvlTree(function (a, b) {
       return a - b;
     });
     let initialIndex = 0;
 
-    indexTree.removeOldRecords = function() {
+    indexTree.removeOldRecords = function () {
       while (true) {
         let element = this.at(0);
         if (element !== null && Date.now() > element.time + interval) {
@@ -70,7 +63,7 @@ import avlTree from './avlTree';
       }
     };
 
-    indexTree.getPercentile = function() {
+    indexTree.getPercentile = function () {
       let percent = arguments[0];
       this.removeOldRecords();
       const index = (this.size() - 1) * percent / 100;
@@ -83,28 +76,28 @@ import avlTree from './avlTree';
       return parseFloat(percentile);
     };
 
-    indexTree.pushSome = function() {
+    indexTree.pushSome = function () {
       let len = Math.min(this.size(), reservoirSize);
       for (var i = 0; i < arguments.length; i++) {
         this.removeOldRecords();
-        var value = { index: initialIndex, time: Date.now(), data: arguments[i] }
+        var value = {index: initialIndex, time: Date.now(), data: arguments[i]};
         addSample.call(this, value);
         initialIndex++;
       }
       return len;
     };
 
-    indexTree.fromPlainObject = function() {
+    indexTree.fromPlainObject = function () {
       let len = Math.min(this.size(), reservoirSize);
       for (var i = 0; i < arguments.length; i++) {
-        var value = { index: arguments[i].index, time: arguments[i].time, data: arguments[i].data }
+        var value = {index: arguments[i].index, time: arguments[i].time, data: arguments[i].data};
         addSample.call(this, value);
         initialIndex++;
       }
       return len;
     };
 
-    var addSample = function(sample) {
+    var addSample = function (sample) {
       if (this.size() < reservoirSize) {
         this.insert(sample);
         valueTree.insert(sample.data);
@@ -251,4 +244,6 @@ import avlTree from './avlTree';
     return indexTree;
   }
   return _Reservoir;
-}));
+}());
+
+export default Reservoir;

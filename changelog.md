@@ -1,3 +1,7 @@
+11.0.1
+  - fixed reservoir export
+  - removed packet logger import for browser version
+
 11.0.0
   - breaking change: MetaApi options are now specified via an object
   - breaking change: CopyFactory options are now specified via an object
