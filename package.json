@@ -45,7 +45,7 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "11.0.0",
+  "version": "11.0.1",
   "dependencies": {
     "babel-runtime": "~6.26.0",
     "dotenv": "~8.2.0",
