@@ -8,7 +8,11 @@ import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';
 import PacketOrderer from './packetOrderer';
-import PacketLogger from './packetLogger';
+
+let PacketLogger;
+if (typeof window === 'undefined') { // don't import PacketLogger for browser version
+  PacketLogger = require('./packetLogger');
+}
 
 /**
  * MetaApi websocket API client (see https://metaapi.cloud/docs/client/websocket/overview/)
