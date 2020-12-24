@@ -1,3 +1,6 @@
+11.1.0
+  - added API to retrieve CopyFactory slave trading log
+
 11.0.2
   - fix packet logger import
 

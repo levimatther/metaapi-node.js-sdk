@@ -152,4 +152,57 @@ describe('TradingClient', () => {
     }
   });
 
+  /**
+   * @test {TradingClient#getUserLog}
+   */
+  it('should retrieve copy trading user log', async () => {
+    let expected = [{
+      time: new Date('2020-08-08T07:57:30.328Z'),
+      level: 'INFO',
+      message: 'message'
+    }];
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${copyFactoryApiUrl}/users/current/accounts/` +
+            '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/user-log',
+            method: 'GET',
+            qs: {
+              startTime: new Date('2020-08-01T00:00:00.000Z'),
+              endTime: new Date('2020-08-10T00:00:00.000Z'),
+              offset: 10,
+              limit: 100
+            },
+            headers: {
+              'auth-token': 'header.payload.sign'
+            },
+            json: true,
+            timeout: 60000
+          });
+          return expected;
+        });
+    };
+    let records = await tradingClient
+      .getUserLog('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+        new Date('2020-08-01T00:00:00.000Z'), new Date('2020-08-10T00:00:00.000Z'), 10, 100);
+    records.should.equal(expected);
+  });
+
+  /**
+   * @test {TradingClient#getUserLog}
+   */
+  it('should not retrieve copy trading user log from API with account token', async () => {
+    tradingClient = new TradingClient(httpClient, 'token');
+    try {
+      await tradingClient.getUserLog('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke getUserLog method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
 });

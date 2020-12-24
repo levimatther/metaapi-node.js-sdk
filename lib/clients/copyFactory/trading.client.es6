@@ -104,4 +104,54 @@ export default class TradingClient extends MetaApiClient {
     return this._httpClient.request(opts);
   }
 
+  /**
+   * Trade copying user log record
+   * @typedef {Object} CopyFactoryUserLogRecord
+   * @property {Date} time log record time
+   * @property {string} level log level. One of INFO, WARN, ERROR
+   * @property {string} message log message
+   * @property {string} [symbol] symbol traded
+   * @property {string} [strategyId] id of the strategy event relates to
+   * @property {string} [strategyName] name of the strategy event relates to
+   * @property {string} [positionId] position id event relates to
+   * @property {string} [side] side of the trade event relates to. One of buy, sell, close
+   * @property {string} [type] type of the trade event relates to. One of market, limit, stop
+   * @property {number} [openPrice] open price for limit and stop orders
+   */
+
+  /**
+   * Returns copy trading user log for an account and time range. See
+   * https://trading-api-v1.project-stock.v2.agiliumlabs.cloud/swagger/#!/default/get_users_current_accounts_accountId_user_log
+   * @param {string} accountId account id
+   * @param {Date} [startTime] time to start loading data from
+   * @param {Date} [endTime] time to stop loading data at
+   * @param {number} [offset] pagination offset. Default is 0
+   * @param {number} [limit] pagination limit. Default is 1000
+   * @return {Promise<Array<CopyFactoryUserLogRecord>>} promise which resolves with log records found
+   */
+  async getUserLog(accountId, startTime, endTime, offset = 0, limit = 1000) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('getUserLog');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${accountId}/user-log`,
+      method: 'GET',
+      qs: {
+        startTime,
+        endTime,
+        offset,
+        limit
+      },
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    let result = await this._httpClient.request(opts);
+    if (result) {
+      result.map(r => r.time = new Date(r.time));
+    }
+    return result;
+  }
+
 }

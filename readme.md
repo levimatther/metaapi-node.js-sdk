@@ -555,6 +555,18 @@ console.log(await tradingApi.getStopouts(accountId));
 await tradingApi.resetStopout(accountId, strategyId, 'daily-equity');
 ```
 
+#### Retrieving slave trading logs
+```javascript
+let tradingApi = copyFactory.tradingApi;
+let accountId = '...'; // CopyFactory account id
+
+// retrieve slave trading log
+console.log(await tradingApi.getUserLog(accountId));
+
+// retrieve paginated slave trading log by time range
+console.log(await tradingApi.getUserLog(accountId, new Date(Date.now() - 24 * 60 * 60 * 1000), undefined, 20, 10);
+```
+
 Keywords: MetaTrader API, MetaTrader REST API, MetaTrader websocket API,
 MetaTrader 5 API, MetaTrader 5 REST API, MetaTrader 5 websocket API,
 MetaTrader 4 API, MetaTrader 4 REST API, MetaTrader 4 websocket API,
