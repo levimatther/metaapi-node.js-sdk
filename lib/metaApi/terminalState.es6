@@ -19,6 +19,8 @@ export default class TerminalState extends SynchronizationListener {
     this._specifications = [];
     this._specificationsBySymbol = {};
     this._pricesBySymbol = {};
+    this._completedOrders = {};
+    this._removedPositions = {};
   }
 
   /**
@@ -130,6 +132,8 @@ export default class TerminalState extends SynchronizationListener {
     this._specifications = [];
     this._specificationsBySymbol = {};
     this._pricesBySymbol = {};
+    this._completedOrders = {};
+    this._removedPositions = {};
     this._ordersInitialized = false;
     this._positionsInitialized = false;
   }
@@ -149,6 +153,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPositionsReplaced(positions) {
     this._positions = positions;
+    this._removedPositions = {};
     this._positionsInitialized = true;
   }
 
@@ -160,7 +165,7 @@ export default class TerminalState extends SynchronizationListener {
     let index = this._positions.findIndex(p => p.id === position.id);
     if (index !== -1) {
       this._positions[index] = position;
-    } else {
+    } else if (!this._removedPositions[position.id]) {
       this._positions.push(position);
     }
   }
@@ -170,7 +175,17 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} positionId removed MetaTrader position id
    */
   onPositionRemoved(positionId) {
-    this._positions = this._positions.filter(p => p.id !== positionId);
+    let position = this._positions.find(p => p.id !== positionId);
+    if (!position) {
+      for (let e of Object.entries(this._removedPositions)) {
+        if (e[1] + 5 * 60 * 1000 < Date.now()) {
+          delete this._removedPositions[e[0]];
+        }
+      }
+      this._removedPositions[positionId] = Date.now();
+    } else {
+      this._positions = this._positions.filter(p => p.id !== positionId);
+    }
   }
 
   /**
@@ -180,6 +195,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onOrdersReplaced(orders) {
     this._orders = orders;
+    this._completedOrders = {};
     this._ordersInitialized = true;
   }
 
@@ -191,7 +207,7 @@ export default class TerminalState extends SynchronizationListener {
     let index = this._orders.findIndex(o => o.id === order.id);
     if (index !== -1) {
       this._orders[index] = order;
-    } else {
+    } else if (!this._completedOrders[order.id]) {
       this._orders.push(order);
     }
   }
@@ -201,7 +217,17 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} orderId completed MetaTrader order id
    */
   onOrderCompleted(orderId) {
-    this._orders = this._orders.filter(o => o.id !== orderId);
+    let order = this._orders.find(o => o.id !== orderId);
+    if (!order) {
+      for (let e of Object.entries(this._completedOrders)) {
+        if (e[1] + 5 * 60 * 1000 < Date.now()) {
+          delete this._completedOrders[e[0]];
+        }
+      }
+      this._completedOrders[orderId] = Date.now();
+    } else {
+      this._orders = this._orders.filter(o => o.id !== orderId);
+    }
   }
 
   /**

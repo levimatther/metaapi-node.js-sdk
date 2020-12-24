@@ -1,5 +1,6 @@
 11.1.0
   - added API to retrieve CopyFactory slave trading log
+  - fixed race condition when orders are being added and completed fast
 
 11.0.2
   - fix packet logger import
