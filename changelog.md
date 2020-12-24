@@ -1,3 +1,6 @@
+11.0.2
+  - fix packet logger import
+
 11.0.1
   - fixed reservoir export
   - removed packet logger import for browser version

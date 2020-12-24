@@ -11,7 +11,7 @@ import PacketOrderer from './packetOrderer';
 
 let PacketLogger;
 if (typeof window === 'undefined') { // don't import PacketLogger for browser version
-  PacketLogger = require('./packetLogger');
+  PacketLogger = require('./packetLogger').default;
 }
 
 /**
