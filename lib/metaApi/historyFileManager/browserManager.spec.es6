@@ -41,10 +41,18 @@ async function readHistoryStorageFile() {
  * @param deals history deals
  * @param historyOrders history orders
  */
-async function createTestData(deals, historyOrders) {
+async function createTestData(deals, historyOrders, config) {
   const db = await getTestDb();
-  await db.put('deals', {accountIdAndApplication: 'accountId-application', items: deals});
-  await db.put('historyOrders', {accountIdAndApplication: 'accountId-application', items: historyOrders});
+  await db.put('deals', {
+    accountIdAndApplication: 'accountId-application', 
+    items: deals,
+    lastDealTimeByInstanceIndex: config.lastDealTimeByInstanceIndex
+  });
+  await db.put('historyOrders', {
+    accountIdAndApplication: 'accountId-application', 
+    items: historyOrders,
+    lastHistoryOrderTimeByInstanceIndex: config.lastHistoryOrderTimeByInstanceIndex
+  });
   db.close();
 }
 
@@ -59,6 +67,7 @@ describe('BrowserHistoryManger', () => {
   let testDeal2;
   let testOrder;
   let testOrder2;
+  let testConfig;
   let sandbox;
 
   before(() => {
@@ -79,6 +88,10 @@ describe('BrowserHistoryManger', () => {
     testOrder2 = {id:'61210464', type:'ORDER_TYPE_BUY_LIMIT', state:'ORDER_STATE_FILLED', symbol:'AUDNZD', magic:1, 
       time: new Date(75), doneTime: new Date(200), currentPrice:1, volume:0.01, 
       currentVolume:0, positionId:'61206631', platform:'mt5', comment:'AS_AUDNZD_5YyM6KS7Fv:'};
+    testConfig = {
+      lastDealTimeByInstanceIndex: {'0': 1000000000000}, 
+      lastHistoryOrderTimeByInstanceIndex: {'0': 1000000000010}
+    };
   });
 
   afterEach(async () => {
@@ -121,10 +134,13 @@ describe('BrowserHistoryManger', () => {
      * @test {BrowserHistoryManager#getHistoryFromDisk}
      */
     it('should read history from file', async () => {
-      await createTestData([testDeal], [testOrder]);
+      await createTestData([testDeal], [testOrder], testConfig);
       const history = await fileManager.getHistoryFromDisk();
       history.deals.should.match([testDeal]);
+      sinon.assert.match(history.lastDealTimeByInstanceIndex, testConfig.lastDealTimeByInstanceIndex);
       history.historyOrders.should.match([testOrder]);
+      sinon.assert.match(history.lastHistoryOrderTimeByInstanceIndex, 
+        testConfig.lastHistoryOrderTimeByInstanceIndex);
     });
 
     /**
@@ -159,11 +175,16 @@ describe('BrowserHistoryManger', () => {
     it('should create storage if doesnt exist', async () => {
       await deleteDB('metaapi');
       storage.deals = [testDeal];
+      storage.lastDealTimeByInstanceIndex = testConfig.lastDealTimeByInstanceIndex;
       storage.historyOrders = [testOrder];
+      storage.lastHistoryOrderTimeByInstanceIndex = testConfig.lastHistoryOrderTimeByInstanceIndex;
       await fileManager.updateDiskStorage();
       let history = await readHistoryStorageFile();
       sinon.assert.match(history.deals.items, [testDeal]);
+      sinon.assert.match(history.deals.lastDealTimeByInstanceIndex, testConfig.lastDealTimeByInstanceIndex);
       sinon.assert.match(history.historyOrders.items, [testOrder]);
+      sinon.assert.match(history.historyOrders.lastHistoryOrderTimeByInstanceIndex, 
+        testConfig.lastHistoryOrderTimeByInstanceIndex);
     });
 
     /**
@@ -174,27 +195,36 @@ describe('BrowserHistoryManger', () => {
       sinon.assert.match(history.deals, undefined);
       sinon.assert.match(history.historyOrders, undefined);
       storage.deals = [testDeal];
+      storage.lastDealTimeByInstanceIndex = testConfig.lastDealTimeByInstanceIndex;
       storage.historyOrders = [testOrder];
+      storage.lastHistoryOrderTimeByInstanceIndex = testConfig.lastHistoryOrderTimeByInstanceIndex;
       await fileManager.updateDiskStorage();
       history = await readHistoryStorageFile();
       sinon.assert.match(history.deals.items, [testDeal]);
+      sinon.assert.match(history.deals.lastDealTimeByInstanceIndex, testConfig.lastDealTimeByInstanceIndex);
       sinon.assert.match(history.historyOrders.items, [testOrder]);
+      sinon.assert.match(history.historyOrders.lastHistoryOrderTimeByInstanceIndex, 
+        testConfig.lastHistoryOrderTimeByInstanceIndex);
     });
 
     /**
      * @test {BrowserHistoryManager#updateDiskStorage}
      */
     it('should update storage', async () => {
-      await createTestData([testDeal], [testOrder]);
+      await createTestData([testDeal], [testOrder], testConfig);
       let history = await readHistoryStorageFile();
       sinon.assert.match(history.deals.items, [testDeal]);
       sinon.assert.match(history.historyOrders.items, [testOrder]);
       storage.deals = [testDeal, testDeal2];
       storage.historyOrders = [testOrder, testOrder2];
+      storage.lastDealTimeByInstanceIndex = {'1': 20000000};
+      storage.lastHistoryOrderTimeByInstanceIndex = {'1': 30000000};
       await fileManager.updateDiskStorage();
       history = await readHistoryStorageFile();
       sinon.assert.match(history.deals.items, [testDeal, testDeal2]);
+      sinon.assert.match(history.deals.lastDealTimeByInstanceIndex, {'1': 20000000});
       sinon.assert.match(history.historyOrders.items, [testOrder, testOrder2]);
+      sinon.assert.match(history.historyOrders.lastHistoryOrderTimeByInstanceIndex, {'1': 30000000});
     });
 
     /**
@@ -209,11 +239,16 @@ describe('BrowserHistoryManger', () => {
       });
       db.close();
       storage.deals = [testDeal];
+      storage.lastDealTimeByInstanceIndex = testConfig.lastDealTimeByInstanceIndex;
       storage.historyOrders = [testOrder];
+      storage.lastHistoryOrderTimeByInstanceIndex = testConfig.lastHistoryOrderTimeByInstanceIndex;
       await fileManager.updateDiskStorage();
       let history = await readHistoryStorageFile();
       sinon.assert.match(history.deals.items, [testDeal]);
+      sinon.assert.match(history.deals.lastDealTimeByInstanceIndex, testConfig.lastDealTimeByInstanceIndex);
       sinon.assert.match(history.historyOrders.items, [testOrder]);
+      sinon.assert.match(history.historyOrders.lastHistoryOrderTimeByInstanceIndex, 
+        testConfig.lastHistoryOrderTimeByInstanceIndex);
     });
 
     /**
@@ -229,11 +264,16 @@ describe('BrowserHistoryManger', () => {
       });
       db.close();
       storage.deals = [testDeal];
+      storage.lastDealTimeByInstanceIndex = testConfig.lastDealTimeByInstanceIndex;
       storage.historyOrders = [testOrder];
+      storage.lastHistoryOrderTimeByInstanceIndex = testConfig.lastHistoryOrderTimeByInstanceIndex;
       await fileManager.updateDiskStorage();
       let history = await readHistoryStorageFile();
       sinon.assert.match(history.deals.items, [testDeal]);
+      sinon.assert.match(history.deals.lastDealTimeByInstanceIndex, testConfig.lastDealTimeByInstanceIndex);
       sinon.assert.match(history.historyOrders.items, [testOrder]);
+      sinon.assert.match(history.historyOrders.lastHistoryOrderTimeByInstanceIndex, 
+        testConfig.lastHistoryOrderTimeByInstanceIndex);
     });
 
   });
@@ -262,10 +302,13 @@ describe('BrowserHistoryManger', () => {
      * @test {BrowserHistoryManager#deleteStorageFromDisk}
      */
     it('should delete storage', async () => {
-      await createTestData([testDeal], [testOrder]);
+      await createTestData([testDeal], [testOrder], testConfig);
       let history = await readHistoryStorageFile();
       sinon.assert.match(history.deals.items, [testDeal]);
+      sinon.assert.match(history.deals.lastDealTimeByInstanceIndex, testConfig.lastDealTimeByInstanceIndex);
       sinon.assert.match(history.historyOrders.items, [testOrder]);
+      sinon.assert.match(history.historyOrders.lastHistoryOrderTimeByInstanceIndex, 
+        testConfig.lastHistoryOrderTimeByInstanceIndex);
       await fileManager.deleteStorageFromDisk();
       history = await readHistoryStorageFile();
       sinon.assert.match(history.deals, undefined);

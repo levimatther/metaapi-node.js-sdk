@@ -90,6 +90,9 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {CopyFactoryStrategyMaxStopLoss} [maxStopLoss] optional stop loss value restriction
    * @property {Number} [maxLeverage] optional setting indicating maximum leverage allowed when opening a new positions.
    * Any trade which results in a higher leverage will be discarded
+   * @property {Array<CopyFactoryStrategySymbolMapping>} symbolMapping defines how symbol name should be changed when
+   * trading (e.g. when broker uses symbol names with unusual suffixes). By default this setting is disabled and the
+   * trades are copied using signal source symbol name
    */
 
   /**
@@ -155,6 +158,13 @@ export default class ConfigurationClient extends MetaApiClient {
    * @typedef {Object} CopyFactoryStrategyMaxStopLoss
    * @property {Number} value maximum SL value
    * @property {String} units SL units. Only pips value is supported at this point
+   */
+
+  /**
+   * CopyFactory strategy symbol mapping
+   * @typedef {Object} CopyFactoryStrategySymbolMapping
+   * @property {String} from symbol name to convert from
+   * @property {String} to symbol name to convert to
    */
 
   /**
@@ -342,6 +352,9 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {CopyFactoryStrategyTimeSettings} [timeSettings] settings to manage copying timeframe and position
    * lifetime. Default is to copy position within 1 minute from being opened at source and let the position to live for
    * up to 90 days
+   * @property {Array<CopyFactoryStrategySymbolMapping>} symbolMapping defines how symbol name should be changed when
+   * trading (e.g. when broker uses symbol names with unusual suffixes). By default this setting is disabled and the
+   * trades are copied using signal source symbol name
    */
 
   /**
@@ -413,6 +426,9 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {CopyFactoryStrategyMaxStopLoss} [maxStopLoss] optional stop loss value restriction
    * @property {Number} [maxLeverage] optional max leverage risk restriction. All trades resulting in a leverage value
    * higher than specified will be skipped
+   * @property {Array<CopyFactoryStrategySymbolMapping>} symbolMapping defines how symbol name should be changed when
+   * trading (e.g. when broker uses symbol names with unusual suffixes). By default this setting is disabled and the
+   * trades are copied using signal source symbol name
    */
 
   /**
@@ -443,6 +459,9 @@ export default class ConfigurationClient extends MetaApiClient {
    * @property {CopyFactoryStrategyMaxStopLoss} [maxStopLoss] optional stop loss value restriction
    * @property {Number} [maxLeverage] optional max leverage risk restriction. All trades resulting in a leverage value
    * higher than specified will be skipped
+   * @property {Array<CopyFactoryStrategySymbolMapping>} symbolMapping defines how symbol name should be changed when
+   * trading (e.g. when broker uses symbol names with unusual suffixes). By default this setting is disabled and the
+   * trades are copied using signal source symbol name
    */
 
   /**

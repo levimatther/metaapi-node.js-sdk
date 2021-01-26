@@ -670,11 +670,11 @@ describe('MetaApiConnection', () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize();
-    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId', new Date('2020-01-01T00:00:00.000Z'),
-      new Date('2020-01-02T00:00:00.000Z'));
+    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.synchronize(1);
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
 
   /**
@@ -685,11 +685,11 @@ describe('MetaApiConnection', () => {
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry,
       new Date('2020-10-07T00:00:00.000Z'));
-    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize();
-    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId', new Date('2020-10-07T00:00:00.000Z'),
-      new Date('2020-10-07T00:00:00.000Z'));
+    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.synchronize(1);
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
+      new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'));
   });
 
   /**
@@ -697,8 +697,8 @@ describe('MetaApiConnection', () => {
    */
   it('should subscribe to market data', async () => {
     sandbox.stub(client, 'subscribeToMarketData').resolves();
-    await api.subscribeToMarketData('EURUSD');
-    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 'EURUSD');
+    await api.subscribeToMarketData('EURUSD', 1);
+    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD');
   });
 
   /**
@@ -787,10 +787,10 @@ describe('MetaApiConnection', () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected();
-    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId',
+    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.onConnected(1);
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
 
@@ -803,10 +803,10 @@ describe('MetaApiConnection', () => {
     stub.onSecondCall().resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected();
-    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId',
+    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.onConnected(1);
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
 
@@ -818,12 +818,13 @@ describe('MetaApiConnection', () => {
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded({doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded({time: new Date('2020-01-02T00:00:00.000Z')});
+    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.subscribeToMarketData('EURUSD');
-    await api.onConnected();
-    sinon.assert.calledWith(client.synchronize, 'accountId', 'synchronizationId',
+    await api.onConnected(1);
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD');
     sinon.assert.calledTwice(client.subscribeToMarketData);
   });
 
@@ -858,12 +859,12 @@ describe('MetaApiConnection', () => {
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
       (Date.now() - startTime).should.be.approximately(50, 10);
-      api.onOrderSynchronizationFinished('synchronizationId');
-      api.onDealSynchronizationFinished('synchronizationId');
+      api.onOrderSynchronizationFinished(1, 'synchronizationId');
+      api.onDealSynchronizationFinished(1, 'synchronizationId');
       startTime = Date.now();
       await promise;
       (Date.now() - startTime).should.be.approximately(10, 10);
-      (await api.isSynchronized('synchronizationId')).should.equal(true);
+      (await api.isSynchronized(1, 'synchronizationId')).should.equal(true);
       sinon.assert.calledOnce(api.historyStorage.updateDiskStorage);
     });
 

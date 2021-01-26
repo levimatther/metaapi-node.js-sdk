@@ -56,7 +56,7 @@ describe('ConnectionHealthMonitor', () => {
      * @test {ConnectionHealthMonitor#uptime}
      */
     it('should return 100 uptime', async () => {
-      healthMonitor.onSymbolPriceUpdated(prices[0]);
+      healthMonitor.onSymbolPriceUpdated(1, prices[0]);
       await clock.tickAsync(10000);
       sinon.assert.match(healthMonitor.uptime, {'1h': 100, '1d': 100, '1w': 100});
     });
@@ -65,7 +65,7 @@ describe('ConnectionHealthMonitor', () => {
      * @test {ConnectionHealthMonitor#uptime}
      */
     it('should return average uptime', async () => {
-      healthMonitor.onSymbolPriceUpdated(prices[0]);
+      healthMonitor.onSymbolPriceUpdated(1, prices[0]);
       await clock.tickAsync(100000);
       sinon.assert.match(healthMonitor.uptime, {'1h': 59, '1d': 59, '1w': 59});
     });
@@ -74,7 +74,7 @@ describe('ConnectionHealthMonitor', () => {
      * @test {ConnectionHealthMonitor#uptime}
      */
     it('should check connection for downtime', async () => {
-      healthMonitor.onSymbolPriceUpdated(prices[0]);
+      healthMonitor.onSymbolPriceUpdated(1, prices[0]);
       await clock.tickAsync(4000);
       sinon.assert.match(healthMonitor.uptime, {'1h': 100, '1d': 100, '1w': 100});
       connection.terminalState.connected = false;
@@ -156,7 +156,7 @@ describe('ConnectionHealthMonitor', () => {
      * @test {ConnectionHealthMonitor#healthStatus}
      */
     it('should show as healthy if recently updated and in session', async () => {
-      healthMonitor.onSymbolPriceUpdated(prices[0]);
+      healthMonitor.onSymbolPriceUpdated(1, prices[0]);
       await clock.tickAsync(1000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, true);
     });
@@ -165,7 +165,7 @@ describe('ConnectionHealthMonitor', () => {
      * @test {ConnectionHealthMonitor#healthStatus}
      */
     it('should show as not healthy if old update and in session', async () => {
-      healthMonitor.onSymbolPriceUpdated(prices[0]);
+      healthMonitor.onSymbolPriceUpdated(1, prices[0]);
       await clock.tickAsync(61000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, false);
     });
@@ -174,7 +174,7 @@ describe('ConnectionHealthMonitor', () => {
      * @test {ConnectionHealthMonitor#healthStatus}
      */
     it('should show as healthy if not in session', async () => {
-      healthMonitor.onSymbolPriceUpdated(prices[1]);
+      healthMonitor.onSymbolPriceUpdated(1, prices[1]);
       await clock.tickAsync(61000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, true);
     });
@@ -184,7 +184,7 @@ describe('ConnectionHealthMonitor', () => {
      */
     it('should show as healthy if no symbols', async () => {
       healthMonitor._connection.subscribedSymbols = [];
-      healthMonitor.onSymbolPriceUpdated(prices[0]);
+      healthMonitor.onSymbolPriceUpdated(1, prices[0]);
       await clock.tickAsync(61000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, true);
     });

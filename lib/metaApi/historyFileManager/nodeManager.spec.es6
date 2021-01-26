@@ -9,7 +9,18 @@ const HistoryFileManager = require('./nodeManager');
  * Helper function to read saved history storage
  */
 async function readHistoryStorageFile() {
-  const storage = {deals: [], historyOrders: []};
+  const storage = {
+    deals: [], 
+    historyOrders: [], 
+    lastDealTimeByInstanceIndex: {},
+    lastHistoryOrderTimeByInstanceIndex: {}
+  };
+  const isConfigExists = fs.pathExistsSync('./.metaapi/accountId-application-config.bin');
+  if(isConfigExists) {
+    let config = JSON.parse(fs.readFileSync('./.metaapi/accountId-application-config.bin', 'utf-8').toString('utf-8'));
+    storage.lastDealTimeByInstanceIndex = config.lastDealTimeByInstanceIndex;
+    storage.lastHistoryOrderTimeByInstanceIndex = config.lastHistoryOrderTimeByInstanceIndex;
+  }
   const isDealsExists = fs.pathExistsSync('./.metaapi/accountId-application-deals.bin');
   if(isDealsExists) {
     let deals = JSON.parse(fs.readFileSync('./.metaapi/accountId-application-deals.bin', 'utf-8').toString('utf-8'));
@@ -48,6 +59,7 @@ describe('HistoryFileManager', () => {
   let testOrder;
   let testOrder2;
   let testOrder3;
+  let testConfig;
   let sandbox;
 
   before(() => {
@@ -74,6 +86,10 @@ describe('HistoryFileManager', () => {
     testOrder3 = {id:'61210465', type:'ORDER_TYPE_BUY', state:'ORDER_STATE_FILLED', symbol:'AUDNZD', magic:1, 
       time: new Date(100), doneTime: new Date(300), currentPrice:1, volume:0.01, 
       currentVolume:0, positionId:'61206631', platform:'mt5', comment:'AS_AUDNZD_5YyM6KS7Fv:'};
+    testConfig = {
+      lastDealTimeByInstanceIndex: {'0': 1000000000000}, 
+      lastHistoryOrderTimeByInstanceIndex: {'0': 1000000000010}
+    };
   });
 
   after(() => {
@@ -117,10 +133,14 @@ describe('HistoryFileManager', () => {
       'utf-8');
     fs.writeFileSync('./.metaapi/accountId-application-historyOrders.bin', JSON.stringify([testOrder]),
       'utf-8');
+    fs.writeFileSync('./.metaapi/accountId-application-config.bin', JSON.stringify(testConfig),
+      'utf-8');
     const history = await fileManager.getHistoryFromDisk();
     await new Promise(res => setTimeout(res, 50));
     history.deals.should.match([testDeal]);
     history.historyOrders.should.match([testOrder]);
+    history.lastDealTimeByInstanceIndex.should.match(testConfig.lastDealTimeByInstanceIndex);
+    history.lastHistoryOrderTimeByInstanceIndex.should.match(testConfig.lastHistoryOrderTimeByInstanceIndex);
   });
 
   /**
@@ -129,6 +149,8 @@ describe('HistoryFileManager', () => {
   it('should save items in a file', async () => {
     storage.deals = [testDeal];
     storage.historyOrders = [testOrder];
+    storage.lastDealTimeByInstanceIndex = {'0': 1000000000000};
+    storage.lastHistoryOrderTimeByInstanceIndex = {'0': 1000000000010};
     fileManager.setStartNewOrderIndex(0);
     fileManager.setStartNewDealIndex(0);
     fileManager.updateDiskStorage();
@@ -136,6 +158,8 @@ describe('HistoryFileManager', () => {
     const savedData = await readHistoryStorageFile();
     savedData.deals.should.match([testDeal]);
     savedData.historyOrders.should.match([testOrder]);
+    savedData.lastDealTimeByInstanceIndex.should.match({'0': 1000000000000});
+    savedData.lastHistoryOrderTimeByInstanceIndex.should.match({'0': 1000000000010});
   });
 
   /**
@@ -205,11 +229,15 @@ describe('HistoryFileManager', () => {
   it('should not corrupt the disk storage if update called multiple times', async () => {
     storage.deals = [testDeal, testDeal2];
     storage.historyOrders = [testOrder, testOrder2];
+    storage.lastDealTimeByInstanceIndex = {'0': 1000000000000};
+    storage.lastHistoryOrderTimeByInstanceIndex = {'0': 1000000000010};
     fileManager.setStartNewOrderIndex(0);
     fileManager.setStartNewDealIndex(0);
     await fileManager.updateDiskStorage();
     storage.deals = [testDeal, testDeal2, testDeal3];
     storage.historyOrders = [testOrder, testOrder2, testOrder3];
+    storage.lastDealTimeByInstanceIndex = {'1': 1000000000000};
+    storage.lastHistoryOrderTimeByInstanceIndex = {'1': 1000000000010};
     fileManager.setStartNewOrderIndex(2);
     fileManager.setStartNewDealIndex(2);
     await Promise.all([
@@ -220,6 +248,8 @@ describe('HistoryFileManager', () => {
       fileManager.updateDiskStorage()
     ]);
     JSON.parse(await fs.readFile('./.metaapi/accountId-application-historyOrders.bin'));
+    JSON.parse(await fs.readFile('./.metaapi/accountId-application-deals.bin'));
+    JSON.parse(await fs.readFile('./.metaapi/accountId-application-config.bin'));
   });
 
   /**
@@ -228,11 +258,14 @@ describe('HistoryFileManager', () => {
   it('should remove history from disk', async () => {
     await fs.ensureFile('./.metaapi/accountId-application-historyOrders.bin');
     await fs.ensureFile('./.metaapi/accountId-application-deals.bin');
+    await fs.ensureFile('./.metaapi/accountId-application-config.bin');
     fs.pathExistsSync('./.metaapi/accountId-application-historyOrders.bin').should.equal(true);
     fs.pathExistsSync('./.metaapi/accountId-application-deals.bin').should.equal(true);
+    fs.pathExistsSync('./.metaapi/accountId-application-config.bin').should.equal(true);
     await fileManager.deleteStorageFromDisk();
     fs.pathExistsSync('./.metaapi/accountId-application-historyOrders.bin').should.equal(false);
     fs.pathExistsSync('./.metaapi/accountId-application-deals.bin').should.equal(false);
+    fs.pathExistsSync('./.metaapi/accountId-application-config.bin').should.equal(false);
   });
 
 });

@@ -41,8 +41,25 @@ module.exports = class HistoryFileManager extends FileManager {
     const getItemSize = this.getItemSize;
     const accountId = this._accountId;
     const application = this._application;
-    const history = {deals: [], historyOrders: []};
+    const history = {
+      deals: [], 
+      historyOrders: [], 
+      lastDealTimeByInstanceIndex: {}, 
+      lastHistoryOrderTimeByInstanceIndex: {}
+    };
     fs.ensureDir('./.metaapi');
+    try {
+      if(await fs.pathExists(`./.metaapi/${accountId}-${application}-config.bin`)) {
+        let config = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-${application}-config.bin`, 'utf-8'))
+          .toString('utf-8'));
+        history.lastDealTimeByInstanceIndex = config.lastDealTimeByInstanceIndex;
+        history.lastHistoryOrderTimeByInstanceIndex = config.lastHistoryOrderTimeByInstanceIndex;
+      }
+    } catch(err) {
+      console.error(`[${(new Date()).toISOString()}] Failed to read ` + 
+      `history storage config of account ${accountId}`, err);
+      await fs.remove(`./.metaapi/${accountId}-${application}-config.bin`);
+    }
     try {
       if(await fs.pathExists(`./.metaapi/${accountId}-${application}-deals.bin`)) {
         let deals = JSON.parse((await fs.readFile(`./.metaapi/${accountId}-${application}-deals.bin`, 'utf-8'))
@@ -56,7 +73,7 @@ module.exports = class HistoryFileManager extends FileManager {
     } catch(err) {
       console.error(`[${(new Date()).toISOString()}] Failed to read deals ` + 
       `history storage of account ${accountId}`, err);
-      await fs.remove(`./.metaapi/${accountId}-deals.bin`);
+      await fs.remove(`./.metaapi/${accountId}-${application}-deals.bin`);
     }
     try{
       if(await fs.pathExists(`./.metaapi/${accountId}-${application}-historyOrders.bin`)) {
@@ -72,7 +89,7 @@ module.exports = class HistoryFileManager extends FileManager {
     } catch(err) {
       console.error(`[${(new Date()).toISOString()}] Failed to read historyOrders ` + 
       `history storage of account ${accountId}`, err);
-      await fs.remove(`./.metaapi/${accountId}-historyOrders.bin`);
+      await fs.remove(`./.metaapi/${accountId}-${application}-historyOrders.bin`);
     }
     return history;
   }
@@ -105,6 +122,7 @@ module.exports = class HistoryFileManager extends FileManager {
     if(!this._isUpdating) {
       this._isUpdating = true;
       try {
+        await this._updateConfig();
         if(this._startNewDealIndex !== -1) {
           const filePath = `./.metaapi/${accountId}-${application}-deals.bin`;
           if(!await fs.pathExists(filePath)) {
@@ -143,9 +161,30 @@ module.exports = class HistoryFileManager extends FileManager {
   }
 
   /**
+   * Updates stored config for account
+   */
+  async _updateConfig() {
+    const accountId = this._accountId;
+    const application = this._application;
+    const historyStorage = this._historyStorage;
+    const filePath = `./.metaapi/${accountId}-${application}-config.bin`;
+    try {
+      const config = {
+        lastDealTimeByInstanceIndex: historyStorage.lastDealTimeByInstanceIndex,
+        lastHistoryOrderTimeByInstanceIndex: historyStorage.lastHistoryOrderTimeByInstanceIndex
+      };
+      await fs.writeFile(filePath, JSON.stringify(config), 'utf-8');
+    } catch (err) {
+      console.error(`[${(new Date()).toISOString()}] Error updating disk storage config ` + 
+          `for account ${accountId}`, err);
+    }
+  }
+
+  /**
    * Deletes storage files from disk
    */
   async deleteStorageFromDisk(){
+    await fs.remove(`./.metaapi/${this._accountId}-${this._application}-config.bin`);
     await fs.remove(`./.metaapi/${this._accountId}-${this._application}-deals.bin`);
     await fs.remove(`./.metaapi/${this._accountId}-${this._application}-historyOrders.bin`);
   }

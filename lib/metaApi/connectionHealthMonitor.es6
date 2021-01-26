@@ -19,6 +19,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
     this._updateQuoteHealthStatusInterval = setInterval(this._updateQuoteHealthStatus.bind(this), 1000);
     this._measureUptimeInterval = setInterval(this._measureUptime.bind(this), 1000);
     this._minQuoteInterval = 60000;
+    this._serverHealthStatus = {};
     this._uptimeReservoirs = {
       '5m': new Reservoir(300, 5 * 60 * 1000),
       '1h': new Reservoir(600, 60 * 60 * 1000),
@@ -37,9 +38,10 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 
   /**
    * Invoked when a symbol price was updated
+   * @param {Number} instanceIndex index of an account instance connected
    * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price
    */
-  onSymbolPriceUpdated(price) {
+  onSymbolPriceUpdated(instanceIndex, price) {
     try {
       let brokerTimestamp = moment(price.brokerTime).toDate().getTime();
       this._priceUpdatedAt = new Date();
@@ -53,11 +55,21 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 
   /**
    * Invoked when a server-side application health status is received from MetaApi
+   * @param {Number} instanceIndex index of an account instance connected
    * @param {HealthStatus} status server-side application health status
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onHealthStatus(status) {
-    this._serverHealthStatus = status;
+  onHealthStatus(instanceIndex, status) {
+    this._serverHealthStatus['' + instanceIndex] = status;
+  }
+
+  /**
+   * Invoked when connection to MetaTrader terminal terminated
+   * @param {Number} instanceIndex index of an account instance connected
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onDisconnected(instanceIndex) {
+    delete this._serverHealthStatus['' + instanceIndex];
   }
 
   /**
@@ -65,14 +77,24 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
    * @return {HealthStatus} server-side application health status
    */
   get serverHealthStatus() {
-    return this._serverHealthStatus;
+    let result;
+    for (let s of Object.values(this._serverHealthStatus)) {
+      if (!result) {
+        result = s;
+      } else {
+        for (let field of Object.keys(s)) {
+          result[field] = result[field] || s[field];
+        }
+      }
+    }
+    return result || {};
   }
 
   /**
    * Connection health status
    * @typedef {Object} ConnectionHealthStatus
    * @property {Boolean} connected flag indicating successful connection to API server
-   * @property {Boolean} connectedToBroker flag indicating successfull connection to broker
+   * @property {Boolean} connectedToBroker flag indicating successful connection to broker
    * @property {Boolean} quoteStreamingHealthy flag indicating that quotes are being streamed successfully from the
    * broker
    * @property {Boolean} synchronized flag indicating a successful synchronization
@@ -158,7 +180,13 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
         6: 'SATURDAY'
       };
       let inQuoteSession = false;
-      for (let symbol of this._connection.subscribedSymbols) {
+      if (!this._priceUpdatedAt) {
+        this._priceUpdatedAt = new Date();
+      }
+      if (!(this._connection.subscribedSymbols || []).length) {
+        this._priceUpdatedAt = new Date();
+      }
+      for (let symbol of this._connection.subscribedSymbols || []) {
         let specification = this._connection.terminalState.specification(symbol) || {};
         let quoteSessions = (specification.quoteSessions || [])[daysOfWeek[dayOfWeek]] || [];
         for (let session of quoteSessions) {

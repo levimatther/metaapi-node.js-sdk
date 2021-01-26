@@ -6,6 +6,17 @@ import sinon from 'sinon';
  * @test {Reservoir}
  */
 describe('Reservoir', () => {
+
+  let clock;
+
+  beforeEach(() => {
+    clock = sinon.useFakeTimers();
+  });
+
+  afterEach(() => {
+    clock.restore();
+  });
+
   /**
    * @test {Reservoir#pushSome}
    */
@@ -59,7 +70,6 @@ describe('Reservoir', () => {
    * @test {Reservoir#removeOldRecords}
    */
   it('should return percentiles for actual records only', () => {
-    let clock = sinon.useFakeTimers();
     var res = reservoir(15, 60000);
     [5, 15, 20, 35, 40, 50].forEach(item => {
       res.pushSome(item);
@@ -67,11 +77,9 @@ describe('Reservoir', () => {
     });
     let pers50 = res.getPercentile(50);
     pers50.should.eql(35);
-    clock.restore();
   });
 
   it('should run X algorithm', () => {
-    let clock = sinon.useFakeTimers();
     var res = reservoir(15, 60000);
     for (let i = 0; i < 1000; i++) {
       let item = Math.random();
@@ -84,11 +92,9 @@ describe('Reservoir', () => {
     clock.tick(60000);
     res.getPercentile(0);
     sinon.assert.match(res.size(), 0);
-    clock.restore();
   });
 
   it('should run Z algorithm', () => {
-    let clock = sinon.useFakeTimers();
     var res = reservoir(10, 60000);
     for (let i = 0; i < 3000; i++) {
       let item = Math.random();
@@ -96,7 +102,6 @@ describe('Reservoir', () => {
       clock.tick(100);
     }
     sinon.assert.match(res.size(), 10);
-    clock.restore();
   });
 
 });

@@ -11,7 +11,7 @@ export default class NotSynchronizedError extends Error {
    * @param {String} message error message
    */
   constructor(message) {
-    super(message + '. See https://metaapi.cloud/docs/client/websocket/synchronizationMode/ for more details');
+    super(message);
     this.name = 'NotSynchronizedError';
   }
 
