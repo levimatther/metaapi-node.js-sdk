@@ -20,14 +20,23 @@ module.exports = class BrowserHistoryManager extends FileManager {
    * Retrieves history from IndexedDB
    * @returns {Object} object with deals and historyOrders
    */
+  // eslint-disable-next-line complexity
   async getHistoryFromDisk() {
     try {
-      const history = {deals: [], historyOrders: []};
+      const history = {
+        deals: [], 
+        historyOrders: [], 
+        lastDealTimeByInstanceIndex: {}, 
+        lastHistoryOrderTimeByInstanceIndex: {}
+      };
       const db = await this._getDatabase();
       const deals = await db.get('deals', this._accountId + '-' + this._application);
       history.deals = deals && deals.items || [];
+      history.lastDealTimeByInstanceIndex = deals && deals.lastDealTimeByInstanceIndex || {};
       const historyOrders = await db.get('historyOrders', this._accountId + '-' + this._application);
       history.historyOrders = historyOrders && historyOrders.items || [];
+      history.lastHistoryOrderTimeByInstanceIndex = historyOrders && 
+        historyOrders.lastHistoryOrderTimeByInstanceIndex || {};
       db.close();
       return history;
     } catch(err) {
@@ -43,9 +52,11 @@ module.exports = class BrowserHistoryManager extends FileManager {
     try {
       const db = await this._getDatabase();
       await db.put('deals', {accountIdAndApplication: this._accountId + '-' + this._application,
-        items: this._historyStorage.deals});
+        items: this._historyStorage.deals, 
+        lastDealTimeByInstanceIndex: this._historyStorage.lastDealTimeByInstanceIndex});
       await db.put('historyOrders', {accountIdAndApplication: this._accountId + '-' + this._application,
-        items: this._historyStorage.historyOrders});
+        items: this._historyStorage.historyOrders,
+        lastHistoryOrderTimeByInstanceIndex: this._historyStorage.lastHistoryOrderTimeByInstanceIndex});
       db.close();
     } catch(err) {
       console.error(`[${(new Date()).toISOString()}] Failed to save history into ` + 

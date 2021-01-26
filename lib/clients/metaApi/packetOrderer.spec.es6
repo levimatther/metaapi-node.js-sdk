@@ -12,7 +12,7 @@ describe('PacketOrderer', () => {
   let sandbox;
   let packetOrderer;
   let outOfOrderListener = {
-    onOutOfOrderPacket: (accountId, expectedSequenceNumber, actualSequenceNumber, packet) => {}
+    onOutOfOrderPacket: (accountId, instanceIndex, expectedSequenceNumber, actualSequenceNumber, packet) => {}
   };
 
   before(() => {
@@ -196,7 +196,7 @@ describe('PacketOrderer', () => {
     packetOrderer.restoreOrder(thirdPacket).should.deepEqual([]);
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledWith(outOfOrderListener.onOutOfOrderPacket,
-      'accountId', 14, 15, thirdPacket);
+      'accountId', 0, 14, 15, thirdPacket);
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledOnce(outOfOrderListener.onOutOfOrderPacket);
   }).timeout(3000);
@@ -208,24 +208,28 @@ describe('PacketOrderer', () => {
     sandbox.stub(outOfOrderListener, 'onOutOfOrderPacket').returns();
     let timedOutPacket = {
       accountId: 'accountId',
+      instanceId: 'accountId:0',
+      instanceIndex: 0,
       sequenceNumber: 11,
       packet: {},
       receivedAt: new Date('2010-10-19T09:58:56.000Z')
     };
     let notTimedOutPacket = {
       accountId: 'accountId',
+      instanceId: 'accountId:0',
+      instanceIndex: 0,
       sequenceNumber: 15,
       packet: {},
       receivedAt: new Date('3015-10-19T09:58:56.000Z')
     };
-    packetOrderer._sequenceNumberByAccount.accountId = 1;
-    packetOrderer._packetsByAccountId.accountId = [
+    packetOrderer._sequenceNumberByInstance['accountId:0'] = 1;
+    packetOrderer._packetsByInstance['accountId:0'] = [
       timedOutPacket,
       notTimedOutPacket
     ];
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledWith(outOfOrderListener.onOutOfOrderPacket,
-      'accountId', 2, 11, timedOutPacket.packet);
+      'accountId', 0, 2, 11, timedOutPacket.packet);
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.calledOnce(outOfOrderListener.onOutOfOrderPacket);
   }).timeout(3000);
@@ -245,8 +249,8 @@ describe('PacketOrderer', () => {
       packet: {},
       receivedAt: new Date('3015-10-19T09:58:56.000Z')
     };
-    packetOrderer._sequenceNumberByAccount.accountId = 1;
-    packetOrderer._packetsByAccountId.accountId = [
+    packetOrderer._sequenceNumberByInstance['accountId:0'] = 1;
+    packetOrderer._packetsByInstance['accountId:0'] = [
       notTimedOutPacket,
       timedOutPacket
     ];
@@ -267,9 +271,9 @@ describe('PacketOrderer', () => {
     };
 
     // There were no synchronization start packets
-    packetOrderer._sequenceNumberByAccount.accountId = undefined;
+    packetOrderer._sequenceNumberByInstance['accountId:0'] = undefined;
 
-    packetOrderer._packetsByAccountId.accountId = [outOfOrderPacket];
+    packetOrderer._packetsByInstance['accountId:0'] = [outOfOrderPacket];
     await new Promise(res => setTimeout(res, 1000));
     sinon.assert.notCalled(outOfOrderListener.onOutOfOrderPacket);
   }).timeout(3000);
@@ -292,11 +296,11 @@ describe('PacketOrderer', () => {
       accountId: 'accountId'
     };
     packetOrderer.restoreOrder(secondPacket);
-    packetOrderer._packetsByAccountId.accountId.length.should.equal(1);
-    packetOrderer._packetsByAccountId.accountId[0].packet.should.equal(secondPacket);
+    packetOrderer._packetsByInstance['accountId:0'].length.should.equal(1);
+    packetOrderer._packetsByInstance['accountId:0'][0].packet.should.equal(secondPacket);
     packetOrderer.restoreOrder(thirdPacket);
-    packetOrderer._packetsByAccountId.accountId.length.should.equal(1);
-    packetOrderer._packetsByAccountId.accountId[0].packet.should.equal(thirdPacket);
+    packetOrderer._packetsByInstance['accountId:0'].length.should.equal(1);
+    packetOrderer._packetsByInstance['accountId:0'][0].packet.should.equal(thirdPacket);
   });
 
   /**
@@ -310,7 +314,7 @@ describe('PacketOrderer', () => {
       accountId: 'accountId'
     };
     packetOrderer.restoreOrder(startPacket).should.deepEqual([]);
-    packetOrderer._packetsByAccountId.accountId.length.should.equal(1);
-    packetOrderer._packetsByAccountId.accountId[0].packet.should.deepEqual(startPacket);
+    packetOrderer._packetsByInstance['accountId:0'].length.should.equal(1);
+    packetOrderer._packetsByInstance['accountId:0'][0].packet.should.deepEqual(startPacket);
   });
 });

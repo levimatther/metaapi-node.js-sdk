@@ -49,19 +49,20 @@ export default class MetaApiWebsocketClient {
   /**
    * Restarts the account synchronization process on an out of order packet
    * @param {String} accountId account id
+   * @param {Number} instanceIndex instance index
    * @param {Number} expectedSequenceNumber expected s/n
    * @param {Number} actualSequenceNumber actual s/n
    * @param {Object} packet packet data
    * @param {Date} receivedAt time the packet was received at
    */
-  onOutOfOrderPacket(accountId, expectedSequenceNumber, actualSequenceNumber, packet, receivedAt) {
+  onOutOfOrderPacket(accountId, instanceIndex, expectedSequenceNumber, actualSequenceNumber, packet, receivedAt) {
     console.error(`[${(new Date()).toISOString()}] MetaApi websocket client received an out of order ` +
       `packet type ${packet.type} for account id ${accountId}. Expected s/n ${expectedSequenceNumber} ` +
       `does not match the actual of ${actualSequenceNumber}`);
-    this.subscribe(accountId).catch(err => {
+    this.subscribe(accountId, instanceIndex).catch(err => {
       if (err.name !== 'TimeoutError') {
         console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-          'subscribe response for account id ' + accountId, err);
+          'subscribe response for account id ' + accountId + ':' + instanceIndex, err);
       }
     });
   }
@@ -579,10 +580,11 @@ export default class MetaApiWebsocketClient {
   /**
    * Subscribes to the Metatrader terminal events (see https://metaapi.cloud/docs/client/websocket/api/subscribe/).
    * @param {String} accountId id of the MetaTrader account to subscribe to
+   * @param {Number} [instanceIndex] instance index
    * @returns {Promise} promise which resolves when subscription started
    */
-  subscribe(accountId) {
-    return this._rpcRequest(accountId, {type: 'subscribe'});
+  subscribe(accountId, instanceIndex) {
+    return this._rpcRequest(accountId, {type: 'subscribe', instanceIndex});
   }
 
   /**
@@ -598,6 +600,7 @@ export default class MetaApiWebsocketClient {
    * Requests the terminal to start synchronization process
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
    * @param {String} accountId id of the MetaTrader account to synchronize
+   * @param {Number} instanceIndex instance index
    * @param {String} synchronizationId synchronization request id
    * @param {Date} startingHistoryOrderTime from what date to start synchronizing history orders from. If not specified,
    * the entire order history will be downloaded.
@@ -605,21 +608,22 @@ export default class MetaApiWebsocketClient {
    * history deals will be downloaded.
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(accountId, synchronizationId, startingHistoryOrderTime, startingDealTime) {
+  synchronize(accountId, instanceIndex, synchronizationId, startingHistoryOrderTime, startingDealTime) {
     return this._rpcRequest(accountId, {requestId: synchronizationId, type: 'synchronize',
-      startingHistoryOrderTime, startingDealTime});
+      startingHistoryOrderTime, startingDealTime, instanceIndex});
   }
 
   /**
    * Waits for server-side terminal state synchronization to complete.
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/waitSynchronized/).
    * @param {String} accountId id of the MetaTrader account to synchronize
+   * @param {Number} instanceIndex instance index
    * @param {String} applicationPattern MetaApi application regular expression pattern, default is .*
    * @param {Number} timeoutInSeconds timeout in seconds, default is 300 seconds
    * @returns {Promise} promise which resolves when synchronization started
    */
-  waitSynchronized(accountId, applicationPattern, timeoutInSeconds) {
-    return this._rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds},
+  waitSynchronized(accountId, instanceIndex, applicationPattern, timeoutInSeconds) {
+    return this._rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds, instanceIndex},
       timeoutInSeconds + 1);
   }
 
@@ -627,11 +631,12 @@ export default class MetaApiWebsocketClient {
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
    * @param {String} accountId id of the MetaTrader account
+   * @param {Number} instanceIndex instance index
    * @param {String} symbol symbol (e.g. currency pair or an index)
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(accountId, symbol) {
-    return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol});
+  subscribeToMarketData(accountId, instanceIndex, symbol) {
+    return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, instanceIndex});
   }
 
   /**
@@ -962,36 +967,38 @@ export default class MetaApiWebsocketClient {
       }
       let packets = this._packetOrderer.restoreOrder(packet);
       for (let data of packets) {
+        let instanceId = data.accountId + ':' + (data.instanceIndex || 0);
+        let instanceIndex = data.instanceIndex || 0;
         if (data.type === 'authenticated') {
-          this._connectedHosts[data.accountId] = data.host;
+          this._connectedHosts[instanceId] = data.host;
           const onConnectedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onConnectedPromises.push(
-              Promise.resolve(listener.onConnected())
+              Promise.resolve(listener.onConnected(instanceIndex, data.replicas))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about connected event`, err))
             );
           }
           await Promise.all(onConnectedPromises);
         } else if (data.type === 'disconnected') {
-          if (this._connectedHosts[data.accountId] === data.host) {
+          if (this._connectedHosts[instanceId] === data.host) {
             const onDisconnectedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onDisconnectedPromises.push(
-                Promise.resolve(listener.onDisconnected())
+                Promise.resolve(listener.onDisconnected(instanceIndex))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
                     err))
               );
             }
             await Promise.all(onDisconnectedPromises);
-            delete this._connectedHosts[data.accountId];
+            delete this._connectedHosts[instanceId];
           }
         } else if (data.type === 'synchronizationStarted') {
           const promises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             promises.push(
-              Promise.resolve(listener.onSynchronizationStarted())
+              Promise.resolve(listener.onSynchronizationStarted(instanceIndex))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about synchronization ` +
                   'started event', err))
@@ -1003,7 +1010,7 @@ export default class MetaApiWebsocketClient {
             const onAccountInformationUpdatedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onAccountInformationUpdatedPromises.push(
-                Promise.resolve(listener.onAccountInformationUpdated(data.accountInformation))
+                Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about accountInformation ` +
                     'event', err))
@@ -1016,7 +1023,7 @@ export default class MetaApiWebsocketClient {
             const onDealAddedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onDealAddedPromises.push(
-                Promise.resolve(listener.onDealAdded(deal))
+                Promise.resolve(listener.onDealAdded(instanceIndex, deal))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about deals event`, err))
               );
@@ -1027,7 +1034,7 @@ export default class MetaApiWebsocketClient {
           const onOrderUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onOrderUpdatedPromises.push(
-              Promise.resolve(listener.onOrdersReplaced(data.orders || []))
+              Promise.resolve(listener.onOrdersReplaced(instanceIndex, data.orders || []))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about orders event`, err))
             );
@@ -1038,7 +1045,7 @@ export default class MetaApiWebsocketClient {
             const onHistoryOrderAddedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onHistoryOrderAddedPromises.push(
-                Promise.resolve(listener.onHistoryOrderAdded(historyOrder))
+                Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about historyOrders event`,
                     err))
@@ -1050,7 +1057,7 @@ export default class MetaApiWebsocketClient {
           const onPositionUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onPositionUpdatedPromises.push(
-              Promise.resolve(listener.onPositionsReplaced(data.positions || []))
+              Promise.resolve(listener.onPositionsReplaced(instanceIndex, data.positions || []))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about positions event`,
                   err))
@@ -1062,7 +1069,7 @@ export default class MetaApiWebsocketClient {
             const onAccountInformationUpdatedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onAccountInformationUpdatedPromises.push(
-                Promise.resolve(listener.onAccountInformationUpdated(data.accountInformation))
+                Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
               );
@@ -1073,7 +1080,7 @@ export default class MetaApiWebsocketClient {
             const onPositionUpdatedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onPositionUpdatedPromises.push(
-                Promise.resolve(listener.onPositionUpdated(position))
+                Promise.resolve(listener.onPositionUpdated(instanceIndex, position))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
               );
@@ -1084,7 +1091,7 @@ export default class MetaApiWebsocketClient {
             const onPositionRemovedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onPositionRemovedPromises.push(
-                Promise.resolve(listener.onPositionRemoved(positionId))
+                Promise.resolve(listener.onPositionRemoved(instanceIndex, positionId))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
               );
@@ -1095,7 +1102,7 @@ export default class MetaApiWebsocketClient {
             const onOrderUpdatedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onOrderUpdatedPromises.push(
-                Promise.resolve(listener.onOrderUpdated(order))
+                Promise.resolve(listener.onOrderUpdated(instanceIndex, order))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
               );
@@ -1106,7 +1113,7 @@ export default class MetaApiWebsocketClient {
             const onOrderCompletedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onOrderCompletedPromises.push(
-                Promise.resolve(listener.onOrderCompleted(orderId))
+                Promise.resolve(listener.onOrderCompleted(instanceIndex, orderId))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
               );
@@ -1117,7 +1124,7 @@ export default class MetaApiWebsocketClient {
             const onHistoryOrderAddedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onHistoryOrderAddedPromises.push(
-                Promise.resolve(listener.onHistoryOrderAdded(historyOrder))
+                Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
               );
@@ -1128,7 +1135,7 @@ export default class MetaApiWebsocketClient {
             const onDealAddedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onDealAddedPromises.push(
-                Promise.resolve(listener.onDealAdded(deal))
+                Promise.resolve(listener.onDealAdded(instanceIndex, deal))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
               );
@@ -1153,7 +1160,7 @@ export default class MetaApiWebsocketClient {
           const onDealSynchronizationFinishedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onDealSynchronizationFinishedPromises.push(
-              Promise.resolve(listener.onDealSynchronizationFinished(data.synchronizationId))
+              Promise.resolve(listener.onDealSynchronizationFinished(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
                   'dealSynchronizationFinished event', err))
@@ -1164,7 +1171,7 @@ export default class MetaApiWebsocketClient {
           const onOrderSynchronizationFinishedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onOrderSynchronizationFinishedPromises.push(
-              Promise.resolve(listener.onOrderSynchronizationFinished(data.synchronizationId))
+              Promise.resolve(listener.onOrderSynchronizationFinished(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
                   'orderSynchronizationFinished event', err))
@@ -1172,27 +1179,27 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onOrderSynchronizationFinishedPromises);
         } else if (data.type === 'status') {
-          if (!this._connectedHosts[data.accountId]) {
-            if (!this._resubscriptionTriggerTimes[data.accountId]) {
-              this._resubscriptionTriggerTimes[data.accountId] = new Date();
-            } else if (this._resubscriptionTriggerTimes[data.accountId].getTime() + 2 * 60 * 1000 < Date.now()) {
-              delete this._resubscriptionTriggerTimes[data.accountId];
+          if (!this._connectedHosts[instanceId]) {
+            if (!this._resubscriptionTriggerTimes[instanceId]) {
+              this._resubscriptionTriggerTimes[instanceId] = new Date();
+            } else if (this._resubscriptionTriggerTimes[instanceId].getTime() + 2 * 60 * 1000 < Date.now()) {
+              delete this._resubscriptionTriggerTimes[instanceId];
               // eslint-disable-next-line no-console
               console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
-                'server yet, retrying subscription for account ' + data.accountId);
-              this.subscribe(data.accountId).catch(err => {
+                'server yet, retrying subscription for account ' + instanceId);
+              this.subscribe(data.accountId, data.instanceIndex).catch(err => {
                 if (err.name !== 'TimeoutError') {
                   console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-                    'subscribe response for account id ' + data.accountId, err);
+                    'subscribe response for account id ' + instanceId, err);
                 }
               });
             }
-          } else if (this._connectedHosts[data.accountId] === data.host) {
-            delete this._resubscriptionTriggerTimes[data.accountId];
+          } else if (this._connectedHosts[instanceId] === data.host) {
+            delete this._resubscriptionTriggerTimes[instanceId];
             const onBrokerConnectionStatusChangedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onBrokerConnectionStatusChangedPromises.push(
-                Promise.resolve(listener.onBrokerConnectionStatusChanged(!!data.connected))
+                Promise.resolve(listener.onBrokerConnectionStatusChanged(instanceIndex, !!data.connected))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
                     'brokerConnectionStatusChanged event', err))
@@ -1204,7 +1211,7 @@ export default class MetaApiWebsocketClient {
               // eslint-disable-next-line max-depth
               for (let listener of this._synchronizationListeners[data.accountId] || []) {
                 onHealthStatusPromises.push(
-                  Promise.resolve(listener.onHealthStatus(data.healthStatus))
+                  Promise.resolve(listener.onHealthStatus(instanceIndex, data.healthStatus))
                   // eslint-disable-next-line no-console
                     .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
                       'server-side healthStatus event', err))
@@ -1218,7 +1225,7 @@ export default class MetaApiWebsocketClient {
             const onSymbolSpecificationUpdatedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onSymbolSpecificationUpdatedPromises.push(
-                Promise.resolve(listener.onSymbolSpecificationUpdated(specification))
+                Promise.resolve(listener.onSymbolSpecificationUpdated(instanceIndex, specification))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about specifications event`,
                     err))
@@ -1231,8 +1238,8 @@ export default class MetaApiWebsocketClient {
           const onSymbolPricesUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onSymbolPricesUpdatedPromises.push(
-              Promise.resolve(listener.onSymbolPricesUpdated(prices, data.equity, data.margin, data.freeMargin,
-                data.marginLevel))
+              Promise.resolve(listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin,
+                data.freeMargin, data.marginLevel))
               // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
             );
@@ -1242,7 +1249,7 @@ export default class MetaApiWebsocketClient {
             const onSymbolPriceUpdatedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onSymbolPriceUpdatedPromises.push(
-                Promise.resolve(listener.onSymbolPriceUpdated(price))
+                Promise.resolve(listener.onSymbolPriceUpdated(instanceIndex, price))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about price event`, err))
               );

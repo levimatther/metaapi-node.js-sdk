@@ -17,6 +17,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     this._fileManager = new HistoryFileManager(accountId, application, this);
     this._deals = [];
     this._historyOrders = [];
+    this._lastDealTimeByInstanceIndex = {};
+    this._lastHistoryOrderTimeByInstanceIndex = {};
     this._fileManager.startUpdateJob();
   }
 
@@ -37,11 +39,29 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   }
 
   /**
+   * Returns times of last deals by instance indices
+   * @return {Object} dictionary of last deal times by instance indices
+   */
+  get lastDealTimeByInstanceIndex() {
+    return this._lastDealTimeByInstanceIndex;
+  }
+
+  /**
+   * Returns times of last history orders by instance indices
+   * @return {Object} dictionary of last history orders times by instance indices
+   */
+  get lastHistoryOrderTimeByInstanceIndex() {
+    return this._lastHistoryOrderTimeByInstanceIndex;
+  }
+
+  /**
    * Resets the storage. Intended for use in tests
    */
   reset() {
     this._deals = [];
     this._historyOrders = [];
+    this._lastDealTimeByInstanceIndex = {};
+    this._lastHistoryOrderTimeByInstanceIndex = {};
     this._fileManager.deleteStorageFromDisk();
   }
 
@@ -53,6 +73,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     const history = await this._fileManager.getHistoryFromDisk();
     this._deals = history.deals;
     this._historyOrders = history.historyOrders;
+    this._lastDealTimeByInstanceIndex = history.lastDealTimeByInstanceIndex || {};
+    this._lastHistoryOrderTimeByInstanceIndex = history.lastHistoryOrderTimeByInstanceIndex || {};
   }
 
   /**
@@ -64,29 +86,46 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Returns the time of the last history order record stored in the history storage
+   * @param {Number} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history order record stored in the history storage
    */
-  lastHistoryOrderTime() {
-    return new Date(this._historyOrders.reduce((max, o) => Math.max(max, (o.doneTime || new Date(0)).getTime()), 0));
+  lastHistoryOrderTime(instanceIndex) {
+    if (instanceIndex !== undefined) {
+      return new Date(this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] || 0);
+    } else {
+      return new Date(Object.values(this._lastHistoryOrderTimeByInstanceIndex)
+        .reduce((acc, time) => time > acc ? time : acc, 0));
+    }
   }
 
   /**
    * Returns the time of the last history deal record stored in the history storage
+   * @param {Number} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history deal record stored in the history storage
    */
-  lastDealTime() {
-    return new Date(this._deals.reduce((max, d) => Math.max(max, (d.time || new Date(0)).getTime()), 0));
+  lastDealTime(instanceIndex) {
+    if (instanceIndex !== undefined) {
+      return new Date(this._lastDealTimeByInstanceIndex['' + instanceIndex] || 0);
+    } else {
+      return new Date(Object.values(this._lastDealTimeByInstanceIndex).reduce((acc, time) => time > acc ? time : acc,
+        0));
+    }
   }
 
   /**
    * Invoked when a new MetaTrader history order is added
+   * @param {Number} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    */
   // eslint-disable-next-line complexity
-  onHistoryOrderAdded(historyOrder) {
+  onHistoryOrderAdded(instanceIndex, historyOrder) {
     let insertIndex = 0;
     let replacementIndex = -1;
     const newHistoryOrderTime = (historyOrder.doneTime || new Date(0)).getTime();
+    if (!this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] ||
+      this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] < newHistoryOrderTime) {
+      this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] = newHistoryOrderTime;
+    }
     for(let i = this._historyOrders.length - 1; i >= 0; i--) {
       const order = this._historyOrders[i];
       const historyOrderTime = (order.doneTime || new Date(0)).getTime();
@@ -112,13 +151,18 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Invoked when a new MetaTrader history deal is added
+   * @param {Number} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
    */
   // eslint-disable-next-line complexity
-  onDealAdded(deal) {
+  onDealAdded(instanceIndex, deal) {
     let insertIndex = 0;
     let replacementIndex = -1;
     const newDealTime = (deal.time || new Date(0)).getTime();
+    if (!this._lastDealTimeByInstanceIndex['' + instanceIndex] ||
+      this._lastDealTimeByInstanceIndex['' + instanceIndex] < newDealTime) {
+      this._lastDealTimeByInstanceIndex['' + instanceIndex] = newDealTime;
+    }
     for(let i = this._deals.length - 1; i >= 0; i--) {
       const d = this._deals[i];
       const dealTime = (d.time || new Date(0)).getTime();

@@ -12,8 +12,8 @@ export default class HistoryStorage extends SynchronizationListener {
    */
   constructor() {
     super();
-    this._orderSynchronizationFinished = false;
-    this._dealSynchronizationFinished = false;
+    this._orderSynchronizationFinished = {};
+    this._dealSynchronizationFinished = {};
   }
 
   /**
@@ -21,7 +21,7 @@ export default class HistoryStorage extends SynchronizationListener {
    * @return {Boolean} flag indicating whether order history synchronization have finished
    */
   get orderSynchronizationFinished() {
-    return this._orderSynchronizationFinished;
+    return Object.values(this._orderSynchronizationFinished).reduce((acc, r) => acc || r, false);
   }
 
   /**
@@ -29,55 +29,62 @@ export default class HistoryStorage extends SynchronizationListener {
    * @return {Boolean} flag indicating whether deal history synchronization have finished
    */
   get dealSynchronizationFinished() {
-    return this._dealSynchronizationFinished;
+    return Object.values(this._dealSynchronizationFinished).reduce((acc, r) => acc || r, false);
   }
 
   /**
    * Returns the time of the last history order record stored in the history storage
+   * @param {Number} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history order record stored in the history storage
    */
-  async lastHistoryOrderTime() {}
+  async lastHistoryOrderTime(instanceIndex) {}
 
   /**
    * Returns the time of the last history deal record stored in the history storage
+   * @param {Number} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history deal record stored in the history storage
    */
-  async lastDealTime() {}
+  async lastDealTime(instanceIndex) {}
 
   /**
    * Invoked when a new MetaTrader history order is added
+   * @param {Number} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onHistoryOrderAdded(historyOrder) {}
+  async onHistoryOrderAdded(instanceIndex, historyOrder) {}
 
   /**
    * Invoked when a new MetaTrader history deal is added
+   * @param {Number} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onDealAdded(deal) {}
+  async onDealAdded(instanceIndex, deal) {}
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished
+   * @param {Number} instanceIndex index of an account instance connected
    */
-  onDealSynchronizationFinished() {
-    this._dealSynchronizationFinished = true;
+  onDealSynchronizationFinished(instanceIndex) {
+    this._dealSynchronizationFinished['' + instanceIndex] = true;
   }
 
   /**
    * Invoked when a synchronization of history orders on a MetaTrader account have finished
+   * @param {Number} instanceIndex index of an account instance connected
    */
-  onOrderSynchronizationFinished() {
-    this._orderSynchronizationFinished = true;
+  onOrderSynchronizationFinished(instanceIndex) {
+    this._orderSynchronizationFinished['' + instanceIndex] = true;
   }
 
   /**
    * Invoked when connection to MetaTrader terminal established
+   * @param {Number} instanceIndex index of an account instance connected
    */
-  onConnected() {
-    this._orderSynchronizationFinished = false;
-    this._dealSynchronizationFinished = false;
+  onConnected(instanceIndex) {
+    this._orderSynchronizationFinished['' + instanceIndex] = false;
+    this._dealSynchronizationFinished['' + instanceIndex] = false;
   }
 
 }

@@ -137,6 +137,14 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns reliability value. Possible values are regular, high and maximum
+   * @return {String} account reliability value
+   */
+  get reliability() {
+    return this._data.reliability;
+  }
+
+  /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */

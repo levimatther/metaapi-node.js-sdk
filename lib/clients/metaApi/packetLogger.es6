@@ -18,9 +18,16 @@ export default class PacketLogger {
     this._compressSpecifications = opts.compressSpecifications !== undefined ? opts.compressSpecifications : true;
     this._compressPrices = opts.compressPrices !== undefined ? opts.compressPrices : true;
     this._previousPrices = {};
+    this._lastKeepAlive = {};
     this._writeQueue = {};
     this._root = './.metaapi/logs';
     fs.ensureDir(this._root);
+  }
+
+  _ensurePreviousPriceObject(accountId) {
+    if(!this._previousPrices[accountId]) {
+      this._previousPrices[accountId] = {};
+    }
   }
 
   /**
@@ -29,21 +36,34 @@ export default class PacketLogger {
    */
   // eslint-disable-next-line complexity
   logPacket(packet) {
+    const instanceIndex = packet.instanceIndex || 0;
     if(!this._writeQueue[packet.accountId]) {
       this._writeQueue[packet.accountId] = {isWriting: false, queue: []};
     }
     if(packet.type === 'status') {
       return;
     }
+    if(!this._lastKeepAlive[packet.accountId]) {
+      this._lastKeepAlive[packet.accountId] = {};
+    }
+    if(packet.type === 'keepalive') {
+      this._lastKeepAlive[packet.accountId][instanceIndex] = packet;
+      return;
+    }
     const queue = this._writeQueue[packet.accountId].queue;
-    const prevPrice = this._previousPrices[packet.accountId];
+    if(!this._previousPrices[packet.accountId]) {
+      this._previousPrices[packet.accountId] = {};
+    }
+    
+    const prevPrice = this._previousPrices[packet.accountId][instanceIndex];
+    
     if(packet.type !== 'prices') {
       if(prevPrice) {
-        this._recordPrices(packet.accountId);
+        this._recordPrices(packet.accountId, instanceIndex);
       }
       if(packet.type === 'specifications' && this._compressSpecifications) {
         queue.push(JSON.stringify({type: packet.type, sequenceNumber: packet.sequenceNumber, 
-          sequenceTimestamp: packet.sequenceTimestamp}));
+          sequenceTimestamp: packet.sequenceTimestamp, instanceIndex}));
       } else {
         queue.push(JSON.stringify(packet));
       }
@@ -52,15 +72,21 @@ export default class PacketLogger {
         queue.push(JSON.stringify(packet));
       } else {
         if(prevPrice) {
-          if(![prevPrice.last.sequenceNumber, prevPrice.last.sequenceNumber + 1].includes(packet.sequenceNumber)) {
-            this._recordPrices(packet.accountId);
-            this._previousPrices[packet.accountId] = {first: packet, last: packet};
+          const validSequenceNumbers = [prevPrice.last.sequenceNumber, prevPrice.last.sequenceNumber + 1];
+          if(this._lastKeepAlive[packet.accountId][instanceIndex]) {
+            validSequenceNumbers.push(this._lastKeepAlive[packet.accountId][instanceIndex].sequenceNumber + 1);
+          }
+          if(!validSequenceNumbers.includes(packet.sequenceNumber)) {
+            this._recordPrices(packet.accountId, instanceIndex);
+            this._ensurePreviousPriceObject(packet.accountId);
+            this._previousPrices[packet.accountId][instanceIndex] = {first: packet, last: packet};
             queue.push(JSON.stringify(packet));
           } else {
-            this._previousPrices[packet.accountId].last = packet;
+            this._previousPrices[packet.accountId][instanceIndex].last = packet;
           }
         } else {
-          this._previousPrices[packet.accountId] = {first: packet, last: packet};
+          this._ensurePreviousPriceObject(packet.accountId);
+          this._previousPrices[packet.accountId][instanceIndex] = {first: packet, last: packet};
           queue.push(JSON.stringify(packet));
         }
       }
@@ -132,14 +158,17 @@ export default class PacketLogger {
    * Records price packet messages to log files
    * @param {String} accountId account id
    */
-  _recordPrices(accountId) {
-    const prevPrice = this._previousPrices[accountId];
+  _recordPrices(accountId, instanceIndex) {
+    const prevPrice = this._previousPrices[accountId][instanceIndex] || {first: {}, last:{}};
     const queue = this._writeQueue[accountId].queue;
-    delete this._previousPrices[accountId];
+    delete this._previousPrices[accountId][instanceIndex];
+    if(!Object.keys(this._previousPrices[accountId]).length) {
+      delete this._previousPrices[accountId];
+    }
     if(prevPrice.first.sequenceNumber !== prevPrice.last.sequenceNumber) {
       queue.push(JSON.stringify(prevPrice.last));
       queue.push(`Recorded price packets ${prevPrice.first.sequenceNumber}` +
-        `-${prevPrice.last.sequenceNumber}`);
+        `-${prevPrice.last.sequenceNumber}, instanceIndex: ${instanceIndex}`);
     }
   }
 
