@@ -55,7 +55,7 @@
     "randomstring": "~1.1.5",
     "request": "~2.88.2",
     "request-promise-any": "~1.0.8",
-    "socket.io-client": "~2.3.0"
+    "socket.io-client": "~2.4.0"
   },
   "devDependencies": {
     "babel-cli": "~6.26.0",
@@ -71,7 +71,7 @@
     "mocha": "~7.2.0",
     "should": "~13.2.3",
     "sinon": "~9.0.2",
-    "socket.io": "~2.3.0",
+    "socket.io": "~2.4.0",
     "webpack": "~4.44.0",
     "webpack-cli": "~3.3.12"
   },
