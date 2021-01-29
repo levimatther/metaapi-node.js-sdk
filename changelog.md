@@ -1,3 +1,6 @@
+12.1.0
+  - add name and login to account infomration
+
 12.0.0
   - added API to retrieve CopyFactory slave trading log
   - fixed race condition when orders are being added and completed fast

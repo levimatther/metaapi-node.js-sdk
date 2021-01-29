@@ -211,6 +211,8 @@ export default class MetaApiWebsocketClient {
    * @property {Boolean} [investorMode] flag indicating that investor password was used (supported for g2 only)
    * @property {String} marginMode margin calculation mode, one of ACCOUNT_MARGIN_MODE_EXCHANGE,
    * ACCOUNT_MARGIN_MODE_RETAIL_NETTING, ACCOUNT_MARGIN_MODE_RETAIL_HEDGING
+   * @property {String} name Account owner name
+   * @property {Number} login Account login
    */
 
   /**
