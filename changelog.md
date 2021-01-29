@@ -1,5 +1,6 @@
 12.1.0
   - add name and login to account infomration
+  - add a feature to select trade scaling mode in CopyFactory (i.e. if we want the trade size to be preserved or scaled according to balance when copying)
 
 12.0.0
   - added API to retrieve CopyFactory slave trading log
