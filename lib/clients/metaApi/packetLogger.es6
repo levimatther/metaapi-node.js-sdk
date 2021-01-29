@@ -128,10 +128,10 @@ export default class PacketLogger {
    * @param {String} accountId account id
    * @returns {String} file path
    */
-  getFilePath(accountId) {
+  async getFilePath(accountId) {
     const fileIndex = Math.floor(new Date().getHours() / this._logFileSizeInHours);
     const folderName = `${moment().format('YYYY-MM-DD')}-${fileIndex > 9 ? fileIndex : '0' + fileIndex}`;
-    fs.ensureDir(`${this._root}/${folderName}`);
+    await fs.ensureDir(`${this._root}/${folderName}`);
     return `${this._root}/${folderName}/${accountId}.log`;
   }
 
@@ -181,7 +181,7 @@ export default class PacketLogger {
       if (!queue.isWriting && queue.queue.length) {
         queue.isWriting = true;
         try {
-          const filePath = this.getFilePath(key);
+          const filePath = await this.getFilePath(key);
           const writeString = queue.queue.reduce((a,b) => a + 
           `[${moment().format('YYYY-MM-DD HH:mm:ss.SSS')}] ${b}\r\n` ,'');
           queue.queue = [];
