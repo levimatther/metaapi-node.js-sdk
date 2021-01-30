@@ -1,8 +1,10 @@
 'use strict';
 
 import request from 'request-promise-any';
-import {UnauthorizedError, ForbiddenError, ApiError, ConflictError,
-  ValidationError, InternalError, NotFoundError} from './errorHandler';
+import {
+  UnauthorizedError, ForbiddenError, ApiError, ConflictError,
+  ValidationError, InternalError, NotFoundError, TooManyRequestsError
+} from './errorHandler';
 
 /**
  * HTTP client library based on request-promise
@@ -50,6 +52,8 @@ export default class HttpClient {
       return new NotFoundError(err.error.message || err.message);
     case 409:
       return new ConflictError(err.error.message || err.message);
+    case 429:
+      return new TooManyRequestsError(err.error.message || err.message);
     case 500:
       return new InternalError(err.error.message || err.message);
     default:

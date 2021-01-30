@@ -1,5 +1,5 @@
 12.1.0
-  - add name and login to account infomration
+  - add name and login to account information
   - add a feature to select trade scaling mode in CopyFactory (i.e. if we want the trade size to be preserved or scaled according to balance when copying)
 
 12.0.0
@@ -26,7 +26,7 @@
   - bugfix MetatraderAccount.connect method to throw an error to avoid creating broken connections
   - add marginMode, tradeAllowed, investorMode fields to account information
   - breaking change: waitSynchronized to synchronize CopyFactory and RPC applications by default
-  - improvements to position profit and acount equity tracking on client side
+  - improvements to position profit and account equity tracking on client side
   - real-time updates for margin fields in account information
   - breaking change: uptime now returns uptime measurements over several timeframes (1h, 1d, 1w)
   - do not retry synchronization after MetaApiConnection is closed
