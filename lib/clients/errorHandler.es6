@@ -153,3 +153,17 @@ export class ConflictError extends ApiError {
     super(ConflictError, message, 409);
   }
 }
+
+
+/**
+ * Represents too many requests error. Throwing this error results in 429 (Too Many Requests) HTTP response code.
+ */
+export class TooManyRequestsError extends ApiError {
+  /**
+   * Constructs too many requests error.
+   * @param {string} message error message
+   */
+  constructor(message) {
+    super(TooManyRequestsError, message, 429);
+  }
+}
