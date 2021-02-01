@@ -21,7 +21,7 @@ describe('MetaApiWebsocketClient', () => {
 
   before(() => {
     client = new MetaApiWebsocketClient('token', {application: 'application', 
-      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5});
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, retryOpts: {retries: 3}});
     client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });
@@ -673,7 +673,7 @@ describe('MetaApiWebsocketClient', () => {
       } catch (err) {
         err.name.should.equal('NotSynchronizedError');
       }
-    });
+    }).timeout(8000);
 
     /**
      * @test {MetaApiWebsocketClient#getPosition}
@@ -709,7 +709,7 @@ describe('MetaApiWebsocketClient', () => {
       } catch (err) {
         err.name.should.equal('InternalError');
       }
-    });
+    }).timeout(8000);
 
   });
 
@@ -1081,6 +1081,85 @@ describe('MetaApiWebsocketClient', () => {
     /**
      * @test {MetaApiWebsocketClient#_rpcRequest}
      */
+    it('should retry request on failure', async () => {
+      let requestCounter = 0;
+      let order = {
+        id: '46871284',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        state: 'ORDER_STATE_PLACED',
+        symbol: 'AUDNZD',
+        magic: 123456,
+        platform: 'mt5',
+        time: new Date('2020-04-20T08:38:58.270Z'),
+        openPrice: 1.03,
+        currentPrice: 1.05206,
+        volume: 0.01,
+        currentVolume: 0.01,
+        comment: 'COMMENT2'
+      };
+      server.on('request', data => {
+        if (requestCounter > 1 && data.type === 'getOrder' && data.accountId === 'accountId' &&
+          data.orderId === '46871284' && data.application === 'RPC') {
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, order});
+        } 
+        requestCounter++;
+      });
+      let actual = await client.getOrder('accountId', '46871284');
+      actual.should.match(order);
+    }).timeout(20000);
+
+    /**
+     * @test {MetaApiWebsocketClient#_rpcRequest}
+     */
+    it('should not retry request on validation error', async () => {
+      let requestCounter = 0;
+      server.on('request', data => {
+        if (requestCounter > 0 && data.type === 'subscribeToMarketData' && data.accountId === 'accountId' &&
+          data.symbol === 'EURUSD' && data.application === 'application' && data.instanceIndex === 1) {
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        } else {
+          server.emit('processingError', {
+            id: 1, error: 'ValidationError', message: 'Error message', requestId: data.requestId
+          });
+        }
+        requestCounter ++;
+      });
+      try {
+        await client.subscribeToMarketData('accountId', 1, 'EURUSD');
+        throw new Error('ValidationError expected');
+      } catch (err) {
+        err.name.should.equal('ValidationError');
+      }
+      sinon.assert.match(requestCounter, 1);
+    }).timeout(6000);
+    
+    /**
+     * @test {MetaApiWebsocketClient#_rpcRequest}
+     */
+    it('should not retry trade requests on fail', async () => {
+      let requestCounter = 0;
+      let trade = {
+        actionType: 'ORDER_TYPE_SELL',
+        symbol: 'AUDNZD',
+        volume: 0.07
+      };
+      server.on('request', data => {
+        if(requestCounter > 0) {
+          sinon.assert.fail();
+        }
+        requestCounter++;
+      });
+      try {
+        await client.trade(trade);
+        throw new Error('TimeoutError expected');
+      } catch (err) {
+        err.name.should.equal('TimeoutError');
+      }
+    }).timeout(6000);
+
+    /**
+     * @test {MetaApiWebsocketClient#_rpcRequest}
+     */
     it('should return timeout error if no server response received', async () => {
       let trade = {
         actionType: 'ORDER_TYPE_SELL',
@@ -1095,7 +1174,7 @@ describe('MetaApiWebsocketClient', () => {
       } catch (err) {
         err.name.should.equal('TimeoutError');
       }
-    });
+    }).timeout(20000);
 
     /**
      * @test {MetaApiWebsocketClient#subscribeToMarketData}
