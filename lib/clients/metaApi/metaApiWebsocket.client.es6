@@ -32,6 +32,10 @@ export default class MetaApiWebsocketClient {
     this._url = `https://mt-client-api-v1.${opts.domain || 'agiliumtrade.agiliumtrade.ai'}`;
     this._requestTimeout = (opts.requestTimeout || 60) * 1000;
     this._connectTimeout = (opts.connectTimeout || 60) * 1000;
+    const retryOpts = opts.retryOpts || {};
+    this._retries = retryOpts.retries || 5;
+    this._minRetryDelayInSeconds = retryOpts.minDelayInSeconds || 1;
+    this._maxRetryDelayInSeconds = retryOpts.maxDelayInSeconds || 30;
     this._token = token;
     this._requestResolves = {};
     this._synchronizationListeners = {};
@@ -774,13 +778,34 @@ export default class MetaApiWebsocketClient {
     } else {
       await this._connectPromise;
     }
+    if(request.type === 'trade') {
+      return this._makeRequest(accountId, request, timeoutInSeconds);
+    }
+    let retryCounter = 0;
+    while (true) { //eslint-disable-line no-constant-condition
+      try {
+        return await this._makeRequest(accountId, request, timeoutInSeconds);
+      } catch(err) {
+        if(['NotSynchronizedError', 'TimeoutError', 'NotAuthenticatedError', 'InternalError'].includes(err.name) && 
+          retryCounter < this._retries) {
+          await new Promise(res => setTimeout(res, Math.min(Math.pow(2, retryCounter) * 
+            this._minRetryDelayInSeconds, this._maxRetryDelayInSeconds) * 1000));
+          retryCounter++;
+        } else {
+          throw err;
+        }
+      }
+    }
+  }
+
+  _makeRequest(accountId, request, timeoutInSeconds) {
     let requestId = request.requestId || randomstring.generate(32);
     request.timestamps = {clientProcessingStarted: new Date()};
     let result = Promise.race([
       new Promise((resolve, reject) => this._requestResolves[requestId] = {resolve, reject, type: request.type}),
       new Promise((resolve, reject) => setTimeout(() => reject(new TimeoutError('MetaApi websocket client ' + 
-      `request ${request.requestId} of type ${request.type} timed out. Please make sure your account is connected ` +
-        'to broker before retrying your request.')), (timeoutInSeconds * 1000) || this._requestTimeout))
+        `request ${request.requestId} of type ${request.type} timed out. Please make sure your account is connected ` +
+          'to broker before retrying your request.')), (timeoutInSeconds * 1000) || this._requestTimeout))
     ]);
     request.accountId = accountId;
     request.application = request.application || this._application;

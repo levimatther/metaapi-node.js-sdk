@@ -20,7 +20,8 @@ export default class CopyFactory {
   constructor(token, opts = {}) {
     let domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
     let requestTimeout = opts.requestTimeout || 60;
-    let httpClient = new HttpClient(requestTimeout);
+    const retryOpts = opts.retryOpts || {};
+    let httpClient = new HttpClient(requestTimeout, retryOpts);
     this._configurationClient = new ConfigurationClient(httpClient, token, domain);
     this._historyClient = new HistoryClient(httpClient, token, domain);
     this._tradingClient = new TradingClient(httpClient, token, domain);

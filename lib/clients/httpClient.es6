@@ -15,8 +15,11 @@ export default class HttpClient {
    * Constructs HttpClient class instance
    * @param timeout request timeout in seconds
    */
-  constructor(timeout = 60) {
+  constructor(timeout = 60, retryOpts = {}) {
     this._timeout = timeout * 1000;
+    this._retries = retryOpts.retries || 5;
+    this._minRetryDelayInSeconds = retryOpts.minDelayInSeconds || 1;
+    this._maxRetryDelayInSeconds = retryOpts.maxDelayInSeconds || 30;
   }
 
   /**
@@ -24,11 +27,19 @@ export default class HttpClient {
    * @param {Object} options request options
    * @returns {Promise} promise returning request results
    */
-  request(options) {
+  request(options, retryCounter = 0) {
     options.timeout = this._timeout;
     return this._makeRequest(options)
-      .catch((err) => {
-        throw this._convertError(err);
+      .catch(async (err) => {
+        const error = this._convertError(err);
+        if(['ConflictError', 'InternalError', 'ApiError', 'TimeoutError']
+          .includes(error.name) && retryCounter < this._retries) {
+          await new Promise(res => setTimeout(res, 
+            Math.min(Math.pow(2, retryCounter) * this._minRetryDelayInSeconds, this._maxRetryDelayInSeconds) * 1000));
+          return this.request(options, retryCounter + 1);
+        } else {
+          throw error;
+        }
       });
   }
 
@@ -72,8 +83,8 @@ export class HttpClientMock extends HttpClient {
    * Constructs HTTP client mock
    * @param {Function(options:Object):Promise} requestFn mocked request function
    */
-  constructor(requestFn) {
-    super();
+  constructor(requestFn, timeout = 60, retryOpts = {}) {
+    super(timeout, retryOpts);
     this._requestFn = requestFn;
   }
 
