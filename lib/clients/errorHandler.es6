@@ -154,6 +154,12 @@ export class ConflictError extends ApiError {
   }
 }
 
+/**
+ * @typedef {Object} TooManyRequestsErrorMetadata
+ * @property {Number} periodInMinutes throttling period in minutes
+ * @property {Number} requestsPerPeriodAllowed available requests for periodInMinutes
+ * @property {Date} recommendedRetryTime recommended date to retry request
+ */
 
 /**
  * Represents too many requests error. Throwing this error results in 429 (Too Many Requests) HTTP response code.
@@ -162,8 +168,10 @@ export class TooManyRequestsError extends ApiError {
   /**
    * Constructs too many requests error.
    * @param {string} message error message
+   * @param {TooManyRequestsErrorMetadata} metadata error metadata
    */
-  constructor(message) {
+  constructor(message, metadata) {
     super(TooManyRequestsError, message, 429);
+    this.metadata = metadata;
   }
 }
