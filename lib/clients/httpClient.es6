@@ -64,7 +64,7 @@ export default class HttpClient {
     case 409:
       return new ConflictError(err.error.message || err.message);
     case 429:
-      return new TooManyRequestsError(err.error.message || err.message);
+      return new TooManyRequestsError(err.error.message || err.message, err.error.metadata || err.metadata);
     case 500:
       return new InternalError(err.error.message || err.message);
     default:
