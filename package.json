@@ -55,7 +55,7 @@
     "randomstring": "~1.1.5",
     "request": "~2.88.2",
     "request-promise-any": "~1.0.8",
-    "socket.io-client": "~2.4.0"
+    "socket.io-client": "~3.1.1"
   },
   "devDependencies": {
     "babel-cli": "~6.26.0",
