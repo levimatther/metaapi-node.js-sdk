@@ -8,6 +8,7 @@ import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';
 import PacketOrderer from './packetOrderer';
+import SynchronizationThrottler from './synchronizationThrottler';
 
 let PacketLogger;
 if (typeof window === 'undefined') { // don't import PacketLogger for browser version
@@ -32,6 +33,7 @@ export default class MetaApiWebsocketClient {
     this._url = `https://mt-client-api-v1.${opts.domain || 'agiliumtrade.agiliumtrade.ai'}`;
     this._requestTimeout = (opts.requestTimeout || 60) * 1000;
     this._connectTimeout = (opts.connectTimeout || 60) * 1000;
+    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 5;
     const retryOpts = opts.retryOpts || {};
     this._retries = retryOpts.retries || 5;
     this._minRetryDelayInSeconds = retryOpts.minDelayInSeconds || 1;
@@ -43,6 +45,8 @@ export default class MetaApiWebsocketClient {
     this._reconnectListeners = [];
     this._connectedHosts = {};
     this._resubscriptionTriggerTimes = {};
+    this._synchronizationThrottler = new SynchronizationThrottler(this, this._maxConcurrentSynchronizations);
+    this._synchronizationThrottler.start();
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
@@ -141,6 +145,7 @@ export default class MetaApiWebsocketClient {
         }
       });
       this._socket.on('disconnect', async (reason) => {
+        this._synchronizationThrottler.onDisconnect();
         // eslint-disable-next-line no-console
         console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client disconnected from the MetaApi ' +
           'server because of ' + reason);
@@ -615,8 +620,8 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when synchronization started
    */
   synchronize(accountId, instanceIndex, synchronizationId, startingHistoryOrderTime, startingDealTime) {
-    return this._rpcRequest(accountId, {requestId: synchronizationId, type: 'synchronize',
-      startingHistoryOrderTime, startingDealTime, instanceIndex});
+    return this._synchronizationThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, 
+      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex});
   }
 
   /**
@@ -994,6 +999,9 @@ export default class MetaApiWebsocketClient {
       }
       let packets = this._packetOrderer.restoreOrder(packet);
       for (let data of packets) {
+        if (data.synchronizationId) {
+          this._synchronizationThrottler.updateSynchronizationId(data.synchronizationId);
+        }
         let instanceId = data.accountId + ':' + (data.instanceIndex || 0);
         let instanceIndex = data.instanceIndex || 0;
         if (data.type === 'authenticated') {
@@ -1186,6 +1194,7 @@ export default class MetaApiWebsocketClient {
         } else if (data.type === 'dealSynchronizationFinished') {
           const onDealSynchronizationFinishedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            this._synchronizationThrottler.removeSynchronizationId(data.synchronizationId);
             onDealSynchronizationFinishedPromises.push(
               Promise.resolve(listener.onDealSynchronizationFinished(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console

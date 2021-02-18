@@ -63,7 +63,7 @@ async function testMetaApiSynchronization() {
 
     // wait until terminal state synchronized to the local state
     console.log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history size)');
-    await connection.waitSynchronized(undefined, 600);
+    await connection.waitSynchronized();
 
     // access local copy of terminal state
     console.log('Testing terminal state access');

@@ -32,12 +32,13 @@ export default class MetaApi {
     const packetOrderingTimeout = opts.packetOrderingTimeout || 60;
     const retryOpts = opts.retryOpts || {};
     const packetLogger = opts.packetLogger || {};
+    const maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 5;
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, {application, domain, requestTimeout,
-      connectTimeout, packetLogger, packetOrderingTimeout, retryOpts});
+      connectTimeout, packetLogger, packetOrderingTimeout, maxConcurrentSynchronizations, retryOpts});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
