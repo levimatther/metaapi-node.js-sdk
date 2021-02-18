@@ -6,7 +6,7 @@ let login = process.env.LOGIN_MT4;
 let password = process.env.PASSWORD_MT4;
 let serverName = process.env.SERVER_MT4 || 'Tradeview-Demo';
 let brokerSrvFile = process.env.PATH_TO_BROKER_SRV || './lib/integration-tests/files/tradeview-demo.broker.srv';
-const api = new MetaAPI(token, {application: 'MetaApi', domain: 'project-stock.v2.agiliumlabs.cloud'});
+const api = new MetaAPI(token, {application: 'MetaApi', domain: 'project-stock.v3.agiliumlabs.cloud'});
 
 describe('MT4 sync positions test', () => {
 

@@ -121,7 +121,7 @@ export default class TradingClient extends MetaApiClient {
 
   /**
    * Returns copy trading user log for an account and time range. See
-   * https://trading-api-v1.project-stock.v2.agiliumlabs.cloud/swagger/#!/default/get_users_current_accounts_accountId_user_log
+   * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/get_users_current_accounts_accountId_user_log
    * @param {string} accountId account id
    * @param {Date} [startTime] time to start loading data from
    * @param {Date} [endTime] time to stop loading data at
