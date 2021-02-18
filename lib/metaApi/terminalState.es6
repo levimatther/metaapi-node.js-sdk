@@ -90,6 +90,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onConnected(instanceIndex) {
     this._getState(instanceIndex).connected = true;
+    this._resetDisconnectTimer(instanceIndex);
   }
 
   /**
@@ -102,6 +103,15 @@ export default class TerminalState extends SynchronizationListener {
     state.connectedToBroker = false;
   }
 
+  _resetDisconnectTimer(instanceIndex) {
+    if (this._statusTimer) {
+      clearTimeout(this._statusTimer);
+    }
+    this._statusTimer = setTimeout(() => {
+      this.onDisconnected(instanceIndex);
+    }, 60000);
+  }
+
   /**
    * Invoked when broker connection status have changed
    * @param {Number} instanceIndex index of an account instance connected
@@ -109,12 +119,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onBrokerConnectionStatusChanged(instanceIndex, connected) {
     this._getState(instanceIndex).connectedToBroker = connected;
-    if (this._statusTimer) {
-      clearTimeout(this._statusTimer);
-    }
-    this._statusTimer = setTimeout(() => {
-      this.onDisconnected(instanceIndex);
-    }, 60000);
+    this._resetDisconnectTimer(instanceIndex);
   }
 
   /**
