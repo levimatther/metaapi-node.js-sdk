@@ -99,7 +99,7 @@ export default class MetaApiWebsocketClient {
       });
       this._connectPromise = result;
       this._packetOrderer.start();
-
+      this._sessionId = randomstring.generate(32);
       let url = `${this._url}?auth-token=${this._token}`;
       this._socket = socketIO(url, {
         path: '/ws',
@@ -771,6 +771,7 @@ export default class MetaApiWebsocketClient {
   _tryReconnect() {
     return new Promise((resolve) => setTimeout(() => {
       if (!this._socket.connected && !this._socket.connecting && this._connected) {
+        this._sessionId = randomstring.generate(32);
         this._socket.connect();
       }
       resolve();
@@ -782,6 +783,9 @@ export default class MetaApiWebsocketClient {
       await this.connect();
     } else {
       await this._connectPromise;
+    }
+    if(request.type === 'subscribe') {
+      request.sessionId = this._sessionId;
     }
     if(request.type === 'trade') {
       return this._makeRequest(accountId, request, timeoutInSeconds);
@@ -1005,16 +1009,19 @@ export default class MetaApiWebsocketClient {
         let instanceId = data.accountId + ':' + (data.instanceIndex || 0);
         let instanceIndex = data.instanceIndex || 0;
         if (data.type === 'authenticated') {
-          this._connectedHosts[instanceId] = data.host;
-          const onConnectedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onConnectedPromises.push(
-              Promise.resolve(listener.onConnected(instanceIndex, data.replicas))
-              // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about connected event`, err))
-            );
+          if((!data.sessionId) || (data.sessionId === this._sessionId)) {
+            this._connectedHosts[instanceId] = data.host;
+            const onConnectedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onConnectedPromises.push(
+                Promise.resolve(listener.onConnected(instanceIndex, data.replicas))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about connected event`,
+                    err))
+              );
+            }
+            await Promise.all(onConnectedPromises);
           }
-          await Promise.all(onConnectedPromises);
         } else if (data.type === 'disconnected') {
           if (this._connectedHosts[instanceId] === data.host) {
             const onDisconnectedPromises = [];

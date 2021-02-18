@@ -731,6 +731,22 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onConnected, 1, 2);
     });
 
+    it('should process authenticated synchronization event with session id', async () => {
+      let listener = {
+        onConnected: () => {
+        }
+      };
+      sandbox.stub(listener, 'onConnected').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', instanceIndex: 2,
+        replicas: 4, sessionId: 'wrong'});
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', instanceIndex: 1,
+        replicas: 2, sessionId: client._sessionId});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.callCount(listener.onConnected, 1);
+      sinon.assert.calledWith(listener.onConnected, 1, 2);
+    });
+
     it('should process broker connection status event', async () => {
       let listener = {
         onBrokerConnectionStatusChanged: () => {
