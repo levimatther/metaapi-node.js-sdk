@@ -373,10 +373,10 @@ describe('MetaApiConnection', () => {
    */
   it('should remove history', async () => {
     sandbox.stub(client, 'removeHistory').resolves();
-    sandbox.stub(api.historyStorage, 'reset').resolves();
+    sandbox.stub(api.historyStorage, 'clear').resolves();
     await api.removeHistory('app');
     sinon.assert.calledWith(client.removeHistory, 'accountId', 'app');
-    sinon.assert.calledOnce(api.historyStorage.reset);
+    sinon.assert.calledOnce(api.historyStorage.clear);
   });
 
   /**
@@ -384,10 +384,10 @@ describe('MetaApiConnection', () => {
    */
   it('should remove application', async () => {
     sandbox.stub(client, 'removeApplication').resolves();
-    sandbox.stub(api.historyStorage, 'reset').resolves();
+    sandbox.stub(api.historyStorage, 'clear').resolves();
     await api.removeApplication();
     sinon.assert.calledWith(client.removeApplication, 'accountId');
-    sinon.assert.calledOnce(api.historyStorage.reset);
+    sinon.assert.calledOnce(api.historyStorage.clear);
   });
 
   /**
@@ -852,7 +852,6 @@ describe('MetaApiConnection', () => {
      */
     it('should wait util synchronization complete', async () => {
       sandbox.stub(client, 'waitSynchronized').resolves();
-      sandbox.stub(api.historyStorage, 'updateDiskStorage');
       (await api.isSynchronized()).should.equal(false);
       let promise = api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
         timeoutInSeconds: 1, intervalInMilliseconds: 10});
@@ -865,7 +864,6 @@ describe('MetaApiConnection', () => {
       await promise;
       (Date.now() - startTime).should.be.approximately(10, 10);
       (await api.isSynchronized(1, 'synchronizationId')).should.equal(true);
-      sinon.assert.calledOnce(api.historyStorage.updateDiskStorage);
     });
 
     /**
@@ -897,9 +895,9 @@ describe('MetaApiConnection', () => {
    * @test {MetaApiConnection#initialize}
    */
   it('should load data to history storage from disk', async () => {
-    sandbox.stub(api.historyStorage, 'loadDataFromDisk').resolves();
+    sandbox.stub(api.historyStorage, 'initialize').resolves();
     await api.initialize();
-    sinon.assert.calledOnce(api.historyStorage.loadDataFromDisk);
+    sinon.assert.calledOnce(api.historyStorage.initialize);
   });
 
 });

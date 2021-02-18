@@ -23,6 +23,13 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   }
 
   /**
+   * Initializes the storage and loads required data from a persistent storage
+   */
+  async initialize() {
+    await this.loadDataFromDisk();
+  }
+
+  /**
    * Returns all deals stored in history storage
    * @return {Array<MetatraderDeal>} all deals stored in history storage
    */
@@ -57,12 +64,12 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Resets the storage. Intended for use in tests
    */
-  reset() {
+  async clear() {
     this._deals = [];
     this._historyOrders = [];
     this._lastDealTimeByInstanceIndex = {};
     this._lastHistoryOrderTimeByInstanceIndex = {};
-    this._fileManager.deleteStorageFromDisk();
+    await this._fileManager.deleteStorageFromDisk();
   }
 
   /**
@@ -182,6 +189,15 @@ export default class MemoryHistoryStorage extends HistoryStorage {
       this._deals.splice(insertIndex, 0, deal);
       this._fileManager.setStartNewDealIndex(insertIndex);
     }
+  }
+
+  /**
+   * Invoked when a synchronization of history deals on a MetaTrader account have finished
+   * @param {Number} instanceIndex index of an account instance connected
+   */
+  async onDealSynchronizationFinished(instanceIndex, synchronizationId) {
+    this._dealSynchronizationFinished[instanceIndex] = true;
+    await this.updateDiskStorage();
   }
 
 }

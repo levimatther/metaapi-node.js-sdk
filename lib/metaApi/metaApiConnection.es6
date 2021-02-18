@@ -160,7 +160,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory(application) {
-    this._historyStorage.reset();
+    this._historyStorage.clear();
     return this._websocketClient.removeHistory(this._account.id, application);
   }
 
@@ -170,7 +170,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise resolving when the history is cleared and application is removed
    */
   removeApplication() {
-    this._historyStorage.reset();
+    this._historyStorage.clear();
     return this._websocketClient.removeApplication(this._account.id);
   }
 
@@ -468,7 +468,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise which resolves when meta api connection is initialized
    */
   async initialize() {
-    await this._historyStorage.loadDataFromDisk();
+    await this._historyStorage.initialize();
   }
 
   /**
@@ -609,7 +609,6 @@ export default class MetaApiConnection extends SynchronizationListener {
   async onDealSynchronizationFinished(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.dealsSynchronized[synchronizationId] = true;
-    await this._historyStorage.updateDiskStorage();
   }
 
   /**

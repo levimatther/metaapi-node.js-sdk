@@ -27,7 +27,7 @@ describe('MemoryHistoryStorage', () => {
     testOrder = {id:'61210463', type:'ORDER_TYPE_SELL', state:'ORDER_STATE_FILLED', symbol:'AUDNZD', magic:0, 
       time: new Date(50), doneTime: new Date(100), currentPrice:1, volume:0.01, 
       currentVolume:0, positionId:'61206630', platform:'mt5', comment:'AS_AUDNZD_5YyM6KS7Fv:'};
-    storage.reset();
+    await storage.clear();
     storage.onConnected(1);
   });
 
@@ -151,8 +151,10 @@ describe('MemoryHistoryStorage', () => {
    * @test {MemoryHistoryStorage#dealSynchronizationFinished}
    */
   it('should return saved deal synchronization status', () => {
+    storage._fileManager.updateDiskStorage = sandbox.stub();
     storage.dealSynchronizationFinished.should.be.false();
     storage.onDealSynchronizationFinished(1);
+    sinon.assert.calledOnce(storage._fileManager.updateDiskStorage);
     storage.dealSynchronizationFinished.should.be.true();
   });
 
@@ -163,7 +165,7 @@ describe('MemoryHistoryStorage', () => {
     sandbox.stub(storage._fileManager, 'deleteStorageFromDisk');
     storage.onDealAdded(1, {id: '1', time: new Date('2020-01-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
     storage.onHistoryOrderAdded(1, {id: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
-    storage.reset();
+    await storage.clear();
     sinon.assert.match(storage.deals, []);
     sinon.assert.match(storage.historyOrders, []);
     sinon.assert.calledOnce(storage._fileManager.deleteStorageFromDisk);
