@@ -17,6 +17,11 @@ export default class HistoryStorage extends SynchronizationListener {
   }
 
   /**
+   * Initializes the storage and loads required data from a persistent storage
+   */
+  async initialize() {}
+
+  /**
    * Returns flag indicating whether order history synchronization have finished
    * @return {Boolean} flag indicating whether order history synchronization have finished
    */
@@ -31,6 +36,11 @@ export default class HistoryStorage extends SynchronizationListener {
   get dealSynchronizationFinished() {
     return Object.values(this._dealSynchronizationFinished).reduce((acc, r) => acc || r, false);
   }
+
+  /**
+   * Clears the storage and deletes persistent data
+   */
+  async clear(){}
 
   /**
    * Returns the time of the last history order record stored in the history storage
