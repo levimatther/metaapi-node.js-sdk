@@ -657,10 +657,95 @@ describe('MetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#subscribe}
    */
-  it('should subscribe to terminal', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
-    await api.subscribe();
-    sinon.assert.calledWith(client.subscribe, 'accountId');
+  describe('ensure subscribe', () => {
+
+    let clock;
+
+    beforeEach(() => {
+      clock = sinon.useFakeTimers({
+        shouldAdvanceTime: true
+      });
+    });
+
+    afterEach(async () => {
+      clock.restore();
+    });
+
+    /**
+     * @test {MetaApiConnection#subscribe}
+     */
+    it('should subscribe to terminal', async () => {
+      sandbox.stub(client, 'subscribe').resolves();
+      setTimeout(() => {
+        api.onConnected(1, 1);
+      }, 20);
+      await api.subscribe();
+      sinon.assert.calledWith(client.subscribe, 'accountId');
+    });
+
+    /**
+     * @test {MetaApiConnection#subscribe}
+     */
+    it('should retry subscribe to terminal if no response received', async () => {
+      const response = {type: 'response', accountId: 'accountId', requestId: 'requestId'};
+      sandbox.stub(client, 'subscribe')
+        .onFirstCall().rejects()
+        .onSecondCall().resolves(response)
+        .onThirdCall().resolves(response);
+      setTimeout(() => {
+        api.onConnected(1, 1);
+      }, 3050);
+      api.subscribe();
+      await clock.tickAsync(4000);
+      sinon.assert.calledWith(client.subscribe, 'accountId');
+      sinon.assert.callCount(client.subscribe, 2);
+    });
+
+    /**
+     * @test {MetaApiConnection#subscribe}
+     */
+    it('should subscribe after reconnect', async () => {
+      sandbox.stub(client, 'subscribe').resolves();
+      api.subscribe();
+      await clock.tickAsync(1800);
+      sinon.assert.calledWith(client.subscribe, 'accountId');
+      await api.onConnected(1, 1);
+      api.onReconnected();
+      await clock.tickAsync(3300);
+      sinon.assert.callCount(client.subscribe, 3);
+      await api.onConnected(1, 1);
+      await clock.tickAsync(1800);
+      sinon.assert.callCount(client.subscribe, 3);
+    });
+
+    /**
+     * @test {MetaApiConnection#subscribe}
+     */
+    it('should not send multiple subscribe requests at the same time', async () => {
+      sandbox.stub(client, 'subscribe').resolves();
+      api.subscribe();
+      api.subscribe();
+      await clock.tickAsync(500);
+      await api.onConnected(1, 1);
+      await clock.tickAsync(2600);
+      sinon.assert.calledWith(client.subscribe, 'accountId');
+      sinon.assert.callCount(client.subscribe, 1);
+    });
+
+    /**
+     * @test {MetaApiConnection#subscribe}
+     */
+    it('should not retry subscribe to terminal if connection is closed', async () => {
+      sandbox.stub(client, 'subscribe').rejects();
+      sandbox.stub(client, 'unsubscribe').resolves();
+      api.subscribe();
+      api.close();
+      await clock.tickAsync(3100);
+      sinon.assert.calledWith(client.subscribe, 'accountId');
+      sinon.assert.callCount(client.subscribe, 1);
+      sinon.assert.calledWith(client.unsubscribe, 'accountId');
+    });
+
   });
 
   /**

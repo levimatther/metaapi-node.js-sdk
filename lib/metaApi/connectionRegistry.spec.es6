@@ -24,14 +24,13 @@ describe('ConnectionRegistry', () => {
   };
 
   before(() => {
-    registry = new ConnectionRegistry(metaApiWebsocketClient);
     sandbox = sinon.createSandbox();
   });
-
+  
   beforeEach(() => {
-    sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
-    sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
+    registry = new ConnectionRegistry(metaApiWebsocketClient);
     sandbox.stub(MetaApiConnection.prototype, 'initialize').resolves();
+    sandbox.stub(MetaApiConnection.prototype, 'subscribe').resolves();
   });
 
   afterEach(() => {
@@ -46,9 +45,8 @@ describe('ConnectionRegistry', () => {
     let connection = await registry.connect(account, storage);
     (connection instanceof MetaApiConnection).should.be.true();
     connection.historyStorage.should.equal(storage);
-    sinon.assert.calledWith(metaApiWebsocketClient.addSynchronizationListener, 'id', storage);
-    sinon.assert.calledWith(metaApiWebsocketClient.subscribe, 'id');
     sinon.assert.calledOnce(connection.initialize);
+    sinon.assert.calledOnce(connection.subscribe);
     sinon.assert.match(registry._connections, sinon.match.has('id', connection));
   });
 
@@ -60,14 +58,14 @@ describe('ConnectionRegistry', () => {
     let connection0 = await registry.connect(accounts[0], storage);
     let connection02 = await registry.connect(accounts[0], storage);
     let connection1 = await registry.connect(accounts[1], storage);
-    sinon.assert.calledWith(metaApiWebsocketClient.addSynchronizationListener, 'id0', storage);
-    sinon.assert.calledWith(metaApiWebsocketClient.addSynchronizationListener, 'id1', storage);
-    sinon.assert.calledWith(metaApiWebsocketClient.subscribe, 'id0');
-    sinon.assert.calledWith(metaApiWebsocketClient.subscribe, 'id1');
-    sinon.assert.calledTwice(metaApiWebsocketClient.subscribe);
+    sinon.assert.called(connection0.initialize);
+    sinon.assert.called(connection0.subscribe);
+    sinon.assert.called(connection1.initialize);
+    sinon.assert.called(connection1.subscribe);
     sinon.assert.match(registry._connections, sinon.match.has('id0', connection0));
     sinon.assert.match(registry._connections, sinon.match.has('id1', connection1));
     sinon.assert.match(Object.is(connection0, connection02), true);
+    sinon.assert.match(Object.is(connection0, connection1), false);
   });
 
   /**
