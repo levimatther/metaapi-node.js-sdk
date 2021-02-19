@@ -787,7 +787,7 @@ export default class MetaApiWebsocketClient {
     if(request.type === 'subscribe') {
       request.sessionId = this._sessionId;
     }
-    if(request.type === 'trade') {
+    if(['trade', 'subscribe'].includes(request.type)) {
       return this._makeRequest(accountId, request, timeoutInSeconds);
     }
     let retryCounter = 0;
