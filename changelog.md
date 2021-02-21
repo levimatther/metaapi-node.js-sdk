@@ -1,5 +1,6 @@
 12.2.0
   - added retryOpts option to configure retries of certain REST/RPC requests upon failure
+  - improve account connection reliability
 
 12.1.0
   - add name and login to account information
