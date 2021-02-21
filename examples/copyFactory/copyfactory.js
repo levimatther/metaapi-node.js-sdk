@@ -25,8 +25,8 @@ async function configureCopyFactory() {
     }
 
     let configurationApi = copyFactory.configurationApi;
-    let masterAccountId = configurationApi.generateAccountId();
-    let slaveAccountId = configurationApi.generateAccountId();
+    masterAccountId = configurationApi.generateAccountId();
+    slaveAccountId = configurationApi.generateAccountId();
     await configurationApi.updateAccount(masterAccountId, {
       name: 'Demo master account',
       connectionId: masterMetaapiAccount.id,
@@ -47,14 +47,14 @@ async function configureCopyFactory() {
       connectionId: slaveMetaapiAccount.id,
       subscriptions: [
         {
-          strategyId,
+          strategyId: strategyId.id,
           multiplier: 1
         }
       ]
     });
 
     console.log('Please note that it can take some time for CopyFactory to initialize accounts. During this time ' +
-      'the MetaApi accounts may redeploy a cople of times. After initialization finishes, you can copy trades from ' +
+      'the MetaApi accounts may redeploy a couple of times. After initialization finishes, you can copy trades from ' +
       'your master to slave account.');
   } catch (err) {
     console.error(err);
