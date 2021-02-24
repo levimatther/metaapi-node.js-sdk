@@ -222,6 +222,7 @@ export default class MetaApiWebsocketClient {
    * ACCOUNT_MARGIN_MODE_RETAIL_NETTING, ACCOUNT_MARGIN_MODE_RETAIL_HEDGING
    * @property {String} name Account owner name
    * @property {Number} login Account login
+   * @property {Number} credit Account credit in the deposit currency
    */
 
   /**
