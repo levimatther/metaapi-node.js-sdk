@@ -129,7 +129,8 @@ const account = await api.metatraderAccountApi.createAccount({
   provisioningProfileId: provisioningProfile.id,
   application: 'MetaApi',
   magic: 123456,
-  quoteStreamingIntervalInSeconds: 2.5 // set to 0 to receive quote per tick
+  quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
+  reliability: 'regular' // set this field to 'high' value if you want to increase uptime of your account
 });
 ```
 
@@ -220,6 +221,9 @@ await connection.subscribeToMarketData('GBPUSD');
 console.log(await connection.getSymbolSpecification('GBPUSD'));
 // read current price
 console.log(await connection.getSymbolPrice('GBPUSD'));
+
+// unsubscribe from market data when no longer needed
+await connection.unsubscribeFromMarketData('GBPUSD');
 ```
 
 ### Use real-time streaming API
