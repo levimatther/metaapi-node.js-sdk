@@ -314,6 +314,9 @@ await connection.subscribeToMarketData('GBPUSD');
 console.log(terminalState.specification('EURUSD'));
 // read current price
 console.log(terminalState.price('EURUSD'));
+
+// unsubscribe from market data when no longer needed
+await connection.unsubscribeFromMarketData('GBPUSD');
 ```
 
 ### Execute trades (both RPC and streaming APIs)
