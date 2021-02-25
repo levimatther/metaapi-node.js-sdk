@@ -487,7 +487,7 @@ await configurationApi.updateAccount(slaveAccountId, {
   connectionId: slaveMetaapiAccount.id,
   subscriptions: [
     {
-      strategyId,
+      strategyId.id,
       multiplier: 1
     }
   ]
