@@ -129,7 +129,8 @@ const account = await api.metatraderAccountApi.createAccount({
   provisioningProfileId: provisioningProfile.id,
   application: 'MetaApi',
   magic: 123456,
-  quoteStreamingIntervalInSeconds: 2.5 // set to 0 to receive quote per tick
+  quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
+  reliability: 'regular' // set this field to 'high' value if you want to increase uptime of your account
 });
 ```
 

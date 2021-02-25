@@ -137,7 +137,7 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns reliability value. Possible values are regular, high and maximum
+   * Returns reliability value. Possible values are regular and high
    * @return {String} account reliability value
    */
   get reliability() {

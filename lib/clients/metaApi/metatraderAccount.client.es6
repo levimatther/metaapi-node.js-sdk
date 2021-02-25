@@ -41,8 +41,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Array<string>} [tags] MetaTrader account tags
    * @property {Array<Extension>} extensions API extensions
    * @property {Object} metadata extra information which can be stored together with your account
-   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular, high
-   * and maximum. Default is regular
+   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and high. Default is regular
    */
 
   /**
@@ -159,8 +158,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Array<string>} [tags] MetaTrader account tags
    * @property {Array<Extension>} extensions API extensions
    * @property {Object} metadata extra information which can be stored together with your account
-   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular, high
-   * and maximum. Default is regular
+   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and high. Default is regular
    */
 
   /**
