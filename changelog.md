@@ -1,5 +1,6 @@
 12.3.0
   - added credit account property
+  - added feature to unsubscribe from market data (remove symbol from market watch)
 
 12.2.0
   - added retryOpts option to configure retries of certain REST/RPC requests upon failure

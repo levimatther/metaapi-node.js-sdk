@@ -523,6 +523,18 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Unsubscribes from market data of specified symbol (see
+   * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
+   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {Number} instanceIndex instance index
+   * @returns {Promise} promise which resolves when unsubscription request was processed
+   */
+  unsubscribeFromMarketData(symbol, instanceIndex) {
+    this._subscriptions[symbol] = true;
+    return this._websocketClient.unsubscribeFromMarketData(this._account.id, instanceIndex, symbol);
+  }
+
+  /**
    * Returns list of the symbols connection is subscribed to
    * @returns {Array<String>} list of the symbols connection is subscribed to
    */

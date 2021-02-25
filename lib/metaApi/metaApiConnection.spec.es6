@@ -34,6 +34,7 @@ describe('MetaApiConnection', () => {
     synchronize: () => {},
     subscribe: () => {},
     subscribeToMarketData: () => {},
+    unsubscribeFromMarketData: () => {},
     addSynchronizationListener: () => {},
     addReconnectListener: () => {},
     removeSynchronizationListener: () => {},
@@ -784,6 +785,15 @@ describe('MetaApiConnection', () => {
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     await api.subscribeToMarketData('EURUSD', 1);
     sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD');
+  });
+
+  /**
+   * @test {MetaApiConnection#unsubscribeFromMarketData}
+   */
+  it('should unsubscribe from market data', async () => {
+    sandbox.stub(client, 'unsubscribeFromMarketData').resolves();
+    await api.unsubscribeFromMarketData('EURUSD', 1);
+    sinon.assert.calledWith(client.unsubscribeFromMarketData, 'accountId', 1, 'EURUSD');
   });
 
   /**

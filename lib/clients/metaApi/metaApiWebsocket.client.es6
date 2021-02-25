@@ -652,6 +652,18 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Unsubscribes from market data of specified symbol (see
+   * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
+   * @param {String} accountId id of the MetaTrader account
+   * @param {Number} instanceIndex instance index
+   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @returns {Promise} promise which resolves when unsubscription request was processed
+   */
+  unsubscribeFromMarketData(accountId, instanceIndex, symbol) {
+    return this._rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, instanceIndex});
+  }
+
+  /**
    * Retrieves specification for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolSpecification/).
    * @param {String} accountId id of the MetaTrader account to retrieve symbol specification for

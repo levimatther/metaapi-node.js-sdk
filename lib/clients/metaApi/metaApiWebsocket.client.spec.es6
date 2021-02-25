@@ -1208,6 +1208,22 @@ describe('MetaApiWebsocketClient', () => {
       requestReceived.should.be.true();
     });
 
+    /**
+     * @test {MetaApiWebsocketClient#unsubscribeFromMarketData}
+     */
+    it('should unsubscribe from market data with MetaTrader terminal', async () => {
+      let requestReceived = false;
+      server.on('request', data => {
+        if (data.type === 'unsubscribeFromMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
+          data.application === 'application' && data.instanceIndex === 1) {
+          requestReceived = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      await client.unsubscribeFromMarketData('accountId', 1, 'EURUSD');
+      requestReceived.should.be.true();
+    });
+
     it('should synchronize symbol specifications', async () => {
       let specifications = [{
         symbol: 'EURUSD',
