@@ -60,7 +60,9 @@ export default class SynchronizationThrottler {
    * @param {String} synchronizationId synchronization id
    */
   updateSynchronizationId(synchronizationId) {
-    this._synchronizationIds[synchronizationId] = Date.now();
+    if(this._accountsBySynchronizationIds[synchronizationId]) {
+      this._synchronizationIds[synchronizationId] = Date.now();
+    }
   }
 
   /**
@@ -68,7 +70,14 @@ export default class SynchronizationThrottler {
    * @return {Boolean} flag whether there are free slots for synchronization requests
    */
   get isSynchronizationAvailable() {
-    return Object.values(this._synchronizationIds).length < this._maxConcurrentSynchronizations;
+    const synchronizingAccounts = [];
+    Object.keys(this._synchronizationIds).forEach(synchronizationId => {
+      const accountData = this._accountsBySynchronizationIds[synchronizationId];
+      if(accountData && (!synchronizingAccounts.includes(accountData.accountId))) {
+        synchronizingAccounts.push(accountData.accountId);
+      }
+    });
+    return synchronizingAccounts.length < this._maxConcurrentSynchronizations;
   }
 
   /**
@@ -77,9 +86,11 @@ export default class SynchronizationThrottler {
    */
   removeSynchronizationId(synchronizationId) {
     if (this._accountsBySynchronizationIds[synchronizationId]) {
-      const accountId = this._accountsBySynchronizationIds[synchronizationId];
+      const accountId = this._accountsBySynchronizationIds[synchronizationId].accountId;
+      const instanceIndex = this._accountsBySynchronizationIds[synchronizationId].instanceIndex;
       for (let key of Object.keys(this._accountsBySynchronizationIds)) {
-        if(this._accountsBySynchronizationIds[key] === accountId) {
+        if(this._accountsBySynchronizationIds[key].accountId === accountId && 
+          instanceIndex === this._accountsBySynchronizationIds[key].instanceIndex) {
           this._removeFromQueue(key);
           delete this._accountsBySynchronizationIds[key];
         }
@@ -140,11 +151,12 @@ export default class SynchronizationThrottler {
   async scheduleSynchronize(accountId, request) {
     const synchronizationId = request.requestId;
     for (let key of Object.keys(this._accountsBySynchronizationIds)) {
-      if(this._accountsBySynchronizationIds[key] === accountId) {
+      if(this._accountsBySynchronizationIds[key].accountId === accountId &&
+        this._accountsBySynchronizationIds[key].instanceIndex === request.instanceIndex) {
         this.removeSynchronizationId(key);
       }
     }
-    this._accountsBySynchronizationIds[synchronizationId] = accountId;
+    this._accountsBySynchronizationIds[synchronizationId] = {accountId, instanceIndex: request.instanceIndex};
     if(!this.isSynchronizationAvailable) {
       let resolve;
       let requestResolve = new Promise((res) => {
