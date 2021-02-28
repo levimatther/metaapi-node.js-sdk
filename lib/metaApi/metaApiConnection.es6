@@ -530,7 +530,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
   unsubscribeFromMarketData(symbol, instanceIndex) {
-    this._subscriptions[symbol] = true;
+    delete this._subscriptions[symbol];
     return this._websocketClient.unsubscribeFromMarketData(this._account.id, instanceIndex, symbol);
   }
 
