@@ -1,3 +1,6 @@
+12.3.1
+  - bugfix for unsubscribeFromMarketData API
+
 12.3.0
   - added credit account property
   - added feature to unsubscribe from market data (remove symbol from market watch)
