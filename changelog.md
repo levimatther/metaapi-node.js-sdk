@@ -1,3 +1,6 @@
+12.3.2
+  - added client-id to query websocket url
+
 12.3.1
   - bugfix for unsubscribeFromMarketData API
 
