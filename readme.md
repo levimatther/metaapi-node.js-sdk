@@ -396,6 +396,12 @@ const demoAccount = await api.metatraderDemoAccountApi.createMT5DemoAccount(prov
   });
 ```
 
+## Rate limits & quotas
+
+MetaApi applies rate limits to requests. See [MT account management API](https://metaapi.cloud/docs/provisioning/rateLimiting/) and [MetaApi API](https://metaapi.cloud/docs/client/restApi/rateLimiting/) for details.
+Also, MetaApi applies quotas to limit the number of accounts and provisioning profiles, for more details see the [MT account management API quotas](https://metaapi.cloud/docs/provisioning/userQuota/)
+
+
 ## CopyFactory copy trading API
 
 CopyFactory is a powerful trade copying API which makes developing forex
@@ -518,7 +524,7 @@ console.log(await historyApi.getSubscribers());
 console.log(await historyApi.getProvidedStrategies());
 
 // retrieve trading history, please note that this method support pagination and limits number of records
-console.log(await historyApi.getProvidedStrategiesTransactions(new Date('2020-08-01'), new Date('2020-09-01'));
+console.log(await historyApi.getProvidedStrategiesTransactions(new Date('2020-08-01'), new Date('2020-09-01')));
 ```
 
 #### Retrieving trading history on subscriber side
@@ -532,7 +538,7 @@ console.log(await historyApi.getProviders());
 console.log(await historyApi.getStrategiesSubscribed());
 
 // retrieve trading history, please note that this method support pagination and limits number of records
-console.log(await historyApi.getStrategiesSubscribedTransactions(new Date('2020-08-01'), new Date('2020-09-01'));
+console.log(await historyApi.getStrategiesSubscribedTransactions(new Date('2020-08-01'), new Date('2020-09-01')));
 ```
 
 #### Resynchronizing slave accounts to masters
@@ -573,7 +579,7 @@ let accountId = '...'; // CopyFactory account id
 console.log(await tradingApi.getUserLog(accountId));
 
 // retrieve paginated slave trading log by time range
-console.log(await tradingApi.getUserLog(accountId, new Date(Date.now() - 24 * 60 * 60 * 1000), undefined, 20, 10);
+console.log(await tradingApi.getUserLog(accountId, new Date(Date.now() - 24 * 60 * 60 * 1000), undefined, 20, 10));
 ```
 
 Keywords: MetaTrader API, MetaTrader REST API, MetaTrader websocket API,
