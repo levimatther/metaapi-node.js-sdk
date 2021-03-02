@@ -301,6 +301,14 @@ export default class ConfigurationClient extends MetaApiClient {
    */
 
   /**
+   * CopyFactory strategy equity curve filter
+   * @typedef {Object} CopyFactoryStrategyEquityCurveFilter
+   * @property {Number} period moving average period, must be greater or equal to 1
+   * @property {String} granularity moving average granularity, a positive integer followed by time unit, e.g. 2h.
+   * Allowed units are s, m, h, d and w.
+   */
+
+  /**
    * Retrieves CopyFactory copy trading strategies. See
    * https://trading-api-v1.agiliumtrade.agiliumtrade.ai/swagger/#!/default/get_users_current_configuration_strategies
    * @return {Promise<CopyFactoryStrategy>} promise resolving with CopyFactory strategies found
@@ -363,6 +371,8 @@ export default class ConfigurationClient extends MetaApiClient {
    * according to balance to preserve risk. If value is none, then trade size will be preserved irregardless of the
    * subscriber balance. If value is contractSize, then trade size will be scaled according to contract size. Default is
    * balance.
+   * @property {CopyFactoryStrategyEquityCurveFilter} equityCurveFilter filter which permits the trades only if account
+   * equity is greater than balance moving average
    */
 
   /**

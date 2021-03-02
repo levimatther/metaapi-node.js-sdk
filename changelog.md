@@ -1,5 +1,6 @@
-12.3.1
+12.4.0
   - bugfix for unsubscribeFromMarketData API
+  - added equity curve filter to CopyFactory
 
 12.3.0
   - added credit account property
