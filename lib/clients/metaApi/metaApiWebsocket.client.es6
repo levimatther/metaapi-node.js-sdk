@@ -100,7 +100,8 @@ export default class MetaApiWebsocketClient {
       this._connectPromise = result;
       this._packetOrderer.start();
       this._sessionId = randomstring.generate(32);
-      let url = `${this._url}?auth-token=${this._token}`;
+      let clientId = Math.random();
+      let url = `${this._url}?auth-token=${this._token}&client-id=${clientId}`;
       this._socket = socketIO(url, {
         path: '/ws',
         reconnection: true,
@@ -109,7 +110,7 @@ export default class MetaApiWebsocketClient {
         reconnectionAttempts: Infinity,
         timeout: this._connectTimeout,
         extraHeaders: {
-          'Client-id': Math.random()
+          'Client-id': clientId
         }
       });
       this._socket.on('connect', async () => {

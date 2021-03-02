@@ -1,4 +1,5 @@
 12.4.0
+  - added client-id to query websocket url
   - bugfix for unsubscribeFromMarketData API
   - added equity curve filter to CopyFactory
 
