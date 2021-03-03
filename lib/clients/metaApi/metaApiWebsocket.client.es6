@@ -110,7 +110,7 @@ export default class MetaApiWebsocketClient {
         reconnectionAttempts: Infinity,
         timeout: this._connectTimeout,
         extraHeaders: {
-          'ClientId': clientId
+          'Client-Id': clientId
         }
       });
       this._socket.on('connect', async () => {
