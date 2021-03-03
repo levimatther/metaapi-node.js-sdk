@@ -101,7 +101,7 @@ export default class MetaApiWebsocketClient {
       this._packetOrderer.start();
       this._sessionId = randomstring.generate(32);
       let clientId = Math.random();
-      let url = `${this._url}?auth-token=${this._token}&clientId=${clientId}&version=1.1`;
+      let url = `${this._url}?auth-token=${this._token}&clientId=${clientId}`;
       this._socket = socketIO(url, {
         path: '/ws',
         reconnection: true,
