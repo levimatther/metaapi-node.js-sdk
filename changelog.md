@@ -2,7 +2,6 @@
   - added clientId to query websocket url
   - bugfix for unsubscribeFromMarketData API
   - added equity curve filter to CopyFactory
-  - changed websocket header param Client-id to ClientId
   - fixed health state tracking for multiple replicas
 
 12.3.0
