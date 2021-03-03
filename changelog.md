@@ -1,7 +1,8 @@
 12.4.0
-  - added client-id to query websocket url
+  - added clientId to query websocket url
   - bugfix for unsubscribeFromMarketData API
   - added equity curve filter to CopyFactory
+  - changed websocket header param Client-id to ClientId
 
 12.3.0
   - added credit account property
