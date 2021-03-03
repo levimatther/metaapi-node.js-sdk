@@ -13,6 +13,7 @@ export default class TerminalState extends SynchronizationListener {
   constructor() {
     super();
     this._stateByInstanceIndex = {};
+    this._statusTimers = {};
   }
 
   /**
@@ -104,10 +105,10 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   _resetDisconnectTimer(instanceIndex) {
-    if (this._statusTimer) {
-      clearTimeout(this._statusTimer);
+    if (this._statusTimers[instanceIndex]) {
+      clearTimeout(this._statusTimers[instanceIndex]);
     }
-    this._statusTimer = setTimeout(() => {
+    this._statusTimers[instanceIndex] = setTimeout(() => {
       this.onDisconnected(instanceIndex);
     }, 60000);
   }
