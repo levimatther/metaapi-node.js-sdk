@@ -48,6 +48,28 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#_tryReconnect}
+   */
+  it('should change client id on reconnect', async () => {
+    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
+    client.close();
+    let clientId;
+    let connectAmount = 0;
+    io.on('connect', socket => {
+      connectAmount++;
+      socket.request._query.clientId.should.not.equal(clientId);
+      clientId = socket.request._query.clientId;
+      socket.disconnect();
+    });
+    await client.connect();
+    await new Promise(res => setTimeout(res, 50));
+    await clock.tickAsync(1500);
+    await new Promise(res => setTimeout(res, 50));
+    connectAmount.should.be.aboveOrEqual(2);
+    clock.restore();
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#getAccountInformation}
    */
   it('should retrieve MetaTrader account information from API', async () => {
