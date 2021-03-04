@@ -29,11 +29,11 @@ export default class MetaApiWebsocketClient {
   constructor(token, opts) {
     opts = opts || {};
     opts.packetOrderingTimeout = opts.packetOrderingTimeout || 60;
+    opts.synchronizationThrottler = opts.synchronizationThrottler || {};
     this._application = opts.application || 'MetaApi';
     this._url = `https://mt-client-api-v1.${opts.domain || 'agiliumtrade.agiliumtrade.ai'}`;
     this._requestTimeout = (opts.requestTimeout || 60) * 1000;
     this._connectTimeout = (opts.connectTimeout || 60) * 1000;
-    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 5;
     const retryOpts = opts.retryOpts || {};
     this._retries = retryOpts.retries || 5;
     this._minRetryDelayInSeconds = retryOpts.minDelayInSeconds || 1;
@@ -45,7 +45,7 @@ export default class MetaApiWebsocketClient {
     this._reconnectListeners = [];
     this._connectedHosts = {};
     this._resubscriptionTriggerTimes = {};
-    this._synchronizationThrottler = new SynchronizationThrottler(this, this._maxConcurrentSynchronizations);
+    this._synchronizationThrottler = new SynchronizationThrottler(this, opts.synchronizationThrottler);
     this._synchronizationThrottler.start();
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
