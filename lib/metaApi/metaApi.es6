@@ -13,6 +13,29 @@ import {ValidationError} from '../clients/errorHandler';
 import LatencyMonitor from './latencyMonitor';
 
 /**
+ * Request retry options
+ * @typedef {Object} RetryOpts
+ * @property {Number} [retries] maximum amount of request retries, default value is 5
+ * @property {Number} [minDelayInSeconds] minimum delay in seconds until request retry, default value is 1
+ * @property {Number} [maxDelayInSeconds] maximum delay in seconds until request retry, default value is 30
+ */
+
+/**
+ * MetaApi options
+ * @typedef {Object} MetaApiOpts
+ * @property {String} [application] application id
+ * @property {String} [domain] domain to connect to, default is agiliumtrade.agiliumtrade.ai
+ * @property {Number} [requestTimeout] timeout for socket requests in seconds
+ * @property {Number} [connectTimeout] timeout for connecting to server in seconds
+ * @property {Number} [packetOrderingTimeout] packet ordering timeout in seconds
+ * @property {PacketLoggerOpts} [packetLogger] packet logger options
+ * @property {Boolean} [enableLatencyMonitor] an option to enable latency tracking
+ * @property {Boolean} [enableLatencyTracking] an option to enable latency tracking
+ * @property {SynchronizationThrottlerOpts} [synchronizationThrottler] options for synchronization throttler
+ * @property {RetryOpts} [retryOpts] options for request retries
+ */
+
+/**
  * MetaApi MetaTrader API SDK
  */
 export default class MetaApi {
@@ -20,7 +43,7 @@ export default class MetaApi {
   /**
    * Constructs MetaApi class instance
    * @param {String} token authorization token
-   * @param {Object} opts application options
+   * @param {MetaApiOpts} opts application options
    */
   // eslint-disable-next-line complexity
   constructor(token, opts) {
@@ -32,13 +55,13 @@ export default class MetaApi {
     const packetOrderingTimeout = opts.packetOrderingTimeout || 60;
     const retryOpts = opts.retryOpts || {};
     const packetLogger = opts.packetLogger || {};
-    const maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 5;
+    const synchronizationThrottler = opts.synchronizationThrottler || {};
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, {application, domain, requestTimeout,
-      connectTimeout, packetLogger, packetOrderingTimeout, maxConcurrentSynchronizations, retryOpts});
+      connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),

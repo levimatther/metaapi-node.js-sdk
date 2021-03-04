@@ -3,6 +3,7 @@
   - bugfix for unsubscribeFromMarketData API
   - added equity curve filter to CopyFactory
   - fixed health state tracking for multiple replicas
+  - extended synchronization throttler options
 
 12.3.0
   - added credit account property

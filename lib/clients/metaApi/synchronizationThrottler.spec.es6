@@ -20,7 +20,7 @@ describe('SynchronizationThrottler', () => {
       shouldAdvanceTime: true
     });
     websocketClient._rpcRequest = sandbox.stub();
-    throttler = new SynchronizationThrottler(websocketClient, 2);
+    throttler = new SynchronizationThrottler(websocketClient, {maxConcurrentSynchronizations: 2});
     throttler.start();
   });
 

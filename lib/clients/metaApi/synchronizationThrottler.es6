@@ -1,6 +1,15 @@
 'use strict';
 
 /**
+ * Options for synchronization throttler
+ * @typedef {Object} SynchronizationThrottlerOpts
+ * @property {Number} [maxConcurrentSynchronizations] amount of maximum allowed concurrent synchronizations
+ * @property {Number} [queueTimeoutInSeconds] allowed time for a synchronization in queue
+ * @property {Number} [synchronizationTimeoutInSeconds] time after which a synchronization slot
+ * is freed to be used by another synchronization
+ */
+
+/**
  * Synchronization throttler used to limit the amount of concurrent synchronizations to prevent application
  * from being overloaded due to excessive number of synchronisation responses being sent.
  */
@@ -9,10 +18,13 @@ export default class SynchronizationThrottler {
   /**
    * Constructs the synchronization throttler
    * @param {MetaApiWebsocketClient} client MetaApi websocket client
-   * @param {Number} maxConcurrentSynchronizations limit of concurrent synchronizations
+   * @param {SynchronizationThrottlerOpts} opts synchronization throttler options
    */
-  constructor(client, maxConcurrentSynchronizations) {
-    this._maxConcurrentSynchronizations = maxConcurrentSynchronizations;
+  constructor(client, opts) {
+    opts = opts || {};
+    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 10;
+    this._queueTimeoutInSeconds = opts.queueTimeoutInSeconds || 300;
+    this._synchronizationTimeoutInSeconds = opts.synchronizationTimeoutInSeconds || 10;
     this._client = client;
     this._synchronizationIds = {};
     this._accountsBySynchronizationIds = {};
@@ -45,12 +57,13 @@ export default class SynchronizationThrottler {
   async _removeOldSyncIdsJob() {
     const now = Date.now();
     for (let key of Object.keys(this._synchronizationIds)) {
-      if ((now - this._synchronizationIds[key]) > 10 * 1000) {
+      if ((now - this._synchronizationIds[key]) > this._synchronizationTimeoutInSeconds * 1000) {
         delete this._synchronizationIds[key];
         this._advanceQueue();
       }
     }
-    while (this._synchronizationQueue.length && (Date.now() - this._synchronizationQueue[0].queueTime) > 300 * 1000) {
+    while (this._synchronizationQueue.length && (Date.now() - this._synchronizationQueue[0].queueTime) > 
+        this._queueTimeoutInSeconds * 1000) {
       this._removeFromQueue(this._synchronizationQueue[0].synchronizationId);
     }
   }

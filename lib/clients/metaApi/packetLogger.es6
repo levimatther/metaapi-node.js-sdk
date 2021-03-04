@@ -3,13 +3,22 @@ import fs from 'fs-extra';
 import moment from 'moment';
 
 /**
+ * Packet logger options
+ * @typedef {Object} PacketLoggerOpts
+ * @property {Number} [fileNumberLimit] maximum amount of files per account, default value is 12
+ * @property {Number} [logFileSizeInHours] amount of logged hours per account file, default value is 4
+ * @property {Boolean} [compressSpecifications] whether to compress specifications packets, default value is true
+ * @property {Boolean} [compressPrices] whether to compress specifications packets, default value is true
+ */
+
+/**
  * A class which records packets into log files
  */
 export default class PacketLogger {
 
   /**
    * Constructs the class
-   * @param {Object} opts packet logger options
+   * @param {PacketLoggerOpts} opts packet logger options
    */
   constructor(opts) {
     opts = opts || {};
