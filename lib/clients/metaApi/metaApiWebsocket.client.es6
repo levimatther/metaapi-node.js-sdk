@@ -180,8 +180,11 @@ export default class MetaApiWebsocketClient {
         requestResolve.reject(this._convertError(data));
       });
       this._socket.on('synchronization', async data => {
-        this._convertIsoTimeToDate(data);
-        await this._processSynchronizationPacket(data);
+        if((!data.synchronizationId) || 
+        this._synchronizationThrottler.activeSynchronizationIds.includes(data.synchronizationId)) {
+          this._convertIsoTimeToDate(data);
+          await this._processSynchronizationPacket(data);
+        }
       });
       return result;
     }

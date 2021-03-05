@@ -35,6 +35,7 @@ describe('MetaApiWebsocketClient', () => {
         socket.close();
       }
     });
+    sandbox.stub(client._synchronizationThrottler, 'activeSynchronizationIds').get(() => []);
     await client.connect();
   });
 
@@ -820,6 +821,27 @@ describe('MetaApiWebsocketClient', () => {
 
     afterEach(() => {
       client.removeAllListeners();
+    });
+
+    it('should only accept packets with own synchronization ids', async () => {
+      let listener = {
+        onAccountInformationUpdated: () => {},
+      };
+      sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      sandbox.stub(client._synchronizationThrottler, 'activeSynchronizationIds').get(() => ['synchronizationId']);
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+        accountInformation: {}, instanceIndex: 1});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.callCount(listener.onAccountInformationUpdated, 1);
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+        accountInformation: {}, instanceIndex: 1, synchronizationId: 'wrong'});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.callCount(listener.onAccountInformationUpdated, 1);
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+        accountInformation: {}, instanceIndex: 1, synchronizationId: 'synchronizationId'});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.callCount(listener.onAccountInformationUpdated, 2);
     });
 
     /**
