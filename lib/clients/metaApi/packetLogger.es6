@@ -5,6 +5,7 @@ import moment from 'moment';
 /**
  * Packet logger options
  * @typedef {Object} PacketLoggerOpts
+ * @property {Boolean} [enabled] whether packet logger is enabled
  * @property {Number} [fileNumberLimit] maximum amount of files per account, default value is 12
  * @property {Number} [logFileSizeInHours] amount of logged hours per account file, default value is 4
  * @property {Boolean} [compressSpecifications] whether to compress specifications packets, default value is true
@@ -27,7 +28,7 @@ export default class PacketLogger {
     this._compressSpecifications = opts.compressSpecifications !== undefined ? opts.compressSpecifications : true;
     this._compressPrices = opts.compressPrices !== undefined ? opts.compressPrices : true;
     this._previousPrices = {};
-    this._lastKeepAlive = {};
+    this._lastSNPacket = {};
     this._writeQueue = {};
     this._root = './.metaapi/logs';
     fs.ensureDir(this._root);
@@ -52,11 +53,11 @@ export default class PacketLogger {
     if(packet.type === 'status') {
       return;
     }
-    if(!this._lastKeepAlive[packet.accountId]) {
-      this._lastKeepAlive[packet.accountId] = {};
+    if(!this._lastSNPacket[packet.accountId]) {
+      this._lastSNPacket[packet.accountId] = {};
     }
-    if(packet.type === 'keepalive') {
-      this._lastKeepAlive[packet.accountId][instanceIndex] = packet;
+    if(['keepalive', 'noop'].includes(packet.type)) {
+      this._lastSNPacket[packet.accountId][instanceIndex] = packet;
       return;
     }
     const queue = this._writeQueue[packet.accountId].queue;
@@ -82,8 +83,8 @@ export default class PacketLogger {
       } else {
         if(prevPrice) {
           const validSequenceNumbers = [prevPrice.last.sequenceNumber, prevPrice.last.sequenceNumber + 1];
-          if(this._lastKeepAlive[packet.accountId][instanceIndex]) {
-            validSequenceNumbers.push(this._lastKeepAlive[packet.accountId][instanceIndex].sequenceNumber + 1);
+          if(this._lastSNPacket[packet.accountId][instanceIndex]) {
+            validSequenceNumbers.push(this._lastSNPacket[packet.accountId][instanceIndex].sequenceNumber + 1);
           }
           if(!validSequenceNumbers.includes(packet.sequenceNumber)) {
             this._recordPrices(packet.accountId, instanceIndex);
