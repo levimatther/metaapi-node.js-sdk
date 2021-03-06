@@ -79,6 +79,14 @@ export default class SynchronizationThrottler {
   }
 
   /**
+   * Returns the list of currenly active synchronization ids
+   * @return {String[]} synchronization ids
+   */
+  get activeSynchronizationIds() {
+    return Object.keys(this._accountsBySynchronizationIds);
+  }
+
+  /**
    * Returns flag whether there are free slots for synchronization requests
    * @return {Boolean} flag whether there are free slots for synchronization requests
    */
