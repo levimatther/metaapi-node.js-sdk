@@ -371,7 +371,7 @@ export default class ConfigurationClient extends MetaApiClient {
    * according to balance to preserve risk. If value is none, then trade size will be preserved irregardless of the
    * subscriber balance. If value is contractSize, then trade size will be scaled according to contract size. Default is
    * balance.
-   * @property {CopyFactoryStrategyEquityCurveFilter} equityCurveFilter filter which permits the trades only if account
+   * @property {CopyFactoryStrategyEquityCurveFilter} [equityCurveFilter] filter which permits the trades only if account
    * equity is greater than balance moving average
    */
 
