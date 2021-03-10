@@ -108,6 +108,9 @@ export default class MetaApiWebsocketClient {
         reconnectionDelayMax: 5000,
         reconnectionAttempts: Infinity,
         timeout: this._connectTimeout,
+        extraHeaders: {
+          'Client-Id': clientId
+        },
         query: {
           'auth-token': this._token,
           'clientId': clientId
@@ -789,7 +792,9 @@ export default class MetaApiWebsocketClient {
     return new Promise((resolve) => setTimeout(() => {
       if (!this._socket.connected && !this._socket.connecting && this._connected) {
         this._sessionId = randomstring.generate(32);
-        this._socket.io.opts.query.clientId = Math.random();
+        const clientId = Math.random();
+        this._socket.io.opts.extraHeaders['Client-Id'] = clientId;
+        this._socket.io.opts.query.clientId = clientId;
         this._socket.connect();
       }
       resolve();
