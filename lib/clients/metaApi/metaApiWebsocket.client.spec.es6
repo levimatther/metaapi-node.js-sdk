@@ -58,6 +58,8 @@ describe('MetaApiWebsocketClient', () => {
     let connectAmount = 0;
     io.on('connect', socket => {
       connectAmount++;
+      socket.request.headers['client-id'].should.equal(socket.request._query.clientId);
+      socket.request.headers['client-id'].should.not.equal(clientId);
       socket.request._query.clientId.should.not.equal(clientId);
       clientId = socket.request._query.clientId;
       socket.disconnect();
