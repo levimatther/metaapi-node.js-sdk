@@ -7,7 +7,7 @@ let accountId = process.env.ACCOUNT_ID || '<put in your account id here>';
 const api = new MetaApi(token);
 
 class EURUSDListener extends SynchronizationListener {
-  async onSymbolPriceUpdated(price) {
+  async onSymbolPriceUpdated(instanceIndex, price) {
     if(price.symbol === 'EURUSD') {
       console.log('EURUSD price updated', price);
     }
