@@ -4,7 +4,7 @@ import MetaApi from './metaApi/metaApi';
 import HistoryStorage from './metaApi/historyStorage';
 import MemoryHistoryStorage from './metaApi/memoryHistoryStorage';
 import SynchronizationListener from './clients/metaApi/synchronizationListener';
-import CopyFactory from './copyFactory/copyFactory';
+import CopyFactory from 'metaapi.cloud-copyfactory-sdk';
 
 export default MetaApi;
 
