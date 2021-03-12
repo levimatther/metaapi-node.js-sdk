@@ -21,7 +21,11 @@ async function streamQuotes() {
 
     // wait until account is deployed and connected to broker
     console.log('Deploying account');
-    await account.deploy();
+    if (account.state !== 'DEPLOYED') {
+      await account.deploy();
+    } else {
+      console.log('Account already deployed');
+    }
     console.log('Waiting for API server to connect to broker (may take couple of minutes)');
     await account.waitConnected();
 
