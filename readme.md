@@ -407,16 +407,4 @@ Also, MetaApi applies quotas to limit the number of accounts and provisioning pr
 CopyFactory is a powerful trade copying API which makes developing forex
 trade copying applications as easy as writing few lines of code.
 
-You can find CopyFactory API documentation here [https://github.com/agiliumtrade-ai/copyfactory-javscript-sdk](https://github.com/agiliumtrade-ai/copyfactory-javscript-sdk)
-
-Keywords: MetaTrader API, MetaTrader REST API, MetaTrader websocket API,
-MetaTrader 5 API, MetaTrader 5 REST API, MetaTrader 5 websocket API,
-MetaTrader 4 API, MetaTrader 4 REST API, MetaTrader 4 websocket API,
-MT5 API, MT5 REST API, MT5 websocket API, MT4 API, MT4 REST API,
-MT4 websocket API, MetaTrader SDK, MetaTrader SDK, MT4 SDK, MT5 SDK,
-MetaTrader 5 SDK, MetaTrader 4 SDK, MetaTrader node.js SDK, MetaTrader 5
-node.js SDK, MetaTrader 4 node.js SDK, MT5 node.js SDK, MT4 node.js SDK,
-FX REST API, Forex REST API, Forex websocket API, FX websocket API, FX
-SDK, Forex SDK, FX node.js SDK, Forex node.js SDK, Trading API, Forex
-API, FX API, Trading SDK, Trading REST API, Trading websocket API,
-Trading SDK, Trading node.js SDK
+You can find CopyFactory Javascript SDK documentation here: [https://github.com/agiliumtrade-ai/copyfactory-javscript-sdk](https://github.com/agiliumtrade-ai/copyfactory-javscript-sdk)

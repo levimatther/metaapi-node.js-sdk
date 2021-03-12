@@ -3,13 +3,14 @@ let SynchronizationListener = require('metaapi.cloud-sdk').SynchronizationListen
 
 let token = process.env.TOKEN || '<put in your token here>';
 let accountId = process.env.ACCOUNT_ID || '<put in your account id here>';
+let symbol = process.env.SYMBOL || 'EURUSD';
 
 const api = new MetaApi(token);
 
-class EURUSDListener extends SynchronizationListener {
+class QuoteListener extends SynchronizationListener {
   async onSymbolPriceUpdated(instanceIndex, price) {
-    if(price.symbol === 'EURUSD') {
-      console.log('EURUSD price updated', price);
+    if(price.symbol === symbol) {
+      console.log(symbol + ' price updated', price);
     }
   }
 }
@@ -32,8 +33,8 @@ async function streamQuotes() {
     // connect to MetaApi API
     let connection = await account.connect();
 
-    const eurUsdListener = new EURUSDListener();
-    connection.addSynchronizationListener(eurUsdListener);
+    const quoteListener = new QuoteListener();
+    connection.addSynchronizationListener(quoteListener);
 
     // wait until terminal state synchronized to the local state
     console.log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history ' + 
@@ -41,9 +42,9 @@ async function streamQuotes() {
     await connection.waitSynchronized(undefined, 1200);
 
     // Add symbol to MarketWatch if not yet added
-    await connection.subscribeToMarketData('EURUSD');
+    await connection.subscribeToMarketData(symbol);
 
-    console.log('Streaming EURUSD price now...');
+    console.log('Streaming ' + symbol + ' quotes now...');
 
     // eslint-disable-next-line
     while(true){
