@@ -787,6 +787,37 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onBrokerConnectionStatusChanged, 1, true);
     });
 
+    it('should call an onDisconnect if there was no signal for a long time', async () => {
+      const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
+      let listener = {
+        onConnected: () => {},
+        onDisconnected: () => {},
+        onBrokerConnectionStatusChanged: () => {}
+      };
+      sandbox.stub(listener, 'onDisconnected').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 1, replicas: 2});
+      server.emit('synchronization', {type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
+        instanceIndex: 1});
+      await new Promise(res => setTimeout(res, 50));
+      await clock.tickAsync(10000);
+      server.emit('synchronization', {type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
+        instanceIndex: 1});
+      await new Promise(res => setTimeout(res, 50));
+      await clock.tickAsync(55000);
+      sinon.assert.notCalled(listener.onDisconnected);
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 1, replicas: 2});
+      await new Promise(res => setTimeout(res, 50));
+      await clock.tickAsync(10000);
+      sinon.assert.notCalled(listener.onDisconnected);
+      await clock.tickAsync(55000);
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledWith(listener.onDisconnected, 1);
+      clock.restore();
+    });
+
     it('should process server-side health status event', async () => {
       let listener = {
         onBrokerConnectionStatusChanged: () => {},

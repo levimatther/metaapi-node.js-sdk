@@ -42,6 +42,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._isSubscribing = false;
     this._subscribeTask = null;
     this._subscribeFuture = null;
+    this._lastAccountReloadTime = 0;
   }
 
   /**
@@ -484,7 +485,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       this._isSubscribing = true;
       this._shouldRetrySubscribe = true;
       let subscribeRetryIntervalInSeconds = 3;
-      while(this._shouldRetrySubscribe && (!this._closed)) {
+      while(this._shouldRetrySubscribe && (!this._closed) && this._account.state === 'DEPLOYED') {
         try {
           await this._websocketClient.subscribe(this._account.id);
         } catch (error) {
@@ -636,13 +637,18 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Invoked when connection to MetaTrader terminal terminated
    * @param {Number} instanceIndex index of an account instance connected
    */
-  onDisconnected(instanceIndex) {
+  async onDisconnected(instanceIndex) {
     let state = this._getState(instanceIndex);
     state.lastDisconnectedSynchronizationId = state.lastSynchronizationId;
     state.lastSynchronizationId = undefined;
     state.shouldSynchronize = undefined;
     state.synchronized = false;
     state.disconnected = true;
+    if((Date.now() - 10 * 60 * 1000) > this._lastAccountReloadTime) {
+      await this._account.reload();
+      this._lastAccountReloadTime = Date.now();
+    }
+    this.subscribe();
   }
 
   /**
@@ -674,6 +680,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       this._subscribeFuture.resolve(false);
       clearTimeout(this._subscribeTask);
     }
+    await new Promise(res => setTimeout(res, 50));
     await this.subscribe();
   }
 
