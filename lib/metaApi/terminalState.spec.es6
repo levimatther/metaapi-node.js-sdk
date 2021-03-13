@@ -47,46 +47,6 @@ describe('TerminalState', () => {
   });
 
   /**
-   * @test {TerminalState#onBrokerConnectionStatus}
-   */
-  it('should call an onDisconnect if there was no signal for a long time', async () => {
-    const clock = sinon.useFakeTimers();
-    state.onConnected(1, 1);
-    state.onBrokerConnectionStatusChanged(1, true);
-    await clock.tickAsync(25000);
-    state.connectedToBroker.should.be.true();
-    state.connected.should.be.true();
-    await clock.tickAsync(45000);
-    state.connectedToBroker.should.be.false();
-    state.connected.should.be.false();
-    clock.restore();
-  });
-
-  /**
-   * @test {TerminalState#onBrokerConnectionStatus}
-   */
-  it('should call an onDisconnect if there was no signal for a long time on multiple instances', async () => {
-    const clock = sinon.useFakeTimers();
-    state.onConnected(1, 1);
-    state.onConnected(0, 2);
-    state.onBrokerConnectionStatusChanged(1, true);
-    await clock.tickAsync(25000);
-    state.onBrokerConnectionStatusChanged(1, true);
-    state.onBrokerConnectionStatusChanged(0, true);
-    await clock.tickAsync(45000);
-    state.connectedToBroker.should.be.true();
-    state.connected.should.be.true();
-    state.onBrokerConnectionStatusChanged(0, true);
-    await clock.tickAsync(25000);
-    state.connectedToBroker.should.be.true();
-    state.connected.should.be.true();
-    await clock.tickAsync(45000);
-    state.connectedToBroker.should.be.false();
-    state.connected.should.be.false();
-    clock.restore();
-  });
-
-  /**
    * @test {TerminalState#onAccountInformationUpdated}
    * @test {TerminalState#accountInformation}
    */

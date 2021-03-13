@@ -44,9 +44,9 @@ export default class MetaApiWebsocketClient {
     this._latencyListeners = [];
     this._reconnectListeners = [];
     this._connectedHosts = {};
-    this._resubscriptionTriggerTimes = {};
     this._synchronizationThrottler = new SynchronizationThrottler(this, opts.synchronizationThrottler);
     this._synchronizationThrottler.start();
+    this._statusTimers = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
@@ -1031,7 +1031,33 @@ export default class MetaApiWebsocketClient {
         }
         let instanceId = data.accountId + ':' + (data.instanceIndex || 0);
         let instanceIndex = data.instanceIndex || 0;
+
+        const resetDisconnectTimer = () => {
+          if (this._statusTimers[instanceId]) {
+            clearTimeout(this._statusTimers[instanceId]);
+          }
+          this._statusTimers[instanceId] = setTimeout(() => {
+            onDisconnected();
+          }, 60000);
+        };
+
+        const onDisconnected = async () => { 
+          if (this._connectedHosts[instanceId] === data.host) {
+            const onDisconnectedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onDisconnectedPromises.push(
+                Promise.resolve(listener.onDisconnected(instanceIndex))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
+                    err))
+              );
+            }
+            await Promise.all(onDisconnectedPromises);
+            delete this._connectedHosts[instanceId];
+          }
+        };
         if (data.type === 'authenticated') {
+          resetDisconnectTimer();
           if((!data.sessionId) || (data.sessionId === this._sessionId)) {
             this._connectedHosts[instanceId] = data.host;
             const onConnectedPromises = [];
@@ -1046,19 +1072,10 @@ export default class MetaApiWebsocketClient {
             await Promise.all(onConnectedPromises);
           }
         } else if (data.type === 'disconnected') {
-          if (this._connectedHosts[instanceId] === data.host) {
-            const onDisconnectedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onDisconnectedPromises.push(
-                Promise.resolve(listener.onDisconnected(instanceIndex))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
-                    err))
-              );
-            }
-            await Promise.all(onDisconnectedPromises);
-            delete this._connectedHosts[instanceId];
+          if (this._statusTimers[instanceId]) {
+            clearTimeout(this._statusTimers[instanceId]);
           }
+          await onDisconnected();
         } else if (data.type === 'synchronizationStarted') {
           const promises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1245,23 +1262,18 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onOrderSynchronizationFinishedPromises);
         } else if (data.type === 'status') {
+          resetDisconnectTimer();
           if (!this._connectedHosts[instanceId]) {
-            if (!this._resubscriptionTriggerTimes[instanceId]) {
-              this._resubscriptionTriggerTimes[instanceId] = new Date();
-            } else if (this._resubscriptionTriggerTimes[instanceId].getTime() + 2 * 60 * 1000 < Date.now()) {
-              delete this._resubscriptionTriggerTimes[instanceId];
-              // eslint-disable-next-line no-console
-              console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
-                'server yet, retrying subscription for account ' + instanceId);
-              this.subscribe(data.accountId, data.instanceIndex).catch(err => {
-                if (err.name !== 'TimeoutError') {
-                  console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-                    'subscribe response for account id ' + instanceId, err);
-                }
-              });
-            }
+            // eslint-disable-next-line no-console
+            console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
+                        'server yet, retrying subscription for account ' + instanceId);
+            this.subscribe(data.accountId, data.instanceIndex).catch(err => {
+              if (err.name !== 'TimeoutError') {
+                console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
+                              'subscribe response for account id ' + instanceId, err);
+              }
+            });
           } else if (this._connectedHosts[instanceId] === data.host) {
-            delete this._resubscriptionTriggerTimes[instanceId];
             const onBrokerConnectionStatusChangedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onBrokerConnectionStatusChangedPromises.push(
