@@ -28,7 +28,9 @@ async function streamQuotes() {
       console.log('Account already deployed');
     }
     console.log('Waiting for API server to connect to broker (may take couple of minutes)');
-    await account.waitConnected();
+    if (account.connectionStatus !== 'CONNECTED') {
+      await account.waitConnected();
+    }
 
     // connect to MetaApi API
     let connection = await account.connect();

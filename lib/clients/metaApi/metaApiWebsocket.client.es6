@@ -647,27 +647,48 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Market data subscription
+   * @typedef {Object} MarketDataSubscription
+   * @property {string} type subscription type, one of quotes, candles, ticks, or marketDepth
+   * @property {string} [timeframe] when subscription type is candles, defined the timeframe accorsing to which the
+   * candles must be generated. Allowed values for MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h,
+   * 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
+   * @property {number} [intervalInMilliseconds] defines how frequently the terminal will stream data to client. If not
+   * set, then the value configured in account will be used
+   */
+
+  /**
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
    * @param {String} accountId id of the MetaTrader account
    * @param {Number} instanceIndex instance index
    * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
+   * note that this feature is not fully implemented on server-side yet
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(accountId, instanceIndex, symbol) {
-    return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, instanceIndex});
+  subscribeToMarketData(accountId, instanceIndex, symbol, subscriptions) {
+    return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, subscriptions, instanceIndex});
   }
 
   /**
+   * Market data unsubscription
+   * @typedef {Object} MarketDataUnsubscription
+   * @property {string} type subscription type, one of quotes, candles, ticks, or marketDepth
+   */
+
+   /**
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
    * @param {String} accountId id of the MetaTrader account
    * @param {Number} instanceIndex instance index
    * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
+   * @param {Number} instanceIndex instance index
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(accountId, instanceIndex, symbol) {
-    return this._rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, instanceIndex});
+  unsubscribeFromMarketData(accountId, instanceIndex, symbol, subscriptions) {
+    return this._rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, subscriptions, instanceIndex});
   }
 
   /**

@@ -6,6 +6,7 @@
   - extended synchronization throttler options
   - move CopyFactory trade copying API to a separate npm module
   - increase socket connection stability
+  - added API for advanced market data subscriptions
 
 12.3.0
   - added credit account property

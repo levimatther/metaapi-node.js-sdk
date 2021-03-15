@@ -1276,12 +1276,13 @@ describe('MetaApiWebsocketClient', () => {
       let requestReceived = false;
       server.on('request', data => {
         if (data.type === 'subscribeToMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
-          data.application === 'application' && data.instanceIndex === 1) {
+          data.application === 'application' && data.instanceIndex === 1 &&
+          JSON.stringify(data.subscriptions) === JSON.stringify([{type: 'quotes'}])) {
           requestReceived = true;
           server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         }
       });
-      await client.subscribeToMarketData('accountId', 1, 'EURUSD');
+      await client.subscribeToMarketData('accountId', 1, 'EURUSD', [{type: 'quotes'}]);
       requestReceived.should.be.true();
     });
 
@@ -1292,12 +1293,13 @@ describe('MetaApiWebsocketClient', () => {
       let requestReceived = false;
       server.on('request', data => {
         if (data.type === 'unsubscribeFromMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
-          data.application === 'application' && data.instanceIndex === 1) {
+          data.application === 'application' && data.instanceIndex === 1 &&
+          JSON.stringify(data.subscriptions) === JSON.stringify([{type: 'quotes'}])) {
           requestReceived = true;
           server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         }
       });
-      await client.unsubscribeFromMarketData('accountId', 1, 'EURUSD');
+      await client.unsubscribeFromMarketData('accountId', 1, 'EURUSD', [{type: 'quotes'}]);
       requestReceived.should.be.true();
     });
 

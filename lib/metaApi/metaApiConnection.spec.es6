@@ -802,8 +802,8 @@ describe('MetaApiConnection', () => {
    */
   it('should subscribe to market data', async () => {
     sandbox.stub(client, 'subscribeToMarketData').resolves();
-    await api.subscribeToMarketData('EURUSD', 1);
-    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD');
+    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
+    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
   });
 
   /**
@@ -811,8 +811,8 @@ describe('MetaApiConnection', () => {
    */
   it('should unsubscribe from market data', async () => {
     sandbox.stub(client, 'unsubscribeFromMarketData').resolves();
-    await api.unsubscribeFromMarketData('EURUSD', 1);
-    sinon.assert.calledWith(client.unsubscribeFromMarketData, 'accountId', 1, 'EURUSD');
+    await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}], 1);
+    sinon.assert.calledWith(client.unsubscribeFromMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
   });
 
   /**

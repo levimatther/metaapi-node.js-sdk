@@ -515,24 +515,35 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
    * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
+   * note that this feature is not fully implemented on server-side yet
    * @param {Number} instanceIndex instance index
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(symbol, instanceIndex) {
-    this._subscriptions[symbol] = true;
-    return this._websocketClient.subscribeToMarketData(this._account.id, instanceIndex, symbol);
+  subscribeToMarketData(symbol, subscriptions, instanceIndex) {
+    this._subscriptions[symbol] = {subscriptions};
+    return this._websocketClient.subscribeToMarketData(this._account.id, instanceIndex, symbol, subscriptions);
   }
 
   /**
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
    * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
    * @param {Number} instanceIndex instance index
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(symbol, instanceIndex) {
-    delete this._subscriptions[symbol];
-    return this._websocketClient.unsubscribeFromMarketData(this._account.id, instanceIndex, symbol);
+  unsubscribeFromMarketData(symbol, subscriptions, instanceIndex) {
+    if (!subscriptions) {
+      delete this._subscriptions[symbol];
+    } else if (this._subscriptions[symbol]) {
+      this._subscriptions[symbol].subscriptions = this._subscriptions[symbol].subscriptions
+        .filter(s => !subscriptions.find(s2 => s.type === s2.type));
+      if (!this._subscriptions[symbol].subscriptions.length) {
+        delete this._subscriptions[symbol];
+      }
+    }
+    return this._websocketClient.unsubscribeFromMarketData(this._account.id, instanceIndex, symbol, subscriptions);
   }
 
   /**
@@ -541,6 +552,15 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   get subscribedSymbols() {
     return Object.keys(this._subscriptions);
+  }
+
+  /**
+   * Returns subscriptions for a symbol
+   * @param {string} symbol symbol to retrieve subscriptions for
+   * @returns {Array<MarketDataSubscription>} list of market data subscriptions for the symbol
+   */
+  subscriptions(symbol) {
+    return (this._subscriptions[symbol] || {}).subscriptions;
   }
 
   /**
@@ -802,7 +822,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       try {
         await this.synchronize(instanceIndex);
         for (let symbol of Object.keys(this._subscriptions)) {
-          await this.subscribeToMarketData(symbol, instanceIndex);
+          await this.subscribeToMarketData(symbol, this._subscriptions[symbol].subscriptions, instanceIndex);
         }
         state.synchronized = true;
         state.synchronizationRetryIntervalInSeconds = 1;
