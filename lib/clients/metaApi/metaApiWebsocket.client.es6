@@ -1039,6 +1039,21 @@ export default class MetaApiWebsocketClient {
    * @property {String} brokerTime time quote time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
 
+  /**
+   * MetaTrader candle
+   * @typedef {Object} MetatraderCandle
+   * @property {string} symbol symbol (e.g. currency pair or an index)
+   * @property {Date} time candle opening time
+   * @property {string} brokerTime candle opening time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   * @property {number} open open price
+   * @property {number} high high price
+   * @property {number} low low price
+   * @property {number} close close price
+   * @property {number} tickVolume tick volume, i.e. number of ticks inside the candle
+   * @property {number} spread spread in points
+   * @property {number} volume trade volume
+   */
+
   // eslint-disable-next-line complexity,max-statements
   async _processSynchronizationPacket(packet) {
     try {
@@ -1334,14 +1349,25 @@ export default class MetaApiWebsocketClient {
           }
         } else if (data.type === 'prices') {
           let prices = data.prices || [];
+          let candles = data.candles || [];
           const onSymbolPricesUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onSymbolPricesUpdatedPromises.push(
-              Promise.resolve(listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin,
-                data.freeMargin, data.marginLevel))
-              // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
-            );
+            if (prices.length) {
+              onSymbolPricesUpdatedPromises.push(
+                Promise.resolve(listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin,
+                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
+              );
+            }
+            if (candles.length) {
+              onSymbolPricesUpdatedPromises.push(
+                Promise.resolve(listener.onCandlesUpdated(instanceIndex, candles, data.equity, data.margin,
+                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about candles event`, err))
+              );
+            }
           }
           await Promise.all(onSymbolPricesUpdatedPromises);
           for (let price of prices) {
