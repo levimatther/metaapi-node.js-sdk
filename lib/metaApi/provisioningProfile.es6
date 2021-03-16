@@ -84,7 +84,7 @@ export default class ProvisioningProfile {
    * @param {String} fileName name of the file to upload. Allowed values are servers.dat for MT5 profile, broker.srv for
    * MT4 profile
    * @param {String|Buffer} file path to a file to upload or buffer containing file contents
-   * @return {Promise} promise which resolves when the file is uploaded
+   * @return {Promise} promise which resolves when the file was uploaded
    */
   uploadFile(fileName, file) {
     return this._provisioningProfileClient.uploadProvisioningProfileFile(this.id, fileName, file);
