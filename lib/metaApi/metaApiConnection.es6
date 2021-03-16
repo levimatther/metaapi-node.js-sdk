@@ -565,7 +565,7 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Retrieves specification for a symbol (see
-   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolSpecification/).
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolSpecification/).
    * @param {String} symbol symbol to retrieve specification for
    * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
    */
@@ -575,12 +575,25 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Retrieves specification for a symbol (see
-   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolPrice/).
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolPrice/).
    * @param {String} symbol symbol to retrieve price for
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
   getSymbolPrice(symbol) {
     return this._websocketClient.getSymbolPrice(this._account.id, symbol);
+  }
+
+  /**
+   * Retrieves specification for a symbol (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readCandle/).
+   * @param {String} symbol symbol to retrieve candle for
+   * @param {string} timeframe defines the timeframe according to which the candle must be generated. Allowed values for
+   * MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values
+   * for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
+   * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when candle is retrieved
+   */
+  getCandle(symbol, timeframe) {
+    return this._websocketClient.getCandle(this._account.id, symbol, timeframe);
   }
 
   /**

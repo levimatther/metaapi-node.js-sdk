@@ -41,6 +41,7 @@ describe('MetaApiConnection', () => {
     removeSynchronizationListener: () => {},
     getSymbolSpecification: () => {},
     getSymbolPrice: () => {},
+    getCandle: () => {},
     saveUptime: () => {},
     waitSynchronized: () => {},
     unsubscribe: () => {}
@@ -847,6 +848,29 @@ describe('MetaApiConnection', () => {
     let actual = await api.getSymbolPrice('AUDNZD');
     actual.should.match(price);
     sinon.assert.calledWith(client.getSymbolPrice, 'accountId', 'AUDNZD');
+  });
+
+  /**
+   * @test {MetaApiConnection#getCandle}
+   */
+  it('should retrieve current candle', async () => {
+    let candle = {
+      symbol: 'AUDNZD',
+      timeframe: '15m',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      open: 1.03297,
+      high: 1.06309,
+      low: 1.02705,
+      close: 1.043,
+      tickVolume: 1435,
+      spread: 17,
+      volume: 345
+    };
+    sandbox.stub(client, 'getCandle').resolves(candle);
+    let actual = await api.getCandle('AUDNZD', '15m');
+    actual.should.match(candle);
+    sinon.assert.calledWith(client.getCandle, 'accountId', 'AUDNZD', '15m');
   });
 
   /**

@@ -650,7 +650,7 @@ export default class MetaApiWebsocketClient {
    * Market data subscription
    * @typedef {Object} MarketDataSubscription
    * @property {string} type subscription type, one of quotes, candles, ticks, or marketDepth
-   * @property {string} [timeframe] when subscription type is candles, defined the timeframe accorsing to which the
+   * @property {string} [timeframe] when subscription type is candles, defines the timeframe according to which the
    * candles must be generated. Allowed values for MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h,
    * 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
    * @property {number} [intervalInMilliseconds] defines how frequently the terminal will stream data to client. If not
@@ -677,7 +677,7 @@ export default class MetaApiWebsocketClient {
    * @property {string} type subscription type, one of quotes, candles, ticks, or marketDepth
    */
 
-   /**
+  /**
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
    * @param {String} accountId id of the MetaTrader account
@@ -693,7 +693,7 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Retrieves specification for a symbol (see
-   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolSpecification/).
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolSpecification/).
    * @param {String} accountId id of the MetaTrader account to retrieve symbol specification for
    * @param {String} symbol symbol to retrieve specification for
    * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
@@ -705,7 +705,7 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Retrieves price for a symbol (see
-   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/getSymbolPrice/).
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolPrice/).
    * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
    * @param {String} symbol symbol to retrieve price for
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
@@ -713,6 +713,21 @@ export default class MetaApiWebsocketClient {
   async getSymbolPrice(accountId, symbol) {
     let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbolPrice', symbol});
     return response.price;
+  }
+
+  /**
+   * Retrieves price for a symbol (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readCandle/).
+   * @param {string} accountId id of the MetaTrader account to retrieve symbol price for
+   * @param {string} symbol symbol to retrieve candle for
+   * @param {string} timeframe defines the timeframe according to which the candle must be generated. Allowed values for
+   * MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values
+   * for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
+   * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when candle is retrieved
+   */
+  async getCandle(accountId, symbol, timeframe) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getCandle', symbol, timeframe});
+    return response.candle;
   }
 
   /**
@@ -1043,6 +1058,8 @@ export default class MetaApiWebsocketClient {
    * MetaTrader candle
    * @typedef {Object} MetatraderCandle
    * @property {string} symbol symbol (e.g. currency pair or an index)
+   * @property {string} timeframe timeframe candle was generated for, e.g. 1h. One of 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m,
+   * 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn
    * @property {Date} time candle opening time
    * @property {string} brokerTime candle opening time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    * @property {number} open open price

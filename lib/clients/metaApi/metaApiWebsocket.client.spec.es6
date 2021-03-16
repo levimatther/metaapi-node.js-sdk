@@ -612,6 +612,33 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#getCandle}
+   */
+  it('should retrieve candle from API', async () => {
+    let candle = {
+      symbol: 'AUDNZD',
+      timeframe: '15m',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      open: 1.03297,
+      high: 1.06309,
+      low: 1.02705,
+      close: 1.043,
+      tickVolume: 1435,
+      spread: 17,
+      volume: 345
+    };
+    server.on('request', data => {
+      if (data.type === 'getCandle' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
+        data.application === 'RPC' && data.timeframe === '15m') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, candle});
+      }
+    });
+    let actual = await client.getCandle('accountId', 'AUDNZD', '15m');
+    actual.should.match(candle);
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#sendUptime}
    */
   it('should sent uptime stats to the server', async () => {
