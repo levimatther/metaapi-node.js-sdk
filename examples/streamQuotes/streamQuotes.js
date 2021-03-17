@@ -20,6 +20,13 @@ class QuoteListener extends SynchronizationListener {
       }
     }
   }
+  async onTicksUpdated(instanceIndex, ticks) {
+    for (let tick of ticks) {
+      if (tick.symbol === symbol) {
+        console.log(symbol + ' tick updated', tick);
+      }
+    }
+  }
 }
 
 // eslint-disable-next-line
@@ -53,7 +60,8 @@ async function streamQuotes() {
     // Add symbol to MarketWatch if not yet added
     await connection.subscribeToMarketData(symbol, [
       {type: 'quotes', intervalInMilliseconds: 5000},
-      {type: 'candles', timeframe: '1m', intervalInMilliseconds: 10000}
+      {type: 'candles', timeframe: '1m', intervalInMilliseconds: 10000},
+      {type: 'ticks'}
     ]);
 
     console.log('Streaming ' + symbol + ' quotes now...');

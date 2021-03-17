@@ -718,16 +718,28 @@ export default class MetaApiWebsocketClient {
   /**
    * Retrieves price for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readCandle/).
-   * @param {string} accountId id of the MetaTrader account to retrieve symbol price for
+   * @param {string} accountId id of the MetaTrader account to retrieve candle for
    * @param {string} symbol symbol to retrieve candle for
    * @param {string} timeframe defines the timeframe according to which the candle must be generated. Allowed values for
    * MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values
    * for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
-   * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when candle is retrieved
+   * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
   async getCandle(accountId, symbol, timeframe) {
     let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getCandle', symbol, timeframe});
     return response.candle;
+  }
+
+  /**
+   * Retrieves latest tick for a symbol (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readTick/).
+   * @param {string} accountId id of the MetaTrader account to retrieve symbol tick for
+   * @param {string} symbol symbol to retrieve tick for
+   * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
+   */
+  async getTick(accountId, symbol) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getTick', symbol});
+    return response.tick;
   }
 
   /**
@@ -1071,6 +1083,19 @@ export default class MetaApiWebsocketClient {
    * @property {number} volume trade volume
    */
 
+  /**
+   * MetaTrader tick data
+   * @typdef {Object} MetatraderTick
+   * @property {string} symbol symbol (e.g. a currency pair or an index)
+   * @property {Date} time time
+   * @property {string} brokerTime time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   * @property {number} [bid] bid price
+   * @property {number} [ask] ask price
+   * @property {number} [last] last deal price
+   * @property {number} [volume] volume for the current last deal price
+   * @property {string} side is tick a result of buy or sell deal, one of buy or sell
+   */
+
   // eslint-disable-next-line complexity,max-statements
   async _processSynchronizationPacket(packet) {
     try {
@@ -1367,6 +1392,7 @@ export default class MetaApiWebsocketClient {
         } else if (data.type === 'prices') {
           let prices = data.prices || [];
           let candles = data.candles || [];
+          let ticks = data.ticks || [];
           const onSymbolPricesUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             if (prices.length) {
@@ -1383,6 +1409,14 @@ export default class MetaApiWebsocketClient {
                   data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about candles event`, err))
+              );
+            }
+            if (ticks.length) {
+              onSymbolPricesUpdatedPromises.push(
+                Promise.resolve(listener.onTicksUpdated(instanceIndex, ticks, data.equity, data.margin,
+                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about ticks event`, err))
               );
             }
           }

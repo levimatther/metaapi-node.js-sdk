@@ -574,7 +574,7 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
-   * Retrieves specification for a symbol (see
+   * Retrieves latest price for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolPrice/).
    * @param {String} symbol symbol to retrieve price for
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
@@ -584,16 +584,26 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
-   * Retrieves specification for a symbol (see
+   * Retrieves latest candle for a symbol and timeframe (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readCandle/).
    * @param {String} symbol symbol to retrieve candle for
    * @param {string} timeframe defines the timeframe according to which the candle must be generated. Allowed values for
    * MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values
    * for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
-   * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when candle is retrieved
+   * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
   getCandle(symbol, timeframe) {
     return this._websocketClient.getCandle(this._account.id, symbol, timeframe);
+  }
+
+  /**
+   * Retrieves latest tick for a symbol (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readTick/).
+   * @param {String} symbol symbol to retrieve tick for
+   * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
+   */
+  getTick(symbol) {
+    return this._websocketClient.getTick(this._account.id, symbol);
   }
 
   /**

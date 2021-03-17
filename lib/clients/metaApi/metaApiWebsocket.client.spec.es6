@@ -639,6 +639,30 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#getTick}
+   */
+  it('should retrieve latest tick from API', async () => {
+    let tick = {
+      symbol: 'AUDNZD',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      bid: 1.05297,
+      ask: 1.05309,
+      last: 0.5298,
+      volume: 0.13,
+      side: 'buy'
+    };
+    server.on('request', data => {
+      if (data.type === 'getTick' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
+        data.application === 'RPC') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, tick});
+      }
+    });
+    let actual = await client.getTick('accountId', 'AUDNZD');
+    actual.should.match(tick);
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#sendUptime}
    */
   it('should sent uptime stats to the server', async () => {

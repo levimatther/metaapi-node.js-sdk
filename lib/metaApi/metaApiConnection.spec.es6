@@ -42,6 +42,7 @@ describe('MetaApiConnection', () => {
     getSymbolSpecification: () => {},
     getSymbolPrice: () => {},
     getCandle: () => {},
+    getTick: () => {},
     saveUptime: () => {},
     waitSynchronized: () => {},
     unsubscribe: () => {}
@@ -871,6 +872,26 @@ describe('MetaApiConnection', () => {
     let actual = await api.getCandle('AUDNZD', '15m');
     actual.should.match(candle);
     sinon.assert.calledWith(client.getCandle, 'accountId', 'AUDNZD', '15m');
+  });
+
+  /**
+   * @test {MetaApiConnection#getTick}
+   */
+  it('should retrieve latest tick', async () => {
+    let tick = {
+      symbol: 'AUDNZD',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      bid: 1.05297,
+      ask: 1.05309,
+      last: 0.5298,
+      volume: 0.13,
+      side: 'buy'
+    };
+    sandbox.stub(client, 'getTick').resolves(tick);
+    let actual = await api.getTick('AUDNZD');
+    actual.should.match(tick);
+    sinon.assert.calledWith(client.getTick, 'accountId', 'AUDNZD');
   });
 
   /**
