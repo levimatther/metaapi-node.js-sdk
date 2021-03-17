@@ -607,6 +607,16 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Retrieves latest order book for a symbol (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readBook/).
+   * @param {String} symbol symbol to retrieve order book for
+   * @returns {Promise<MetatraderTick>} promise which resolves when order book is retrieved
+   */
+  getBook(symbol) {
+    return this._websocketClient.getBook(this._account.id, symbol);
+  }
+
+  /**
    * Sends client uptime stats to the server.
    * @param {Object} uptime uptime statistics to send to the server
    * @returns {Promise} promise which resolves when uptime statistics is submitted

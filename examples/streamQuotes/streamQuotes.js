@@ -27,6 +27,13 @@ class QuoteListener extends SynchronizationListener {
       }
     }
   }
+  async onBooksUpdated(instanceIndex, books) {
+    for (let book of books) {
+      if (book.symbol === symbol) {
+        console.log(symbol + ' order book updated', book);
+      }
+    }
+  }
 }
 
 // eslint-disable-next-line
@@ -61,7 +68,8 @@ async function streamQuotes() {
     await connection.subscribeToMarketData(symbol, [
       {type: 'quotes', intervalInMilliseconds: 5000},
       {type: 'candles', timeframe: '1m', intervalInMilliseconds: 10000},
-      {type: 'ticks'}
+      {type: 'ticks'},
+      {type: 'marketDepth', intervalInMilliseconds: 5000}
     ]);
 
     console.log('Streaming ' + symbol + ' quotes now...');

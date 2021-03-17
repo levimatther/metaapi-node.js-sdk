@@ -43,6 +43,7 @@ describe('MetaApiConnection', () => {
     getSymbolPrice: () => {},
     getCandle: () => {},
     getTick: () => {},
+    getBook: () => {},
     saveUptime: () => {},
     waitSynchronized: () => {},
     unsubscribe: () => {}
@@ -892,6 +893,33 @@ describe('MetaApiConnection', () => {
     let actual = await api.getTick('AUDNZD');
     actual.should.match(tick);
     sinon.assert.calledWith(client.getTick, 'accountId', 'AUDNZD');
+  });
+
+  /**
+   * @test {MetaApiConnection#getBook}
+   */
+  it('should retrieve latest order book', async () => {
+    let book = {
+      symbol: 'AUDNZD',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      book: [
+        {
+          type: 'BOOK_TYPE_SELL',
+          price: 1.05309,
+          volume: 5.67
+        },
+        {
+          type: 'BOOK_TYPE_BUY',
+          price: 1.05297,
+          volume: 3.45
+        }
+      ]
+    };
+    sandbox.stub(client, 'getBook').resolves(book);
+    let actual = await api.getBook('AUDNZD');
+    actual.should.match(book);
+    sinon.assert.calledWith(client.getBook, 'accountId', 'AUDNZD');
   });
 
   /**

@@ -743,6 +743,18 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Retrieves latest order book for a symbol (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readBook/).
+   * @param {string} accountId id of the MetaTrader account to retrieve symbol order book for
+   * @param {string} symbol symbol to retrieve order book for
+   * @returns {Promise<MetatraderBook>} promise which resolves when order book is retrieved
+   */
+  async getBook(accountId, symbol) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getBook', symbol});
+    return response.book;
+  }
+
+  /**
    * Sends client uptime stats to the server.
    * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
    * @param {Object} uptime uptime statistics to send to the server
@@ -1085,7 +1097,7 @@ export default class MetaApiWebsocketClient {
 
   /**
    * MetaTrader tick data
-   * @typdef {Object} MetatraderTick
+   * @typedef {Object} MetatraderTick
    * @property {string} symbol symbol (e.g. a currency pair or an index)
    * @property {Date} time time
    * @property {string} brokerTime time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
@@ -1094,6 +1106,24 @@ export default class MetaApiWebsocketClient {
    * @property {number} [last] last deal price
    * @property {number} [volume] volume for the current last deal price
    * @property {string} side is tick a result of buy or sell deal, one of buy or sell
+   */
+
+  /**
+   * MetaTrader order book
+   * @typedef {Object} MetatraderBook
+   * @property {string} symbol symbol (e.g. a currency pair or an index)
+   * @property {Date} time time
+   * @property {string} brokerTime time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   * @property {Array<MetatraderBookEntry>} book list of order book entries
+   */
+
+  /**
+   * MetaTrader order book entry
+   * @typedef {Object} MetatraderBookEntry
+   * @property {string} type entry type, one of BOOK_TYPE_SELL, BOOK_TYPE_BUY, BOOK_TYPE_SELL_MARKET,
+   * BOOK_TYPE_BUY_MARKET
+   * @property {number} price price
+   * @property {number} volume volume
    */
 
   // eslint-disable-next-line complexity,max-statements
@@ -1393,6 +1423,7 @@ export default class MetaApiWebsocketClient {
           let prices = data.prices || [];
           let candles = data.candles || [];
           let ticks = data.ticks || [];
+          let books = data.books || [];
           const onSymbolPricesUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             if (prices.length) {
@@ -1417,6 +1448,14 @@ export default class MetaApiWebsocketClient {
                   data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
                   .catch(err => console.error(`${data.accountId}: Failed to notify listener about ticks event`, err))
+              );
+            }
+            if (books.length) {
+              onSymbolPricesUpdatedPromises.push(
+                Promise.resolve(listener.onBooksUpdated(instanceIndex, books, data.equity, data.margin,
+                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+                // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about books event`, err))
               );
             }
           }

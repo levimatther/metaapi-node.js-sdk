@@ -170,7 +170,7 @@ export default class SynchronizationListener {
     accountCurrencyExchangeRate) {}
 
   /**
-   * Invoked when a symbol candles were updated
+   * Invoked when symbol candles were updated
    * @param {Number} instanceIndex index of an account instance connected
    * @param {Array<MetatraderCandle>} candles updated MetaTrader symbol candles
    * @param {Number} equity account liquidation value
@@ -184,7 +184,7 @@ export default class SynchronizationListener {
     accountCurrencyExchangeRate) {}
 
   /**
-   * Invoked when a symbol ticks were updated
+   * Invoked when symbol ticks were updated
    * @param {Number} instanceIndex index of an account instance connected
    * @param {Array<MetatraderTick>} ticks updated MetaTrader symbol ticks
    * @param {Number} equity account liquidation value
@@ -195,6 +195,20 @@ export default class SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onTicksUpdated(instanceIndex, ticks, equity, margin, freeMargin, marginLevel,
+    accountCurrencyExchangeRate) {}
+
+  /**
+   * Invoked when order books were updated
+   * @param {Number} instanceIndex index of an account instance connected
+   * @param {Array<MetatraderBook>} books updated MetaTrader order books
+   * @param {Number} equity account liquidation value
+   * @param {Number} margin margin used
+   * @param {Number} freeMargin free margin
+   * @param {Number} marginLevel margin level calculated as % of equity/margin
+   * @param {Number} accountCurrencyExchangeRate current exchange rate of account currency into USD
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onBooksUpdated(instanceIndex, books, equity, margin, freeMargin, marginLevel,
     accountCurrencyExchangeRate) {}
 
 }

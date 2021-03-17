@@ -663,6 +663,37 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#getBook}
+   */
+  it('should retrieve latest order book from API', async () => {
+    let book = {
+      symbol: 'AUDNZD',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      book: [
+        {
+          type: 'BOOK_TYPE_SELL',
+          price: 1.05309,
+          volume: 5.67
+        },
+        {
+          type: 'BOOK_TYPE_BUY',
+          price: 1.05297,
+          volume: 3.45
+        }
+      ]
+    };
+    server.on('request', data => {
+      if (data.type === 'getBook' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
+        data.application === 'RPC') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, book});
+      }
+    });
+    let actual = await client.getBook('accountId', 'AUDNZD');
+    actual.should.match(book);
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#sendUptime}
    */
   it('should sent uptime stats to the server', async () => {
