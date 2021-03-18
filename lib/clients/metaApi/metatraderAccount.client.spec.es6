@@ -414,4 +414,41 @@ describe('MetatraderAccountClient', () => {
     }
   });
 
+  /**
+   * @test {MetatraderAccountClient#increaseReliability}
+   */
+  it('should increase MetaTrader account reliability via API', async () => {
+    httpClient.requestFn = (opts) => {
+      return Promise
+        .resolve()
+        .then(() => {
+          opts.should.eql({
+            url: `${provisioningApiUrl}/users/current/accounts/id/increase-reliability`,
+            method: 'POST',
+            headers: {
+              'auth-token': 'header.payload.sign'
+            },
+            json: true,
+            timeout: 60000
+          });
+        });
+    };
+    await accountClient.increaseReliability('id');
+  });
+  
+  /**
+     * @test {MetatraderAccountClient#increaseReliability}
+     */
+  it('should not increase MetaTrader account reliability via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.increaseReliability('id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke increaseReliability method, because you have connected with account access token. ' +
+          'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
 });

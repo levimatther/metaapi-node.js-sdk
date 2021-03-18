@@ -25,7 +25,8 @@ describe('MetatraderAccountApi', () => {
     deployAccount: () => {},
     undeployAccount: () => {},
     redeployAccount: () => {},
-    updateAccount: () => {}
+    updateAccount: () => {},
+    increaseReliability: () => {}
   };
   let eaClient = {
     getExpertAdvisors: () => {},
@@ -367,6 +368,45 @@ describe('MetatraderAccountApi', () => {
     await account.redeploy();
     account.state.should.equal('UNDEPLOYING');
     sinon.assert.calledWith(client.redeployAccount, 'id');
+    sinon.assert.calledWith(client.getAccount, 'id');
+    sinon.assert.calledTwice(client.getAccount);
+  });
+
+  /**
+   * @test {MetatraderAccount#increaseReliability}
+   */
+  it('should increase MT account reliability', async () => {
+    sandbox.stub(client, 'getAccount')
+      .onFirstCall().resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'DISCONNECTED',
+        state: 'DEPLOYED',
+        type: 'cloud'
+      })
+      .onSecondCall().resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'UNDEPLOYING',
+        type: 'cloud',
+        reliability: 'high'
+      });
+    sandbox.stub(client, 'increaseReliability').resolves();
+    let account = await api.getAccount('id');
+    await account.increaseReliability();
+    account.reliability.should.equal('high');
+    sinon.assert.calledWith(client.increaseReliability, 'id');
     sinon.assert.calledWith(client.getAccount, 'id');
     sinon.assert.calledTwice(client.getAccount);
   });

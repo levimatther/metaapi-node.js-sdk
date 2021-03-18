@@ -318,4 +318,26 @@ export default class MetatraderAccountClient extends MetaApiClient {
     return this._httpClient.request(opts);
   }
 
+  /**
+   * Increases MetaTrader account reliability. The account will be temporary stopped to perform this action. (see
+   * https://metaapi.cloud/docs/provisioning/api/account/increaseReliability/).
+   * Method is accessible only with API access token
+   * @param {String} id MetaTrader account id
+   * @return {Promise} promise resolving when MetaTrader account reliability is increased
+   */
+  increaseReliability(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('increaseReliability');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${id}/increase-reliability`,
+      method: 'POST',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
 }
