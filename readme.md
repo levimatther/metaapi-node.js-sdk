@@ -438,9 +438,9 @@ const demoAccount = await api.metatraderDemoAccountApi.createMT5DemoAccount(prov
 
 ## Rate limits & quotas
 
-MetaApi applies rate limits to requests. See [MT account management API](https://metaapi.cloud/docs/provisioning/rateLimiting/) and [MetaApi API](https://metaapi.cloud/docs/client/restApi/rateLimiting/) for details.
-Also, MetaApi applies quotas to limit the number of accounts and provisioning profiles, for more details see the [MT account management API quotas](https://metaapi.cloud/docs/provisioning/userQuota/)
+MetaApi applies rate limits to requests. See [MT account management API](https://metaapi.cloud/docs/provisioning/rateLimiting/) and [MetaApi API](https://metaapi.cloud/docs/client/rateLimiting/) for details.
 
+MetaApi applies quotas to limit the number of accounts and provisioning profiles, for more details see the [MT account management API quotas](https://metaapi.cloud/docs/provisioning/userQuota/)
 
 ## CopyFactory copy trading API
 
