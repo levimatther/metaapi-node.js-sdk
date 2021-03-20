@@ -210,6 +210,15 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Increases MetaTrader account reliability. The account will be temporary stopped to perform this action
+   * @returns {Promise} promise resolving when account reliability is increased
+   */
+  async increaseReliability() {
+    await this._metatraderAccountClient.increaseReliability(this.id);
+    await this.reload();
+  }
+
+  /**
    * Waits until API server has finished deployment and account reached the DEPLOYED state
    * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
    * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
