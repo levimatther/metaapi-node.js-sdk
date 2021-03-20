@@ -818,6 +818,32 @@ describe('MetaApiConnection', () => {
     sinon.assert.calledWith(client.unsubscribeFromMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
   });
 
+  describe('onSubscriptionDowngrade', () => {
+
+    /**
+     * @test {MetaApiConnection#onSubscriptionDowngrade}
+     */
+    it('should unsubscribe during market data subscription downgrade', async () => {
+      sandbox.stub(api, 'subscribeToMarketData').resolves();
+      sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
+      await api.onSubscriptionDowngraded(1, 'EURUSD', undefined, [{type: 'ticks'}, {type: 'books'}]);
+      sinon.assert.calledWith(api.unsubscribeFromMarketData, 'EURUSD', [{type: 'ticks'}, {type: 'books'}]);
+      sinon.assert.notCalled(api.subscribeToMarketData);
+    });
+
+    /**
+     * @test {MetaApiConnection#onSubscriptionDowngrade}
+     */
+    it('should update market data subscription on downgrade', async () => {
+      sandbox.stub(api, 'subscribeToMarketData').resolves();
+      sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
+      await api.onSubscriptionDowngraded(1, 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
+      sinon.assert.calledWith(api.subscribeToMarketData, 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
+      sinon.assert.notCalled(api.unsubscribeFromMarketData);
+    });
+
+  });
+
   /**
    * @test {MetaApiConnection#getSymbolSpecification}
    */

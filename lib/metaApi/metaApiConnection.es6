@@ -547,6 +547,38 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Invoked when subscription downgrade has occurred
+   * @param {number} instanceIndex index of an account instance connected
+   * @param {string} symbol symbol to update subscriptions for
+   * @param {Array<MarketDataSubscription>} updates array of market data subscription to update
+   * @param {Array<MarketDataUnsubscription>} unsubscriptions array of subscriptions to cancel
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onSubscriptionDowngraded(instanceIndex, symbol, updates, unsubscriptions) {
+    let subscriptions = this._subscriptions[symbol];
+    if (unsubscriptions && unsubscriptions.length) {
+      if (subscriptions) {
+        for (let subscription of unsubscriptions) {
+          subscriptions = subscriptions.filter(s => s.type === subscription.type);
+        }
+      }
+      await this.unsubscribeFromMarketData(symbol, unsubscriptions);
+    }
+    if (updates && updates.length) {
+      if (subscriptions) {
+        for (let subscription of updates) {
+          subscriptions.filter(s => s.type === subscription.type)
+            .forEach(s => s.intervalInMilliiseconds = subscription.intervalInMilliseconds);
+        }
+      }
+      await this.subscribeToMarketData(symbol, updates);
+    }
+    if (subscriptions && !subscriptions.length) {
+      delete this._subscriptions[symbol];
+    }
+  }
+
+  /**
    * Returns list of the symbols connection is subscribed to
    * @returns {Array<String>} list of the symbols connection is subscribed to
    */

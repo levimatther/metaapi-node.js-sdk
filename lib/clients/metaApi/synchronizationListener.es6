@@ -211,4 +211,14 @@ export default class SynchronizationListener {
   async onBooksUpdated(instanceIndex, books, equity, margin, freeMargin, marginLevel,
     accountCurrencyExchangeRate) {}
 
+  /**
+   * Invoked when subscription downgrade has occurred
+   * @param {number} instanceIndex index of an account instance connected
+   * @param {string} symbol symbol to update subscriptions for
+   * @param {Array<MarketDataSubscription>} updates array of market data subscription to update
+   * @param {Array<MarketDataUnsubscription>} unsubscriptions array of subscriptions to cancel
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onSubscriptionDowngraded(instanceIndex, symbol, updates, unsubscriptions) {}
+
 }

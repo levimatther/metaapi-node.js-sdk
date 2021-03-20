@@ -34,6 +34,9 @@ class QuoteListener extends SynchronizationListener {
       }
     }
   }
+  async onSubscriptionDowngraded(instanceIndex, symbol, updates, unsubscriptions) {
+    console.log('Market data subscriptions for ' + symbol + ' were downgraded by the server due to rate limits');
+  }
 }
 
 // eslint-disable-next-line
@@ -64,7 +67,9 @@ async function streamQuotes() {
         'size), the price streaming will start once synchronization finishes');
     await connection.waitSynchronized(undefined, 1200);
 
-    // Add symbol to MarketWatch if not yet added
+    // Add symbol to MarketWatch if not yet added and subscribe to market data
+    // Please note that currently only MT5 G1 instances support extended subscription management
+    // Other instances will only stream quotes in response
     await connection.subscribeToMarketData(symbol, [
       {type: 'quotes', intervalInMilliseconds: 5000},
       {type: 'candles', timeframe: '1m', intervalInMilliseconds: 10000},
@@ -72,7 +77,7 @@ async function streamQuotes() {
       {type: 'marketDepth', intervalInMilliseconds: 5000}
     ]);
 
-    console.log('Streaming ' + symbol + ' quotes now...');
+    console.log('Streaming ' + symbol + ' market data now...');
 
     // eslint-disable-next-line
     while(true){

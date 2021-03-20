@@ -663,8 +663,7 @@ export default class MetaApiWebsocketClient {
    * @param {String} accountId id of the MetaTrader account
    * @param {Number} instanceIndex instance index
    * @param {String} symbol symbol (e.g. currency pair or an index)
-   * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
-   * note that this feature is not fully implemented on server-side yet
+   * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update
    * @returns {Promise} promise which resolves when subscription request was processed
    */
   subscribeToMarketData(accountId, instanceIndex, symbol, subscriptions) {
@@ -1406,6 +1405,23 @@ export default class MetaApiWebsocketClient {
               await Promise.all(onHealthStatusPromises);
             }
           }
+        } else if (data.type === 'downgradeSubscription') {
+          // eslint-disable-next-line no-console
+          console.log(`${data.accountId}: Market data subscriptions for symbol ${data.symbol} were downgraded by ` +
+            `the server due to rate limits. Updated subscriptions: ${JSON.stringify(data.updates)}, ` +
+            `removed subscriptions: ${JSON.stringify(data.unsubscriptions)}. Please read ` +
+            'https://metaapi.cloud/docs/client/rateLimiting/ for more details.');
+          const onSubscriptionDowngradePromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onSubscriptionDowngradePromises.push(
+              Promise.resolve(listener.onSubscriptionDowngraded(instanceIndex, data.symbol, data.updates,
+                data.unsubscriptions))
+              // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about subscription ` +
+                  'downgrade event', err))
+            );
+          }
+          await Promise.all(onSubscriptionDowngradePromises);
         } else if (data.type === 'specifications') {
           for (let specification of (data.specifications || [])) {
             const onSymbolSpecificationUpdatedPromises = [];
