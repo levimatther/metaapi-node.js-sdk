@@ -95,7 +95,9 @@ describe('TerminalState', () => {
     state.specifications.length.should.equal(0);
     state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.00001});
     state.onSymbolSpecificationUpdated(1, {symbol: 'GBPUSD'});
+    state.onSymbolSpecificationUpdated(1, {symbol: 'AUDNZD'});
     state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.0001});
+    state.onSymbolSpecificationsRemoved(1, ['AUDNZD']);
     state.specifications.length.should.equal(2);
     state.specifications.should.match([{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}]);
     state.specification('EURUSD').should.match({symbol: 'EURUSD', tickSize: 0.0001});
