@@ -1395,14 +1395,18 @@ describe('MetaApiWebsocketClient', () => {
       }];
       let listener = {
         onSymbolSpecificationUpdated: () => {
+        },
+        onSymbolSpecificationsRemoved: () => {
         }
       };
       sandbox.stub(listener, 'onSymbolSpecificationUpdated').resolves();
+      sandbox.stub(listener, 'onSymbolSpecificationsRemoved').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization',
-        {type: 'specifications', accountId: 'accountId', specifications, instanceIndex: 1});
+        {type: 'specifications', accountId: 'accountId', specifications, instanceIndex: 1, removedSymbols: ['AUDNZD']});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onSymbolSpecificationUpdated, 1, specifications[0]);
+      sinon.assert.calledWith(listener.onSymbolSpecificationsRemoved, 1, ['AUDNZD']);
     });
 
     it('should synchronize symbol prices', async () => {

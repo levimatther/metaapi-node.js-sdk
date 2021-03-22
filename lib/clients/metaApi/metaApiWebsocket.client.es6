@@ -1027,7 +1027,7 @@ export default class MetaApiWebsocketClient {
    * SYMBOL_EXPIRATION_GTC, SYMBOL_EXPIRATION_DAY, SYMBOL_EXPIRATION_SPECIFIED, SYMBOL_EXPIRATION_SPECIFIED_DAY.
    * See https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_expiration_mode for more
    * details
-   * @property {Array<Strign>} allowedOrderTypes allowed order types. Allowed values are SYMBOL_ORDER_MARKET,
+   * @property {Array<String>} allowedOrderTypes allowed order types. Allowed values are SYMBOL_ORDER_MARKET,
    * SYMBOL_ORDER_LIMIT, SYMBOL_ORDER_STOP, SYMBOL_ORDER_STOP_LIMIT, SYMBOL_ORDER_SL, SYMBOL_ORDER_TP,
    * SYMBOL_ORDER_CLOSEBY. See
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_order_mode for more details
@@ -1435,6 +1435,16 @@ export default class MetaApiWebsocketClient {
             }
             await Promise.all(onSymbolSpecificationUpdatedPromises);
           }
+          const onSymbolSpecificationRemovedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onSymbolSpecificationRemovedPromises.push(
+              Promise.resolve(listener.onSymbolSpecificationsRemoved(instanceIndex, data.removedSymbols))
+                // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}: Failed to notify listener about specifications ` +
+                  'removed event', err))
+            );
+          }
+          await Promise.all(onSymbolSpecificationRemovedPromises);
         } else if (data.type === 'prices') {
           let prices = data.prices || [];
           let candles = data.candles || [];

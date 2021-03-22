@@ -148,6 +148,14 @@ export default class SynchronizationListener {
   async onSymbolSpecificationUpdated(instanceIndex, specification) {}
 
   /**
+   * Invoked when a symbol specifications was removed
+   * @param {Number} instanceIndex index of an account instance connected
+   * @param {Array<String>} symbols removed symbols
+   * @returns {Promise<void>} promise which resolves when the asynchronous event is processed
+   */
+  async onSymbolSpecificationsRemoved(instanceIndex, symbols) {}
+
+  /**
    * Invoked when a symbol price was updated
    * @param {Number} instanceIndex index of an account instance connected
    * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price

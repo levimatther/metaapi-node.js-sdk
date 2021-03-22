@@ -252,6 +252,19 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
+   * Invoked when a symbol specifications was removed
+   * @param {Number} instanceIndex index of an account instance connected
+   * @param {Array<String>} symbols removed symbols
+   */
+  async onSymbolSpecificationsRemoved(instanceIndex, symbols) {
+    let state = this._getState(instanceIndex);
+    state.specifications = state.specifications.filter(s => !symbols.includes(s.symbol));
+    for (let symbol of symbols) {
+      delete state.specificationsBySymbol[symbol];
+    }
+  }
+
+  /**
    * Invoked when prices for several symbols were updated
    * @param {Number} instanceIndex index of an account instance connected
    * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
