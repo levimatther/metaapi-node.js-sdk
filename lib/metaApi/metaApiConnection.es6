@@ -554,6 +554,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Array<MarketDataUnsubscription>} unsubscriptions array of subscriptions to cancel
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
+  // eslint-disable-next-line complexity
   async onSubscriptionDowngraded(instanceIndex, symbol, updates, unsubscriptions) {
     let subscriptions = this._subscriptions[symbol];
     if (unsubscriptions && unsubscriptions.length) {
