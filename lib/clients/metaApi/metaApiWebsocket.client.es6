@@ -3,7 +3,7 @@
 import randomstring from 'randomstring';
 import socketIO from 'socket.io-client';
 import TimeoutError from '../timeoutError';
-import {ValidationError, NotFoundError, InternalError, UnauthorizedError} from '../errorHandler';
+import {ValidationError, NotFoundError, InternalError, UnauthorizedError, TooManyRequestsError} from '../errorHandler';
 import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';
@@ -907,6 +907,7 @@ export default class MetaApiWebsocketClient {
     return result;
   }
 
+  // eslint-disable-next-line complexity
   _convertError(data) {
     if (data.error === 'ValidationError') {
       return new ValidationError(data.message, data.details);
@@ -923,6 +924,8 @@ export default class MetaApiWebsocketClient {
     } else if (data.error === 'UnauthorizedError') {
       this.close();
       return new UnauthorizedError(data.message);
+    } else if (data.error === 'TooManyRequestsError') {
+      return new TooManyRequestsError(data.message, data.metadata);
     } else {
       return new InternalError(data.message);
     }
