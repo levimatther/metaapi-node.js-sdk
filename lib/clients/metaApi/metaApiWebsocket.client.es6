@@ -1435,16 +1435,18 @@ export default class MetaApiWebsocketClient {
             }
             await Promise.all(onSymbolSpecificationUpdatedPromises);
           }
-          const onSymbolSpecificationRemovedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onSymbolSpecificationRemovedPromises.push(
-              Promise.resolve(listener.onSymbolSpecificationsRemoved(instanceIndex, data.removedSymbols))
-                // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about specifications ` +
-                  'removed event', err))
-            );
+          if (data.removedSymbols) {
+            const onSymbolSpecificationRemovedPromises = [];
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onSymbolSpecificationRemovedPromises.push(
+                Promise.resolve(listener.onSymbolSpecificationsRemoved(instanceIndex, data.removedSymbols))
+                  // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about specifications ` +
+                    'removed event', err))
+              );
+            }
+            await Promise.all(onSymbolSpecificationRemovedPromises);
           }
-          await Promise.all(onSymbolSpecificationRemovedPromises);
         } else if (data.type === 'prices') {
           let prices = data.prices || [];
           let candles = data.candles || [];
