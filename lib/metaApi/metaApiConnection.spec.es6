@@ -33,7 +33,7 @@ describe('MetaApiConnection', () => {
     trade: () => {},
     reconnect: () => {},
     synchronize: () => {},
-    subscribe: () => {},
+    ensureSubscribe: () => {},
     subscribeToMarketData: () => {},
     unsubscribeFromMarketData: () => {},
     addSynchronizationListener: () => {},
@@ -46,7 +46,7 @@ describe('MetaApiConnection', () => {
     getBook: () => {},
     saveUptime: () => {},
     waitSynchronized: () => {},
-    unsubscribe: () => {}
+    unsubscribe: () => {},
   };
 
   let connectionRegistry = {
@@ -685,88 +685,18 @@ describe('MetaApiConnection', () => {
      * @test {MetaApiConnection#subscribe}
      */
     it('should subscribe to terminal', async () => {
-      sandbox.stub(client, 'subscribe').resolves();
-      setTimeout(() => {
-        api.onConnected(1, 1);
-      }, 20);
+      sandbox.stub(client, 'ensureSubscribe').resolves();
       await api.subscribe();
-      sinon.assert.calledWith(client.subscribe, 'accountId');
-    });
-
-    /**
-     * @test {MetaApiConnection#subscribe}
-     */
-    it('should not subscribe undeployed accounts', async () => {
-      sandbox.stub(client, 'subscribe').resolves();
-      account.state = 'UNDEPLOYED';
-      setTimeout(() => {
-        api.onConnected(1, 1);
-      }, 20);
-      await api.subscribe();
-      sinon.assert.notCalled(client.subscribe);
-    });
-
-    /**
-     * @test {MetaApiConnection#subscribe}
-     */
-    it('should retry subscribe to terminal if no response received', async () => {
-      const response = {type: 'response', accountId: 'accountId', requestId: 'requestId'};
-      sandbox.stub(client, 'subscribe')
-        .onFirstCall().rejects()
-        .onSecondCall().resolves(response)
-        .onThirdCall().resolves(response);
-      setTimeout(() => {
-        api.onConnected(1, 1);
-      }, 3050);
-      api.subscribe();
-      await clock.tickAsync(4000);
-      sinon.assert.calledWith(client.subscribe, 'accountId');
-      sinon.assert.callCount(client.subscribe, 2);
+      sinon.assert.calledWith(client.ensureSubscribe, 'accountId');
     });
 
     /**
      * @test {MetaApiConnection#subscribe}
      */
     it('should subscribe after reconnect', async () => {
-      sandbox.stub(client, 'subscribe').resolves();
-      api.subscribe();
-      await clock.tickAsync(1800);
-      sinon.assert.calledWith(client.subscribe, 'accountId');
-      await api.onConnected(1, 1);
-      api.onReconnected();
-      await clock.tickAsync(3300);
-      sinon.assert.callCount(client.subscribe, 3);
-      await api.onConnected(1, 1);
-      await clock.tickAsync(1800);
-      sinon.assert.callCount(client.subscribe, 3);
-    });
-
-    /**
-     * @test {MetaApiConnection#subscribe}
-     */
-    it('should not send multiple subscribe requests at the same time', async () => {
-      sandbox.stub(client, 'subscribe').resolves();
-      api.subscribe();
-      api.subscribe();
-      await clock.tickAsync(500);
-      await api.onConnected(1, 1);
-      await clock.tickAsync(2600);
-      sinon.assert.calledWith(client.subscribe, 'accountId');
-      sinon.assert.callCount(client.subscribe, 1);
-    });
-
-    /**
-     * @test {MetaApiConnection#subscribe}
-     */
-    it('should not retry subscribe to terminal if connection is closed', async () => {
-      sandbox.stub(client, 'subscribe').rejects();
-      sandbox.stub(client, 'unsubscribe').resolves();
-      api.subscribe();
-      api.close();
-      await clock.tickAsync(3100);
-      sinon.assert.calledWith(client.subscribe, 'accountId');
-      sinon.assert.callCount(client.subscribe, 1);
-      sinon.assert.calledWith(client.unsubscribe, 'accountId');
+      sandbox.stub(client, 'ensureSubscribe').resolves();
+      await api.onReconnected();
+      sinon.assert.calledWith(client.ensureSubscribe, 'accountId');
     });
 
   });
@@ -1105,18 +1035,6 @@ describe('MetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#onReconnected}
-   */
-  it('should overwrite previous subscribe on reconnect', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
-    api.subscribe();
-    await new Promise(res => setTimeout(res, 50));
-    api.onReconnected();
-    await new Promise(res => setTimeout(res, 75));
-    sinon.assert.callCount(client.subscribe, 2);
-  });
-
-  /**
    * @test {MetaApiConnection#initialize}
    */
   it('should load data to history storage from disk', async () => {
@@ -1128,15 +1046,9 @@ describe('MetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#onDisconnected}
    */
-  it('should resubscribe account on disconnect', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
-    sandbox.stub(account, 'reload').resolves();
+  it('should set synchronized false on disconnect', async () => {
     await api.onDisconnected();
     sinon.assert.match(api.synchronized, false);
-    sinon.assert.calledOnce(account.reload);
-    sinon.assert.calledWith(client.subscribe, 'accountId');
-    await api.onDisconnected();
-    sinon.assert.callCount(account.reload, 1);
   });
 
 });

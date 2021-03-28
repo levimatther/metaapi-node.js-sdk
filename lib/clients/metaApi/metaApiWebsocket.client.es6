@@ -9,6 +9,7 @@ import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';
 import PacketOrderer from './packetOrderer';
 import SynchronizationThrottler from './synchronizationThrottler';
+import SubscriptionManager from './subscriptionManager';
 
 let PacketLogger;
 if (typeof window === 'undefined') { // don't import PacketLogger for browser version
@@ -46,6 +47,7 @@ export default class MetaApiWebsocketClient {
     this._connectedHosts = {};
     this._synchronizationThrottler = new SynchronizationThrottler(this, opts.synchronizationThrottler);
     this._synchronizationThrottler.start();
+    this._subscriptionManager = new SubscriptionManager(this);
     this._statusTimers = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
@@ -67,12 +69,7 @@ export default class MetaApiWebsocketClient {
     console.error(`[${(new Date()).toISOString()}] MetaApi websocket client received an out of order ` +
       `packet type ${packet.type} for account id ${accountId}. Expected s/n ${expectedSequenceNumber} ` +
       `does not match the actual of ${actualSequenceNumber}`);
-    this.subscribe(accountId, instanceIndex).catch(err => {
-      if (err.name !== 'TimeoutError') {
-        console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-          'subscribe response for account id ' + accountId + ':' + instanceIndex, err);
-      }
-    });
+    this.ensureSubscribe(accountId, instanceIndex);
   }
 
   /**
@@ -81,6 +78,14 @@ export default class MetaApiWebsocketClient {
    */
   set url(url) {
     this._url = url;
+  }
+
+  /**
+   * Returns websocket client connection status.
+   * @return {Boolean} websocket client connection status
+   */
+  get connected() {
+    return (this._socket && this._socket.connected) || false;
   }
 
   /**
@@ -597,6 +602,15 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Creates a task that ensures the account gets subscribed to the server
+   * @param {String} accountId account id to subscribe
+   * @param {Number} [instanceIndex] instance index
+   */
+  ensureSubscribe(accountId, instanceIndex) {
+    this._subscriptionManager.subscribe(accountId, instanceIndex);
+  }
+
+  /**
    * Subscribes to the Metatrader terminal events (see https://metaapi.cloud/docs/client/websocket/api/subscribe/).
    * @param {String} accountId id of the MetaTrader account to subscribe to
    * @param {Number} [instanceIndex] instance index
@@ -770,6 +784,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when socket unsubscribed
    */
   unsubscribe(accountId) {
+    this._subscriptionManager.cancelAccount(accountId);
     return this._rpcRequest(accountId, {type: 'unsubscribe'});
   }
 
@@ -852,6 +867,7 @@ export default class MetaApiWebsocketClient {
       if (!this._socket.connected && !this._socket.connecting && this._connected) {
         this._sessionId = randomstring.generate(32);
         const clientId = Math.random();
+        this._socket.close();
         this._socket.io.opts.extraHeaders['Client-Id'] = clientId;
         this._socket.io.opts.query.clientId = clientId;
         this._socket.connect();
@@ -860,6 +876,7 @@ export default class MetaApiWebsocketClient {
     }, 1000));
   }
 
+  //eslint-disable-next-line complexity
   async _rpcRequest(accountId, request, timeoutInSeconds) {
     if (!this._connected) {
       await this.connect();
@@ -877,7 +894,25 @@ export default class MetaApiWebsocketClient {
       try {
         return await this._makeRequest(accountId, request, timeoutInSeconds);
       } catch(err) {
-        if(['NotSynchronizedError', 'TimeoutError', 'NotAuthenticatedError', 'InternalError'].includes(err.name) && 
+        if(err.name === 'TooManyRequestsError') {
+          let calcRetryCounter = retryCounter;
+          let calcRequestTime = 0;
+          while(calcRetryCounter < this._retries) {
+            calcRetryCounter++;
+            calcRequestTime += Math.min(Math.pow(2, calcRetryCounter) * this._minRetryDelayInSeconds,
+              this._maxRetryDelayInSeconds) * 1000;
+          }
+          const retryTime = new Date(err.metadata.recommendedRetryTime).getTime();
+          if (Date.now() + calcRequestTime > retryTime && retryCounter < this._retries) {
+            if(Date.now() < retryTime) {
+              await new Promise(res => setTimeout(res, retryTime - Date.now()));
+            }
+            retryCounter++;
+          } else {
+            throw err;
+          }
+        } else if(['NotSynchronizedError', 'TimeoutError', 'NotAuthenticatedError',
+          'InternalError'].includes(err.name) && 
           retryCounter < this._retries) {
           await new Promise(res => setTimeout(res, Math.min(Math.pow(2, retryCounter) * 
             this._minRetryDelayInSeconds, this._maxRetryDelayInSeconds) * 1000));
@@ -936,7 +971,8 @@ export default class MetaApiWebsocketClient {
     // eslint-disable-next-line guard-for-in
     for (let field in packet) {
       let value = packet[field];
-      if (typeof value === 'string' && field.match(/time$|Time$/) && !field.match(/brokerTime$|BrokerTime$/)) {
+      if (typeof value === 'string' && field.match(/time$|Time$/) && 
+        !field.match(/brokerTime$|BrokerTime$|timeframe$/)) {
         packet[field] = new Date(value);
       }
       if (Array.isArray(value)) {
@@ -1142,12 +1178,17 @@ export default class MetaApiWebsocketClient {
         let instanceId = data.accountId + ':' + (data.instanceIndex || 0);
         let instanceIndex = data.instanceIndex || 0;
 
-        const resetDisconnectTimer = () => {
+        const cancelDisconnectTimer = () => {
           if (this._statusTimers[instanceId]) {
             clearTimeout(this._statusTimers[instanceId]);
           }
-          this._statusTimers[instanceId] = setTimeout(() => {
-            onDisconnected();
+        };
+
+        const resetDisconnectTimer = () => {
+          cancelDisconnectTimer();
+          this._statusTimers[instanceId] = setTimeout(async () => {
+            await onDisconnected();
+            this._subscriptionManager.onTimeout(data.accountId, instanceIndex);
           }, 60000);
         };
 
@@ -1179,13 +1220,15 @@ export default class MetaApiWebsocketClient {
                     err))
               );
             }
+            this._subscriptionManager.cancelSubscribe(instanceId);
             await Promise.all(onConnectedPromises);
           }
         } else if (data.type === 'disconnected') {
-          if (this._statusTimers[instanceId]) {
-            clearTimeout(this._statusTimers[instanceId]);
-          }
-          await onDisconnected();
+          cancelDisconnectTimer();
+          await Promise.all([
+            onDisconnected(),
+            this._subscriptionManager.onDisconnected(data.accountId, instanceIndex)
+          ]);
         } else if (data.type === 'synchronizationStarted') {
           const promises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1372,18 +1415,17 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onOrderSynchronizationFinishedPromises);
         } else if (data.type === 'status') {
-          resetDisconnectTimer();
           if (!this._connectedHosts[instanceId]) {
-            // eslint-disable-next-line no-console
-            console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
+            if(this._statusTimers[instanceId] && data.authenticated) {
+              this._subscriptionManager.cancelSubscribe(instanceId);
+              await new Promise(res => setTimeout(res, 10));
+              // eslint-disable-next-line no-console
+              console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
                         'server yet, retrying subscription for account ' + instanceId);
-            this.subscribe(data.accountId, data.instanceIndex).catch(err => {
-              if (err.name !== 'TimeoutError') {
-                console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client failed to receive ' +
-                              'subscribe response for account id ' + instanceId, err);
-              }
-            });
+              this.ensureSubscribe(data.accountId, instanceIndex);
+            }
           } else if (this._connectedHosts[instanceId] === data.host) {
+            resetDisconnectTimer();
             const onBrokerConnectionStatusChangedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onBrokerConnectionStatusChangedPromises.push(
@@ -1527,6 +1569,7 @@ export default class MetaApiWebsocketClient {
   }
 
   async _fireReconnected() {
+    this._subscriptionManager.onReconnected();
     for (let listener of this._reconnectListeners) {
       try {
         await listener.onReconnected();
