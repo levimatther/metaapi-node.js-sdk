@@ -38,11 +38,6 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._subscriptions = {};
     this._stateByInstanceIndex = {};
     this._synchronized = false;
-    this._shouldRetrySubscribe = false;
-    this._isSubscribing = false;
-    this._subscribeTask = null;
-    this._subscribeFuture = null;
-    this._lastAccountReloadTime = 0;
   }
 
   /**
@@ -481,34 +476,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when subscription is initiated
    */
   async subscribe() {
-    if(!this._isSubscribing) {
-      this._isSubscribing = true;
-      this._shouldRetrySubscribe = true;
-      let subscribeRetryIntervalInSeconds = 3;
-      while(this._shouldRetrySubscribe && (!this._closed) && this._account.state === 'DEPLOYED') {
-        try {
-          await this._websocketClient.subscribe(this._account.id);
-        } catch (error) {
-          //
-        }
-        const retryInterval = subscribeRetryIntervalInSeconds;
-        subscribeRetryIntervalInSeconds = Math.min(subscribeRetryIntervalInSeconds * 2, 300);
-        let resolve;
-        let subscribePromise = new Promise((res) => {
-          resolve = res;
-        });
-        this._subscribeTask = setTimeout(() => {
-          resolve(true);
-        }, retryInterval * 1000);
-        this._subscribeFuture = {resolve, promise: subscribePromise};
-        const result = await this._subscribeFuture.promise;
-        this._subscribeFuture = null;
-        if (!result) {
-          break;
-        }
-      }
-      this._isSubscribing = false;
-    }
+    this._websocketClient.ensureSubscribe(this._account.id);
   }
 
   /**
@@ -697,10 +665,6 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onConnected(instanceIndex, replicas) {
-    if(this._subscribeFuture) {
-      this._subscribeFuture.resolve(false);
-      clearTimeout(this._subscribeTask);
-    }
     this._shouldRetrySubscribe = false;
     let key = randomstring.generate(32);
     let state = this._getState(instanceIndex);
@@ -730,11 +694,6 @@ export default class MetaApiConnection extends SynchronizationListener {
     state.shouldSynchronize = undefined;
     state.synchronized = false;
     state.disconnected = true;
-    if((Date.now() - 10 * 60 * 1000) > this._lastAccountReloadTime) {
-      await this._account.reload();
-      this._lastAccountReloadTime = Date.now();
-    }
-    this.subscribe();
   }
 
   /**
@@ -762,10 +721,6 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @return {Promise} promise which resolves when connection to MetaApi websocket API restored after a disconnect
    */
   async onReconnected() {
-    if(this._subscribeFuture) {
-      this._subscribeFuture.resolve(false);
-      clearTimeout(this._subscribeTask);
-    }
     await new Promise(res => setTimeout(res, 50));
     await this.subscribe();
   }

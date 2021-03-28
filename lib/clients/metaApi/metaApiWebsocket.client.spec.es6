@@ -21,13 +21,14 @@ describe('MetaApiWebsocketClient', () => {
 
   before(() => {
     client = new MetaApiWebsocketClient('token', {application: 'application', 
-      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, retryOpts: {retries: 3}});
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, retryOpts: {
+        retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
     client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });
 
   beforeEach(async () => {
-    io = new Server(6784, {path: '/ws'});
+    io = new Server(6784, {path: '/ws', pingTimeout: 1000000});
     io.on('connect', socket => {
       server = socket;
       if (socket.request._query['auth-token'] !== 'token') {
@@ -884,7 +885,7 @@ describe('MetaApiWebsocketClient', () => {
         instanceIndex: 1});
       await new Promise(res => setTimeout(res, 50));
       await clock.tickAsync(10000);
-      server.emit('synchronization', {type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
+      await server.emit('synchronization', {type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
         instanceIndex: 1});
       await new Promise(res => setTimeout(res, 50));
       await clock.tickAsync(55000);
@@ -1286,6 +1287,91 @@ describe('MetaApiWebsocketClient', () => {
     /**
      * @test {MetaApiWebsocketClient#_rpcRequest}
      */
+    it('should wait specified amount of time on too many requests error', async () => {
+      let requestCounter = 0;
+      let order = {
+        id: '46871284',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        state: 'ORDER_STATE_PLACED',
+        symbol: 'AUDNZD',
+        magic: 123456,
+        platform: 'mt5',
+        time: new Date('2020-04-20T08:38:58.270Z'),
+        openPrice: 1.03,
+        currentPrice: 1.05206,
+        volume: 0.01,
+        currentVolume: 0.01,
+        comment: 'COMMENT2'
+      };
+      server.on('request', data => {
+        if (requestCounter > 0 && data.type === 'getOrder' && data.accountId === 'accountId' &&
+          data.orderId === '46871284' && data.application === 'RPC') {
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, order});
+        } else {
+          server.emit('processingError', {
+            id: 1, error: 'TooManyRequestsError', requestId: data.requestId,
+            message: 'The API allows 10000 requests per 60 minutes to avoid overloading our servers.',
+            status_code: 429, metadata: {
+              periodInMinutes: 60, maxRequestsForPeriod: 10000, 
+              recommendedRetryTime: new Date(Date.now() + 1000)
+            }
+          });
+        }
+        requestCounter++;
+      });
+      const startTime = Date.now();
+      let actual = await client.getOrder('accountId', '46871284');
+      actual.should.match(order);
+      (Date.now() - startTime).should.be.approximately(1000, 100);
+    }).timeout(10000);
+
+    /**
+     * @test {MetaApiWebsocketClient#_rpcRequest}
+     */
+    it('should return too many requests exception if recommended time is beyond max request time', async () => {
+      let requestCounter = 0;
+      let order = {
+        id: '46871284',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        state: 'ORDER_STATE_PLACED',
+        symbol: 'AUDNZD',
+        magic: 123456,
+        platform: 'mt5',
+        time: new Date('2020-04-20T08:38:58.270Z'),
+        openPrice: 1.03,
+        currentPrice: 1.05206,
+        volume: 0.01,
+        currentVolume: 0.01,
+        comment: 'COMMENT2'
+      };
+      server.on('request', data => {
+        if (requestCounter > 0 && data.type === 'getOrder' && data.accountId === 'accountId' &&
+              data.orderId === '46871284' && data.application === 'RPC') {
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, order});
+        } else {
+          server.emit('processingError', {
+            id: 1, error: 'TooManyRequestsError', requestId: data.requestId,
+            message: 'The API allows 10000 requests per 60 minutes to avoid overloading our servers.',
+            status_code: 429, metadata: {
+              periodInMinutes: 60, maxRequestsForPeriod: 10000, 
+              recommendedRetryTime: new Date(Date.now() + 60000)
+            }
+          });
+        }
+        requestCounter++;
+      });
+
+      try {
+        await client.getOrder('accountId', '46871284');
+        throw new Error('TooManyRequestsError expected');
+      } catch (err) {
+        err.name.should.equal('TooManyRequestsError');
+      }
+    }).timeout(10000);    
+
+    /**
+     * @test {MetaApiWebsocketClient#_rpcRequest}
+     */
     it('should not retry request on validation error', async () => {
       let requestCounter = 0;
       server.on('request', data => {
@@ -1319,10 +1405,12 @@ describe('MetaApiWebsocketClient', () => {
         volume: 0.07
       };
       server.on('request', data => {
-        if(requestCounter > 0) {
-          sinon.assert.fail();
+        if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+          if(requestCounter > 0) {
+            sinon.assert.fail();
+          }
+          requestCounter++;
         }
-        requestCounter++;
       });
       try {
         await client.trade(trade);
