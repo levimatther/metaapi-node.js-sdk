@@ -88,7 +88,8 @@ describe('Reservoir', () => {
     }
     sinon.assert.match(res.size(), 15);
     const max = res.max();
-    sinon.assert.match(max, {index: 999, time: 999999});
+    max.index.should.be.approximately(999, 2);
+    max.time.should.be.approximately(999999, 3000);
     clock.tick(60000);
     res.getPercentile(0);
     sinon.assert.match(res.size(), 0);

@@ -49,6 +49,7 @@ export default class MetaApiWebsocketClient {
     this._synchronizationThrottler.start();
     this._subscriptionManager = new SubscriptionManager(this);
     this._statusTimers = {};
+    this._isReconnecting = false;
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
@@ -124,6 +125,7 @@ export default class MetaApiWebsocketClient {
       this._socket.on('connect', async () => {
         // eslint-disable-next-line no-console
         console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connected to the MetaApi server');
+        this._isReconnecting = false;
         if (!resolved) {
           resolved = true;
           resolve();
@@ -135,11 +137,13 @@ export default class MetaApiWebsocketClient {
         }
       });
       this._socket.on('reconnect', async () => {
+        this._isReconnecting = false;
         await this._fireReconnected();
       });
       this._socket.on('connect_error', (err) => {
         // eslint-disable-next-line no-console
         console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connection error', err);
+        this._isReconnecting = false;
         if (!resolved) {
           resolved = true;
           reject(err);
@@ -148,6 +152,7 @@ export default class MetaApiWebsocketClient {
       this._socket.on('connect_timeout', (timeout) => {
         // eslint-disable-next-line no-console
         console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connection timeout');
+        this._isReconnecting = false;
         if (!resolved) {
           resolved = true;
           reject(new TimeoutError('MetaApi websocket client connection timed out'));
@@ -158,11 +163,13 @@ export default class MetaApiWebsocketClient {
         // eslint-disable-next-line no-console
         console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client disconnected from the MetaApi ' +
           'server because of ' + reason);
+        this._isReconnecting = false;
         await this._reconnect();
       });
       this._socket.on('error', async (error) => {
         // eslint-disable-next-line no-console
         console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client error', error);
+        this._isReconnecting = false;
         await this._reconnect();
       });
       this._socket.on('response', data => {
@@ -857,19 +864,20 @@ export default class MetaApiWebsocketClient {
   }
 
   async _reconnect() {
-    while (!this._socket.connected && !this._socket.connecting && this._connected) {
+    while (!this._socket.connected && !this._isReconnecting && this._connected) {
       await this._tryReconnect();
     }
   }
 
   _tryReconnect() {
     return new Promise((resolve) => setTimeout(() => {
-      if (!this._socket.connected && !this._socket.connecting && this._connected) {
+      if (!this._socket.connected && !this._isReconnecting && this._connected) {
         this._sessionId = randomstring.generate(32);
         const clientId = Math.random();
         this._socket.close();
         this._socket.io.opts.extraHeaders['Client-Id'] = clientId;
         this._socket.io.opts.query.clientId = clientId;
+        this._isReconnecting = true;
         this._socket.connect();
       }
       resolve();

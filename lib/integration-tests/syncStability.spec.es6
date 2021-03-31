@@ -271,4 +271,20 @@ describe('Synchronization stability test', () => {
       && connection.terminalState.connectedToBroker).should.equal(true);
   }).timeout(10000);
 
+  it('should reconnect after server restarts', async () => {
+    const account = await api.metatraderAccountApi.getAccount('accountId');
+    connection = await account.connect();
+    await connection.waitSynchronized({timeoutInSeconds: 10});
+    for (let i = 0; i < 5; i++) {
+      clearInterval(fakeServer.statusTask);
+      fakeServer.io.close();
+      await clock.tickAsync(200000);
+      await new Promise(res => setTimeout(res, 50));
+      await fakeServer.start();
+      await new Promise(res => setTimeout(res, 200));
+    }
+    const response = await connection.getAccountInformation();
+    sinon.assert.match(response, accountInformation);
+  }).timeout(10000);
+
 });
