@@ -12,6 +12,7 @@ const metaapiApiUrl = 'https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai';
 /**
  * @test {MetaApiWebsocketClient}
  */
+// eslint-disable-next-line max-statements
 describe('MetaApiWebsocketClient', () => {
 
   let io;
@@ -724,6 +725,9 @@ describe('MetaApiWebsocketClient', () => {
     await client.saveUptime('accountId', {'1h': 100});
   });
 
+  /**
+   * @test {MetaApiWebsocketClient#unsubscribe}
+   */
   it('should unsubscribe from account data', async () => {
     let response = {type: 'response', accountId: 'accountId'};
     server.on('request', data => {
@@ -733,6 +737,35 @@ describe('MetaApiWebsocketClient', () => {
     });
     let actual = await client.unsubscribe('accountId');
     actual.should.match(response);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#unsubscribe}
+   */
+  it('should ignore not found exception on unsubscribe', async () => {
+    server.on('request', data => {
+      server.emit('processingError', {
+        id: 1, error: 'ValidationError', message: 'Validation failed',
+        details: [{parameter: 'volume', message: 'Required value.'}], requestId: data.requestId
+      });
+    });
+    try {
+      await client.unsubscribe('accountId');
+      throw new Error('ValidationError extected');
+    } catch (err) {
+      err.name.should.equal('ValidationError');
+      err.details.should.match([{
+        parameter: 'volume',
+        message: 'Required value.'
+      }]);
+    }
+    server.removeAllListeners('request');
+    server.on('request', data => {
+      server.emit('processingError', {
+        id: 1, error: 'NotFoundError', message: 'Account not found', requestId: data.requestId
+      });
+    });
+    await client.unsubscribe('accountId');
   });
 
   describe('error handling', () => {
