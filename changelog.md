@@ -11,6 +11,7 @@
   - added subscription manager to handle account subscription process
   - fixed error on socket reconnect
   - improved handling of too many requests error
+  - added getSymbols RPC API
 
 12.3.0
   - added credit account property

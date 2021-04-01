@@ -39,6 +39,7 @@ describe('MetaApiConnection', () => {
     addSynchronizationListener: () => {},
     addReconnectListener: () => {},
     removeSynchronizationListener: () => {},
+    getSymbols: () => {},
     getSymbolSpecification: () => {},
     getSymbolPrice: () => {},
     getCandle: () => {},
@@ -772,6 +773,17 @@ describe('MetaApiConnection', () => {
       sinon.assert.notCalled(api.unsubscribeFromMarketData);
     });
 
+  });
+
+  /**
+   * @test {MetaApiConnection#getSymbols}
+   */
+  it('should retrieve symbols', async () => {
+    let symbols = ['EURUSD'];
+    sandbox.stub(client, 'getSymbols').resolves(symbols);
+    let actual = await api.getSymbols();
+    actual.should.match(symbols);
+    sinon.assert.calledWith(client.getSymbols, 'accountId');
   });
 
   /**

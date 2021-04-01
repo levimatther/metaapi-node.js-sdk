@@ -565,6 +565,16 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Retrieves available symbols for an account (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbols/).
+   * @param {String} symbol symbol to retrieve symbols for
+   * @returns {Promise<Array<string>>} promise which resolves when symbols are retrieved
+   */
+  getSymbols() {
+    return this._websocketClient.getSymbols(this._account.id);
+  }
+
+  /**
    * Retrieves specification for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolSpecification/).
    * @param {String} symbol symbol to retrieve specification for

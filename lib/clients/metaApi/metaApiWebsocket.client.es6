@@ -712,6 +712,17 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Retrieves symbols available on an account (see
+   * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbols/).
+   * @param {String} accountId id of the MetaTrader account to retrieve symbols for
+   * @returns {Promise<Array<string>>} promise which resolves when symbols are retrieved
+   */
+  async getSymbols(accountId) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbols'});
+    return response.symbols;
+  }
+
+  /**
    * Retrieves specification for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolSpecification/).
    * @param {String} accountId id of the MetaTrader account to retrieve symbol specification for

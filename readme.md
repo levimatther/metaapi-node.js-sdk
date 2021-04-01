@@ -257,6 +257,8 @@ await connection.waitSynchronized();
 // first, subscribe to market data
 await connection.subscribeToMarketData('GBPUSD');
 
+// read symbols available
+console.log(await connection.getSymbols());
 // read constract specification
 console.log(await connection.getSymbolSpecification('GBPUSD'));
 // read current price

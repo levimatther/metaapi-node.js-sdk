@@ -568,6 +568,22 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#getSymbols}
+   */
+  it('should retrieve symbols from API', async () => {
+    let symbols = ['EURUSD'];
+    server.on('request', data => {
+      if (data.type === 'getSymbols' && data.accountId === 'accountId' && data.application === 'RPC') {
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId, symbols
+        });
+      }
+    });
+    let actual = await client.getSymbols('accountId');
+    actual.should.match(symbols);
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#getSymbolSpecification}
    */
   it('should retrieve symbol specification from API', async () => {
