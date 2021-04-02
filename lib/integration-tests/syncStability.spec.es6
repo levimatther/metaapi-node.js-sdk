@@ -92,8 +92,8 @@ class FakeServer {
     });
   }
 
-  async start(){
-    this.io = new Server(6785, {path: '/ws', pingTimeout: 1000000});
+  async start(port = 6785){
+    this.io = new Server(port, {path: '/ws', pingTimeout: 1000000});
     this.io.on('connect', socket => {
       server = socket;
       socket.emit('response', {type: 'response'});
@@ -285,6 +285,22 @@ describe('Synchronization stability test', () => {
     }
     const response = await connection.getAccountInformation();
     sinon.assert.match(response, accountInformation);
+  }).timeout(10000);
+
+  it('should synchronize if connecting while server is rebooting', async () => {
+    fakeServer.io.close();
+    await fakeServer.start(9000);
+    const account = await api.metatraderAccountApi.getAccount('accountId');
+    connection = await account.connect();
+    setTimeout(() => {
+      fakeServer.io.close();
+      fakeServer.start();
+    }, 3000);
+    await connection.waitSynchronized({timeoutInSeconds: 10});
+    const response = await connection.getAccountInformation();
+    sinon.assert.match(response, accountInformation);
+    (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
   }).timeout(10000);
 
 });

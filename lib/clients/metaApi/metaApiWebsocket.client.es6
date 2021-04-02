@@ -905,7 +905,7 @@ export default class MetaApiWebsocketClient {
   async _rpcRequest(accountId, request, timeoutInSeconds) {
     if (!this._connected) {
       await this.connect();
-    } else {
+    } else if(!this.connected) {
       await this._connectPromise;
     }
     if(request.type === 'subscribe') {
