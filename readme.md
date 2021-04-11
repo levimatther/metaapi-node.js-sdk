@@ -449,12 +449,3 @@ CopyFactory is a powerful trade copying API which makes developing forex
 trade copying applications as easy as writing few lines of code.
 
 You can find CopyFactory Javascript SDK documentation here: [https://github.com/agiliumtrade-ai/copyfactory-javascript-sdk](https://github.com/agiliumtrade-ai/copyfactory-javascript-sdk)
-
-## Related projects:
-Take a look at our website for the full list of APIs and features supported [https://metaapi.cloud/#features](https://metaapi.cloud/#features)
-
-Some of the APIs you might decide to use together with MetaStats API are:
-
-1. CopyFactory copy trading  API [https://metaapi.cloud/docs/copyfactory/](https://metaapi.cloud/docs/copyfactory/)
-2. MetaTrader account management API [https://metaapi.cloud/docs/provisioning/](https://metaapi.cloud/docs/provisioning/)
-3. MetaStats forex trading metrics API [https://metaapi.cloud/docs/metastats/](https://metaapi.cloud/docs/metastats/)
