@@ -17,6 +17,18 @@ Please note that this SDK provides an abstraction over REST and websocket API to
 
 For more information about SDK APIs please check esdoc documentation in source codes located inside lib folder of this npm package.
 
+## Working code examples
+Please check [this short video](https://youtu.be/dDOUWBjdfA4) to see how you can download samples via our web application.
+
+You can also find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
+
+We have composed a [short guide explaining how to use the example code](https://metaapi.cloud/docs/client/usingCodeExamples)
+
+## Rate limits & quotas
+API calls you make are subject to rate limits. See [MT account management API](https://metaapi.cloud/docs/provisioning/rateLimiting/) and [MetaApi API](https://metaapi.cloud/docs/client/rateLimiting/) for details.
+
+MetaApi applies quotas to the number of accounts and provisioning profiles, for more details see the [MT account management API quotas](https://metaapi.cloud/docs/provisioning/userQuota/)
+
 ## Installation
 ```bash
 npm install --save metaapi.cloud-sdk
@@ -35,13 +47,6 @@ npm install --save metaapi.cloud-sdk
     const api = new MetaApi(token);
 </script>
 ```
-
-## Working code examples
-Please check [this short video](https://youtu.be/dDOUWBjdfA4) to see how you can download samples via our web application.
-
-You can also find code examples at [examples folder of our github repo](https://github.com/agiliumtrade-ai/metaapi-node.js-client/tree/master/examples) or in the examples folder of the npm package.
-
-We have composed a [short guide explaining how to use the example code](https://metaapi.cloud/docs/client/usingCodeExamples)
 
 ## Connecting to MetaApi
 Please use one of these ways: 
@@ -438,15 +443,18 @@ const demoAccount = await api.metatraderDemoAccountApi.createMT5DemoAccount(prov
   });
 ```
 
-## Rate limits & quotas
-
-MetaApi applies rate limits to requests. See [MT account management API](https://metaapi.cloud/docs/provisioning/rateLimiting/) and [MetaApi API](https://metaapi.cloud/docs/client/rateLimiting/) for details.
-
-MetaApi applies quotas to limit the number of accounts and provisioning profiles, for more details see the [MT account management API quotas](https://metaapi.cloud/docs/provisioning/userQuota/)
-
 ## CopyFactory copy trading API
 
 CopyFactory is a powerful trade copying API which makes developing forex
 trade copying applications as easy as writing few lines of code.
 
 You can find CopyFactory Javascript SDK documentation here: [https://github.com/agiliumtrade-ai/copyfactory-javascript-sdk](https://github.com/agiliumtrade-ai/copyfactory-javascript-sdk)
+
+## Related projects:
+Take a look at our website for the full list of APIs and features supported [https://metaapi.cloud/#features](https://metaapi.cloud/#features)
+
+Some of the APIs you might decide to use together with MetaStats API are:
+
+1. CopyFactory copy trading  API [https://metaapi.cloud/docs/copyfactory/](https://metaapi.cloud/docs/copyfactory/)
+2. MetaTrader account management API [https://metaapi.cloud/docs/provisioning/](https://metaapi.cloud/docs/provisioning/)
+3. MetaStats forex trading metrics API [https://metaapi.cloud/docs/metastats/](https://metaapi.cloud/docs/metastats/)
