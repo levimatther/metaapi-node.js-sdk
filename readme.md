@@ -24,11 +24,6 @@ You can also find code examples at [examples folder of our github repo](https://
 
 We have composed a [short guide explaining how to use the example code](https://metaapi.cloud/docs/client/usingCodeExamples)
 
-## Rate limits & quotas
-API calls you make are subject to rate limits. See [MT account management API](https://metaapi.cloud/docs/provisioning/rateLimiting/) and [MetaApi API](https://metaapi.cloud/docs/client/rateLimiting/) for details.
-
-MetaApi applies quotas to the number of accounts and provisioning profiles, for more details see the [MT account management API quotas](https://metaapi.cloud/docs/provisioning/userQuota/)
-
 ## Installation
 ```bash
 npm install --save metaapi.cloud-sdk
@@ -442,6 +437,11 @@ const demoAccount = await api.metatraderDemoAccountApi.createMT5DemoAccount(prov
   serverName: 'ICMarketsSC-Demo'
   });
 ```
+
+## Rate limits & quotas
+API calls you make are subject to rate limits. See [MT account management API](https://metaapi.cloud/docs/provisioning/rateLimiting/) and [MetaApi API](https://metaapi.cloud/docs/client/rateLimiting/) for details.
+
+MetaApi applies quotas to the number of accounts and provisioning profiles, for more details see the [MT account management API quotas](https://metaapi.cloud/docs/provisioning/userQuota/)
 
 ## CopyFactory copy trading API
 
