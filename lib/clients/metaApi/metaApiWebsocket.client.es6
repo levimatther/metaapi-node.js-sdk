@@ -286,7 +286,8 @@ export default class MetaApiWebsocketClient {
    * @property {String} reason position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,
    * POSITION_REASON_MOBILE, POSITION_REASON_WEB, POSITION_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',
-   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into account base
+   * currency (USD if you did not override it)
    * @property {String} [originalComment] position original comment (present if possible to restore from history)
    * @property {String} [updatePending] flag indicating that position original comment and clientId was not identified
    * yet and will be updated in a future packet
@@ -364,7 +365,8 @@ export default class MetaApiWebsocketClient {
    * ORDER_TIME_SPECIFIED, ORDER_TIME_SPECIFIED_DAY. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_time
    * @property {Date} expirationTime optional order expiration time
-   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into account base
+   * currency (USD if you did not override it)
    * @property {String} [closeByPositionId] identifier of an opposite position used for closing by order
    * ORDER_TYPE_CLOSE_BY
    * @property {Number} [stopLimitPrice] the Limit order price for the StopLimit order
@@ -497,7 +499,8 @@ export default class MetaApiWebsocketClient {
    * DEAL_REASON_WEB, DEAL_REASON_EXPERT, DEAL_REASON_SL, DEAL_REASON_TP, DEAL_REASON_SO, DEAL_REASON_ROLLOVER,
    * DEAL_REASON_VMARGIN, DEAL_REASON_SPLIT, DEAL_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_reason.
-   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into account base
+   * currency (USD if you did not override it)
    */
 
   /**
@@ -1136,7 +1139,8 @@ export default class MetaApiWebsocketClient {
    * @property {Number} ask ask price
    * @property {Number} profitTickValue tick value for a profitable position
    * @property {Number} lossTickValue tick value for a losing position
-   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into account base
+   * currency (USD if you did not override it)
    * @property {Date} time quote time, in ISO format
    * @property {String} brokerTime time quote time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
