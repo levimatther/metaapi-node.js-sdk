@@ -42,6 +42,9 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Array<Extension>} extensions API extensions
    * @property {Object} metadata extra information which can be stored together with your account
    * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and high. Default is regular
+   * @property {String} baseCurrency 3-character ISO currency code of the account base currency. Default value is USD.
+   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
+   * brokers. You should not alter this setting unless you understand what you are doing.
    */
 
   /**
@@ -159,6 +162,9 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Array<Extension>} extensions API extensions
    * @property {Object} metadata extra information which can be stored together with your account
    * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and high. Default is regular
+   * @property {String} baseCurrency 3-character ISO currency code of the account base currency. Default value is USD.
+   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
+   * brokers. You should not alter this setting unless you understand what you are doing.
    */
 
   /**

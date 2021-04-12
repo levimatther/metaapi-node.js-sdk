@@ -1,3 +1,6 @@
+12.5.0
+  - added baseCurrency field to the MetaTraderAccount model
+
 12.4.0
   - added clientId to query websocket url
   - bugfix for unsubscribeFromMarketData API
