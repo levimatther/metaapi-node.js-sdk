@@ -1,6 +1,7 @@
 'use strict';
 
-import {HttpClientMock} from '../httpClient';
+import HttpClient from '../httpClient';
+import sinon from 'sinon';
 import ProvisioningProfileClient from './provisioningProfile.client';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';
@@ -11,10 +12,22 @@ const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumt
 describe('ProvisioningProfileClient', () => {
 
   let provisioningClient;
-  let httpClient = new HttpClientMock(() => 'empty');
+  const token = 'header.payload.sign';
+  let httpClient = new HttpClient();
+  let sandbox;
+  let requestStub;
+
+  before(() => {
+    sandbox = sinon.createSandbox();
+  });
 
   beforeEach(() => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'header.payload.sign');
+    provisioningClient = new ProvisioningProfileClient(httpClient, token);
+    requestStub = sandbox.stub(httpClient, 'request');
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   /**
@@ -27,28 +40,21 @@ describe('ProvisioningProfileClient', () => {
       version: 4,
       status: 'active'
     }];
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/provisioning-profiles`,
-            method: 'GET',
-            qs: {
-              version: 5,
-              status: 'active'
-            },
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return expected;
-        });
-    };
+    requestStub.resolves(expected);
     let profiles = await provisioningClient.getProvisioningProfiles(5, 'active');
     profiles.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles`,
+      method: 'GET',
+      qs: {
+        version: 5,
+        status: 'active'
+      },
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -76,24 +82,17 @@ describe('ProvisioningProfileClient', () => {
       version: 4,
       status: 'active'
     };
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
-            method: 'GET',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return expected;
-        });
-    };
+    requestStub.resolves(expected);
     let profile = await provisioningClient.getProvisioningProfile('id');
     profile.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
+      method: 'GET',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -122,25 +121,18 @@ describe('ProvisioningProfileClient', () => {
       name: 'name',
       version: 4
     };
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/provisioning-profiles`,
-            method: 'POST',
-            body: profile,
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return expected;
-        });
-    };
+    requestStub.resolves(expected);
     let id = await provisioningClient.createProvisioningProfile(profile);
     id.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles`,
+      method: 'POST',
+      body: profile,
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -163,26 +155,18 @@ describe('ProvisioningProfileClient', () => {
    */
   it('should upload file to a provisioning profile via API', async () => {
     let file = Buffer.from('test', 'utf8');
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.match({
-            url: `${provisioningApiUrl}/users/current/provisioning-profiles/id/servers.dat`,
-            method: 'PUT',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            formData: {
-              file
-            },
-            json: true,
-            timeout: 60000
-          });
-          return;
-        });
-    };
     await provisioningClient.uploadProvisioningProfileFile('id', 'servers.dat', file);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles/id/servers.dat`,
+      method: 'PUT',
+      headers: {
+        'auth-token': token
+      },
+      formData: {
+        file
+      },
+      json: true,
+    });
   });
 
   /**
@@ -204,23 +188,15 @@ describe('ProvisioningProfileClient', () => {
    * @test {ProvisioningProfileClient#deleteProvisioningProfile}
    */
   it('should delete provisioning profile via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
-            method: 'DELETE',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return;
-        });
-    };
     await provisioningClient.deleteProvisioningProfile('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
+      method: 'DELETE',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -242,25 +218,18 @@ describe('ProvisioningProfileClient', () => {
    * @test {ProvisioningProfileClient#updateProvisioningProfile}
    */
   it('should update provisioning profile via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
-            method: 'PUT',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000,
-            body: {
-              name: 'new name'
-            }
-          });
-        });
-    };
     await provisioningClient.updateProvisioningProfile('id', {name: 'new name'});
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles/id`,
+      method: 'PUT',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+      body: {
+        name: 'new name'
+      }
+    });
   });
 
   /**
