@@ -1,6 +1,7 @@
 'use strict';
 
-import {HttpClientMock} from '../httpClient';
+import HttpClient from '../httpClient';
+import sinon from 'sinon';
 import MetatraderAccountClient from './metatraderAccount.client';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';
@@ -11,10 +12,22 @@ const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumt
 describe('MetatraderAccountClient', () => {
 
   let accountClient;
-  let httpClient = new HttpClientMock(() => 'empty');
+  const token = 'header.payload.sign';
+  let httpClient = new HttpClient();
+  let sandbox;
+  let requestStub;
+
+  before(() => {
+    sandbox = sinon.createSandbox();
+  });
 
   beforeEach(() => {
-    accountClient = new MetatraderAccountClient(httpClient, 'header.payload.sign');
+    accountClient = new MetatraderAccountClient(httpClient, token);
+    requestStub = sandbox.stub(httpClient, 'request');
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   /**
@@ -34,29 +47,22 @@ describe('MetatraderAccountClient', () => {
       type: 'cloud',
       tags: ['tag1', 'tag2']
     }];
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts`,
-            method: 'GET',
-            qs: {
-              provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076'
-            },
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return expected;
-        });
-    };
+    requestStub.resolves(expected);
     let accounts = await accountClient.getAccounts({
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076'
     });
     accounts.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts`,
+      method: 'GET',
+      qs: {
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076'
+      },
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -91,24 +97,17 @@ describe('MetatraderAccountClient', () => {
       type: 'cloud',
       tags: ['tag1', 'tag2']
     };
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/id`,
-            method: 'GET',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return expected;
-        });
-    };
+    requestStub.resolves(expected);
     let account = await accountClient.getAccount('id');
     account.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id`,
+      method: 'GET',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -128,28 +127,21 @@ describe('MetatraderAccountClient', () => {
       state: 'DEPLOYED',
       type: 'cloud'
     };
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/accessToken/token`,
-            method: 'GET',
-            json: true,
-            timeout: 60000
-          });
-          return expected;
-        });
-    };
+    requestStub.resolves(expected);
     let account = await accountClient.getAccountByToken();
     account.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/accessToken/token`,
+      method: 'GET',
+      json: true
+    });
   });
 
   /**
    * @test {MetatraderAccountClient#createAccount}
    */
   it('should not retrieve MetaTrader account by token via API with api token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'header.payload.sign');
+    accountClient = new MetatraderAccountClient(httpClient, token);
     try {
       await accountClient.getAccountByToken();
     } catch (error) {
@@ -178,25 +170,18 @@ describe('MetatraderAccountClient', () => {
       type: 'cloud',
       tags: ['tag1']
     };
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts`,
-            method: 'POST',
-            body: account,
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return expected;
-        });
-    };
+    requestStub.resolves(expected);
     let id = await accountClient.createAccount(account);
     id.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts`,
+      method: 'POST',
+      body: account,
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -218,23 +203,15 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#deployAccount}
    */
   it('should deploy MetaTrader account via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/id/deploy`,
-            method: 'POST',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return;
-        });
-    };
     await accountClient.deployAccount('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/deploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -256,23 +233,15 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#undeployAccount}
    */
   it('should undeploy MetaTrader account via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/id/undeploy`,
-            method: 'POST',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return;
-        });
-    };
     await accountClient.undeployAccount('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/undeploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -294,23 +263,15 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#redeployAccount}
    */
   it('should redeploy MetaTrader account via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/id/redeploy`,
-            method: 'POST',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return;
-        });
-    };
     await accountClient.redeployAccount('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/redeploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -332,23 +293,15 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#deleteAccount}
    */
   it('should delete MetaTrader account via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/id`,
-            method: 'DELETE',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-          return;
-        });
-    };
     await accountClient.deleteAccount('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id`,
+      method: 'DELETE',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
 
   /**
@@ -370,32 +323,25 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#updateAccount}
    */
   it('should update MetaTrader account via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/id`,
-            method: 'PUT',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000,
-            body: {
-              name: 'new account name',
-              password: 'new_password007',
-              server: 'ICMarketsSC2-Demo',
-              tags: ['tag1']
-            }
-          });
-        });
-    };
     await accountClient.updateAccount('id', {
       name: 'new account name',
       password: 'new_password007',
       server: 'ICMarketsSC2-Demo',
       tags: ['tag1']
+    });
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id`,
+      method: 'PUT',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+      body: {
+        name: 'new account name',
+        password: 'new_password007',
+        server: 'ICMarketsSC2-Demo',
+        tags: ['tag1']
+      }
     });
   });
 
@@ -418,22 +364,15 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#increaseReliability}
    */
   it('should increase MetaTrader account reliability via API', async () => {
-    httpClient.requestFn = (opts) => {
-      return Promise
-        .resolve()
-        .then(() => {
-          opts.should.eql({
-            url: `${provisioningApiUrl}/users/current/accounts/id/increase-reliability`,
-            method: 'POST',
-            headers: {
-              'auth-token': 'header.payload.sign'
-            },
-            json: true,
-            timeout: 60000
-          });
-        });
-    };
     await accountClient.increaseReliability('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/increase-reliability`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
   });
   
   /**

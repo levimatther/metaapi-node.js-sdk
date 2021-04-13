@@ -1,6 +1,7 @@
 'use strict';
 
-import {HttpClientMock} from '../httpClient';
+import HttpClient from '../httpClient';
+import sinon from 'sinon';
 import MetatraderDemoAccountClient from './metatraderDemoAccount.client';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';
@@ -11,10 +12,22 @@ const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumt
 describe('MetatraderDemoAccountClient', () => {
 
   let demoAccountClient;
-  let httpClient = new HttpClientMock(() => 'empty');
+  const token = 'header.payload.sign';
+  let httpClient = new HttpClient();
+  let sandbox;
+  let requestStub;
+
+  before(() => {
+    sandbox = sinon.createSandbox();
+  });
 
   beforeEach(() => {
-    demoAccountClient = new MetatraderDemoAccountClient(httpClient, 'header.payload.sign');
+    demoAccountClient = new MetatraderDemoAccountClient(httpClient, token);
+    requestStub = sandbox.stub(httpClient, 'request');
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   /**
@@ -22,25 +35,7 @@ describe('MetatraderDemoAccountClient', () => {
    */
   it('should create new MetaTrader 4 demo from API', async () => {
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
-    httpClient.requestFn = async (opts) => {
-      await Promise.resolve();
-      opts.should.eql({
-        url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId1/mt4-demo-accounts`,
-        method: 'POST',
-        headers: {
-          'auth-token': 'header.payload.sign'
-        },
-        body: {
-          balance: 10,
-          email: 'test@test.com',
-          leverage: 15,
-          serverName: 'server'
-        },
-        json: true,
-        timeout: 60000
-      });
-      return expected;
-    };
+    requestStub.resolves(expected);
     let account = await demoAccountClient.createMT4DemoAccount(
       'profileId1',
       {
@@ -50,6 +45,20 @@ describe('MetatraderDemoAccountClient', () => {
         serverName: 'server'
       });
     account.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId1/mt4-demo-accounts`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      body: {
+        balance: 10,
+        email: 'test@test.com',
+        leverage: 15,
+        serverName: 'server'
+      },
+      json: true,
+    });
   });
 
   /**
@@ -72,25 +81,7 @@ describe('MetatraderDemoAccountClient', () => {
    */
   it('should create new MetaTrader 5 demo from API', async () => {
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
-    httpClient.requestFn = async (opts) => {
-      await Promise.resolve();
-      opts.should.eql({
-        url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId2/mt5-demo-accounts`,
-        method: 'POST',
-        headers: {
-          'auth-token': 'header.payload.sign'
-        },
-        body: {
-          balance: 10,
-          email: 'test@test.com',
-          leverage: 15,
-          serverName: 'server'
-        },
-        json: true,
-        timeout: 60000
-      });
-      return expected;
-    };
+    requestStub.resolves(expected);
     let account = await demoAccountClient.createMT5DemoAccount(
       'profileId2',
       {
@@ -100,6 +91,20 @@ describe('MetatraderDemoAccountClient', () => {
         serverName: 'server'
       });
     account.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId2/mt5-demo-accounts`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      body: {
+        balance: 10,
+        email: 'test@test.com',
+        leverage: 15,
+        serverName: 'server'
+      },
+      json: true,
+    });
   });
   
   /**
