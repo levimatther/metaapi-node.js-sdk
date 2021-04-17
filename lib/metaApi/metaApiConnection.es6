@@ -451,11 +451,11 @@ export default class MetaApiConnection extends SynchronizationListener {
   async synchronize(instanceIndex) {
     let startingHistoryOrderTime = new Date(Math.max(
       (this._historyStartTime || new Date(0)).getTime(),
-      await this._historyStorage.lastHistoryOrderTime(instanceIndex).getTime()
+      (await this._historyStorage.lastHistoryOrderTime(instanceIndex)).getTime()
     ));
     let startingDealTime = new Date(Math.max(
       (this._historyStartTime || new Date(0)).getTime(),
-      await this._historyStorage.lastDealTime(instanceIndex).getTime()
+      (await this._historyStorage.lastDealTime(instanceIndex)).getTime()
     ));
     let synchronizationId = randomstring.generate(32);
     this._getState(instanceIndex).lastSynchronizationId = synchronizationId;

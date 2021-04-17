@@ -1,5 +1,6 @@
 12.5.0
   - added baseCurrency field to the MetaTraderAccount model
+  - fixed history storage timestamp processing (issue #6)
 
 12.4.0
   - added clientId to query websocket url
