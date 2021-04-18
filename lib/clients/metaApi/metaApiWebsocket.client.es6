@@ -90,6 +90,21 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Returns the list of subscribed account ids
+   * @return {string[]} list of subscribed account ids
+   */
+  get subscribedAccountIds() {
+    const connectedIds = [];
+    Object.keys(this._connectedHosts).forEach(instanceId => {
+      const accountId = instanceId.split(':')[0];
+      if(!connectedIds.includes(accountId)) {
+        connectedIds.push(accountId);
+      }
+    });
+    return connectedIds;
+  }
+
+  /**
    * Connects to MetaApi server via socket.io protocol
    * @returns {Promise} promise which resolves when connection is established
    */
