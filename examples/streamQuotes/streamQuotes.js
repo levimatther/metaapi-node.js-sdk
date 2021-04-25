@@ -68,7 +68,7 @@ async function streamQuotes() {
     await connection.waitSynchronized(undefined, 1200);
 
     // Add symbol to MarketWatch if not yet added and subscribe to market data
-    // Please note that currently only MT5 G1 instances support extended subscription management
+    // Please note that currently only G1 instances support extended subscription management
     // Other instances will only stream quotes in response
     await connection.subscribeToMarketData(symbol, [
       {type: 'quotes', intervalInMilliseconds: 5000},
