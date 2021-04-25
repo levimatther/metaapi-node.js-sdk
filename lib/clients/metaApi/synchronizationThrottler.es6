@@ -22,7 +22,7 @@ export default class SynchronizationThrottler {
    */
   constructor(client, opts) {
     opts = opts || {};
-    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 10;
+    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations;
     this._queueTimeoutInSeconds = opts.queueTimeoutInSeconds || 300;
     this._synchronizationTimeoutInSeconds = opts.synchronizationTimeoutInSeconds || 10;
     this._client = client;
@@ -87,6 +87,16 @@ export default class SynchronizationThrottler {
   }
 
   /**
+   * Returns the amount of maximum allowed concurrent synchronizations
+   * @return {number} maximum allowed concurrent synchronizations
+   */
+  get maxConcurrentSynchronizations() {
+    const calculatedMax = Math.max(Math.ceil(this._client.subscribedAccountIds.length / 10), 1);
+    return this._maxConcurrentSynchronizations ? Math.min(calculatedMax, this._maxConcurrentSynchronizations) :
+      calculatedMax;
+  }
+
+  /**
    * Returns flag whether there are free slots for synchronization requests
    * @return {Boolean} flag whether there are free slots for synchronization requests
    */
@@ -98,7 +108,7 @@ export default class SynchronizationThrottler {
         synchronizingAccounts.push(accountData.accountId);
       }
     });
-    return synchronizingAccounts.length < this._maxConcurrentSynchronizations;
+    return synchronizingAccounts.length < this.maxConcurrentSynchronizations;
   }
 
   /**
@@ -153,7 +163,7 @@ export default class SynchronizationThrottler {
       this._isProcessingQueue = true;
       try {
         while (this._synchronizationQueue.length && 
-          (Object.values(this._synchronizationIds).length < this._maxConcurrentSynchronizations)) {
+          (Object.values(this._synchronizationIds).length < this.maxConcurrentSynchronizations)) {
           await this._synchronizationQueue[0].promise;
           this._synchronizationQueue.shift();
         }
