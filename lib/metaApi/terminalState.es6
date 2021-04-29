@@ -320,16 +320,15 @@ export default class TerminalState extends SynchronizationListener {
   // eslint-disable-next-line complexity
   _updatePositionProfits(position, price) {
     let specification = this.specification(position.symbol);
-    let multiplier = Math.pow(10, specification.digits);
     if (specification) {
       if (position.profit !== undefined) {
-        position.profit = Math.round(position.profit * multiplier) / multiplier;
+        position.profit = Math.round(position.profit * 100) / 100;
       }
       if (position.unrealizedProfit === undefined || position.realizedProfit === undefined) {
         position.unrealizedProfit = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) *
           (position.currentPrice - position.openPrice) * position.currentTickValue *
           position.volume / specification.tickSize;
-        position.unrealizedProfit = Math.round(position.unrealizedProfit * multiplier) / multiplier;
+        position.unrealizedProfit = Math.round(position.unrealizedProfit * 100) / 100;
         position.realizedProfit = position.profit - position.unrealizedProfit;
       }
       let newPositionPrice = position.type === 'POSITION_TYPE_BUY' ? price.bid : price.ask;
@@ -338,10 +337,10 @@ export default class TerminalState extends SynchronizationListener {
       let unrealizedProfit = (position.type === 'POSITION_TYPE_BUY' ? 1 : -1) *
         (newPositionPrice - position.openPrice) * currentTickValue *
         position.volume / specification.tickSize;
-      unrealizedProfit = Math.round(unrealizedProfit * multiplier) / multiplier;
+      unrealizedProfit = Math.round(unrealizedProfit * 100) / 100;
       position.unrealizedProfit = unrealizedProfit;
       position.profit = position.unrealizedProfit + position.realizedProfit;
-      position.profit = Math.round(position.profit * multiplier) / multiplier;
+      position.profit = Math.round(position.profit * 100) / 100;
       position.currentPrice = newPositionPrice;
       position.currentTickValue = currentTickValue;
     }
