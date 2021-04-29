@@ -142,8 +142,8 @@ describe('TerminalState', () => {
       profit: 100,
       volume: 2
     });
-    state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.01});
-    state.onSymbolSpecificationUpdated(1, {symbol: 'AUDUSD', tickSize: 0.01});
+    state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.01, digits: 5});
+    state.onSymbolSpecificationUpdated(1, {symbol: 'AUDUSD', tickSize: 0.01, digits: 5});
     state.onSymbolPricesUpdated(1, [
       {
         time: new Date(),
