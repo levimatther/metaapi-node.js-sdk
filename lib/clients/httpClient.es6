@@ -17,6 +17,7 @@ export default class HttpClient {
    * @property {Number} [retries] the number of attempts to retry failed request, default 5
    * @property {Number} [minDelayInSeconds] minimum delay in seconds before retrying, default 1
    * @property {Number} [maxDelayInSeconds] maximum delay in seconds before retrying, default 30
+   * @property {Number} [subscribeCooldownInSeconds] time to disable new subscriptions for
    */
 
   /**

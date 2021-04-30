@@ -18,10 +18,11 @@ describe('SynchronizationThrottler', () => {
     });
     websocketClient = {
       _rpcRequest: (accountId, request, timeoutInSeconds) => {},
-      subscribedAccountIds: new Array(11)
+      subscribedAccountIds: () => new Array(11),
+      socketInstances: [{synchronizationThrottler: {synchronizingAccounts: []}}],
     };  
     websocketClient._rpcRequest = sandbox.stub();
-    throttler = new SynchronizationThrottler(websocketClient);
+    throttler = new SynchronizationThrottler(websocketClient, 0);
     throttler.start();
   });
 
@@ -74,7 +75,7 @@ describe('SynchronizationThrottler', () => {
    * @test {SynchronizationThrottler#scheduleSynchronize}
    */
   it('should increase slot amount with more subscribed accounts', async () => {
-    websocketClient.subscribedAccountIds = new Array(21);
+    websocketClient.subscribedAccountIds = () => new Array(21);
     await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
     await throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
@@ -87,14 +88,15 @@ describe('SynchronizationThrottler', () => {
   /**
    * @test {SynchronizationThrottler#scheduleSynchronize}
    */
-  it('should set hard limit for concurrent synchronizations via options', async () => {
-    websocketClient.subscribedAccountIds = new Array(21);
-    throttler = new SynchronizationThrottler(websocketClient, {maxConcurrentSynchronizations: 2});
+  it('should set hard limit for concurrent synchronizations across throttlers via options', async () => {
+    websocketClient.subscribedAccountIds = () => new Array(21);
+    throttler = new SynchronizationThrottler(websocketClient, 0, {maxConcurrentSynchronizations: 3});
+    websocketClient.socketInstances = [{synchronizationThrottler: throttler},
+      {synchronizationThrottler: {synchronizingAccounts: ['accountId4']}}];
     await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId1', {requestId: 'test1'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test2'});
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
+    throttler.scheduleSynchronize('accountId4', {requestId: 'test4'});
     await new Promise(res => setTimeout(res, 20));
     sinon.assert.callCount(websocketClient._rpcRequest, 2);
     throttler.removeSynchronizationId('test1');

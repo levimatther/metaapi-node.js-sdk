@@ -40,10 +40,20 @@ export default class SubscriptionManager {
             await client.subscribe(accountId, instanceIndex);
           } catch (err) {
             if(err.name === 'TooManyRequestsError') {
-              const retryTime = new Date(err.metadata.recommendedRetryTime).getTime();
-              if (Date.now() + subscribeRetryIntervalInSeconds * 1000 < retryTime) {
-                await new Promise(res => setTimeout(res, retryTime - Date.now() -
-                  subscribeRetryIntervalInSeconds * 1000));
+              const socketInstanceIndex = client.socketInstancesByAccounts[accountId];
+              if (err.metadata.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER') {
+                console.log(err);
+              }
+              if (['LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER', 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER', 
+                'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER'].includes(err.metadata.type)) {
+                delete client.socketInstancesByAccounts[accountId];
+                await client.lockSocketInstance(socketInstanceIndex, err.metadata);
+              } else {
+                const retryTime = new Date(err.metadata.recommendedRetryTime).getTime();
+                if (Date.now() + subscribeRetryIntervalInSeconds * 1000 < retryTime) {
+                  await new Promise(res => setTimeout(res, retryTime - Date.now() -
+                    subscribeRetryIntervalInSeconds * 1000));
+                }
               }
             }
           }
@@ -108,7 +118,7 @@ export default class SubscriptionManager {
    * @param {Number} instanceIndex instance index
    */
   onTimeout(accountId, instanceIndex) {
-    if(this._websocketClient.connected) {
+    if(this._websocketClient.connected(this._websocketClient.socketInstancesByAccounts[accountId])) {
       this.subscribe(accountId, instanceIndex);
     }
   }
@@ -125,10 +135,15 @@ export default class SubscriptionManager {
 
   /**
    * Invoked when connection to MetaApi websocket API restored after a disconnect.
+   * @param {Number} socketInstanceIndex socket instance index
    */
-  onReconnected() {
+  onReconnected(socketInstanceIndex) {
+    const socketInstancesByAccounts = this._websocketClient.socketInstancesByAccounts;
     for(let instanceId of Object.keys(this._subscriptions)){
-      this.cancelSubscribe(instanceId);
+      const accountId = instanceId.split(':')[0];
+      if (socketInstancesByAccounts[accountId] === socketInstanceIndex) {
+        this.cancelSubscribe(instanceId);
+      }
     }
   }
 }
