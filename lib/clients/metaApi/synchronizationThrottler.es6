@@ -18,14 +18,16 @@ export default class SynchronizationThrottler {
   /**
    * Constructs the synchronization throttler
    * @param {MetaApiWebsocketClient} client MetaApi websocket client
+   * @param {Number} socketInstanceIndex index of socket instance that uses the throttler
    * @param {SynchronizationThrottlerOpts} opts synchronization throttler options
    */
-  constructor(client, opts) {
+  constructor(client, socketInstanceIndex, opts) {
     opts = opts || {};
-    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations;
+    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 15;
     this._queueTimeoutInSeconds = opts.queueTimeoutInSeconds || 300;
     this._synchronizationTimeoutInSeconds = opts.synchronizationTimeoutInSeconds || 10;
     this._client = client;
+    this._socketInstanceIndex = socketInstanceIndex;
     this._synchronizationIds = {};
     this._accountsBySynchronizationIds = {};
     this._synchronizationQueue = [];
@@ -79,6 +81,20 @@ export default class SynchronizationThrottler {
   }
 
   /**
+   * Returns the list of currently synchronizing account ids
+   */
+  get synchronizingAccounts() {
+    const synchronizingAccounts = [];
+    Object.keys(this._synchronizationIds).forEach(key => {
+      const accountData = this._accountsBySynchronizationIds[key];
+      if(accountData && !synchronizingAccounts.includes(accountData.accountId)) {
+        synchronizingAccounts.push(accountData.accountId);
+      }
+    });
+    return synchronizingAccounts;
+  }
+
+  /**
    * Returns the list of currenly active synchronization ids
    * @return {String[]} synchronization ids
    */
@@ -91,9 +107,9 @@ export default class SynchronizationThrottler {
    * @return {number} maximum allowed concurrent synchronizations
    */
   get maxConcurrentSynchronizations() {
-    const calculatedMax = Math.max(Math.ceil(this._client.subscribedAccountIds.length / 10), 1);
-    return this._maxConcurrentSynchronizations ? Math.min(calculatedMax, this._maxConcurrentSynchronizations) :
-      calculatedMax;
+    const calculatedMax = Math.max(Math.ceil(
+      this._client.subscribedAccountIds(this._socketInstanceIndex).length / 10), 1);
+    return Math.min(calculatedMax, this._maxConcurrentSynchronizations);
   }
 
   /**
@@ -101,14 +117,12 @@ export default class SynchronizationThrottler {
    * @return {Boolean} flag whether there are free slots for synchronization requests
    */
   get isSynchronizationAvailable() {
-    const synchronizingAccounts = [];
-    Object.keys(this._synchronizationIds).forEach(synchronizationId => {
-      const accountData = this._accountsBySynchronizationIds[synchronizationId];
-      if(accountData && (!synchronizingAccounts.includes(accountData.accountId))) {
-        synchronizingAccounts.push(accountData.accountId);
-      }
-    });
-    return synchronizingAccounts.length < this.maxConcurrentSynchronizations;
+    if (this._client.socketInstances.reduce((acc, socketInstance) => 
+      acc + socketInstance.synchronizationThrottler.synchronizingAccounts.length, 0) >=
+      this._maxConcurrentSynchronizations) {
+      return false;
+    }
+    return this.synchronizingAccounts.length < this.maxConcurrentSynchronizations;
   }
 
   /**

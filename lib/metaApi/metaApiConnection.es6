@@ -34,7 +34,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
     this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);
     this._websocketClient.addSynchronizationListener(account.id, this._healthMonitor);
-    this._websocketClient.addReconnectListener(this);
+    this._websocketClient.addReconnectListener(this, account.id);
     this._subscriptions = {};
     this._stateByInstanceIndex = {};
     this._synchronized = false;

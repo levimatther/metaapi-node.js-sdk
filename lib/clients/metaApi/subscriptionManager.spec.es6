@@ -10,17 +10,21 @@ describe('SubscriptionManager', () => {
   let sandbox;
   let clock;
   let manager;
-  let client = {
-    subscribe: () => {},
-    connect: () => {},
-    connected: true,
-  };
+  let client;
 
   before(() => {
     sandbox = sinon.createSandbox();
   });
 
   beforeEach(async () => {  
+    const socketInstances = [{socket: {connected: true}}, {socket: {connected: false}}];
+    client = {
+      subscribe: () => {},
+      connect: () => {},
+      connected: (socketInstanceIndex) => socketInstances[socketInstanceIndex].socket.connected,
+      socketInstances: socketInstances,
+      socketInstancesByAccounts: {accountId: 0}
+    };
     clock = sinon.useFakeTimers({shouldAdvanceTime: true});
     manager = new SubscriptionManager(client);
   });
@@ -68,6 +72,7 @@ describe('SubscriptionManager', () => {
     sandbox.stub(client, 'subscribe')
       .onFirstCall().rejects(new TooManyRequestsError('timeout', {
         periodInMinutes: 60, maxRequestsForPeriod: 10000,
+        type: 'LIMIT_REQUEST_RATE_PER_USER',
         recommendedRetryTime: new Date(Date.now() + 5000)}))
       .onSecondCall().resolves(response)
       .onThirdCall().resolves(response);
@@ -84,12 +89,14 @@ describe('SubscriptionManager', () => {
    */
   it('should cancel all subscriptions on reconnect', async () => {
     sandbox.stub(client, 'subscribe').resolves();
+    client.socketInstancesByAccounts = {accountId: 0, accountId2: 0, accountId3: 1};
     manager.subscribe('accountId');
     manager.subscribe('accountId2');
+    manager.subscribe('accountId3');
     await clock.tickAsync(1000);
-    manager.onReconnected();
+    manager.onReconnected(0);
     await clock.tickAsync(5000);
-    sinon.assert.calledTwice(client.subscribe);
+    sinon.assert.callCount(client.subscribe, 4);
   });
 
   /**
@@ -111,12 +118,17 @@ describe('SubscriptionManager', () => {
    */
   it('should resubscribe on timeout', async () => {
     sandbox.stub(client, 'subscribe').resolves();
+    client.socketInstances[0].socket.connected = true;
+    client.socketInstancesByAccounts.accountId2 = 1;
     setTimeout(() => {
       manager.cancelSubscribe('accountId:0');
+      manager.cancelSubscribe('accountId2:0');
     }, 100);
     manager.onTimeout('accountId');
+    manager.onTimeout('accountId2');
     await clock.tickAsync(200);
     sinon.assert.calledWith(client.subscribe, 'accountId', undefined);
+    sinon.assert.callCount(client.subscribe, 1);
   });
 
   /**
@@ -124,7 +136,7 @@ describe('SubscriptionManager', () => {
    */
   it('should not retry subscribe to terminal if connection is closed', async () => {
     sandbox.stub(client, 'subscribe').resolves();
-    client.connected = false;
+    client.socketInstances[0].socket.connected = false;
     setTimeout(() => {
       manager.cancelSubscribe('accountId:0');
     }, 100);
