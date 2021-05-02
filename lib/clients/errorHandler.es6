@@ -159,6 +159,7 @@ export class ConflictError extends ApiError {
  * @property {Number} periodInMinutes throttling period in minutes
  * @property {Number} requestsPerPeriodAllowed available requests for periodInMinutes
  * @property {Date} recommendedRetryTime recommended date to retry request
+ * @property {String} type error type
  */
 
 /**

@@ -37,8 +37,9 @@ describe('MetaApiWebsocketClient', () => {
         socket.close();
       }
     });
-    sandbox.stub(client._synchronizationThrottler, 'activeSynchronizationIds').get(() => []);
+    client._socketInstancesByAccounts = {accountId: 0};
     await client.connect();
+    sandbox.stub(client._socketInstances[0].synchronizationThrottler, 'activeSynchronizationIds').get(() => []);
   });
 
   afterEach(async () => {
@@ -531,6 +532,29 @@ describe('MetaApiWebsocketClient', () => {
   /**
    * @test {MetaApiWebsocketClient#subscribe}
    */
+  it('should create new instance when account limit is reached', async () => {
+    sinon.assert.match(client.socketInstances.length, 1);
+    for (let i = 0; i < 100; i++) {
+      client._socketInstancesByAccounts['accountId' + i] = 0;
+    }
+
+    io.removeAllListeners('connect');
+    io.on('connect', socket => {
+      socket.on('request', data => {
+        if (data.type === 'subscribe' && data.accountId === 'accountId101' && data.application === 'application' &&
+          data.instanceIndex === 1) {
+          socket.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+    });
+    await client.subscribe('accountId101', 1);
+    await new Promise(res => setTimeout(res, 50));
+    sinon.assert.match(client.socketInstances.length, 2);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#subscribe}
+   */
   it('should return error if connect to MetaTrader terminal failed', async () => {
     let requestReceived = false;
     server.on('request', data => {
@@ -729,14 +753,18 @@ describe('MetaApiWebsocketClient', () => {
    * @test {MetaApiWebsocketClient#unsubscribe}
    */
   it('should unsubscribe from account data', async () => {
+    let requestReceived = false;
+
     let response = {type: 'response', accountId: 'accountId'};
     server.on('request', data => {
       if (data.type === 'unsubscribe' && data.accountId === 'accountId') {
+        requestReceived = true;
         server.emit('response', Object.assign({requestId: data.requestId}, response));
       }
     });
-    let actual = await client.unsubscribe('accountId');
-    actual.should.match(response);
+    await client.unsubscribe('accountId');
+    sinon.assert.match(requestReceived, true);
+    client.socketInstancesByAccounts.should.not.have.property('accountId');
   });
 
   /**
@@ -994,7 +1022,8 @@ describe('MetaApiWebsocketClient', () => {
       };
       sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
-      sandbox.stub(client._synchronizationThrottler, 'activeSynchronizationIds').get(() => ['synchronizationId']);
+      sandbox.stub(client._socketInstances[0].synchronizationThrottler, 
+        'activeSynchronizationIds').get(() => ['synchronizationId']);
       server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
         accountInformation: {}, instanceIndex: 1});
       await new Promise(res => setTimeout(res, 50));
