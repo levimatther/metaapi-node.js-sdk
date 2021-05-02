@@ -1,9 +1,10 @@
-12.5.0
+13.0.0
   - added baseCurrency field to the MetaTraderAccount model
   - fixed history storage timestamp processing (issue #6)
   - handle TooManyRequestsError in HTTP client
   - limit max concurrent synchronizations based on the number of subscribed accounts
   - implement proper rounding for position profits and account equity
+  - breaking change: refactored specifications updated events
 
 12.4.0
   - added clientId to query websocket url

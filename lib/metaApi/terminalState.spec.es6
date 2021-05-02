@@ -87,17 +87,14 @@ describe('TerminalState', () => {
   });
 
   /**
-   * @test {TerminalState#onSymbolSpecificationUpdated}
+   * @test {TerminalState#onSymbolSpecificationsUpdated}
    * @test {TerminalState#specifications}
    * @test {TerminalState#specification}
    */
   it('should return specifications', () => {
     state.specifications.length.should.equal(0);
-    state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.00001});
-    state.onSymbolSpecificationUpdated(1, {symbol: 'GBPUSD'});
-    state.onSymbolSpecificationUpdated(1, {symbol: 'AUDNZD'});
-    state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.0001});
-    state.onSymbolSpecificationsRemoved(1, ['AUDNZD']);
+    state.onSymbolSpecificationsUpdated(1, [{symbol: 'EURUSD', tickSize: 0.00001}, {symbol: 'GBPUSD'}], []);
+    state.onSymbolSpecificationsUpdated(1, [{symbol: 'AUDNZD'}, {symbol: 'EURUSD', tickSize: 0.0001}], ['AUDNZD']);
     state.specifications.length.should.equal(2);
     state.specifications.should.match([{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}]);
     state.specification('EURUSD').should.match({symbol: 'EURUSD', tickSize: 0.0001});
@@ -142,8 +139,8 @@ describe('TerminalState', () => {
       profit: 100,
       volume: 2
     });
-    state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.01, digits: 5});
-    state.onSymbolSpecificationUpdated(1, {symbol: 'AUDUSD', tickSize: 0.01, digits: 5});
+    state.onSymbolSpecificationsUpdated(1, [{symbol: 'EURUSD', tickSize: 0.01, digits: 5},
+      {symbol: 'AUDUSD', tickSize: 0.01, digits: 5}], []);
     state.onSymbolPricesUpdated(1, [
       {
         time: new Date(),
@@ -199,7 +196,7 @@ describe('TerminalState', () => {
       type: 'ORDER_TYPE_SELL_LIMIT',
       currentPrice: 9
     });
-    state.onSymbolSpecificationUpdated(1, {symbol: 'EURUSD', tickSize: 0.01});
+    state.onSymbolSpecificationsUpdated(1, [{symbol: 'EURUSD', tickSize: 0.01}], []);
     state.onSymbolPricesUpdated(1, [{
       time: new Date(),
       symbol: 'EURUSD',
