@@ -63,9 +63,9 @@ async function streamQuotes() {
     connection.addSynchronizationListener(quoteListener);
 
     // wait until terminal state synchronized to the local state
-    console.log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history ' + 
-        'size), the price streaming will start once synchronization finishes');
-    await connection.waitSynchronized(undefined, 1200);
+    console.log('[' + (new Date().toISOString()) + '] Waiting for SDK to synchronize to terminal state (may take ' +
+      'some time depending on your history size), the price streaming will start once synchronization finishes');
+    await connection.waitSynchronized(undefined, {timeoutInSeconds: 600});
 
     // Add symbol to MarketWatch if not yet added and subscribe to market data
     // Please note that currently only G1 instances support extended subscription management
@@ -77,7 +77,8 @@ async function streamQuotes() {
       {type: 'marketDepth', intervalInMilliseconds: 5000}
     ]);
 
-    console.log('Streaming ' + symbol + ' market data now...');
+    console.log('[' + (new Date().toISOString()) + '] Synchronized successfully, streaming ' + symbol +
+      ' market data now...');
 
     // eslint-disable-next-line
     while(true){
