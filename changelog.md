@@ -5,6 +5,7 @@
   - limit max concurrent synchronizations based on the number of subscribed accounts
   - implement proper rounding for position profits and account equity
   - breaking change: refactored specifications updated events
+  - breaking change: removed expert advisor API
 
 12.4.0
   - added clientId to query websocket url

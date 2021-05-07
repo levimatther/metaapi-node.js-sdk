@@ -11,7 +11,6 @@ import MetatraderDemoAccountClient from '../clients/metaApi/metatraderDemoAccoun
 import ConnectionRegistry from './connectionRegistry';
 import {ValidationError} from '../clients/errorHandler';
 import LatencyMonitor from './latencyMonitor';
-import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
 
 /**
  * Request retry options
@@ -66,7 +65,7 @@ export default class MetaApi {
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
-      this._metaApiWebsocketClient, this._connectionRegistry, new ExpertAdvisorClient(httpClient, token, domain));
+      this._metaApiWebsocketClient, this._connectionRegistry);
     this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
       new MetatraderDemoAccountClient(httpClient, token, domain));
     if (opts.enableLatencyTracking || opts.enableLatencyMonitor) {
