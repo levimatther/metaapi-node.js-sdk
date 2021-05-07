@@ -6,7 +6,6 @@ import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccount from './metatraderAccount';
 import {NotFoundError} from '../clients/errorHandler';
 import HistoryFileManager from './historyFileManager/index';
-import ExpertAdvisor from './expertAdvisor';
 
 /**
  * @test {MetatraderAccountApi}
@@ -28,13 +27,7 @@ describe('MetatraderAccountApi', () => {
     updateAccount: () => {},
     increaseReliability: () => {}
   };
-  let eaClient = {
-    getExpertAdvisors: () => {},
-    getExpertAdvisor: () => {},
-    updateExpertAdvisor: () => {},
-    uploadExpertAdvisorFile: () => {},
-    deleteExpertAdvisor: () => {}
-  };
+  
   let metaApiWebsocketClient = {
     addSynchronizationListener: () => {},
     addReconnectListener: () => {},
@@ -46,7 +39,7 @@ describe('MetatraderAccountApi', () => {
   };
 
   before(() => {
-    api = new MetatraderAccountApi(client, metaApiWebsocketClient, connectionRegistry, eaClient);
+    api = new MetatraderAccountApi(client, metaApiWebsocketClient, connectionRegistry);
     sandbox = sinon.createSandbox();
   });
 
@@ -747,202 +740,6 @@ describe('MetatraderAccountApi', () => {
     });
     sinon.assert.calledWith(client.getAccount, 'id');
     sinon.assert.calledTwice(client.getAccount);
-  });
-
-  /**
-   * @test {MetatraderAccount#getExpertAdvisors}
-   */
-  it('should retrieve expert advisors', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g1'});
-    sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{expertId: 'ea'}]);
-    const account = await api.getAccount();
-    const experts = await account.getExpertAdvisors();
-    experts.map(e => e.expertId).should.match(['ea']);
-    experts.forEach(e => (e instanceof ExpertAdvisor).should.be.true());
-    sinon.assert.calledWithMatch(eaClient.getExpertAdvisors, 'id');
-  });
-
-  /**
-   * @test {MetatraderAccount#getExpertAdvisor}
-   */
-  it('should retrieve expert advisor by expert id', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g1'});
-    sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
-      expertId: 'ea',
-      period: '1H',
-      symbol: 'EURUSD',
-      fileUploaded: false
-    });
-    const account = await api.getAccount('id');
-    const expert = await account.getExpertAdvisor('ea');
-    expert.expertId.should.match('ea');
-    expert.period.should.match('1H');
-    expert.symbol.should.match('EURUSD');
-    expert.fileUploaded.should.be.false();
-    (expert instanceof ExpertAdvisor).should.be.true();
-    sinon.assert.calledWithMatch(eaClient.getExpertAdvisor, 'id', 'ea');
-  });
-
-  /**
-   * @test {MetatraderAccount#getExpertAdvisor}
-   */
-  it('should validate account type', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g2'});
-    sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{
-      expertId: 'ea',
-      period: '1H',
-      symbol: 'EURUSD',
-      fileUploaded: false
-    }]);
-    sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
-      expertId: 'ea',
-      period: '1H',
-      symbol: 'EURUSD',
-      fileUploaded: false
-    });
-    sandbox.stub(eaClient, 'updateExpertAdvisor').resolves();
-    let newExpertAdvisor = {
-      period: '1H',
-      symbol: 'EURUSD',
-      preset: 'preset'
-    };
-    const account = await api.getAccount('id');
-    await should(account.getExpertAdvisors()).rejected();
-    await should(account.getExpertAdvisor('ea')).rejected();
-    await should(account.createExpertAdvisor('ea', newExpertAdvisor)).rejected();
-  });
-
-  /**
-   * @test {MetatraderAccount#createExpertAdvisor}
-   */
-  it('should create expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g1'});
-    sandbox.stub(eaClient, 'updateExpertAdvisor').resolves();
-    sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
-      expertId: 'ea',
-      period: '1H',
-      symbol: 'EURUSD',
-      fileUploaded: false
-    });
-    let newExpertAdvisor = {
-      period: '1H',
-      symbol: 'EURUSD',
-      preset: 'preset'
-    };
-    const account = await api.getAccount('id');
-    const expert = await account.createExpertAdvisor('ea', newExpertAdvisor);
-    expert.expertId.should.match('ea');
-    expert.period.should.match('1H');
-    expert.symbol.should.match('EURUSD');
-    expert.fileUploaded.should.be.false();
-    (expert instanceof ExpertAdvisor).should.be.true();
-    sinon.assert.calledWith(eaClient.updateExpertAdvisor, 'id', 'ea', newExpertAdvisor);
-    sinon.assert.calledWith(eaClient.getExpertAdvisor, 'id', 'ea');
-  });
-
-  /**
-   * @test {ExpertAdvisor#reload}
-   */
-  it('should reload expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g1'});
-    sandbox.stub(eaClient, 'getExpertAdvisor')
-      .onFirstCall().resolves({
-        expertId: 'ea',
-        period: '1H',
-        symbol: 'EURUSD',
-        fileUploaded: false
-      })
-      .onSecondCall().resolves({
-        expertId: 'ea',
-        period: '4H',
-        symbol: 'EURUSD',
-        fileUploaded: false
-      });
-    const account = await api.getAccount('id');
-    const expert = await account.getExpertAdvisor('ea');
-    await expert.reload();
-    expert.period.should.eql('4H');
-    sinon.assert.calledWith(eaClient.getExpertAdvisor, 'id', 'ea');
-    sinon.assert.calledTwice(eaClient.getExpertAdvisor);
-  });
-
-  /**
-   * @test {ExpertAdvisor#update}
-   */
-  it('should update expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g1'});
-    sandbox.stub(eaClient, 'getExpertAdvisor')
-      .onFirstCall().resolves({
-        expertId: 'ea',
-        period: '1H',
-        symbol: 'EURUSD',
-        fileUploaded: false
-      })
-      .onSecondCall().resolves({
-        expertId: 'ea',
-        period: '4H',
-        symbol: 'EURUSD',
-        fileUploaded: false
-      });
-    let newExpertAdvisor = {
-      period: '4H',
-      symbol: 'EURUSD',
-      preset: 'preset'
-    };
-    sandbox.stub(eaClient, 'updateExpertAdvisor').resolves();
-    const account = await api.getAccount('id');
-    const expert = await account.getExpertAdvisor('ea');
-    await expert.update(newExpertAdvisor);
-    expert.period.should.eql('4H');
-    sinon.assert.calledWith(eaClient.updateExpertAdvisor, 'id', 'ea', newExpertAdvisor);
-    sinon.assert.calledTwice(eaClient.getExpertAdvisor);
-    sinon.assert.calledWith(eaClient.getExpertAdvisor, 'id', 'ea');
-  });
-
-  /**
-   * @test {ExpertAdvisor#uploadFile}
-   */
-  it('should upload expert advisor file', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g1'});
-    sandbox.stub(eaClient, 'getExpertAdvisor')
-      .onFirstCall().resolves({
-        expertId: 'ea',
-        period: '1H',
-        symbol: 'EURUSD',
-        fileUploaded: false
-      })
-      .onSecondCall().resolves({
-        expertId: 'ea',
-        period: '4H',
-        symbol: 'EURUSD',
-        fileUploaded: true
-      });
-    sandbox.stub(eaClient, 'uploadExpertAdvisorFile').resolves();
-    const account = await api.getAccount('id');
-    const expert = await account.getExpertAdvisor('ea');
-    await expert.uploadFile('/path/to/file');
-    expert.fileUploaded.should.be.true();
-    sinon.assert.calledWith(eaClient.uploadExpertAdvisorFile, 'id', 'ea', '/path/to/file');
-    sinon.assert.calledTwice(eaClient.getExpertAdvisor);
-    sinon.assert.calledWith(eaClient.getExpertAdvisor, 'id', 'ea');
-  });
-
-  /**
-   * @test {ExpertAdvisor#remove}
-   */
-  it('should remove expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', type: 'cloud-g1'});
-    sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
-      expertId: 'ea',
-      period: '1H',
-      symbol: 'EURUSD',
-      fileUploaded: false
-    });
-    sandbox.stub(eaClient, 'deleteExpertAdvisor').resolves({_id: 'id'});
-    const account = await api.getAccount('id');
-    const expert = await account.getExpertAdvisor('ea');
-    await expert.remove();
-    sinon.assert.calledWith(eaClient.deleteExpertAdvisor, 'id', 'ea');
   });
 
 });
