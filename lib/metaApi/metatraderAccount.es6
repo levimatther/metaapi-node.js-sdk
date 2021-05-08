@@ -3,7 +3,6 @@
 import TimeoutError from '../clients/timeoutError';
 import MetaApiConnection from './metaApiConnection';
 import HistoryFileManager from './historyFileManager/index';
-import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
 
 /**
@@ -17,14 +16,12 @@ export default class MetatraderAccount {
    * @param {MetatraderAccountClient} metatraderAccountClient MetaTrader account REST API client
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
-   * @param {ExpertAdvisorClient} expertAdvisorClient expert advisor REST API client
    */
-  constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry, expertAdvisorClient) {
+  constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry) {
     this._data = data;
     this._metatraderAccountClient = metatraderAccountClient;
     this._metaApiWebsocketClient = metaApiWebsocketClient;
     this._connectionRegistry = connectionRegistry;
-    this._expertAdvisorClient = expertAdvisorClient;
   }
 
   /**
@@ -318,45 +315,6 @@ export default class MetatraderAccount {
   async update(account) {
     await this._metatraderAccountClient.updateAccount(this.id, account);
     await this.reload();
-  }
-
-  /**
-   * Retrieves expert advisor of current account
-   * @returns {Promise<ExpertAdvisor[]>} promise resolving with an array of expert advisor entities
-   */
-  async getExpertAdvisors() {
-    if (this.type !== 'cloud-g1') {
-      throw new ValidationError('Custom expert advisor is available only for cloud-g1 accounts');
-    }
-    let expertAdvisors = await this._expertAdvisorClient.getExpertAdvisors(this.id);
-    return expertAdvisors.map(e => new ExpertAdvisor(e, this.id, this._expertAdvisorClient));
-  }
-
-  /**
-   * Retrieves a expert advisor of current account by id
-   * @param {String} expertId expert advisor id
-   * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
-   */
-  async getExpertAdvisor(expertId) {
-    if (this.type !== 'cloud-g1') {
-      throw new ValidationError('Custom expert advisor is available only for cloud-g1 accounts');
-    }
-    let expertAdvisor = await this._expertAdvisorClient.getExpertAdvisor(this.id, expertId);
-    return new ExpertAdvisor(expertAdvisor, this.id, this._expertAdvisorClient);
-  }
-
-  /**
-   * Creates an expert advisor
-   * @param {String} expertId expert advisor id
-   * @param {NewExpertAdvisorDto} expert expert advisor data
-   * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
-   */
-  async createExpertAdvisor(expertId, expert) {
-    if (this.type !== 'cloud-g1') {
-      throw new ValidationError('Custom expert advisor is available only for cloud-g1 accounts');
-    }
-    await this._expertAdvisorClient.updateExpertAdvisor(this.id, expertId, expert);
-    return this.getExpertAdvisor(expertId);
   }
 
   _delay(timeoutInMilliseconds) {
