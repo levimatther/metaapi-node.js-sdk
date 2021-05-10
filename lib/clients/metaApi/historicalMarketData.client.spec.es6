@@ -53,7 +53,7 @@ describe('HistoricalMarketDataClient', () => {
     candles.should.equal(expected);
     sinon.assert.calledOnceWithExactly(httpClient.request, {
       url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/AUDNZD/` +
-      'timeframes/15m',
+        'timeframes/15m/candles',
       method: 'GET',
       qs: {
         startTime: new Date('2020-04-07T03:45:00.000Z'),

@@ -31,10 +31,10 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * @param {number} [limit] maximum number of candles to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
    */
-  getHistoricalCandles(accountId, symbol, timeframe, startTime, limit) {
+  async getHistoricalCandles(accountId, symbol, timeframe, startTime, limit) {
     const opts = {
       url: `${this._host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/` +
-        `timeframes/${timeframe}`,
+        `timeframes/${timeframe}/candles`,
       method: 'GET',
       qs: {
         startTime,
@@ -45,7 +45,10 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    let candles = await this._httpClient.request(opts);
+    candles = candles || [];
+    candles.forEach(c => c.time = new Date(c.time));
+    return candles;
   }
 
   /**
@@ -53,14 +56,14 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
    * @param {string} accountId MetaTrader account id
    * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
-   * @param {Date} [startTime] time to start loading candles from. Note that candles are loaded in backwards direction, so
-   * this should be the latest time. Leave empty to request latest candles.
+   * @param {Date} [startTime] time to start loading ticks from. Note that candles are loaded in forward direction, so
+   * this should be the earliest time. Leave empty to request latest candles.
    * @param {number} [offset] number of ticks to skip (you can use it to avoid requesting ticks from previous request
    * twice)
    * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
    */
-  getHistoricalTicks(accountId, symbol, startTime, offset, limit) {
+  async getHistoricalTicks(accountId, symbol, startTime, offset, limit) {
     const opts = {
       url: `${this._host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/ticks`,
       method: 'GET',
@@ -74,7 +77,10 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    let ticks = await this._httpClient.request(opts);
+    ticks = ticks || [];
+    ticks.forEach(t => t.time = new Date(t.time));
+    return ticks;
   }
 
 }
