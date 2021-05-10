@@ -34,6 +34,7 @@ async function retrieveHistoricalTicks() {
     let ticks;
     for (let i = 0; i < pages; i++) {
       // the API to retrieve historical market data is currently available for G1 only
+      // historical ticks can be retrieved from MT5 only
       ticks = await account.getHistoricalTicks(symbol, startTime, offset);
       console.log(`Downloaded ${ticks ? ticks.length : 0} historical ticks for ${symbol}`);
       if (ticks && ticks.length) {
