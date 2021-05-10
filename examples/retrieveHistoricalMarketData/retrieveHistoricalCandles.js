@@ -16,13 +16,13 @@ async function retrieveHistoricalCandles() {
     // wait until account is deployed and connected to broker
     console.log('Deploying account');
     if (account.state !== 'DEPLOYED') {
-      //await account.deploy();
+      await account.deploy();
     } else {
       console.log('Account already deployed');
     }
     console.log('Waiting for API server to connect to broker (may take couple of minutes)');
     if (account.connectionStatus !== 'CONNECTED') {
-      //await account.waitConnected();
+      await account.waitConnected();
     }
 
     // retrieve last 10K 1m candles
@@ -32,6 +32,7 @@ async function retrieveHistoricalCandles() {
     let startTime;
     let candles
     for (let i = 0; i < pages; i++) {
+      // the API to retrieve historical market data is currently available for G1 only
       candles = await account.getHistoricalCandles(symbol, '1m', startTime);
       console.log(`Downloaded ${candles ? candles.length : 0} historical candles for ${symbol}`);
       if (candles && candles.length) {
