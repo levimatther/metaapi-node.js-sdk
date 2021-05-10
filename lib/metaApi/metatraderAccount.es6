@@ -16,12 +16,14 @@ export default class MetatraderAccount {
    * @param {MetatraderAccountClient} metatraderAccountClient MetaTrader account REST API client
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
+   * @param {HistoricalMarketDataClient} historicalMarketDataClient historical market data HTTP API client
    */
-  constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry) {
+  constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry, historicalMarketDataClient) {
     this._data = data;
     this._metatraderAccountClient = metatraderAccountClient;
     this._metaApiWebsocketClient = metaApiWebsocketClient;
     this._connectionRegistry = connectionRegistry;
+    this._historicalMarketDataClient = historicalMarketDataClient;
   }
 
   /**
@@ -315,6 +317,37 @@ export default class MetatraderAccount {
   async update(account) {
     await this._metatraderAccountClient.updateAccount(this.id, account);
     await this.reload();
+  }
+
+  /**
+   * Returns historical candles for a specific symbol and timeframe from the MetaTrader account.
+   * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalCandles/
+   * @param {string} symbol symbol to retrieve candles for (e.g. a currency pair or an index)
+   * @param {string} timeframe defines the timeframe according to which the candles must be generated. Allowed values
+   * for MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed
+   * values for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
+   * @param {Date} [startTime] time to start loading candles from. Note that candles are loaded in backwards direction, so
+   * this should be the latest time. Leave empty to request latest candles.
+   * @param {number} [limit] maximum number of candles to retrieve. Must be less or equal to 1000
+   * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
+   */
+  getHistoricalCandles(symbol, timeframe, startTime, limit) {
+    return this._historicalMarketDataClient.getHistoricalCandles(this.id, symbol, timeframe, startTime, limit);
+  }
+
+  /**
+   * Returns historical ticks for a specific symbol from the MetaTrader account.
+   * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
+   * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
+   * @param {Date} [startTime] time to start loading candles from. Note that candles are loaded in backwards direction, so
+   * this should be the latest time. Leave empty to request latest candles.
+   * @param {number} [offset] number of ticks to skip (you can use it to avoid requesting ticks from previous request
+   * twice)
+   * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
+   * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
+   */
+  getHistoricalTicks(symbol, startTime, offset, limit) {
+    return this._historicalMarketDataClient.getHistoricalCandles(this.id, symbol, startTime, offset, limit);
   }
 
   _delay(timeoutInMilliseconds) {

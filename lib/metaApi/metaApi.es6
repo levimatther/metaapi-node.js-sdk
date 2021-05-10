@@ -8,6 +8,7 @@ import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
 import MetatraderDemoAccountApi from './metatraderDemoAccountApi';
 import MetatraderDemoAccountClient from '../clients/metaApi/metatraderDemoAccount.client';
+import HistoricalMarketDataClient from '../clients/metaApi/historicalMarketData.client';
 import ConnectionRegistry from './connectionRegistry';
 import {ValidationError} from '../clients/errorHandler';
 import LatencyMonitor from './latencyMonitor';
@@ -51,6 +52,7 @@ export default class MetaApi {
     const application = opts.application || 'MetaApi';
     const domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
     const requestTimeout = opts.requestTimeout || 60;
+    const historicalMarketDataRequestTimeout = opts.historicalMarketDataRequestTimeout || 240;
     const connectTimeout = opts.connectTimeout || 60;
     const packetOrderingTimeout = opts.packetOrderingTimeout || 60;
     const retryOpts = opts.retryOpts || {};
@@ -60,12 +62,14 @@ export default class MetaApi {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
     let httpClient = new HttpClient(requestTimeout, retryOpts);
+    let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, {application, domain, requestTimeout,
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
+    let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, token, domain);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
-      this._metaApiWebsocketClient, this._connectionRegistry);
+      this._metaApiWebsocketClient, this._connectionRegistry, historicalMarketDataClient);
     this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
       new MetatraderDemoAccountClient(httpClient, token, domain));
     if (opts.enableLatencyTracking || opts.enableLatencyMonitor) {

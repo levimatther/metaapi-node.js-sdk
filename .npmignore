@@ -9,3 +9,4 @@ package-lock.json
 .env
 .metaapi
 test.log
+streamQuotes2.js

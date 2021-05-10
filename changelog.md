@@ -6,6 +6,7 @@
   - implement proper rounding for position profits and account equity
   - breaking change: refactored specifications updated events
   - breaking change: removed expert advisor API
+  - implemented API to retrieve historical market data
 
 12.4.1
   - fix equity calculation

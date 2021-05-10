@@ -10,28 +10,27 @@ const api = new MetaApi(token);
 class QuoteListener extends SynchronizationListener {
   async onSymbolPriceUpdated(instanceIndex, price) {
     if(price.symbol === symbol) {
-      //console.log(symbol + ' price updated', price);
+      console.log(symbol + ' price updated', price);
     }
   }
   async onCandlesUpdated(instanceIndex, candles) {
     for (let candle of candles) {
       if (candle.symbol === symbol) {
-        //console.log(symbol + ' candle updated', candle);
+        console.log(symbol + ' candle updated', candle);
       }
     }
   }
   async onTicksUpdated(instanceIndex, ticks) {
-    process.stdout.write('+');
     for (let tick of ticks) {
       if (tick.symbol === symbol) {
-        //console.log(symbol + ' tick updated', tick);
+        console.log(symbol + ' tick updated', tick);
       }
     }
   }
   async onBooksUpdated(instanceIndex, books) {
     for (let book of books) {
       if (book.symbol === symbol) {
-        //console.log(symbol + ' order book updated', book);
+        console.log(symbol + ' order book updated', book);
       }
     }
   }
@@ -80,8 +79,6 @@ async function streamQuotes() {
 
     console.log('[' + (new Date().toISOString()) + '] Synchronized successfully, streaming ' + symbol +
       ' market data now...');
-
-    setInterval(() => process.stdout.write('!'), 2500);
 
     // eslint-disable-next-line
     while(true){
