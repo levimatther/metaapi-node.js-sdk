@@ -320,8 +320,8 @@ export default class TerminalState extends SynchronizationListener {
   // eslint-disable-next-line complexity
   _updatePositionProfits(position, price) {
     let specification = this.specification(position.symbol);
-    let multiplier = Math.pow(10, specification.digits);
     if (specification) {
+      let multiplier = Math.pow(10, specification.digits);
       if (position.profit !== undefined) {
         position.profit = Math.round(position.profit * multiplier) / multiplier;
       }
