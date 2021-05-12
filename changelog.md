@@ -8,6 +8,12 @@
   - breaking change: removed expert advisor API
   - implemented API to retrieve historical market data
 
+12.4.3
+  - fix specifications synchronization bug introduced in 12.4.1
+
+12.4.2
+  - do not query specification fields until it is received in TerminalState
+
 12.4.1
   - fix equity calculation
 
