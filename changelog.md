@@ -7,6 +7,7 @@
   - breaking change: refactored specifications updated events
   - breaking change: removed expert advisor API
   - implemented API to retrieve historical market data
+  - upgraded CopyFactory API to 2.1.0
 
 12.4.3
   - fix specifications synchronization bug introduced in 12.4.1
