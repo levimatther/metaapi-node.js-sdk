@@ -299,12 +299,13 @@ export default class TerminalState extends SynchronizationListener {
     if (state.accountInformation) {
       if (state.positionsInitialized && pricesInitialized) {
         if (state.accountInformation.platform === 'mt5') {
-          state.accountInformation.equity = state.accountInformation.balance +
+          state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
             state.positions.reduce((acc, p) => acc +
               Math.round((p.unrealizedProfit || 0) * 100) / 100 + Math.round((p.swap || 0) * 100) / 100, 0);
         } else {
-          state.accountInformation.equity = state.accountInformation.balance +
-            state.positions.reduce((acc, p) => acc + Math.round((p.profit || 0) * 100) / 100, 0);
+          state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
+            state.positions.reduce((acc, p) => acc + Math.round((p.swap || 0) * 100) / 100 +
+              Math.round((p.commission || 0) * 100) / 100 + Math.round((p.unrealizedProfit || 0) * 100) / 100, 0);
         }
         state.accountInformation.equity = Math.round(state.accountInformation.equity * 100) / 100;
       } else {
