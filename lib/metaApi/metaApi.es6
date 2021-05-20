@@ -58,11 +58,13 @@ export default class MetaApi {
     const retryOpts = opts.retryOpts || {};
     const packetLogger = opts.packetLogger || {};
     const synchronizationThrottler = opts.synchronizationThrottler || {};
+    const demoAccountRequestTimeout = opts.demoAccountRequestTimeout || 240;
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
+    let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, {application, domain, requestTimeout,
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
@@ -71,7 +73,7 @@ export default class MetaApi {
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient, this._connectionRegistry, historicalMarketDataClient);
     this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
-      new MetatraderDemoAccountClient(httpClient, token, domain));
+      new MetatraderDemoAccountClient(demoAccountHttpClient, token, domain));
     if (opts.enableLatencyTracking || opts.enableLatencyMonitor) {
       this._latencyMonitor = new LatencyMonitor();
       this._metaApiWebsocketClient.addLatencyListener(this._latencyMonitor);
