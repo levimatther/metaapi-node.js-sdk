@@ -1236,7 +1236,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} [swapLong] long swap value
    * @property {Number} [swapShort] short swap value
    * @property {String} [swapRollover3Days] day of week to charge 3 days swap rollover. Allowed values are SUNDAY,
-   * MONDAY, TUESDAY, WEDNESDAY, THURDAY, FRIDAY, SATURDAY
+   * MONDAY, TUESDAY, WEDNESDAY, THURDAY, FRIDAY, SATURDAY, NONE
    * @property {Array<String>} allowedExpirationModes allowed order expiration modes. Allowed values are
    * SYMBOL_EXPIRATION_GTC, SYMBOL_EXPIRATION_DAY, SYMBOL_EXPIRATION_SPECIFIED, SYMBOL_EXPIRATION_SPECIFIED_DAY.
    * See https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_expiration_mode for more
