@@ -228,6 +228,20 @@ console.log(await connection.getSymbolPrice('GBPUSD'));
 await connection.unsubscribeFromMarketData('GBPUSD');
 ```
 
+### Query historical market data via RPC API
+Currently this API is supported on G1 only.
+
+```javascript
+// retrieve 1000 candles before the specified time
+let candles = await account.getHistoricalCandles('EURUSD', '1m', new Date('2021-05-01'), 1000);
+
+// retrieve 1000 ticks after the specified time
+let ticks = account.getHistoricalTicks('EURUSD', new Date('2021-05-01'), 5, 1000);
+
+// retrieve 1000 latest ticks
+ticks = account.getHistoricalTicks('EURUSD', undefined, 0, 1000);
+```
+
 ### Use real-time streaming API
 Real-time streaming API is good for developing trading applications like trade copiers or automated trading strategies.
 The API synchronizes the terminal state locally so that you can query local copy of the terminal state really fast.
