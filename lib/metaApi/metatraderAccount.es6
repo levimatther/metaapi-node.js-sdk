@@ -3,6 +3,7 @@
 import TimeoutError from '../clients/timeoutError';
 import MetaApiConnection from './metaApiConnection';
 import HistoryFileManager from './historyFileManager/index';
+import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
 
 /**
@@ -16,13 +17,16 @@ export default class MetatraderAccount {
    * @param {MetatraderAccountClient} metatraderAccountClient MetaTrader account REST API client
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
+   * @param {ExpertAdvisorClient} expertAdvisorClient expert advisor REST API client
    * @param {HistoricalMarketDataClient} historicalMarketDataClient historical market data HTTP API client
    */
-  constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry, historicalMarketDataClient) {
+  constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry, expertAdvisorClient, 
+    historicalMarketDataClient) {
     this._data = data;
     this._metatraderAccountClient = metatraderAccountClient;
     this._metaApiWebsocketClient = metaApiWebsocketClient;
     this._connectionRegistry = connectionRegistry;
+    this._expertAdvisorClient = expertAdvisorClient;
     this._historicalMarketDataClient = historicalMarketDataClient;
   }
 
@@ -145,6 +149,14 @@ export default class MetatraderAccount {
    */
   get reliability() {
     return this._data.reliability;
+  }
+
+  /**
+   * Returns platform value. Possible values are mt4 and mt5
+   * @return {String} account platform value
+   */
+  get platform() {
+    return this._data.platform;
   }
 
   /**
@@ -320,6 +332,45 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Retrieves expert advisor of current account
+   * @returns {Promise<ExpertAdvisor[]>} promise resolving with an array of expert advisor entities
+   */
+  async getExpertAdvisors() {
+    if (this.platform !== 'mt4') {
+      throw new ValidationError('Custom expert advisor is available only for MT4 accounts');
+    }
+    let expertAdvisors = await this._expertAdvisorClient.getExpertAdvisors(this.id);
+    return expertAdvisors.map(e => new ExpertAdvisor(e, this.id, this._expertAdvisorClient));
+  }
+
+  /**
+   * Retrieves a expert advisor of current account by id
+   * @param {String} expertId expert advisor id
+   * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
+   */
+  async getExpertAdvisor(expertId) {
+    if (this.platform !== 'mt4') {
+      throw new ValidationError('Custom expert advisor is available only for MT4 accounts');
+    }
+    let expertAdvisor = await this._expertAdvisorClient.getExpertAdvisor(this.id, expertId);
+    return new ExpertAdvisor(expertAdvisor, this.id, this._expertAdvisorClient);
+  }
+
+  /**
+   * Creates an expert advisor
+   * @param {String} expertId expert advisor id
+   * @param {NewExpertAdvisorDto} expert expert advisor data
+   * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
+   */
+  async createExpertAdvisor(expertId, expert) {
+    if (this.platform !== 'mt4') {
+      throw new ValidationError('Custom expert advisor is available only for MT4 accounts');
+    }
+    await this._expertAdvisorClient.updateExpertAdvisor(this.id, expertId, expert);
+    return this.getExpertAdvisor(expertId);
+  }
+
+  /**
    * Returns historical candles for a specific symbol and timeframe from the MetaTrader account.
    * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalCandles/
    * @param {string} symbol symbol to retrieve candles for (e.g. a currency pair or an index)
@@ -334,18 +385,18 @@ export default class MetatraderAccount {
   getHistoricalCandles(symbol, timeframe, startTime, limit) {
     return this._historicalMarketDataClient.getHistoricalCandles(this.id, symbol, timeframe, startTime, limit);
   }
-
+  
   /**
-   * Returns historical ticks for a specific symbol from the MetaTrader account.
-   * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
-   * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
-   * @param {Date} [startTime] time to start loading ticks from. Note that candles are loaded in forward direction, so
-   * this should be the earliest time. Leave empty to request latest candles.
-   * @param {number} [offset] number of ticks to skip (you can use it to avoid requesting ticks from previous request
-   * twice)
-   * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
-   * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
-   */
+     * Returns historical ticks for a specific symbol from the MetaTrader account.
+     * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
+     * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
+     * @param {Date} [startTime] time to start loading ticks from. Note that candles are loaded in forward direction, so
+     * this should be the earliest time. Leave empty to request latest candles.
+     * @param {number} [offset] number of ticks to skip (you can use it to avoid requesting ticks from previous request
+     * twice)
+     * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
+     * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
+     */
   getHistoricalTicks(symbol, startTime, offset, limit) {
     return this._historicalMarketDataClient.getHistoricalTicks(this.id, symbol, startTime, offset, limit);
   }
