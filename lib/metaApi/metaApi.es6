@@ -12,6 +12,7 @@ import HistoricalMarketDataClient from '../clients/metaApi/historicalMarketData.
 import ConnectionRegistry from './connectionRegistry';
 import {ValidationError} from '../clients/errorHandler';
 import LatencyMonitor from './latencyMonitor';
+import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
 
 /**
  * Request retry options
@@ -71,7 +72,8 @@ export default class MetaApi {
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, token, domain);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
-      this._metaApiWebsocketClient, this._connectionRegistry, historicalMarketDataClient);
+      this._metaApiWebsocketClient, this._connectionRegistry, 
+      new ExpertAdvisorClient(httpClient, token, domain), historicalMarketDataClient);
     this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
       new MetatraderDemoAccountClient(demoAccountHttpClient, token, domain));
     if (opts.enableLatencyTracking || opts.enableLatencyMonitor) {
