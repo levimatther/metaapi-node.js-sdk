@@ -730,10 +730,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Invoked when connection to MetaApi websocket API restored after a disconnect
    * @return {Promise} promise which resolves when connection to MetaApi websocket API restored after a disconnect
    */
-  async onReconnected() {
-    await new Promise(res => setTimeout(res, 50));
-    await this.subscribe();
-  }
+  async onReconnected() {}
 
   /**
    * Returns flag indicating status of state synchronization with MetaTrader terminal
@@ -817,6 +814,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._healthMonitor);
+      this._websocketClient.removeReconnectListener(this);
       this._connectionRegistry.remove(this._account.id);
       this._healthMonitor.stop();
       this._closed = true;
