@@ -94,9 +94,42 @@ describe('SubscriptionManager', () => {
     manager.subscribe('accountId2');
     manager.subscribe('accountId3');
     await clock.tickAsync(1000);
-    manager.onReconnected(0);
+    manager.onReconnected(0, []);
     await clock.tickAsync(5000);
     sinon.assert.callCount(client.subscribe, 4);
+  });
+
+  /**
+   * @test {SubscriptionManager#onReconnected}
+   */
+  it('should restart subscriptions on reconnect', async () => {
+    sandbox.stub(client, 'connect').resolves();
+    sandbox.stub(client, 'subscribe').resolves();
+    client.socketInstancesByAccounts = {accountId: 0, accountId2: 0, accountId3: 0};
+    manager.subscribe('accountId');
+    manager.subscribe('accountId2');
+    manager.subscribe('accountId3');
+    await clock.tickAsync(1000);
+    manager.onReconnected(0, ['accountId', 'accountId2']);
+    await clock.tickAsync(1000);
+    sinon.assert.callCount(client.subscribe, 5);
+  });
+
+  /**
+   * @test {SubscriptionManager#onReconnected}
+   */
+  it('should wait until previous subscription ends on reconnect', async () => {
+    sandbox.stub(client, 'subscribe').callsFake(async () => {
+      await new Promise(res => setTimeout(res, 2000));
+    });
+
+    sandbox.stub(client, 'connect').resolves();
+    client.socketInstancesByAccounts = {accountId: 0};
+    manager.subscribe('accountId');
+    await clock.tickAsync(1000);
+    manager.onReconnected(0, ['accountId']);
+    await clock.tickAsync(2000);
+    sinon.assert.callCount(client.subscribe, 2);
   });
 
   /**

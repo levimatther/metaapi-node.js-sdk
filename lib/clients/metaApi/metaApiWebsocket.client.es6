@@ -976,7 +976,7 @@ export default class MetaApiWebsocketClient {
    * @param {ReconnectListener} listener listener to remove
    */
   removeReconnectListener(listener) {
-    this._reconnectListeners = this._reconnectListeners.filter(l => l !== listener);
+    this._reconnectListeners = this._reconnectListeners.filter(l => l.listener !== listener);
   }
 
   /**
@@ -1759,16 +1759,24 @@ export default class MetaApiWebsocketClient {
   }
 
   async _fireReconnected(socketInstanceIndex) {
-    this._subscriptionManager.onReconnected(socketInstanceIndex);
-    for (let listener of this._reconnectListeners) {
-      if (this._socketInstancesByAccounts[listener.accountId] === socketInstanceIndex) {
-        try {
-          await listener.listener.onReconnected();
-        } catch (err) {
-        // eslint-disable-next-line no-console
-          console.error('[' + (new Date()).toISOString() + '] Failed to notify reconnect listener', err);
+    try {
+      const reconnectListeners = [];
+      for (let listener of this._reconnectListeners) {
+        if (this._socketInstancesByAccounts[listener.accountId] === socketInstanceIndex) {
+          reconnectListeners.push(listener);
         }
       }
+      this._subscriptionManager.onReconnected(socketInstanceIndex, 
+        reconnectListeners.map(listener => listener.accountId));
+      for (let listener of reconnectListeners) {
+        Promise.resolve(listener.listener.onReconnected())
+          // eslint-disable-next-line no-console
+          .catch(err => 
+            console.error('[' + (new Date()).toISOString() + '] Failed to notify reconnect listener', err));
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[' + (new Date()).toISOString() + '] Failed to process reconnected event', err);
     }
   }
 

@@ -62,12 +62,19 @@ class FakeServer {
   constructor(){
     this.io;
     this.socket;
-    this.statusTask;
+    this.statusTasks = {};
   }
 
   async authenticate(socket, data){
     socket.emit('synchronization', {type: 'authenticated', accountId: data.accountId,
       instanceIndex: 0, replicas: 1, host: 'ps-mpa-0'});
+  }
+
+  deleteStatusTask(accountId) {
+    if(this.statusTasks[accountId]) {
+      clearInterval(this.statusTasks[accountId]);
+      delete this.statusTasks[accountId];
+    }
   }
 
   async emitStatus(socket, accountId){
@@ -116,17 +123,20 @@ class FakeServer {
       if(data.type === 'subscribe') {
         await new Promise(res => setTimeout(res, 200)); 
         await this.respond(socket, data);
-        this.statusTask = setInterval(() => this.emitStatus(socket, data.accountId), 100);
+        this.statusTasks[data.accountId] = setInterval(() => this.emitStatus(socket, data.accountId), 100);
         await new Promise(res => setTimeout(res, 50)); 
         await this.authenticate(socket, data);
       } else if (data.type === 'synchronize') {
         await this.respond(socket, data);
         await new Promise(res => setTimeout(res, 50)); 
         await this.syncAccount(socket, data);
-      } else if (data.type === 'waitSynchronized' || data.type === 'unsubscribe') {
+      } else if (data.type === 'waitSynchronized') {
         await this.respond(socket, data);
       } else if (data.type === 'getAccountInformation') {
         await this.respondAccountInformation(socket, data);
+      } else if (data.type === 'unsubscribe') {
+        this.deleteStatusTask(data.accountId);
+        await this.respond(socket, data);
       }
     });
   }
@@ -185,7 +195,7 @@ describe('Synchronization stability test', () => {
   });
 
   afterEach(async () => {
-    clearInterval(fakeServer.statusTask);
+    Object.values(fakeServer.statusTasks).forEach(task => clearInterval(task));
     connection._websocketClient._subscriptionManager.cancelAccount('accountId');
     connection._websocketClient.close();
     let resolve;
@@ -223,7 +233,7 @@ describe('Synchronization stability test', () => {
     const account = await api.metatraderAccountApi.getAccount('accountId');
     connection = await account.connect();
     await connection.waitSynchronized({timeoutInSeconds: 10});
-    clearInterval(fakeServer.statusTask);
+    fakeServer.deleteStatusTask('accountId');
     fakeServer.io.on('connect', socket => {
       socket.disconnect();
     });
@@ -239,7 +249,7 @@ describe('Synchronization stability test', () => {
     const account = await api.metatraderAccountApi.getAccount('accountId');
     connection = await account.connect();
     await connection.waitSynchronized({timeoutInSeconds: 10});
-    clearInterval(fakeServer.statusTask);
+    fakeServer.deleteStatusTask('accountId');
     await clock.tickAsync(61000);
     await new Promise(res => setTimeout(res, 50));
     const response = await connection.getAccountInformation();
@@ -254,7 +264,7 @@ describe('Synchronization stability test', () => {
       socket.on('request', async data => {
         if(data.type === 'subscribe') {
           await new Promise(res => setTimeout(res, 200)); 
-          fakeServer.statusTask = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+          fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
           await fakeServer.authenticate(socket, data);
           await new Promise(res => setTimeout(res, 400)); 
           await fakeServer.respond(socket, data);
@@ -281,7 +291,7 @@ describe('Synchronization stability test', () => {
     const account = await api.metatraderAccountApi.getAccount('accountId');
     connection = await account.connect();
     await connection.waitSynchronized({timeoutInSeconds: 10});
-    clearInterval(fakeServer.statusTask);
+    fakeServer.deleteStatusTask('accountId');
     fakeServer.disableSync();
     await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
       host: 'ps-mpa-0', instanceIndex: 0});
@@ -304,7 +314,7 @@ describe('Synchronization stability test', () => {
     const account = await api.metatraderAccountApi.getAccount('accountId');
     connection = await account.connect();
     await connection.waitSynchronized({timeoutInSeconds: 10});
-    clearInterval(fakeServer.statusTask);
+    fakeServer.deleteStatusTask('accountId');
     fakeServer.disableSync();
     await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
       host: 'ps-mpa-0', instanceIndex: 0});
@@ -325,7 +335,7 @@ describe('Synchronization stability test', () => {
     connection = await account.connect();
     await connection.waitSynchronized({timeoutInSeconds: 10});
     for (let i = 0; i < 5; i++) {
-      clearInterval(fakeServer.statusTask);
+      fakeServer.deleteStatusTask('accountId');
       fakeServer.io.close();
       await clock.tickAsync(200000);
       await new Promise(res => setTimeout(res, 50));
@@ -352,6 +362,37 @@ describe('Synchronization stability test', () => {
       && connection.terminalState.connectedToBroker).should.equal(true);
   }).timeout(10000);
 
+  it('should resubscribe other accounts after one of connections is closed', async () => {
+    const account = await api.metatraderAccountApi.getAccount('accountId');
+    connection = await account.connect();
+    connection.waitSynchronized({timeoutInSeconds: 3});
+    await clock.tickAsync(1000);
+    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+    const connection2 = await account2.connect();
+    connection2.waitSynchronized({timeoutInSeconds: 3});
+    await clock.tickAsync(1000);
+    const account3 = await api.metatraderAccountApi.getAccount('accountId3');
+    const connection3 = await account3.connect();
+    connection3.waitSynchronized({timeoutInSeconds: 3});
+    await clock.tickAsync(1000);
+    await connection.close();
+    fakeServer.deleteStatusTask('accountId2');
+    fakeServer.deleteStatusTask('accountId3');
+    fakeServer.disableSync();
+    server.disconnect();
+    await clock.tickAsync(2000);
+    await new Promise(res => setTimeout(res, 50)); 
+    fakeServer.enableSync(server);
+    server.disconnect();
+    await clock.tickAsync(3000);
+    await new Promise(res => setTimeout(res, 50)); 
+    connection.synchronized.should.equal(false);
+    (connection2.synchronized && connection2.terminalState.connected 
+      && connection2.terminalState.connectedToBroker).should.equal(true);
+    (connection2.synchronized && connection2.terminalState.connected 
+        && connection2.terminalState.connectedToBroker).should.equal(true);
+  });
+
   it('should limit subscriptions during per user 429 error', async () => {
     const subscribedAccounts = {};
     fakeServer.enableSync = (socket) => {
@@ -362,7 +403,7 @@ describe('Synchronization stability test', () => {
             subscribedAccounts[data.accountId] = true;
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
-            fakeServer.statusTask = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
             await new Promise(res => setTimeout(res, 50)); 
             await fakeServer.authenticate(socket, data);
           } else {
@@ -411,11 +452,11 @@ describe('Synchronization stability test', () => {
       socket.on('request', async data => {
         if(data.type === 'subscribe') {
           if (Object.keys(subscribedAccounts).length < 2 || 
-            (requestTimestamp !==0 && Date.now() - 2 * 1000 > requestTimestamp)) {
+            (requestTimestamp !== 0 && Date.now() - 2 * 1000 > requestTimestamp)) {
             subscribedAccounts[data.accountId] = true;
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
-            fakeServer.statusTask = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
             await new Promise(res => setTimeout(res, 50)); 
             await fakeServer.authenticate(socket, data);
           } else {
@@ -474,7 +515,7 @@ describe('Synchronization stability test', () => {
             sidByAccounts[data.accountId] = sid;
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
-            fakeServer.statusTask = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
             await new Promise(res => setTimeout(res, 50)); 
             await fakeServer.authenticate(socket, data);
           }
@@ -522,7 +563,7 @@ describe('Synchronization stability test', () => {
           } else {
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
-            fakeServer.statusTask = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
             await new Promise(res => setTimeout(res, 50)); 
             await fakeServer.authenticate(socket, data);
           }
@@ -557,7 +598,7 @@ describe('Synchronization stability test', () => {
             sidByAccounts[data.accountId] = sid;
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
-            fakeServer.statusTask = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
             await new Promise(res => setTimeout(res, 50)); 
             await fakeServer.authenticate(socket, data);
           }
@@ -611,7 +652,7 @@ describe('Synchronization stability test', () => {
             sidByAccounts[data.accountId] = sid;
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
-            fakeServer.statusTask = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
             await new Promise(res => setTimeout(res, 50)); 
             await fakeServer.authenticate(socket, data);
           }
