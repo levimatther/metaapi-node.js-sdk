@@ -5,7 +5,6 @@
   - limit max concurrent synchronizations based on the number of subscribed accounts
   - implement proper rounding for position profits and account equity
   - breaking change: refactored specifications updated events
-  - breaking change: removed expert advisor API
   - implemented API to retrieve historical market data
   - upgraded CopyFactory API to 2.1.0
   - swapRollover3Days can take value of NONE for some brokers

@@ -39,6 +39,7 @@ describe('MetaApiConnection', () => {
     addSynchronizationListener: () => {},
     addReconnectListener: () => {},
     removeSynchronizationListener: () => {},
+    removeReconnectListener: () => {},
     getSymbols: () => {},
     getSymbolSpecification: () => {},
     getSymbolPrice: () => {},
@@ -691,15 +692,6 @@ describe('MetaApiConnection', () => {
       sinon.assert.calledWith(client.ensureSubscribe, 'accountId');
     });
 
-    /**
-     * @test {MetaApiConnection#subscribe}
-     */
-    it('should subscribe after reconnect', async () => {
-      sandbox.stub(client, 'ensureSubscribe').resolves();
-      await api.onReconnected();
-      sinon.assert.calledWith(client.ensureSubscribe, 'accountId');
-    });
-
   });
 
   /**
@@ -1035,15 +1027,6 @@ describe('MetaApiConnection', () => {
       (await api.isSynchronized('synchronizationId')).should.equal(false);
     });
 
-  });
-
-  /**
-   * @test {MetaApiConnection#onReconnected}
-   */
-  it('should subscribe to terminal on reconnect', async () => {
-    sandbox.stub(api, 'subscribe').resolves();
-    await api.onReconnected();
-    sinon.assert.calledWith(api.subscribe);
   });
 
   /**

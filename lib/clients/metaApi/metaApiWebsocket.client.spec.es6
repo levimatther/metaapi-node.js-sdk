@@ -1768,4 +1768,60 @@ describe('MetaApiWebsocketClient', () => {
 
   });
 
+  /**
+   * @test {MetaApiWebsocketClient#_rpcRequest}
+   */
+  it('should remove reconnect listener', async () => {
+    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
+
+    let trade = {
+      actionType: 'ORDER_TYPE_SELL',
+      symbol: 'AUDNZD',
+      volume: 0.07
+    };
+    let response = {
+      numericCode: 10009,
+      stringCode: 'TRADE_RETCODE_DONE',
+      message: 'Request completed',
+      orderId: '46870472'
+    };
+    const listener = {onReconnected: async () => {}};
+    sandbox.stub(listener, 'onReconnected').resolves();
+    client.addReconnectListener(listener, 'accountId');
+    sandbox.stub(client._subscriptionManager, 'onReconnected');
+    let requestCounter = 0;
+    server.on('request', data => {
+      data.trade.should.match(trade);
+      requestCounter++;
+      if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+      }
+      server.disconnect();
+    });
+
+    await client.trade('accountId', trade);
+    await new Promise(res => setTimeout(res, 50));
+    await clock.tickAsync(1100);
+    await new Promise(res => setTimeout(res, 50));
+    sinon.assert.calledOnce(listener.onReconnected);
+    client.removeReconnectListener(listener);
+
+    server.on('request', data => {
+      data.trade.should.match(trade);
+      requestCounter++;
+      if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+      }
+      server.disconnect();
+    });
+
+    await client.trade('accountId', trade);
+    await new Promise(res => setTimeout(res, 50));
+    await clock.tickAsync(1100);
+    await new Promise(res => setTimeout(res, 50));
+    sinon.assert.calledOnce(listener.onReconnected);
+    sinon.assert.match(requestCounter, 2);
+    clock.restore();
+  });
+
 });

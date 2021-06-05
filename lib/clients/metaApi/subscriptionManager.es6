@@ -10,6 +10,21 @@ export default class SubscriptionManager {
   constructor(websocketClient) {
     this._websocketClient = websocketClient;
     this._subscriptions = {};
+    this._awaitingResubscribe = {};
+  }
+
+  /**
+   * Returns whether an account is currently subscribing
+   * @param {String} accountId account id
+   * @returns {Boolean} whether an account is currently subscribing
+   */
+  isAccountSubscribing(accountId) {
+    for (let key of Object.keys(this._subscriptions)) {
+      if (key.startsWith(accountId)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -47,7 +62,7 @@ export default class SubscriptionManager {
               if (['LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER', 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER', 
                 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER'].includes(err.metadata.type)) {
                 delete client.socketInstancesByAccounts[accountId];
-                await client.lockSocketInstance(socketInstanceIndex, err.metadata);
+                client.lockSocketInstance(socketInstanceIndex, err.metadata);
               } else {
                 const retryTime = new Date(err.metadata.recommendedRetryTime).getTime();
                 if (Date.now() + subscribeRetryIntervalInSeconds * 1000 < retryTime) {
@@ -136,14 +151,34 @@ export default class SubscriptionManager {
   /**
    * Invoked when connection to MetaApi websocket API restored after a disconnect.
    * @param {Number} socketInstanceIndex socket instance index
+   * @param {String[]} reconnectAccountIds account ids to reconnect
    */
-  onReconnected(socketInstanceIndex) {
-    const socketInstancesByAccounts = this._websocketClient.socketInstancesByAccounts;
-    for(let instanceId of Object.keys(this._subscriptions)){
-      const accountId = instanceId.split(':')[0];
-      if (socketInstancesByAccounts[accountId] === socketInstanceIndex) {
-        this.cancelSubscribe(instanceId);
+  onReconnected(socketInstanceIndex, reconnectAccountIds) {
+    try {
+      const socketInstancesByAccounts = this._websocketClient.socketInstancesByAccounts;
+      for(let instanceId of Object.keys(this._subscriptions)){
+        const accountId = instanceId.split(':')[0];
+        if (socketInstancesByAccounts[accountId] === socketInstanceIndex) {
+          this.cancelSubscribe(instanceId);
+        }
       }
+      reconnectAccountIds.forEach(async accountId => {
+        try {
+          if(!this._awaitingResubscribe[accountId]) {
+            this._awaitingResubscribe[accountId] = true;
+            while(this.isAccountSubscribing(accountId)) {
+              await new Promise(res => setTimeout(res, 1000));
+            }
+            delete this._awaitingResubscribe[accountId];
+            this.subscribe(accountId);
+          }
+        } catch (err) {
+          console.error('[' + (new Date()).toISOString() + '] Account ' + accountId + 
+          ' resubscribe task failed', err);
+        }
+      });
+    } catch (err) {
+      console.error('[' + (new Date()).toISOString() + '] Failed to process subscribe manager reconnected event', err);
     }
   }
 }
