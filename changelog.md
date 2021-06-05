@@ -10,6 +10,7 @@
   - upgraded CopyFactory API to 2.1.0
   - swapRollover3Days can take value of NONE for some brokers
   - increased default demo account request timeout to 240 seconds
+  - added MetaStats SDK
 
 12.4.3
   - fix specifications synchronization bug introduced in 12.4.1
