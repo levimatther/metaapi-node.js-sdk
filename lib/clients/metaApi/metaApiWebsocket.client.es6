@@ -270,6 +270,9 @@ export default class MetaApiWebsocketClient {
       await this._reconnect(instance.id);
     });
     socketInstance.on('response', data => {
+      if (typeof data === 'string') {
+        data = JSON.parse(data);
+      }
       let requestResolve = (instance.requestResolves[data.requestId] || {resolve: () => {}, reject: () => {}});
       delete instance.requestResolves[data.requestId];
       this._convertIsoTimeToDate(data);
@@ -292,7 +295,10 @@ export default class MetaApiWebsocketClient {
       requestResolve.reject(this._convertError(data));
     });
     socketInstance.on('synchronization', async data => {
-      if((!data.synchronizationId) || 
+      if (typeof data === 'string') {
+        data = JSON.parse(data);
+      }
+      if((!data.synchronizationId) ||
       instance.synchronizationThrottler.activeSynchronizationIds
         .includes(data.synchronizationId)) {
         this._convertIsoTimeToDate(data);
