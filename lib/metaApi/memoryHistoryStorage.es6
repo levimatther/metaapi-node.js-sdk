@@ -136,8 +136,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     for(let i = this._historyOrders.length - 1; i >= 0; i--) {
       const order = this._historyOrders[i];
       const historyOrderTime = (order.doneTime || new Date(0)).getTime();
-      if (historyOrderTime < newHistoryOrderTime || (historyOrderTime === newHistoryOrderTime &&
-          order.id <= historyOrder.id)) {
+      if (historyOrderTime < newHistoryOrderTime ||
+        (historyOrderTime === newHistoryOrderTime && order.id <= historyOrder.id)) {
         if (historyOrderTime === newHistoryOrderTime && order.id === historyOrder.id && 
           order.type === historyOrder.type) {
           replacementIndex = i;
@@ -173,7 +173,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     for(let i = this._deals.length - 1; i >= 0; i--) {
       const d = this._deals[i];
       const dealTime = (d.time || new Date(0)).getTime();
-      if ((dealTime < newDealTime) || (dealTime === newDealTime && d.id <= deal.id)) {
+      if ((dealTime < newDealTime) || (dealTime === newDealTime && d.id <= deal.id) ||
+        (dealTime === newDealTime && d.id === deal.id && d.entryType <= deal.entryType)) {
         if (dealTime === newDealTime && d.id === deal.id && d.entryType === deal.entryType) {
           replacementIndex = i;
         } else {
