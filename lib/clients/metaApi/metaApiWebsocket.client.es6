@@ -205,7 +205,8 @@ export default class MetaApiWebsocketClient {
         },
         query: {
           'auth-token': this._token,
-          'clientId': clientId
+          clientId: clientId,
+          protocol: 2
         }
       }),
       synchronizationThrottler: new SynchronizationThrottler(this, socketInstanceIndex,
