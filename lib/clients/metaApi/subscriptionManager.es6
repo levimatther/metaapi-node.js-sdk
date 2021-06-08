@@ -16,31 +16,50 @@ export default class SubscriptionManager {
   /**
    * Returns whether an account is currently subscribing
    * @param {String} accountId account id
+   * @param {Number} instanceNumber instance index number
    * @returns {Boolean} whether an account is currently subscribing
    */
-  isAccountSubscribing(accountId) {
-    for (let key of Object.keys(this._subscriptions)) {
-      if (key.startsWith(accountId)) {
-        return true;
+  isAccountSubscribing(accountId, instanceNumber) {
+    if(instanceNumber !== undefined) {
+      return Object.keys(this._subscriptions).includes(accountId + ':' + instanceNumber);
+    } else {
+      for (let key of Object.keys(this._subscriptions)) {
+        if (key.startsWith(accountId)) {
+          return true;
+        }
       }
+      return false;
     }
-    return false;
+  }
+
+  /**
+   * Returns whether an instance is in disconnected retry mode
+   * @param {String} accountId account id
+   * @param {Number} instanceNumber instance index number
+   * @returns {Boolean} whether an account is currently subscribing
+   */
+  isDisconnectedRetryMode(accountId, instanceNumber) {
+    let instanceId = accountId + ':' + (instanceNumber || 0);
+    return this._subscriptions[instanceId] ? this._subscriptions[instanceId].isDisconnectedRetryMode : false;
   }
 
   /**
    * Schedules to send subscribe requests to an account until cancelled
    * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceIndex instance index
+   * @param {Number} instanceNumber instance index number
+   * @param {Boolean} isDisconnectedRetryMode whether to start subscription in disconnected retry
+   * mode. Subscription task in disconnected mode will be immediately replaced when the status packet is received
    */
-  async subscribe(accountId, instanceIndex) {
+  async subscribe(accountId, instanceNumber, isDisconnectedRetryMode = false) {
     const client = this._websocketClient;
-    let instanceId = accountId + ':' + (instanceIndex || 0);
+    let instanceId = accountId + ':' + (instanceNumber || 0);
     if(!this._subscriptions[instanceId]) {
       this._subscriptions[instanceId] = {
         shouldRetry: true,
         task: null,
         waitTask: null,
-        future: null
+        future: null,
+        isDisconnectedRetryMode
       };
       let subscribeRetryIntervalInSeconds = 3;
       while(this._subscriptions[instanceId].shouldRetry) {
@@ -52,7 +71,7 @@ export default class SubscriptionManager {
         // eslint-disable-next-line no-inner-declarations
         async function subscribeTask() {
           try {
-            await client.subscribe(accountId, instanceIndex);
+            await client.subscribe(accountId, instanceNumber);
           } catch (err) {
             if(err.name === 'TooManyRequestsError') {
               const socketInstanceIndex = client.socketInstancesByAccounts[accountId];
@@ -130,22 +149,25 @@ export default class SubscriptionManager {
   /**
    * Invoked on account timeout.
    * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceIndex instance index
+   * @param {Number} instanceNumber instance index number
    */
-  onTimeout(accountId, instanceIndex) {
-    if(this._websocketClient.connected(this._websocketClient.socketInstancesByAccounts[accountId])) {
-      this.subscribe(accountId, instanceIndex);
+  onTimeout(accountId, instanceNumber) {
+    if(this._websocketClient.socketInstancesByAccounts[accountId] !== undefined && 
+      this._websocketClient.connected(this._websocketClient.socketInstancesByAccounts[accountId])) {
+      this.subscribe(accountId, instanceNumber, true);
     }
   }
 
   /**
    * Invoked when connection to MetaTrader terminal terminated
    * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceIndex instance index
+   * @param {Number} instanceNumber instance index number
    */
-  async onDisconnected(accountId, instanceIndex) {
+  async onDisconnected(accountId, instanceNumber) {
     await new Promise(res => setTimeout(res, Math.max(Math.random() * 5, 1) * 1000));
-    this.subscribe(accountId, instanceIndex);
+    if(this._websocketClient.socketInstancesByAccounts[accountId] !== undefined) {
+      this.subscribe(accountId, instanceNumber, true);
+    }
   }
 
   /**

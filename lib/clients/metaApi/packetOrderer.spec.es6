@@ -208,7 +208,8 @@ describe('PacketOrderer', () => {
     sandbox.stub(outOfOrderListener, 'onOutOfOrderPacket').returns();
     let timedOutPacket = {
       accountId: 'accountId',
-      instanceId: 'accountId:0',
+      instanceId: 'accountId:0:ps-mpa-1',
+      host: 'ps-mpa-1',
       instanceIndex: 0,
       sequenceNumber: 11,
       packet: {},
@@ -216,14 +217,15 @@ describe('PacketOrderer', () => {
     };
     let notTimedOutPacket = {
       accountId: 'accountId',
-      instanceId: 'accountId:0',
+      instanceId: 'accountId:0:ps-mpa-1',
+      host: 'ps-mpa-1',
       instanceIndex: 0,
       sequenceNumber: 15,
       packet: {},
       receivedAt: new Date('3015-10-19T09:58:56.000Z')
     };
-    packetOrderer._sequenceNumberByInstance['accountId:0'] = 1;
-    packetOrderer._packetsByInstance['accountId:0'] = [
+    packetOrderer._sequenceNumberByInstance['accountId:0:ps-mpa-1'] = 1;
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'] = [
       timedOutPacket,
       notTimedOutPacket
     ];
@@ -287,20 +289,22 @@ describe('PacketOrderer', () => {
       type: 'prices',
       sequenceTimestamp: 1603124267180,
       sequenceNumber: 14,
-      accountId: 'accountId'
+      accountId: 'accountId',
+      host: 'ps-mpa-1'
     };
     let thirdPacket = {
       type: 'accountInformation',
       sequenceTimestamp: 1603124267187,
       sequenceNumber: 15,
-      accountId: 'accountId'
+      accountId: 'accountId',
+      host: 'ps-mpa-1'
     };
     packetOrderer.restoreOrder(secondPacket);
-    packetOrderer._packetsByInstance['accountId:0'].length.should.equal(1);
-    packetOrderer._packetsByInstance['accountId:0'][0].packet.should.equal(secondPacket);
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'].length.should.equal(1);
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'][0].packet.should.equal(secondPacket);
     packetOrderer.restoreOrder(thirdPacket);
-    packetOrderer._packetsByInstance['accountId:0'].length.should.equal(1);
-    packetOrderer._packetsByInstance['accountId:0'][0].packet.should.equal(thirdPacket);
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'].length.should.equal(1);
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'][0].packet.should.equal(thirdPacket);
   });
 
   /**
@@ -311,10 +315,77 @@ describe('PacketOrderer', () => {
       type: 'synchronizationStarted',
       sequenceTimestamp: 1603124267198,
       sequenceNumber: 16,
-      accountId: 'accountId'
+      accountId: 'accountId',
+      host: 'ps-mpa-1'
     };
     packetOrderer.restoreOrder(startPacket).should.deepEqual([]);
-    packetOrderer._packetsByInstance['accountId:0'].length.should.equal(1);
-    packetOrderer._packetsByInstance['accountId:0'][0].packet.should.deepEqual(startPacket);
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'].length.should.equal(1);
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'][0].packet.should.deepEqual(startPacket);
+  });
+
+  /**
+   * @test {PacketOrderer#restoreOrder}
+   */
+  it('should reset state on reconnected event', async () => {
+    sandbox.stub(outOfOrderListener, 'onOutOfOrderPacket').returns();
+    let timedOutPacket = {
+      accountId: 'accountId',
+      instanceId: 'accountId:0:ps-mpa-1',
+      host: 'ps-mpa-1',
+      instanceIndex: 0,
+      sequenceNumber: 11,
+      packet: {},
+      receivedAt: new Date('2010-10-19T09:58:56.000Z')
+    };
+    let notTimedOutPacket = {
+      accountId: 'accountId',
+      instanceId: 'accountId:0:ps-mpa-1',
+      host: 'ps-mpa-1',
+      instanceIndex: 0,
+      sequenceNumber: 15,
+      packet: {},
+      receivedAt: new Date('3015-10-19T09:58:56.000Z')
+    };
+    packetOrderer._sequenceNumberByInstance['accountId:0:ps-mpa-1'] = 1;
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'] = [
+      timedOutPacket,
+      notTimedOutPacket
+    ];
+    packetOrderer.onReconnected(['accountId']);
+    await new Promise(res => setTimeout(res, 1000));
+    sinon.assert.notCalled(outOfOrderListener.onOutOfOrderPacket);
+  });
+
+  /**
+   * @test {PacketOrderer#restoreOrder}
+   */
+  it('should reset state for an instance on stream closed event', async () => {
+    sandbox.stub(outOfOrderListener, 'onOutOfOrderPacket').returns();
+    let timedOutPacket = {
+      accountId: 'accountId',
+      instanceId: 'accountId:0:ps-mpa-1',
+      host: 'ps-mpa-1',
+      instanceIndex: 0,
+      sequenceNumber: 11,
+      packet: {},
+      receivedAt: new Date('2010-10-19T09:58:56.000Z')
+    };
+    let notTimedOutPacket = {
+      accountId: 'accountId',
+      instanceId: 'accountId:0:ps-mpa-1',
+      host: 'ps-mpa-1',
+      instanceIndex: 0,
+      sequenceNumber: 15,
+      packet: {},
+      receivedAt: new Date('3015-10-19T09:58:56.000Z')
+    };
+    packetOrderer._sequenceNumberByInstance['accountId:0:ps-mpa-1'] = 1;
+    packetOrderer._packetsByInstance['accountId:0:ps-mpa-1'] = [
+      timedOutPacket,
+      notTimedOutPacket
+    ];
+    packetOrderer.onStreamClosed('accountId:0:ps-mpa-1');
+    await new Promise(res => setTimeout(res, 1000));
+    sinon.assert.notCalled(outOfOrderListener.onOutOfOrderPacket);
   });
 });

@@ -455,21 +455,23 @@ export default class MetaApiConnection extends SynchronizationListener {
   /**
    * Requests the terminal to start synchronization process
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/)
-   * @param {Number} instanceIndex instance index
+   * @param {String} instanceIndex instance index
    * @returns {Promise} promise which resolves when synchronization started
    */
   async synchronize(instanceIndex) {
+    const instance = this.getInstanceNumber(instanceIndex);
+    const host = this.getHostName(instanceIndex);
     let startingHistoryOrderTime = new Date(Math.max(
       (this._historyStartTime || new Date(0)).getTime(),
-      (await this._historyStorage.lastHistoryOrderTime(instanceIndex)).getTime()
+      (await this._historyStorage.lastHistoryOrderTime(instance)).getTime()
     ));
     let startingDealTime = new Date(Math.max(
       (this._historyStartTime || new Date(0)).getTime(),
-      (await this._historyStorage.lastDealTime(instanceIndex)).getTime()
+      (await this._historyStorage.lastDealTime(instance)).getTime()
     ));
     let synchronizationId = randomstring.generate(32);
     this._getState(instanceIndex).lastSynchronizationId = synchronizationId;
-    return this._websocketClient.synchronize(this._account.id, instanceIndex, synchronizationId,
+    return this._websocketClient.synchronize(this._account.id, instance, host, synchronizationId,
       startingHistoryOrderTime, startingDealTime);
   }
 
@@ -486,7 +488,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when subscription is initiated
    */
   async subscribe() {
-    this._websocketClient.ensureSubscribe(this._account.id);
+    if(!this._closed) {
+      this._websocketClient.ensureSubscribe(this._account.id);
+    }
   }
 
   /**
@@ -526,7 +530,7 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Invoked when subscription downgrade has occurred
-   * @param {number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {string} symbol symbol to update subscriptions for
    * @param {Array<MarketDataSubscription>} updates array of market data subscription to update
    * @param {Array<MarketDataUnsubscription>} unsubscriptions array of subscriptions to cancel
@@ -680,12 +684,11 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal established
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {Number} replicas number of account replicas launched
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onConnected(instanceIndex, replicas) {
-    this._shouldRetrySubscribe = false;
     let key = randomstring.generate(32);
     let state = this._getState(instanceIndex);
     state.shouldSynchronize = key;
@@ -697,7 +700,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       indices.push(i);
     }
     for (let e of Object.entries(this._stateByInstanceIndex)) {
-      if (!indices.includes(e[1].instanceIndex)) {
+      if (!indices.includes(this.getInstanceNumber(e[1].instanceIndex))) {
         delete this._stateByInstanceIndex[e[0]];
       }
     }
@@ -705,7 +708,7 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal terminated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    */
   async onDisconnected(instanceIndex) {
     let state = this._getState(instanceIndex);
@@ -718,7 +721,7 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {String} synchronizationId synchronization request id
    */
   async onDealSynchronizationFinished(instanceIndex, synchronizationId) {
@@ -728,12 +731,32 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   /**
    * Invoked when a synchronization of history orders on a MetaTrader account have finished
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {String} synchronizationId synchronization request id
    */
   async onOrderSynchronizationFinished(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.ordersSynchronized[synchronizationId] = true;
+  }
+
+  /**
+   * Invoked when MetaTrader account information is updated
+   * @param {String} instanceIndex index of an account instance connected
+   * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onAccountInformationUpdated(instanceIndex, accountInformation) {
+    for(let symbol of this.subscribedSymbols) {
+      if(!this._terminalState.price(symbol)) {
+        try {
+          const instance = this.getInstanceNumber(instanceIndex);
+          await this.subscribeToMarketData(symbol, this._subscriptions[symbol].subscriptions, instance);
+        } catch (err) {
+          console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' 
+          + this._account.id + ':' + instanceIndex + ' failed to resubscribe to symbol ' + symbol, err);
+        }
+      }
+    }
   }
 
   /**
@@ -743,8 +766,16 @@ export default class MetaApiConnection extends SynchronizationListener {
   async onReconnected() {}
 
   /**
+   * Invoked when a stream for an instance index is closed
+   * @param {String} instanceIndex index of an account instance connected
+   */
+  async onStreamClosed(instanceIndex) {
+    delete this._stateByInstanceIndex[instanceIndex];
+  }
+
+  /**
    * Returns flag indicating status of state synchronization with MetaTrader terminal
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {String} synchronizationId optional synchronization request id, last synchronization request id will be used
    * by default
    * @return {Promise<Boolean>} promise resolving with a flag indicating status of state synchronization with MetaTrader
@@ -810,7 +841,8 @@ export default class MetaApiConnection extends SynchronizationListener {
           (state && state.lastDisconnectedSynchronizationId)));
     }
     let timeLeftInSeconds = Math.max(0, timeoutInSeconds - (Date.now() - startTime) / 1000);
-    await this._websocketClient.waitSynchronized(this._account.id, instanceIndex, applicationPattern, timeoutInSeconds);
+    await this._websocketClient.waitSynchronized(this._account.id, this.getInstanceNumber(instanceIndex),
+      applicationPattern, timeLeftInSeconds);
   }
 
   /**
@@ -874,12 +906,9 @@ export default class MetaApiConnection extends SynchronizationListener {
 
   async _ensureSynchronized(instanceIndex, key) {
     let state = this._getState(instanceIndex);
-    if (state) {
+    if (state && !this._closed) {
       try {
         await this.synchronize(instanceIndex);
-        for (let symbol of Object.keys(this._subscriptions)) {
-          await this.subscribeToMarketData(symbol, this._subscriptions[symbol].subscriptions, instanceIndex);
-        }
         state.synchronized = true;
         state.synchronizationRetryIntervalInSeconds = 1;
       } catch (err) {

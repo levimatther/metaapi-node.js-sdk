@@ -86,7 +86,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal established
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    */
   onConnected(instanceIndex) {
     this._getState(instanceIndex).connected = true;
@@ -94,7 +94,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal terminated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    */
   onDisconnected(instanceIndex) {
     let state = this._getState(instanceIndex);
@@ -104,7 +104,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when broker connection status have changed
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {Boolean} connected is MetaTrader terminal is connected to broker
    */
   onBrokerConnectionStatusChanged(instanceIndex, connected) {
@@ -113,7 +113,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when MetaTrader terminal state synchronization is started
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onSynchronizationStarted(instanceIndex) {
@@ -132,7 +132,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when MetaTrader account information is updated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
    */
   onAccountInformationUpdated(instanceIndex, accountInformation) {
@@ -141,7 +141,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when the positions are replaced as a result of initial terminal state synchronization
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {Array<MetatraderPosition>} positions updated array of positions
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
@@ -154,7 +154,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when MetaTrader position is updated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderPosition} position updated MetaTrader position
    */
   onPositionUpdated(instanceIndex, position) {
@@ -169,7 +169,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when MetaTrader position is removed
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {String} positionId removed MetaTrader position id
    */
   onPositionRemoved(instanceIndex, positionId) {
@@ -189,7 +189,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when the orders are replaced as a result of initial terminal state synchronization
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {Array<MetatraderOrder>} orders updated array of orders
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
@@ -202,7 +202,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when MetaTrader order is updated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} order updated MetaTrader order
    */
   onOrderUpdated(instanceIndex, order) {
@@ -217,7 +217,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when MetaTrader order is completed (executed or canceled)
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {String} orderId completed MetaTrader order id
    */
   onOrderCompleted(instanceIndex, orderId) {
@@ -237,7 +237,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when a symbol specification was updated
-   * @param {Number} instanceIndex index of account instance connected
+   * @param {String} instanceIndex index of account instance connected
    * @param {Array<MetatraderSymbolSpecification>} specifications updated specifications
    * @param {Array<String>} removedSymbols removed symbols
    */
@@ -260,7 +260,7 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Invoked when prices for several symbols were updated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
    * @param {Number} equity account liquidation value
    * @param {Number} margin margin used
@@ -316,6 +316,15 @@ export default class TerminalState extends SynchronizationListener {
       state.accountInformation.marginLevel = freeMargin !== undefined ? marginLevel :
         state.accountInformation.marginLevel;
     }
+  }
+
+  /**
+   * Invoked when a stream for an instance index is closed
+   * @param {String} instanceIndex index of an account instance connected
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onStreamClosed(instanceIndex) {
+    delete this._stateByInstanceIndex[instanceIndex];
   }
 
   // eslint-disable-next-line complexity

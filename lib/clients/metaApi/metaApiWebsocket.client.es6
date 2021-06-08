@@ -722,20 +722,20 @@ export default class MetaApiWebsocketClient {
   /**
    * Creates a task that ensures the account gets subscribed to the server
    * @param {String} accountId account id to subscribe
-   * @param {Number} [instanceIndex] instance index
+   * @param {Number} [instanceNumber] instance index number
    */
-  ensureSubscribe(accountId, instanceIndex) {
-    this._subscriptionManager.subscribe(accountId, instanceIndex);
+  ensureSubscribe(accountId, instanceNumber) {
+    this._subscriptionManager.subscribe(accountId, instanceNumber);
   }
 
   /**
    * Subscribes to the Metatrader terminal events (see https://metaapi.cloud/docs/client/websocket/api/subscribe/).
    * @param {String} accountId id of the MetaTrader account to subscribe to
-   * @param {Number} [instanceIndex] instance index
+   * @param {Number} [instanceNumber] instance index number
    * @returns {Promise} promise which resolves when subscription started
    */
-  subscribe(accountId, instanceIndex) {
-    return this._rpcRequest(accountId, {type: 'subscribe', instanceIndex});
+  subscribe(accountId, instanceNumber) {
+    return this._rpcRequest(accountId, {type: 'subscribe', instanceIndex: instanceNumber});
   }
 
   /**
@@ -752,6 +752,7 @@ export default class MetaApiWebsocketClient {
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
    * @param {String} accountId id of the MetaTrader account to synchronize
    * @param {Number} instanceIndex instance index
+   * @param {String} host name of host to synchronize with
    * @param {String} synchronizationId synchronization request id
    * @param {Date} startingHistoryOrderTime from what date to start synchronizing history orders from. If not specified,
    * the entire order history will be downloaded.
@@ -759,24 +760,25 @@ export default class MetaApiWebsocketClient {
    * history deals will be downloaded.
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(accountId, instanceIndex, synchronizationId, startingHistoryOrderTime, startingDealTime) {
+  synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime) {
     const syncThrottler = this._socketInstances[this._socketInstancesByAccounts[accountId]].synchronizationThrottler;
     return syncThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, 
-      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex});
+      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host});
   }
 
   /**
    * Waits for server-side terminal state synchronization to complete.
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/waitSynchronized/).
    * @param {String} accountId id of the MetaTrader account to synchronize
-   * @param {Number} instanceIndex instance index
+   * @param {Number} instanceNumber instance index number
    * @param {String} applicationPattern MetaApi application regular expression pattern, default is .*
    * @param {Number} timeoutInSeconds timeout in seconds, default is 300 seconds
    * @returns {Promise} promise which resolves when synchronization started
    */
-  waitSynchronized(accountId, instanceIndex, applicationPattern, timeoutInSeconds) {
-    return this._rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds, instanceIndex},
-      timeoutInSeconds + 1);
+  waitSynchronized(accountId, instanceNumber, applicationPattern, timeoutInSeconds) {
+    return this._rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds,
+      instanceIndex: instanceNumber},
+    timeoutInSeconds + 1);
   }
 
   /**
@@ -794,13 +796,14 @@ export default class MetaApiWebsocketClient {
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
    * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceIndex instance index
+   * @param {Number} instanceNumber instance index number
    * @param {String} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(accountId, instanceIndex, symbol, subscriptions) {
-    return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, subscriptions, instanceIndex});
+  subscribeToMarketData(accountId, instanceNumber, symbol, subscriptions) {
+    return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, subscriptions,
+      instanceIndex: instanceNumber});
   }
 
   /**
@@ -813,14 +816,14 @@ export default class MetaApiWebsocketClient {
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
    * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceIndex instance index
+   * @param {Number} instanceNumber instance index
    * @param {String} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
-   * @param {Number} instanceIndex instance index
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(accountId, instanceIndex, symbol, subscriptions) {
-    return this._rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, subscriptions, instanceIndex});
+  unsubscribeFromMarketData(accountId, instanceNumber, symbol, subscriptions) {
+    return this._rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, subscriptions,
+      instanceIndex: instanceNumber});
   }
 
   /**
@@ -1359,8 +1362,15 @@ export default class MetaApiWebsocketClient {
         if (data.synchronizationId && socketInstance) {
           socketInstance.synchronizationThrottler.updateSynchronizationId(data.synchronizationId);
         }
-        let instanceId = data.accountId + ':' + (data.instanceIndex || 0);
-        let instanceIndex = data.instanceIndex || 0;
+        const instanceNumber = data.instanceIndex || 0;
+        let instanceId = data.accountId + ':' + instanceNumber + ':' + (data.host || 0);
+        let instanceIndex = instanceNumber + ':' + (data.host || 0);
+
+        const isOnlyActiveInstance = () => {
+          const activeInstanceIds = Object.keys(this._connectedHosts).filter(instance => 
+            instance.startsWith(data.accountId + ':' + instanceNumber));
+          return activeInstanceIds.length === 1 && activeInstanceIds[0] === instanceId;
+        };
 
         const cancelDisconnectTimer = () => {
           if (this._statusTimers[instanceId]) {
@@ -1371,23 +1381,42 @@ export default class MetaApiWebsocketClient {
         const resetDisconnectTimer = () => {
           cancelDisconnectTimer();
           this._statusTimers[instanceId] = setTimeout(async () => {
-            await onDisconnected();
-            this._subscriptionManager.onTimeout(data.accountId, instanceIndex);
+            if(isOnlyActiveInstance()) {
+              this._subscriptionManager.onTimeout(data.accountId, instanceNumber);
+            }
+            await onDisconnected(true);
           }, 60000);
         };
 
-        const onDisconnected = async () => { 
-          if (this._connectedHosts[instanceId] === data.host) {
-            const onDisconnectedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onDisconnectedPromises.push(
-                Promise.resolve(listener.onDisconnected(instanceIndex))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
-                    err))
-              );
+        const onDisconnected = async (isTimeout = false) => { 
+          if (this._connectedHosts[instanceId]) {
+            if(isOnlyActiveInstance()) {
+              const onDisconnectedPromises = [];
+              if(!isTimeout) {
+                onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, instanceNumber));
+              }
+              for (let listener of this._synchronizationListeners[data.accountId] || []) {
+                onDisconnectedPromises.push(
+                  Promise.resolve(listener.onDisconnected(instanceIndex))
+                  // eslint-disable-next-line no-console
+                    .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
+                      err))
+                );
+              }
+              await Promise.all(onDisconnectedPromises);
+            } else {
+              const onStreamClosedPromises = [];
+              this._packetOrderer.onStreamClosed(instanceId);
+              for (let listener of this._synchronizationListeners[data.accountId] || []) {
+                onStreamClosedPromises.push(
+                  Promise.resolve(listener.onStreamClosed(instanceIndex))
+                  // eslint-disable-next-line no-console
+                    .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                      'stream closed event', err))
+                );
+              }
+              await Promise.all(onStreamClosedPromises);
             }
-            await Promise.all(onDisconnectedPromises);
             delete this._connectedHosts[instanceId];
           }
         };
@@ -1404,15 +1433,12 @@ export default class MetaApiWebsocketClient {
                     err))
               );
             }
-            this._subscriptionManager.cancelSubscribe(instanceId);
+            this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
             await Promise.all(onConnectedPromises);
           }
         } else if (data.type === 'disconnected') {
           cancelDisconnectTimer();
-          await Promise.all([
-            onDisconnected(),
-            this._subscriptionManager.onDisconnected(data.accountId, instanceIndex)
-          ]);
+          await onDisconnected();
         } else if (data.type === 'synchronizationStarted') {
           const promises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1602,15 +1628,17 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onOrderSynchronizationFinishedPromises);
         } else if (data.type === 'status') {
           if (!this._connectedHosts[instanceId]) {
-            if(this._statusTimers[instanceId] && data.authenticated) {
-              this._subscriptionManager.cancelSubscribe(instanceId);
+            if(this._statusTimers[instanceId] && data.authenticated && 
+              (this._subscriptionManager.isDisconnectedRetryMode(data.accountId, instanceNumber) || 
+              !this._subscriptionManager.isAccountSubscribing(data.accountId, instanceNumber))) {
+              this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
               await new Promise(res => setTimeout(res, 10));
               // eslint-disable-next-line no-console
               console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
                         'server yet, retrying subscription for account ' + instanceId);
-              this.ensureSubscribe(data.accountId, instanceIndex);
+              this.ensureSubscribe(data.accountId, instanceNumber);
             }
-          } else if (this._connectedHosts[instanceId] === data.host) {
+          } else {
             resetDisconnectTimer();
             const onBrokerConnectionStatusChangedPromises = [];
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1773,8 +1801,10 @@ export default class MetaApiWebsocketClient {
           reconnectListeners.push(listener);
         }
       }
-      this._subscriptionManager.onReconnected(socketInstanceIndex, 
-        reconnectListeners.map(listener => listener.accountId));
+      const reconnectAccountIds = reconnectListeners.map(listener => listener.accountId);
+      this._subscriptionManager.onReconnected(socketInstanceIndex, reconnectAccountIds);
+      this._packetOrderer.onReconnected(reconnectAccountIds);
+
       for (let listener of reconnectListeners) {
         Promise.resolve(listener.listener.onReconnected())
           // eslint-disable-next-line no-console

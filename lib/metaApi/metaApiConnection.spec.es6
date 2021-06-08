@@ -715,14 +715,24 @@ describe('MetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#synchronize}
    */
+  it('should not subscribe if connection is closed', async () => {
+    const ensureSubscribeStub = sandbox.stub(client, 'ensureSubscribe').resolves();
+    await api.close();
+    await api.subscribe();
+    sinon.assert.notCalled(ensureSubscribeStub);
+  });
+
+  /**
+   * @test {MetaApiConnection#synchronize}
+   */
   it('should synchronize state with terminal', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize(1);
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
+    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.synchronize('1:ps-mpa-1');
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
 
@@ -734,10 +744,10 @@ describe('MetaApiConnection', () => {
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry,
       new Date('2020-10-07T00:00:00.000Z'));
-    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize(1);
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
+    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.synchronize('1:ps-mpa-1');
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'));
   });
 
@@ -767,7 +777,7 @@ describe('MetaApiConnection', () => {
     it('should unsubscribe during market data subscription downgrade', async () => {
       sandbox.stub(api, 'subscribeToMarketData').resolves();
       sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
-      await api.onSubscriptionDowngraded(1, 'EURUSD', undefined, [{type: 'ticks'}, {type: 'books'}]);
+      await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', undefined, [{type: 'ticks'}, {type: 'books'}]);
       sinon.assert.calledWith(api.unsubscribeFromMarketData, 'EURUSD', [{type: 'ticks'}, {type: 'books'}]);
       sinon.assert.notCalled(api.subscribeToMarketData);
     });
@@ -778,7 +788,7 @@ describe('MetaApiConnection', () => {
     it('should update market data subscription on downgrade', async () => {
       sandbox.stub(api, 'subscribeToMarketData').resolves();
       sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
-      await api.onSubscriptionDowngraded(1, 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
+      await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
       sinon.assert.calledWith(api.subscribeToMarketData, 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
       sinon.assert.notCalled(api.unsubscribeFromMarketData);
     });
@@ -952,10 +962,10 @@ describe('MetaApiConnection', () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected(1);
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
+    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.onConnected('1:ps-mpa-1', 1);
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
 
@@ -968,29 +978,39 @@ describe('MetaApiConnection', () => {
     stub.onSecondCall().resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected(1);
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
+    await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.onConnected('1:ps-mpa-1', 1);
+    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
 
   /**
    * @test {MetaApiConnection#onConnected}
    */
-  it('should restore market data subscriptions on sychronization', async () => {
-    sandbox.stub(client, 'synchronize').resolves();
-    sandbox.stub(client, 'subscribeToMarketData').resolves();
-    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
+  it('should not synchronize if connection is closed', async () => {
+    let synchronizeStub = sandbox.stub(client, 'synchronize');
     api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded(1, {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded(1, {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.close();
+    await api.onConnected('1:ps-mpa-1', 1);
+    sinon.assert.notCalled(synchronizeStub);
+  });
+
+  /**
+   * @test {MetaApiConnection#onConnected}
+   */
+  it('should restore market data subscriptions on synchronization', async () => {
+    sandbox.stub(api.terminalState, 'price').callsFake((symbol) => {
+      return symbol === 'EURUSD' ? {symbol} : undefined;
+    });
     await api.subscribeToMarketData('EURUSD');
-    await api.onConnected(1);
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
-    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD');
-    sinon.assert.calledTwice(client.subscribeToMarketData);
+    await api.subscribeToMarketData('AUDNZD');
+    const subscribeStub = sandbox.stub(client, 'subscribeToMarketData').resolves();
+    await api.onAccountInformationUpdated('1:ps-mpa-1', {});
+    sinon.assert.callCount(subscribeStub, 1);
+    sinon.assert.calledWith(subscribeStub, 'accountId', 1, 'AUDNZD');
   });
 
   /**
@@ -1017,18 +1037,19 @@ describe('MetaApiConnection', () => {
      */
     it('should wait util synchronization complete', async () => {
       sandbox.stub(client, 'waitSynchronized').resolves();
+      sinon.assert.match(await api.isSynchronized('1:ps-mpa-1'), false);
       (await api.isSynchronized()).should.equal(false);
       let promise = api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
         timeoutInSeconds: 1, intervalInMilliseconds: 10});
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
       (Date.now() - startTime).should.be.approximately(50, 10);
-      api.onOrderSynchronizationFinished(1, 'synchronizationId');
-      api.onDealSynchronizationFinished(1, 'synchronizationId');
+      api.onOrderSynchronizationFinished('1:ps-mpa-1', 'synchronizationId');
+      api.onDealSynchronizationFinished('1:ps-mpa-1', 'synchronizationId');
       startTime = Date.now();
       await promise;
       (Date.now() - startTime).should.be.approximately(10, 10);
-      (await api.isSynchronized(1, 'synchronizationId')).should.equal(true);
+      (await api.isSynchronized('1:ps-mpa-1', 'synchronizationId')).should.equal(true);
     });
 
     /**
@@ -1060,7 +1081,19 @@ describe('MetaApiConnection', () => {
    * @test {MetaApiConnection#onDisconnected}
    */
   it('should set synchronized false on disconnect', async () => {
-    await api.onDisconnected();
+    await api.onConnected('1:ps-mpa-1', 2);
+    sinon.assert.match(api.synchronized, true);
+    await api.onDisconnected('1:ps-mpa-1');
+    sinon.assert.match(api.synchronized, false);
+  });
+
+  /**
+   * @test {MetaApiConnection#onDisconnected}
+   */
+  it('should delete state if stream closed', async () => {
+    await api.onConnected('1:ps-mpa-1', 2);
+    sinon.assert.match(api.synchronized, true);
+    await api.onStreamClosed('1:ps-mpa-1');
     sinon.assert.match(api.synchronized, false);
   });
 
