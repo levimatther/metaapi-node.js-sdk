@@ -11,6 +11,7 @@
   - increased default demo account request timeout to 240 seconds
   - added MetaStats SDK
   - fixed deal sorting in memory history store
+  - make it possible to specify relative SL/TP
 
 12.4.3
   - fix specifications synchronization bug introduced in 12.4.1

@@ -420,6 +420,24 @@ describe('MetaApiConnection', () => {
   });
 
   /**
+   * @test {MetaApiConnection#createMarketBuyOrder}
+   */
+  it('should create market buy order with relative SL/TP', async () => {
+    let tradeResult = {
+      error: 10009,
+      description: 'TRADE_RETCODE_DONE',
+      orderId: 46870472
+    };
+    sandbox.stub(client, 'trade').resolves(tradeResult);
+    let actual = await api.createMarketBuyOrder('GBPUSD', 0.07, {value: 0.1, units: 'RELATIVE_PRICE'},
+      {value: 2000, units: 'RELATIVE_POINTS'}, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
+    actual.should.match(tradeResult);
+    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY', symbol: 'GBPUSD',
+      volume: 0.07, stopLoss: 0.1, stopLossUnits: 'RELATIVE_PRICE', takeProfit: 2000,
+      takeProfitUnits: 'RELATIVE_POINTS', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+  });
+
+  /**
    * @test {MetaApiConnection#createMarketSellOrder}
    */
   it('should create market sell order', async () => {
