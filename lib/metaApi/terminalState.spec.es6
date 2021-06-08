@@ -22,9 +22,9 @@ describe('TerminalState', () => {
    */
   it('should return connection state', () => {
     state.connected.should.be.false();
-    state.onConnected(1);
+    state.onConnected('1:ps-mpa-1');
     state.connected.should.be.true();
-    state.onDisconnected(1);
+    state.onDisconnected('1:ps-mpa-1');
     state.connected.should.be.false();
   });
 
@@ -35,12 +35,12 @@ describe('TerminalState', () => {
   it('should return broker connection state', async () => {
     const clock = sinon.useFakeTimers();
     state.connectedToBroker.should.be.false();
-    state.onBrokerConnectionStatusChanged(1, true);
+    state.onBrokerConnectionStatusChanged('1:ps-mpa-1', true);
     state.connectedToBroker.should.be.true();
-    state.onBrokerConnectionStatusChanged(1, false);
+    state.onBrokerConnectionStatusChanged('1:ps-mpa-1', false);
     state.connectedToBroker.should.be.false();
-    state.onBrokerConnectionStatusChanged(1, true);
-    state.onDisconnected(1);
+    state.onBrokerConnectionStatusChanged('1:ps-mpa-1', true);
+    state.onDisconnected('1:ps-mpa-1');
     state.connectedToBroker.should.be.false();
     await clock.tickAsync(65000);
     clock.restore();
@@ -52,7 +52,7 @@ describe('TerminalState', () => {
    */
   it('should return account information', () => {
     should.not.exist(state.accountInformation);
-    state.onAccountInformationUpdated(1, {balance: 1000});
+    state.onAccountInformationUpdated('1:ps-mpa-1', {balance: 1000});
     state.accountInformation.should.match({balance: 1000});
   });
 
@@ -63,10 +63,10 @@ describe('TerminalState', () => {
    */
   it('should return positions', () => {
     state.positions.length.should.equal(0);
-    state.onPositionUpdated(1, {id: '1', profit: 10});
-    state.onPositionUpdated(1, {id: '2'});
-    state.onPositionUpdated(1, {id: '1', profit: 11});
-    state.onPositionRemoved(1, '2');
+    state.onPositionUpdated('1:ps-mpa-1', {id: '1', profit: 10});
+    state.onPositionUpdated('1:ps-mpa-1', {id: '2'});
+    state.onPositionUpdated('1:ps-mpa-1', {id: '1', profit: 11});
+    state.onPositionRemoved('1:ps-mpa-1', '2');
     state.positions.length.should.equal(1);
     state.positions.should.match([{id: '1', profit: 11}]);
   });
@@ -76,12 +76,13 @@ describe('TerminalState', () => {
    * @test {TerminalState#onOrderCompleted}
    * @test {TerminalState#orders}
    */
-  it('should return orders', () => {
+  it('should return orders', async () => {
     state.orders.length.should.equal(0);
-    state.onOrderUpdated(1, {id: '1', openPrice: 10});
-    state.onOrderUpdated(1, {id: '2'});
-    state.onOrderUpdated(1, {id: '1', openPrice: 11});
-    state.onOrderCompleted(1, '2');
+    await state.onOrderUpdated('1:ps-mpa-1', {id: '1', openPrice: 10});
+    await state.onOrderUpdated('1:ps-mpa-1', {id: '2'});
+    await state.onOrderUpdated('1:ps-mpa-1', {id: '1', openPrice: 11});
+    state.orders.length.should.equal(2);
+    await state.onOrderCompleted('1:ps-mpa-1', '2');
     state.orders.length.should.equal(1);
     state.orders.should.match([{id: '1', openPrice: 11}]);
   });
@@ -93,8 +94,9 @@ describe('TerminalState', () => {
    */
   it('should return specifications', () => {
     state.specifications.length.should.equal(0);
-    state.onSymbolSpecificationsUpdated(1, [{symbol: 'EURUSD', tickSize: 0.00001}, {symbol: 'GBPUSD'}], []);
-    state.onSymbolSpecificationsUpdated(1, [{symbol: 'AUDNZD'}, {symbol: 'EURUSD', tickSize: 0.0001}], ['AUDNZD']);
+    state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.00001}, {symbol: 'GBPUSD'}], []);
+    state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [{symbol: 'AUDNZD'}, {symbol: 'EURUSD', 
+      tickSize: 0.0001}], ['AUDNZD']);
     state.specifications.length.should.equal(2);
     state.specifications.should.match([{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}]);
     state.specification('EURUSD').should.match({symbol: 'EURUSD', tickSize: 0.0001});
@@ -106,9 +108,9 @@ describe('TerminalState', () => {
    */
   it('should return price', () => {
     should.not.exist(state.price('EURUSD'));
-    state.onSymbolPricesUpdated(1, [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
-    state.onSymbolPricesUpdated(1, [{time: new Date(), symbol: 'GBPUSD'}]);
-    state.onSymbolPricesUpdated(1, [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.2}]);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'GBPUSD'}]);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.2}]);
     state.price('EURUSD').should.match({symbol: 'EURUSD', bid: 1, ask: 1.2});
   });
 
@@ -118,8 +120,8 @@ describe('TerminalState', () => {
    * @test {TerminalState#positions}
    */
   it('should update account equity and position profit on price update', () => {
-    state.onAccountInformationUpdated(1, {equity: 1000, balance: 800});
-    state.onPositionsReplaced(1, [{
+    state.onAccountInformationUpdated('1:ps-mpa-1', {equity: 1000, balance: 800});
+    state.onPositionsReplaced('1:ps-mpa-1', [{
       id: '1',
       symbol: 'EURUSD',
       type: 'POSITION_TYPE_BUY',
@@ -129,7 +131,7 @@ describe('TerminalState', () => {
       profit: 100,
       volume: 2
     }]);
-    state.onPositionUpdated(1, {
+    state.onPositionUpdated('1:ps-mpa-1', {
       id: '2',
       symbol: 'AUDUSD',
       type: 'POSITION_TYPE_BUY',
@@ -139,9 +141,9 @@ describe('TerminalState', () => {
       profit: 100,
       volume: 2
     });
-    state.onSymbolSpecificationsUpdated(1, [{symbol: 'EURUSD', tickSize: 0.01, digits: 5},
+    state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.01, digits: 5},
       {symbol: 'AUDUSD', tickSize: 0.01, digits: 5}], []);
-    state.onSymbolPricesUpdated(1, [
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [
       {
         time: new Date(),
         symbol: 'EURUSD',
@@ -171,8 +173,8 @@ describe('TerminalState', () => {
    * @test {TerminalState#positions}
    */
   it('should update margin fields on price update', () => {
-    state.onAccountInformationUpdated(1, {equity: 1000, balance: 800});
-    state.onSymbolPricesUpdated(1, [], 100, 200, 400, 40000);
+    state.onAccountInformationUpdated('1:ps-mpa-1', {equity: 1000, balance: 800});
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [], 100, 200, 400, 40000);
     state.accountInformation.equity.should.equal(100);
     state.accountInformation.margin.should.equal(200);
     state.accountInformation.freeMargin.should.equal(400);
@@ -184,20 +186,20 @@ describe('TerminalState', () => {
    * @test {TerminalState#orders}
    */
   it('should update order currentPrice on price update', () => {
-    state.onOrderUpdated(1, {
+    state.onOrderUpdated('1:ps-mpa-1', {
       id: '1',
       symbol: 'EURUSD',
       type: 'ORDER_TYPE_BUY_LIMIT',
       currentPrice: 9
     });
-    state.onOrderUpdated(1, {
+    state.onOrderUpdated('1:ps-mpa-1', {
       id: '2',
       symbol: 'AUDUSD',
       type: 'ORDER_TYPE_SELL_LIMIT',
       currentPrice: 9
     });
-    state.onSymbolSpecificationsUpdated(1, [{symbol: 'EURUSD', tickSize: 0.01}], []);
-    state.onSymbolPricesUpdated(1, [{
+    state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.01}], []);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{
       time: new Date(),
       symbol: 'EURUSD',
       profitTickValue: 0.5,
@@ -206,6 +208,17 @@ describe('TerminalState', () => {
       ask: 11
     }]);
     state.orders.map(o => o.currentPrice).should.match([11, 9]);
+  });
+
+  /**
+   * @test {TerminalState#onStreamClosed}
+   */
+  it('should remove state on closed stream', async () => {
+    sinon.assert.match(state.price('EURUSD'), undefined);
+    await state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    sinon.assert.match(state.price('EURUSD'), {time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1});
+    await state.onStreamClosed('1:ps-mpa-1');
+    sinon.assert.match(state.price('EURUSD'), undefined);
   });
 
 });

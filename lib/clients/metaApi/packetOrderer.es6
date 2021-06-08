@@ -15,6 +15,9 @@ export default class PacketOrderer {
     this._orderingTimeoutInSeconds = orderingTimeoutInSeconds;
     this._isOutOfOrderEmitted = {};
     this._waitListSizeLimit = 100;
+    this._sequenceNumberByInstance = {};
+    this._lastSessionStartTimestamp = {};
+    this._packetsByInstance = {};
   }
 
   /**
@@ -43,7 +46,7 @@ export default class PacketOrderer {
    */
   // eslint-disable-next-line complexity
   restoreOrder(packet) {
-    let instanceId = packet.accountId + ':' + (packet.instanceIndex || 0);
+    let instanceId = packet.accountId + ':' + (packet.instanceIndex || 0) + ':' + (packet.host || 0);
     if (packet.sequenceNumber === undefined) {
       return [packet];
     }
@@ -83,6 +86,42 @@ export default class PacketOrderer {
       }
       return [];
     }
+  }
+
+  /**
+   * Resets state for instance id
+   * @param {String} instanceId instance id to reset state for
+   */
+  onStreamClosed(instanceId) {
+    delete this._packetsByInstance[instanceId];
+    delete this._lastSessionStartTimestamp[instanceId];
+    delete this._sequenceNumberByInstance[instanceId];
+  }
+
+  /**
+   * Resets state for specified accounts on reconnect
+   * @param {String[]} reconnectAccountIds reconnected account ids
+   */
+  onReconnected(reconnectAccountIds) {
+    Object.keys(this._packetsByInstance).forEach(instanceId => {
+      if(reconnectAccountIds.includes(this._getAccountIdFromInstance(instanceId))) {
+        delete this._packetsByInstance[instanceId];
+      }
+    });
+    Object.keys(this._lastSessionStartTimestamp).forEach(instanceId => {
+      if(reconnectAccountIds.includes(this._getAccountIdFromInstance(instanceId))) {
+        delete this._lastSessionStartTimestamp[instanceId];
+      }
+    });
+    Object.keys(this._sequenceNumberByInstance).forEach(instanceId => {
+      if(reconnectAccountIds.includes(this._getAccountIdFromInstance(instanceId))) {
+        delete this._sequenceNumberByInstance[instanceId];
+      }
+    });
+  }
+
+  _getAccountIdFromInstance(instanceId) {
+    return instanceId.split(':')[0];
   }
 
   _findNextPacketsFromWaitList(instanceId) {
