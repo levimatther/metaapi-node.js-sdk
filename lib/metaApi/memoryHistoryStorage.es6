@@ -93,12 +93,12 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Returns the time of the last history order record stored in the history storage
-   * @param {Number} [instanceIndex] index of an account instance connected
+   * @param {Number} [instanceNumber] index of an account instance connected
    * @returns {Date} the time of the last history order record stored in the history storage
    */
-  lastHistoryOrderTime(instanceIndex) {
-    if (instanceIndex !== undefined) {
-      return new Date(this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] || 0);
+  lastHistoryOrderTime(instanceNumber) {
+    if (instanceNumber !== undefined) {
+      return new Date(this._lastHistoryOrderTimeByInstanceIndex['' + instanceNumber] || 0);
     } else {
       return new Date(Object.values(this._lastHistoryOrderTimeByInstanceIndex)
         .reduce((acc, time) => time > acc ? time : acc, 0));
@@ -107,12 +107,12 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Returns the time of the last history deal record stored in the history storage
-   * @param {Number} [instanceIndex] index of an account instance connected
+   * @param {Number} [instanceNumber] index of an account instance connected
    * @returns {Date} the time of the last history deal record stored in the history storage
    */
-  lastDealTime(instanceIndex) {
-    if (instanceIndex !== undefined) {
-      return new Date(this._lastDealTimeByInstanceIndex['' + instanceIndex] || 0);
+  lastDealTime(instanceNumber) {
+    if (instanceNumber !== undefined) {
+      return new Date(this._lastDealTimeByInstanceIndex['' + instanceNumber] || 0);
     } else {
       return new Date(Object.values(this._lastDealTimeByInstanceIndex).reduce((acc, time) => time > acc ? time : acc,
         0));
@@ -121,17 +121,18 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Invoked when a new MetaTrader history order is added
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    */
   // eslint-disable-next-line complexity
   onHistoryOrderAdded(instanceIndex, historyOrder) {
+    const instance = this.getInstanceNumber(instanceIndex);
     let insertIndex = 0;
     let replacementIndex = -1;
     const newHistoryOrderTime = (historyOrder.doneTime || new Date(0)).getTime();
-    if (!this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] ||
-      this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] < newHistoryOrderTime) {
-      this._lastHistoryOrderTimeByInstanceIndex['' + instanceIndex] = newHistoryOrderTime;
+    if (!this._lastHistoryOrderTimeByInstanceIndex['' + instance] ||
+      this._lastHistoryOrderTimeByInstanceIndex['' + instance] < newHistoryOrderTime) {
+      this._lastHistoryOrderTimeByInstanceIndex['' + instance] = newHistoryOrderTime;
     }
     for(let i = this._historyOrders.length - 1; i >= 0; i--) {
       const order = this._historyOrders[i];
@@ -158,17 +159,18 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Invoked when a new MetaTrader history deal is added
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
    */
   // eslint-disable-next-line complexity
   onDealAdded(instanceIndex, deal) {
+    const instance = this.getInstanceNumber(instanceIndex);
     let insertIndex = 0;
     let replacementIndex = -1;
     const newDealTime = (deal.time || new Date(0)).getTime();
-    if (!this._lastDealTimeByInstanceIndex['' + instanceIndex] ||
-      this._lastDealTimeByInstanceIndex['' + instanceIndex] < newDealTime) {
-      this._lastDealTimeByInstanceIndex['' + instanceIndex] = newDealTime;
+    if (!this._lastDealTimeByInstanceIndex['' + instance] ||
+      this._lastDealTimeByInstanceIndex['' + instance] < newDealTime) {
+      this._lastDealTimeByInstanceIndex['' + instance] = newDealTime;
     }
     for(let i = this._deals.length - 1; i >= 0; i--) {
       const d = this._deals[i];
@@ -194,10 +196,11 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    */
   async onDealSynchronizationFinished(instanceIndex, synchronizationId) {
-    this._dealSynchronizationFinished[instanceIndex] = true;
+    const instance = this.getInstanceNumber(instanceIndex);
+    this._dealSynchronizationFinished[instance] = true;
     await this.updateDiskStorage();
   }
 

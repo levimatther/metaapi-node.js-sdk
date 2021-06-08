@@ -44,21 +44,21 @@ export default class HistoryStorage extends SynchronizationListener {
 
   /**
    * Returns the time of the last history order record stored in the history storage
-   * @param {Number} [instanceIndex] index of an account instance connected
+   * @param {String} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history order record stored in the history storage
    */
   async lastHistoryOrderTime(instanceIndex) {}
 
   /**
    * Returns the time of the last history deal record stored in the history storage
-   * @param {Number} [instanceIndex] index of an account instance connected
+   * @param {String} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history deal record stored in the history storage
    */
   async lastDealTime(instanceIndex) {}
 
   /**
    * Invoked when a new MetaTrader history order is added
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
@@ -66,7 +66,7 @@ export default class HistoryStorage extends SynchronizationListener {
 
   /**
    * Invoked when a new MetaTrader history deal is added
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
@@ -74,27 +74,30 @@ export default class HistoryStorage extends SynchronizationListener {
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    */
   onDealSynchronizationFinished(instanceIndex) {
-    this._dealSynchronizationFinished['' + instanceIndex] = true;
+    const instance = this.getInstanceNumber(instanceIndex);
+    this._dealSynchronizationFinished['' + instance] = true;
   }
 
   /**
    * Invoked when a synchronization of history orders on a MetaTrader account have finished
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    */
   onOrderSynchronizationFinished(instanceIndex) {
-    this._orderSynchronizationFinished['' + instanceIndex] = true;
+    const instance = this.getInstanceNumber(instanceIndex);
+    this._orderSynchronizationFinished['' + instance] = true;
   }
 
   /**
    * Invoked when connection to MetaTrader terminal established
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    */
   onConnected(instanceIndex) {
-    this._orderSynchronizationFinished['' + instanceIndex] = false;
-    this._dealSynchronizationFinished['' + instanceIndex] = false;
+    const instance = this.getInstanceNumber(instanceIndex);
+    this._orderSynchronizationFinished['' + instance] = false;
+    this._dealSynchronizationFinished['' + instance] = false;
   }
 
 }

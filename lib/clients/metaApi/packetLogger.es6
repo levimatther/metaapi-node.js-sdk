@@ -168,17 +168,17 @@ export default class PacketLogger {
    * Records price packet messages to log files
    * @param {String} accountId account id
    */
-  _recordPrices(accountId, instanceIndex) {
-    const prevPrice = this._previousPrices[accountId][instanceIndex] || {first: {}, last:{}};
+  _recordPrices(accountId, instanceNumber) {
+    const prevPrice = this._previousPrices[accountId][instanceNumber] || {first: {}, last:{}};
     const queue = this._writeQueue[accountId].queue;
-    delete this._previousPrices[accountId][instanceIndex];
+    delete this._previousPrices[accountId][instanceNumber];
     if(!Object.keys(this._previousPrices[accountId]).length) {
       delete this._previousPrices[accountId];
     }
     if(prevPrice.first.sequenceNumber !== prevPrice.last.sequenceNumber) {
       queue.push(JSON.stringify(prevPrice.last));
       queue.push(`Recorded price packets ${prevPrice.first.sequenceNumber}` +
-        `-${prevPrice.last.sequenceNumber}, instanceIndex: ${instanceIndex}`);
+        `-${prevPrice.last.sequenceNumber}, instanceIndex: ${instanceNumber}`);
     }
   }
 

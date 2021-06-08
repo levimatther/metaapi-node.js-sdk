@@ -209,4 +209,16 @@ describe('SubscriptionManager', () => {
     await clock.tickAsync(50);
     sinon.assert.calledTwice(subscribe);
   });
+
+  /**
+   * @test {SubscriptionManager#cancelSubscribe}
+   */
+  it('should check if account is subscribing', async () => {
+    manager.subscribe('accountId', 1);
+    await clock.tickAsync(50);
+    sinon.assert.match(manager.isAccountSubscribing('accountId'), true);
+    sinon.assert.match(manager.isAccountSubscribing('accountId', 0), false);
+    sinon.assert.match(manager.isAccountSubscribing('accountId', 1), true);
+  });
+
 });

@@ -38,7 +38,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 
   /**
    * Invoked when a symbol price was updated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price
    */
   onSymbolPriceUpdated(instanceIndex, price) {
@@ -55,7 +55,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 
   /**
    * Invoked when a server-side application health status is received from MetaApi
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @param {HealthStatus} status server-side application health status
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
@@ -65,7 +65,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 
   /**
    * Invoked when connection to MetaTrader terminal terminated
-   * @param {Number} instanceIndex index of an account instance connected
+   * @param {String} instanceIndex index of an account instance connected
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onDisconnected(instanceIndex) {
