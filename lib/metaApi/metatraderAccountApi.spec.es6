@@ -753,7 +753,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#getExpertAdvisors}
    */
   it('should retrieve expert advisors', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt4'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{expertId: 'ea'}]);
     const account = await api.getAccount();
     const experts = await account.getExpertAdvisors();
@@ -766,7 +766,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#getExpertAdvisor}
    */
   it('should retrieve expert advisor by expert id', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt4'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
       expertId: 'ea',
       period: '1H',
@@ -786,8 +786,37 @@ describe('MetatraderAccountApi', () => {
   /**
    * @test {MetatraderAccount#getExpertAdvisor}
    */
-  it('should validate account platform', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt5'});
+  it('should validate account version', async () => {
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 5, type: 'cloud-g1'});
+    sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{
+      expertId: 'ea',
+      period: '1H',
+      symbol: 'EURUSD',
+      fileUploaded: false
+    }]);
+    sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
+      expertId: 'ea',
+      period: '1H',
+      symbol: 'EURUSD',
+      fileUploaded: false
+    });
+    sandbox.stub(eaClient, 'updateExpertAdvisor').resolves();
+    let newExpertAdvisor = {
+      period: '1H',
+      symbol: 'EURUSD',
+      preset: 'preset'
+    };
+    const account = await api.getAccount('id');
+    await should(account.getExpertAdvisors()).rejected();
+    await should(account.getExpertAdvisor('ea')).rejected();
+    await should(account.createExpertAdvisor('ea', newExpertAdvisor)).rejected();
+  });
+
+  /**
+   * @test {MetatraderAccount#getExpertAdvisor}
+   */
+  it('should validate account type', async () => {
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g2'});
     sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{
       expertId: 'ea',
       period: '1H',
@@ -816,7 +845,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#createExpertAdvisor}
    */
   it('should create expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt4'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'updateExpertAdvisor').resolves();
     sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
       expertId: 'ea',
@@ -844,7 +873,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#reload}
    */
   it('should reload expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt4'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor')
       .onFirstCall().resolves({
         expertId: 'ea',
@@ -870,7 +899,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#update}
    */
   it('should update expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt4'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor')
       .onFirstCall().resolves({
         expertId: 'ea',
@@ -903,7 +932,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#uploadFile}
    */
   it('should upload expert advisor file', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt4'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor')
       .onFirstCall().resolves({
         expertId: 'ea',
@@ -931,7 +960,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#remove}
    */
   it('should remove expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', platform: 'mt4'});
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
       expertId: 'ea',
       period: '1H',
