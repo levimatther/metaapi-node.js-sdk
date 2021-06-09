@@ -23,6 +23,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * aliases.
    * @property {String} login MetaTrader account number
    * @property {String} server MetaTrader server which hosts the account
+   * @property {Version} version MT version
    * @property {String} provisioningProfileId id of the account's provisioning profile
    * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
