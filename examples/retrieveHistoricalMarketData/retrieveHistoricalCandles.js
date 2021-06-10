@@ -33,8 +33,11 @@ async function retrieveHistoricalCandles() {
     let candles
     for (let i = 0; i < pages; i++) {
       // the API to retrieve historical market data is currently available for G1 only
-      candles = await account.getHistoricalCandles(symbol, '1m', startTime);
-      console.log(`Downloaded ${candles ? candles.length : 0} historical candles for ${symbol}`);
+      let newCandles = await account.getHistoricalCandles(symbol, '1m', startTime);
+      console.log(`Downloaded ${newCandles ? newCandles.length : 0} historical candles for ${symbol}`);
+      if (newCandles && newCandles.length) {
+        candles = newCandles;
+      }
       if (candles && candles.length) {
         startTime = candles[0].time;
         startTime.setMinutes(startTime.getMinutes() - 1);
