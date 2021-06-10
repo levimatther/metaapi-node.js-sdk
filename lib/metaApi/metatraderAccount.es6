@@ -152,11 +152,11 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns platform value. Possible values are mt4 and mt5
-   * @return {String} account platform value
+   * Returns version value. Possible values are 4 and 5
+   * @return {String} account version value
    */
-  get platform() {
-    return this._data.platform;
+  get version() {
+    return this._data.version;
   }
 
   /**
@@ -336,9 +336,7 @@ export default class MetatraderAccount {
    * @returns {Promise<ExpertAdvisor[]>} promise resolving with an array of expert advisor entities
    */
   async getExpertAdvisors() {
-    if (this.platform !== 'mt4') {
-      throw new ValidationError('Custom expert advisor is available only for MT4 accounts');
-    }
+    this._checkExpertAdvisorAllowed();
     let expertAdvisors = await this._expertAdvisorClient.getExpertAdvisors(this.id);
     return expertAdvisors.map(e => new ExpertAdvisor(e, this.id, this._expertAdvisorClient));
   }
@@ -349,9 +347,7 @@ export default class MetatraderAccount {
    * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
    */
   async getExpertAdvisor(expertId) {
-    if (this.platform !== 'mt4') {
-      throw new ValidationError('Custom expert advisor is available only for MT4 accounts');
-    }
+    this._checkExpertAdvisorAllowed();
     let expertAdvisor = await this._expertAdvisorClient.getExpertAdvisor(this.id, expertId);
     return new ExpertAdvisor(expertAdvisor, this.id, this._expertAdvisorClient);
   }
@@ -363,9 +359,7 @@ export default class MetatraderAccount {
    * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
    */
   async createExpertAdvisor(expertId, expert) {
-    if (this.platform !== 'mt4') {
-      throw new ValidationError('Custom expert advisor is available only for MT4 accounts');
-    }
+    this._checkExpertAdvisorAllowed();
     await this._expertAdvisorClient.updateExpertAdvisor(this.id, expertId, expert);
     return this.getExpertAdvisor(expertId);
   }
@@ -399,6 +393,12 @@ export default class MetatraderAccount {
      */
   getHistoricalTicks(symbol, startTime, offset, limit) {
     return this._historicalMarketDataClient.getHistoricalTicks(this.id, symbol, startTime, offset, limit);
+  }
+
+  _checkExpertAdvisorAllowed() {
+    if (this.version !== 4 || this.type !== 'cloud-g1') {
+      throw new ValidationError('Custom expert advisor is available only for MT4 G1 accounts');
+    }
   }
 
   _delay(timeoutInMilliseconds) {
