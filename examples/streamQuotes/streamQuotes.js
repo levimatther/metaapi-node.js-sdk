@@ -4,8 +4,9 @@ let SynchronizationListener = require('metaapi.cloud-sdk').SynchronizationListen
 let token = process.env.TOKEN || '<put in your token here>';
 let accountId = process.env.ACCOUNT_ID || '<put in your account id here>';
 let symbol = process.env.SYMBOL || 'EURUSD';
+let domain = process.env.DOMAIN || 'agiliumtrade.agiliumtrade.ai';
 
-const api = new MetaApi(token);
+const api = new MetaApi(token, {domain});
 
 class QuoteListener extends SynchronizationListener {
   async onSymbolPriceUpdated(instanceIndex, price) {
