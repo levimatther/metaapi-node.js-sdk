@@ -32,7 +32,7 @@ async function retrieveHistoricalCandles() {
     let startTime;
     let candles
     for (let i = 0; i < pages; i++) {
-      // the API to retrieve historical market data is currently available for G1 only
+      // the API to retrieve historical market data is currently available for G1 and MT4 G2 only
       let newCandles = await account.getHistoricalCandles(symbol, '1m', startTime);
       console.log(`Downloaded ${newCandles ? newCandles.length : 0} historical candles for ${symbol}`);
       if (newCandles && newCandles.length) {
