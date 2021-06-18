@@ -70,8 +70,8 @@ export default class MetaApiWebsocketClient {
    */
   onOutOfOrderPacket(accountId, instanceIndex, expectedSequenceNumber, actualSequenceNumber, packet, receivedAt) {
     console.error(`[${(new Date()).toISOString()}] MetaApi websocket client received an out of order ` +
-      `packet type ${packet.type} for account id ${accountId}. Expected s/n ${expectedSequenceNumber} ` +
-      `does not match the actual of ${actualSequenceNumber}`);
+      `packet type ${packet.type} for account id ${accountId}:${instanceIndex}. Expected s/n ` +
+      `${expectedSequenceNumber} does not match the actual of ${actualSequenceNumber}`);
     this.ensureSubscribe(accountId, instanceIndex);
   }
 
@@ -1399,8 +1399,8 @@ export default class MetaApiWebsocketClient {
                 onDisconnectedPromises.push(
                   Promise.resolve(listener.onDisconnected(instanceIndex))
                   // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}: Failed to notify listener about disconnected event`,
-                      err))
+                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                    'about disconnected event', err))
                 );
               }
               await Promise.all(onDisconnectedPromises);
@@ -1411,8 +1411,8 @@ export default class MetaApiWebsocketClient {
                 onStreamClosedPromises.push(
                   Promise.resolve(listener.onStreamClosed(instanceIndex))
                   // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
-                      'stream closed event', err))
+                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                    'about stream closed event', err))
                 );
               }
               await Promise.all(onStreamClosedPromises);
@@ -1429,8 +1429,8 @@ export default class MetaApiWebsocketClient {
               onConnectedPromises.push(
                 Promise.resolve(listener.onConnected(instanceIndex, data.replicas))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about connected event`,
-                    err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` + 
+                  'about connected event', err))
               );
             }
             this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
@@ -1445,8 +1445,8 @@ export default class MetaApiWebsocketClient {
             promises.push(
               Promise.resolve(listener.onSynchronizationStarted(instanceIndex))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about synchronization ` +
-                  'started event', err))
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about synchronization started event', err))
             );
           }
           await Promise.all(promises);
@@ -1457,8 +1457,8 @@ export default class MetaApiWebsocketClient {
               onAccountInformationUpdatedPromises.push(
                 Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about accountInformation ` +
-                    'event', err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about accountInformation event', err))
               );
             }
             await Promise.all(onAccountInformationUpdatedPromises);
@@ -1470,7 +1470,8 @@ export default class MetaApiWebsocketClient {
               onDealAddedPromises.push(
                 Promise.resolve(listener.onDealAdded(instanceIndex, deal))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about deals event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about deals event', err))
               );
             }
             await Promise.all(onDealAddedPromises);
@@ -1481,7 +1482,8 @@ export default class MetaApiWebsocketClient {
             onOrderUpdatedPromises.push(
               Promise.resolve(listener.onOrdersReplaced(instanceIndex, data.orders || []))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about orders event`, err))
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about orders event', err))
             );
           }
           await Promise.all(onOrderUpdatedPromises);
@@ -1492,8 +1494,8 @@ export default class MetaApiWebsocketClient {
               onHistoryOrderAddedPromises.push(
                 Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about historyOrders event`,
-                    err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about historyOrders event', err))
               );
             }
             await Promise.all(onHistoryOrderAddedPromises);
@@ -1504,8 +1506,8 @@ export default class MetaApiWebsocketClient {
             onPositionUpdatedPromises.push(
               Promise.resolve(listener.onPositionsReplaced(instanceIndex, data.positions || []))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about positions event`,
-                  err))
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about positions event', err))
             );
           }
           await Promise.all(onPositionUpdatedPromises);
@@ -1516,7 +1518,8 @@ export default class MetaApiWebsocketClient {
               onAccountInformationUpdatedPromises.push(
                 Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
               );
             }
             await Promise.all(onAccountInformationUpdatedPromises);
@@ -1527,7 +1530,8 @@ export default class MetaApiWebsocketClient {
               onPositionUpdatedPromises.push(
                 Promise.resolve(listener.onPositionUpdated(instanceIndex, position))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
               );
             }
             await Promise.all(onPositionUpdatedPromises);
@@ -1538,7 +1542,8 @@ export default class MetaApiWebsocketClient {
               onPositionRemovedPromises.push(
                 Promise.resolve(listener.onPositionRemoved(instanceIndex, positionId))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
               );
             }
             await Promise.all(onPositionRemovedPromises);
@@ -1549,7 +1554,8 @@ export default class MetaApiWebsocketClient {
               onOrderUpdatedPromises.push(
                 Promise.resolve(listener.onOrderUpdated(instanceIndex, order))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
               );
             }
             await Promise.all(onOrderUpdatedPromises);
@@ -1560,7 +1566,8 @@ export default class MetaApiWebsocketClient {
               onOrderCompletedPromises.push(
                 Promise.resolve(listener.onOrderCompleted(instanceIndex, orderId))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
               );
             }
             await Promise.all(onOrderCompletedPromises);
@@ -1571,7 +1578,8 @@ export default class MetaApiWebsocketClient {
               onHistoryOrderAddedPromises.push(
                 Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
               );
             }
             await Promise.all(onHistoryOrderAddedPromises);
@@ -1582,7 +1590,8 @@ export default class MetaApiWebsocketClient {
               onDealAddedPromises.push(
                 Promise.resolve(listener.onDealAdded(instanceIndex, deal))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about update event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
               );
             }
             await Promise.all(onDealAddedPromises);
@@ -1595,8 +1604,8 @@ export default class MetaApiWebsocketClient {
               onUpdatePromises.push(
                 Promise.resolve(listener.onUpdate(data.accountId, data.timestamps))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify latency listener about ` +
-                    'update event', err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify latency ` +
+                  'listener about update event', err))
               );
             }
             await Promise.all(onUpdatePromises);
@@ -1610,7 +1619,7 @@ export default class MetaApiWebsocketClient {
             onDealSynchronizationFinishedPromises.push(
               Promise.resolve(listener.onDealSynchronizationFinished(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                   'dealSynchronizationFinished event', err))
             );
           }
@@ -1621,7 +1630,7 @@ export default class MetaApiWebsocketClient {
             onOrderSynchronizationFinishedPromises.push(
               Promise.resolve(listener.onOrderSynchronizationFinished(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                   'orderSynchronizationFinished event', err))
             );
           }
@@ -1645,7 +1654,7 @@ export default class MetaApiWebsocketClient {
               onBrokerConnectionStatusChangedPromises.push(
                 Promise.resolve(listener.onBrokerConnectionStatusChanged(instanceIndex, !!data.connected))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                     'brokerConnectionStatusChanged event', err))
               );
             }
@@ -1657,7 +1666,7 @@ export default class MetaApiWebsocketClient {
                 onHealthStatusPromises.push(
                   Promise.resolve(listener.onHealthStatus(instanceIndex, data.healthStatus))
                   // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
+                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                       'server-side healthStatus event', err))
                 );
               }
@@ -1666,8 +1675,8 @@ export default class MetaApiWebsocketClient {
           }
         } else if (data.type === 'downgradeSubscription') {
           // eslint-disable-next-line no-console
-          console.log(`${data.accountId}: Market data subscriptions for symbol ${data.symbol} were downgraded by ` +
-            `the server due to rate limits. Updated subscriptions: ${JSON.stringify(data.updates)}, ` +
+          console.log(`${data.accountId}:${instanceIndex}: Market data subscriptions for symbol ${data.symbol} were ` +
+            `downgraded by the server due to rate limits. Updated subscriptions: ${JSON.stringify(data.updates)}, ` +
             `removed subscriptions: ${JSON.stringify(data.unsubscriptions)}. Please read ` +
             'https://metaapi.cloud/docs/client/rateLimiting/ for more details.');
           const onSubscriptionDowngradePromises = [];
@@ -1676,8 +1685,8 @@ export default class MetaApiWebsocketClient {
               Promise.resolve(listener.onSubscriptionDowngraded(instanceIndex, data.symbol, data.updates,
                 data.unsubscriptions))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about subscription ` +
-                  'downgrade event', err))
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about subscription downgrade event', err))
             );
           }
           await Promise.all(onSubscriptionDowngradePromises);
@@ -1688,8 +1697,8 @@ export default class MetaApiWebsocketClient {
               Promise.resolve(listener.onSymbolSpecificationsUpdated(instanceIndex, data.specifications || [],
                 data.removedSymbols || []))
                 // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}: Failed to notify listener about specifications ` +
-                  'updated event', err))
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about specifications updated event', err))
             );
           }
           await Promise.all(onSymbolSpecificationsUpdatedPromises);
@@ -1699,8 +1708,8 @@ export default class MetaApiWebsocketClient {
               onSymbolSpecificationUpdatedPromises.push(
                 Promise.resolve(listener.onSymbolSpecificationUpdated(instanceIndex, specification))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about specification ` +
-                    'updated event', err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about specification updated event', err))
               );
             }
             await Promise.all(onSymbolSpecificationUpdatedPromises);
@@ -1711,8 +1720,8 @@ export default class MetaApiWebsocketClient {
               onSymbolSpecificationRemovedPromises.push(
                 Promise.resolve(listener.onSymbolSpecificationRemoved(instanceIndex, removedSymbol))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about ` +
-                    'specifications removed event', err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about specifications removed event', err))
               );
             }
             await Promise.all(onSymbolSpecificationRemovedPromises);
@@ -1729,7 +1738,8 @@ export default class MetaApiWebsocketClient {
                 Promise.resolve(listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin,
                   data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about prices event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about prices event', err))
               );
             }
             if (candles.length) {
@@ -1737,7 +1747,8 @@ export default class MetaApiWebsocketClient {
                 Promise.resolve(listener.onCandlesUpdated(instanceIndex, candles, data.equity, data.margin,
                   data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about candles event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about candles event', err))
               );
             }
             if (ticks.length) {
@@ -1745,7 +1756,8 @@ export default class MetaApiWebsocketClient {
                 Promise.resolve(listener.onTicksUpdated(instanceIndex, ticks, data.equity, data.margin,
                   data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about ticks event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about ticks event', err))
               );
             }
             if (books.length) {
@@ -1753,7 +1765,8 @@ export default class MetaApiWebsocketClient {
                 Promise.resolve(listener.onBooksUpdated(instanceIndex, books, data.equity, data.margin,
                   data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about books event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about books event', err))
               );
             }
           }
@@ -1764,7 +1777,8 @@ export default class MetaApiWebsocketClient {
               onSymbolPriceUpdatedPromises.push(
                 Promise.resolve(listener.onSymbolPriceUpdated(instanceIndex, price))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}: Failed to notify listener about price event`, err))
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about price event', err))
               );
             }
             await Promise.all(onSymbolPriceUpdatedPromises);
@@ -1778,8 +1792,8 @@ export default class MetaApiWebsocketClient {
                 onSymbolPricePromises.push(
                   Promise.resolve(listener.onSymbolPrice(data.accountId, price.symbol, price.timestamps))
                   // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}: Failed to notify latency listener about ` +
-                      'price event', err))
+                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify latency ` +
+                    'listener about price event', err))
                 );
               }
               await Promise.all(onSymbolPricePromises);
