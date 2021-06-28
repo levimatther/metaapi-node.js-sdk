@@ -159,821 +159,824 @@ class FakeServer {
 
 }
 
-describe('Synchronization stability test', () => {
+const sequentialProcessing = [true, false];
+sequentialProcessing.forEach(param => {
+  describe('Synchronization stability test', () => {
 
-  let fakeServer;
-  let connection;
-  let clock;
-  let sandbox;
-  let api;
+    let fakeServer;
+    let connection;
+    let clock;
+    let sandbox;
+    let api;
 
-  before(() => {
-    sandbox = sinon.createSandbox();
-  });
-
-  beforeEach(async () => {
-    clock = sinon.useFakeTimers({shouldAdvanceTime: true});
-    api = new MetaApi('token', {application: 'application', domain: 'project-stock.agiliumlabs.cloud',
-      requestTimeout: 3, retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5, 
-        subscribeCooldownInSeconds: 6}});
-    api.metatraderAccountApi._metatraderAccountClient.getAccount = (accountId) => ({
-      _id:  accountId,
-      login: '50194988',
-      name: 'mt5a',
-      server: 'ICMarketsSC-Demo',
-      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
-      magic: 123456,
-      application: 'MetaApi',
-      connectionStatus: 'DISCONNECTED',
-      state: 'DEPLOYED',
-      type: 'cloud',
-      accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
+    before(() => {
+      sandbox = sinon.createSandbox();
     });
-    api._metaApiWebsocketClient.url = 'http://localhost:6785';
-    fakeServer = new FakeServer();
-    await fakeServer.start();
-  });
 
-  afterEach(async () => {
-    Object.values(fakeServer.statusTasks).forEach(task => clearInterval(task));
-    connection._websocketClient._subscriptionManager.cancelAccount('accountId');
-    connection._websocketClient.close();
-    let resolve;
-    let promise = new Promise(res => resolve = res);
-    fakeServer.io.close(() => {
-      resolve();
-    });
-    await promise;
-    sandbox.restore();
-    clock.restore();
-    await new Promise(res => setTimeout(res, 50));
-  });
-
-  it('should synchronize account', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    const response = await connection.getAccountInformation();
-    sinon.assert.match(response, accountInformation);
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-  }).timeout(10000);
-
-  it('should reconnect on server socket crash', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    server.disconnect();
-    await new Promise(res => setTimeout(res, 200));
-    const response = await connection.getAccountInformation();
-    sinon.assert.match(response, accountInformation);
-  }).timeout(10000);
-
-  it('should set state to disconnected on timeout', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    fakeServer.deleteStatusTask('accountId');
-    fakeServer.io.on('connect', socket => {
-      socket.disconnect();
-    });
-    server.disconnect();
-    await clock.tickAsync(61000);
-    await new Promise(res => setTimeout(res, 50));
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-  }).timeout(10000);
-
-  it('should resubscribe on timeout', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    fakeServer.deleteStatusTask('accountId');
-    await clock.tickAsync(61000);
-    await new Promise(res => setTimeout(res, 50));
-    const response = await connection.getAccountInformation();
-    sinon.assert.match(response, accountInformation);
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-  }).timeout(10000);
-
-  it('should synchronize if subscribe response arrives after synchronization', async () => {
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      socket.on('request', async data => {
-        if(data.type === 'subscribe') {
-          await new Promise(res => setTimeout(res, 200)); 
-          fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-          await fakeServer.authenticate(socket, data);
-          await new Promise(res => setTimeout(res, 400)); 
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        }
+    beforeEach(async () => {
+      clock = sinon.useFakeTimers({shouldAdvanceTime: true});
+      api = new MetaApi('token', {application: 'application', domain: 'project-stock.agiliumlabs.cloud',
+        requestTimeout: 3, retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5, 
+          subscribeCooldownInSeconds: 6}, eventProcessing: { sequentialProcessing: param }});
+      api.metatraderAccountApi._metatraderAccountClient.getAccount = (accountId) => ({
+        _id:  accountId,
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'DISCONNECTED',
+        state: 'DEPLOYED',
+        type: 'cloud',
+        accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
       });
-    });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    const response = await connection.getAccountInformation();
-    sinon.assert.match(response, accountInformation);
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-  }).timeout(10000);
-
-  it('should wait until account is redeployed after disconnect', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    fakeServer.deleteStatusTask('accountId');
-    fakeServer.disableSync();
-    await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
-      host: 'ps-mpa-0', instanceIndex: 0});
-    await clock.tickAsync(20000);
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-    await clock.tickAsync(200000);
-    fakeServer.enableSync(server);
-    await clock.tickAsync(20000);
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-    await clock.tickAsync(200000);
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-  }).timeout(10000);
-
-  it('should resubscribe immediately after disconnect on status packet', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    fakeServer.deleteStatusTask('accountId');
-    fakeServer.disableSync();
-    await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
-      host: 'ps-mpa-0', instanceIndex: 0});
-    await clock.tickAsync(20000);
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-    await clock.tickAsync(200000);
-    fakeServer.enableSync(server);
-    await fakeServer.emitStatus(server, 'accountId');
-    await clock.tickAsync(20000);
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-  }).timeout(10000);
-
-  it('should reconnect after server restarts', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    for (let i = 0; i < 5; i++) {
-      fakeServer.deleteStatusTask('accountId');
-      fakeServer.io.close();
-      await clock.tickAsync(200000);
-      await new Promise(res => setTimeout(res, 50));
+      api._metaApiWebsocketClient.url = 'http://localhost:6785';
+      fakeServer = new FakeServer();
       await fakeServer.start();
+    });
+
+    afterEach(async () => {
+      Object.values(fakeServer.statusTasks).forEach(task => clearInterval(task));
+      connection._websocketClient._subscriptionManager.cancelAccount('accountId');
+      connection._websocketClient.close();
+      let resolve;
+      let promise = new Promise(res => resolve = res);
+      fakeServer.io.close(() => {
+        resolve();
+      });
+      await promise;
+      sandbox.restore();
+      clock.restore();
+      await new Promise(res => setTimeout(res, 50));
+    });
+
+    it('should synchronize account', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      const response = await connection.getAccountInformation();
+      sinon.assert.match(response, accountInformation);
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+    }).timeout(10000);
+
+    it('should reconnect on server socket crash', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      server.disconnect();
       await new Promise(res => setTimeout(res, 200));
-    }
-    const response = await connection.getAccountInformation();
-    sinon.assert.match(response, accountInformation);
-  }).timeout(10000);
+      const response = await connection.getAccountInformation();
+      sinon.assert.match(response, accountInformation);
+    }).timeout(10000);
 
-  it('should synchronize if connecting while server is rebooting', async () => {
-    fakeServer.io.close();
-    await fakeServer.start(9000);
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    setTimeout(() => {
+    it('should set state to disconnected on timeout', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      fakeServer.deleteStatusTask('accountId');
+      fakeServer.io.on('connect', socket => {
+        socket.disconnect();
+      });
+      server.disconnect();
+      await clock.tickAsync(61000);
+      await new Promise(res => setTimeout(res, 50));
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+    }).timeout(10000);
+
+    it('should resubscribe on timeout', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      fakeServer.deleteStatusTask('accountId');
+      await clock.tickAsync(61000);
+      await new Promise(res => setTimeout(res, 50));
+      const response = await connection.getAccountInformation();
+      sinon.assert.match(response, accountInformation);
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+    }).timeout(10000);
+
+    it('should synchronize if subscribe response arrives after synchronization', async () => {
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        socket.on('request', async data => {
+          if(data.type === 'subscribe') {
+            await new Promise(res => setTimeout(res, 200)); 
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            await fakeServer.authenticate(socket, data);
+            await new Promise(res => setTimeout(res, 400)); 
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'synchronize') {
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          }
+        });
+      });
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      const response = await connection.getAccountInformation();
+      sinon.assert.match(response, accountInformation);
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+    }).timeout(10000);
+
+    it('should wait until account is redeployed after disconnect', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      fakeServer.deleteStatusTask('accountId');
+      fakeServer.disableSync();
+      await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+        host: 'ps-mpa-0', instanceIndex: 0});
+      await clock.tickAsync(20000);
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+      await clock.tickAsync(200000);
+      fakeServer.enableSync(server);
+      await clock.tickAsync(20000);
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+      await clock.tickAsync(200000);
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+    }).timeout(10000);
+
+    it('should resubscribe immediately after disconnect on status packet', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      fakeServer.deleteStatusTask('accountId');
+      fakeServer.disableSync();
+      await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+        host: 'ps-mpa-0', instanceIndex: 0});
+      await clock.tickAsync(20000);
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+      await clock.tickAsync(200000);
+      fakeServer.enableSync(server);
+      await fakeServer.emitStatus(server, 'accountId');
+      await clock.tickAsync(20000);
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+    }).timeout(10000);
+
+    it('should reconnect after server restarts', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      for (let i = 0; i < 5; i++) {
+        fakeServer.deleteStatusTask('accountId');
+        fakeServer.io.close();
+        await clock.tickAsync(200000);
+        await new Promise(res => setTimeout(res, 50));
+        await fakeServer.start();
+        await new Promise(res => setTimeout(res, 200));
+      }
+      const response = await connection.getAccountInformation();
+      sinon.assert.match(response, accountInformation);
+    }).timeout(10000);
+
+    it('should synchronize if connecting while server is rebooting', async () => {
       fakeServer.io.close();
-      fakeServer.start();
-    }, 3000);
-    await connection.waitSynchronized({timeoutInSeconds: 10});
-    const response = await connection.getAccountInformation();
-    sinon.assert.match(response, accountInformation);
-    (connection.synchronized && connection.terminalState.connected 
+      await fakeServer.start(9000);
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      setTimeout(() => {
+        fakeServer.io.close();
+        fakeServer.start();
+      }, 3000);
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      const response = await connection.getAccountInformation();
+      sinon.assert.match(response, accountInformation);
+      (connection.synchronized && connection.terminalState.connected 
       && connection.terminalState.connectedToBroker).should.equal(true);
-  }).timeout(10000);
+    }).timeout(10000);
 
-  it('should resubscribe other accounts after one of connections is closed', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    connection.waitSynchronized({timeoutInSeconds: 3});
-    await clock.tickAsync(1000);
-    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
-    const connection2 = await account2.connect();
-    connection2.waitSynchronized({timeoutInSeconds: 3});
-    await clock.tickAsync(1000);
-    const account3 = await api.metatraderAccountApi.getAccount('accountId3');
-    const connection3 = await account3.connect();
-    connection3.waitSynchronized({timeoutInSeconds: 3});
-    await clock.tickAsync(1000);
-    await connection.close();
-    fakeServer.deleteStatusTask('accountId2');
-    fakeServer.deleteStatusTask('accountId3');
-    fakeServer.disableSync();
-    server.disconnect();
-    await clock.tickAsync(2000);
-    await new Promise(res => setTimeout(res, 50)); 
-    fakeServer.enableSync(server);
-    server.disconnect();
-    await clock.tickAsync(3000);
-    await new Promise(res => setTimeout(res, 50)); 
-    connection.synchronized.should.equal(false);
-    (connection2.synchronized && connection2.terminalState.connected 
+    it('should resubscribe other accounts after one of connections is closed', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      connection.waitSynchronized({timeoutInSeconds: 3});
+      await clock.tickAsync(1000);
+      const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+      const connection2 = await account2.connect();
+      connection2.waitSynchronized({timeoutInSeconds: 3});
+      await clock.tickAsync(1000);
+      const account3 = await api.metatraderAccountApi.getAccount('accountId3');
+      const connection3 = await account3.connect();
+      connection3.waitSynchronized({timeoutInSeconds: 3});
+      await clock.tickAsync(1000);
+      await connection.close();
+      fakeServer.deleteStatusTask('accountId2');
+      fakeServer.deleteStatusTask('accountId3');
+      fakeServer.disableSync();
+      server.disconnect();
+      await clock.tickAsync(2000);
+      await new Promise(res => setTimeout(res, 50)); 
+      fakeServer.enableSync(server);
+      server.disconnect();
+      await clock.tickAsync(3000);
+      await new Promise(res => setTimeout(res, 50)); 
+      connection.synchronized.should.equal(false);
+      (connection2.synchronized && connection2.terminalState.connected 
       && connection2.terminalState.connectedToBroker).should.equal(true);
-    (connection2.synchronized && connection2.terminalState.connected 
+      (connection2.synchronized && connection2.terminalState.connected 
         && connection2.terminalState.connectedToBroker).should.equal(true);
-  });
-
-  it('should limit subscriptions during per user 429 error', async () => {
-    const subscribedAccounts = {};
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      socket.on('request', async data => {
-        if(data.type === 'subscribe') {
-          if (Object.keys(subscribedAccounts).length < 2) {
-            subscribedAccounts[data.accountId] = true;
-            await new Promise(res => setTimeout(res, 200)); 
-            await fakeServer.respond(socket, data);
-            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-            await new Promise(res => setTimeout(res, 50)); 
-            await fakeServer.authenticate(socket, data);
-          } else {
-            await fakeServer.emitError(socket, data, 1, 2);
-          }
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        } else if (data.type === 'unsubscribe') {
-          delete subscribedAccounts[data.accountId];
-          await fakeServer.respondAccountInformation(socket, data);
-        }
-      });
     });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 3});
-    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
-    const connection2 = await account2.connect();
-    await connection2.waitSynchronized({timeoutInSeconds: 3});
-    const account3 = await api.metatraderAccountApi.getAccount('accountId3');
-    const connection3 = await account3.connect();
-    try {
-      await connection3.waitSynchronized({timeoutInSeconds: 3});
-      throw new Error('TimeoutError expected');
-    } catch (err) {
-      err.name.should.equal('TimeoutError');
-    }
-    await connection2.close();
-    await clock.tickAsync(2000);
-    sinon.assert.match(connection3.synchronized, true);
-  }).timeout(10000);
 
-  it('should wait for retry time after per user 429 error', async () => {
-    let requestTimestamp = 0;
-    const subscribedAccounts = {};
+    it('should limit subscriptions during per user 429 error', async () => {
+      const subscribedAccounts = {};
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        socket.on('request', async data => {
+          if(data.type === 'subscribe') {
+            if (Object.keys(subscribedAccounts).length < 2) {
+              subscribedAccounts[data.accountId] = true;
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            } else {
+              await fakeServer.emitError(socket, data, 1, 2);
+            }
+          } else if (data.type === 'synchronize') {
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          } else if (data.type === 'unsubscribe') {
+            delete subscribedAccounts[data.accountId];
+            await fakeServer.respondAccountInformation(socket, data);
+          }
+        });
+      });
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 3});
+      const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+      const connection2 = await account2.connect();
+      await connection2.waitSynchronized({timeoutInSeconds: 3});
+      const account3 = await api.metatraderAccountApi.getAccount('accountId3');
+      const connection3 = await account3.connect();
+      try {
+        await connection3.waitSynchronized({timeoutInSeconds: 3});
+        throw new Error('TimeoutError expected');
+      } catch (err) {
+        err.name.should.equal('TimeoutError');
+      }
+      await connection2.close();
+      await clock.tickAsync(2000);
+      sinon.assert.match(connection3.synchronized, true);
+    }).timeout(10000);
 
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        if(data.type === 'subscribe') {
-          if (Object.keys(subscribedAccounts).length < 2 || 
+    it('should wait for retry time after per user 429 error', async () => {
+      let requestTimestamp = 0;
+      const subscribedAccounts = {};
+
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          if(data.type === 'subscribe') {
+            if (Object.keys(subscribedAccounts).length < 2 || 
             (requestTimestamp !== 0 && Date.now() - 2 * 1000 > requestTimestamp)) {
-            subscribedAccounts[data.accountId] = true;
-            await new Promise(res => setTimeout(res, 200)); 
+              subscribedAccounts[data.accountId] = true;
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            } else {
+              requestTimestamp = Date.now();
+              await fakeServer.emitError(socket, data, 1, 3);
+            }
+          } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
-            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-            await new Promise(res => setTimeout(res, 50)); 
-            await fakeServer.authenticate(socket, data);
-          } else {
-            requestTimestamp = Date.now();
-            await fakeServer.emitError(socket, data, 1, 3);
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          } else if (data.type === 'unsubscribe') {
+            delete subscribedAccounts[data.accountId];
+            await fakeServer.respond(socket, data);
           }
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        } else if (data.type === 'unsubscribe') {
-          delete subscribedAccounts[data.accountId];
-          await fakeServer.respond(socket, data);
-        }
+        });
       });
-    });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 3});
-    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
-    const connection2 = await account2.connect();
-    await connection2.waitSynchronized({timeoutInSeconds: 3});
-    const account3 = await api.metatraderAccountApi.getAccount('accountId3');
-    const connection3 = await account3.connect();
-    try {
-      await connection3.waitSynchronized({timeoutInSeconds: 3});
-      throw new Error('TimeoutError expected');
-    } catch (err) {
-      err.name.should.equal('TimeoutError');
-    }
-    await clock.tickAsync(2000);
-    sinon.assert.match(connection3.synchronized, false);
-    await clock.tickAsync(2500);
-    await new Promise(res => setTimeout(res, 200));
-    sinon.assert.match(connection3.synchronized, true);
-  }).timeout(10000);
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 3});
+      const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+      const connection2 = await account2.connect();
+      await connection2.waitSynchronized({timeoutInSeconds: 3});
+      const account3 = await api.metatraderAccountApi.getAccount('accountId3');
+      const connection3 = await account3.connect();
+      try {
+        await connection3.waitSynchronized({timeoutInSeconds: 3});
+        throw new Error('TimeoutError expected');
+      } catch (err) {
+        err.name.should.equal('TimeoutError');
+      }
+      await clock.tickAsync(2000);
+      sinon.assert.match(connection3.synchronized, false);
+      await clock.tickAsync(2500);
+      await new Promise(res => setTimeout(res, 200));
+      sinon.assert.match(connection3.synchronized, true);
+    }).timeout(10000);
 
-  it('should wait for retry time after per server 429 error', async () => {
-    let requestTimestamp = 0;
-    const sidByAccounts = {};
+    it('should wait for retry time after per server 429 error', async () => {
+      let requestTimestamp = 0;
+      const sidByAccounts = {};
 
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        const sid = socket.id;
-        if(data.type === 'subscribe') {
-          if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2 && 
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          const sid = socket.id;
+          if(data.type === 'subscribe') {
+            if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2 && 
           (requestTimestamp === 0 || Date.now() - 5 * 1000 < requestTimestamp)) {
-            requestTimestamp = Date.now();
-            await fakeServer.emitError(socket, data, 2, 5);
-          } else {
-            sidByAccounts[data.accountId] = sid;
-            await new Promise(res => setTimeout(res, 200)); 
+              requestTimestamp = Date.now();
+              await fakeServer.emitError(socket, data, 2, 5);
+            } else {
+              sidByAccounts[data.accountId] = sid;
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            }
+          } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
-            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-            await new Promise(res => setTimeout(res, 50)); 
-            await fakeServer.authenticate(socket, data);
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
           }
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        }
+        });
       });
-    });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 3});
-    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
-    const connection2 = await account2.connect();
-    await connection2.waitSynchronized({timeoutInSeconds: 3});
-    const account3 = await api.metatraderAccountApi.getAccount('accountId3');
-    const connection3 = await account3.connect();
-    connection3.waitSynchronized({timeoutInSeconds: 5});
-    await clock.tickAsync(5000);
-    sidByAccounts.accountId.should.equal(sidByAccounts.accountId2);
-    sidByAccounts.accountId2.should.not.equal(sidByAccounts.accountId3);
-    await clock.tickAsync(5000);
-    const account4 = await api.metatraderAccountApi.getAccount('accountId4');
-    const connection4 = await account4.connect();
-    await connection4.waitSynchronized({timeoutInSeconds: 3});
-    sidByAccounts.accountId.should.equal(sidByAccounts.accountId4);
-  }).timeout(10000);
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 3});
+      const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+      const connection2 = await account2.connect();
+      await connection2.waitSynchronized({timeoutInSeconds: 3});
+      const account3 = await api.metatraderAccountApi.getAccount('accountId3');
+      const connection3 = await account3.connect();
+      connection3.waitSynchronized({timeoutInSeconds: 5});
+      await clock.tickAsync(5000);
+      sidByAccounts.accountId.should.equal(sidByAccounts.accountId2);
+      sidByAccounts.accountId2.should.not.equal(sidByAccounts.accountId3);
+      await clock.tickAsync(5000);
+      const account4 = await api.metatraderAccountApi.getAccount('accountId4');
+      const connection4 = await account4.connect();
+      await connection4.waitSynchronized({timeoutInSeconds: 3});
+      sidByAccounts.accountId.should.equal(sidByAccounts.accountId4);
+    }).timeout(10000);
   
-  it('should reconnect after per server 429 error if connection has no subscribed accounts', async () => {
-    const sids = [];
+    it('should reconnect after per server 429 error if connection has no subscribed accounts', async () => {
+      const sids = [];
 
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        const sid = socket.id;
-        if(data.type === 'subscribe') {
-          sids.push(sid);
-          if (sids.length === 1) {
-            await fakeServer.emitError(socket, data, 2, 2);
-          } else {
-            await new Promise(res => setTimeout(res, 200)); 
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          const sid = socket.id;
+          if(data.type === 'subscribe') {
+            sids.push(sid);
+            if (sids.length === 1) {
+              await fakeServer.emitError(socket, data, 2, 2);
+            } else {
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            }
+          } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
-            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-            await new Promise(res => setTimeout(res, 50)); 
-            await fakeServer.authenticate(socket, data);
-          }
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        }
-      });
-    });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 5});
-    sids[0].should.not.equal(sids[1]);
-  }).timeout(10000);
-
-  it('should free a subscribe slot on unsubscribe after per server 429 error', async () => {
-    const sidByAccounts = {};
-
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        const sid = socket.id;
-        if(data.type === 'subscribe') {
-          if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2) {
-            await fakeServer.emitError(socket, data, 2, 200);
-          } else {
-            sidByAccounts[data.accountId] = sid;
-            await new Promise(res => setTimeout(res, 200)); 
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
             await fakeServer.respond(socket, data);
-            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-            await new Promise(res => setTimeout(res, 50)); 
-            await fakeServer.authenticate(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
           }
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        } else if (data.type === 'unsubscribe') {
-          delete sidByAccounts[data.accountId];
-          await fakeServer.respond(socket, data);
-        }
+        });
       });
-    });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 3});
-    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
-    const connection2 = await account2.connect();
-    await connection2.waitSynchronized({timeoutInSeconds: 3});
-    const account3 = await api.metatraderAccountApi.getAccount('accountId3');
-    const connection3 = await account3.connect();
-    connection3.waitSynchronized({timeoutInSeconds: 5});
-    await clock.tickAsync(5000);
-    sidByAccounts.accountId.should.equal(sidByAccounts.accountId2);
-    sidByAccounts.accountId2.should.not.equal(sidByAccounts.accountId3);
-    await connection2.close();
-    const account4 = await api.metatraderAccountApi.getAccount('accountId4');
-    const connection4 = await account4.connect();
-    await connection4.waitSynchronized({timeoutInSeconds: 3});
-    sidByAccounts.accountId.should.equal(sidByAccounts.accountId4);
-  }).timeout(10000);
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 5});
+      sids[0].should.not.equal(sids[1]);
+    }).timeout(10000);
 
-  it('should wait for retry time after per server per user 429 error', async () => {
-    let requestTimestamp = 0;
-    const sidByAccounts = {};
+    it('should free a subscribe slot on unsubscribe after per server 429 error', async () => {
+      const sidByAccounts = {};
 
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        const sid = socket.id;
-        if(data.type === 'subscribe') {
-          if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2 && 
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          const sid = socket.id;
+          if(data.type === 'subscribe') {
+            if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2) {
+              await fakeServer.emitError(socket, data, 2, 200);
+            } else {
+              sidByAccounts[data.accountId] = sid;
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            }
+          } else if (data.type === 'synchronize') {
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          } else if (data.type === 'unsubscribe') {
+            delete sidByAccounts[data.accountId];
+            await fakeServer.respond(socket, data);
+          }
+        });
+      });
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 3});
+      const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+      const connection2 = await account2.connect();
+      await connection2.waitSynchronized({timeoutInSeconds: 3});
+      const account3 = await api.metatraderAccountApi.getAccount('accountId3');
+      const connection3 = await account3.connect();
+      connection3.waitSynchronized({timeoutInSeconds: 5});
+      await clock.tickAsync(5000);
+      sidByAccounts.accountId.should.equal(sidByAccounts.accountId2);
+      sidByAccounts.accountId2.should.not.equal(sidByAccounts.accountId3);
+      await connection2.close();
+      const account4 = await api.metatraderAccountApi.getAccount('accountId4');
+      const connection4 = await account4.connect();
+      await connection4.waitSynchronized({timeoutInSeconds: 3});
+      sidByAccounts.accountId.should.equal(sidByAccounts.accountId4);
+    }).timeout(10000);
+
+    it('should wait for retry time after per server per user 429 error', async () => {
+      let requestTimestamp = 0;
+      const sidByAccounts = {};
+
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          const sid = socket.id;
+          if(data.type === 'subscribe') {
+            if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2 && 
           (requestTimestamp === 0 || Date.now() - 2 * 1000 < requestTimestamp)) {
-            requestTimestamp = Date.now();
-            await fakeServer.emitError(socket, data, 0, 2);
-          } else {
-            sidByAccounts[data.accountId] = sid;
+              requestTimestamp = Date.now();
+              await fakeServer.emitError(socket, data, 0, 2);
+            } else {
+              sidByAccounts[data.accountId] = sid;
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            }
+          } else if (data.type === 'synchronize') {
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          } else if (data.type === 'unsubscribe') {
+            delete sidByAccounts[data.accountId];
+            await fakeServer.respond(socket, data);
+          }
+        });
+      });
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 3});
+      const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+      const connection2 = await account2.connect();
+      await connection2.waitSynchronized({timeoutInSeconds: 3});
+      const account3 = await api.metatraderAccountApi.getAccount('accountId3');
+      const connection3 = await account3.connect();
+      connection3.waitSynchronized({timeoutInSeconds: 5});
+      await clock.tickAsync(5000);
+      sidByAccounts.accountId.should.equal(sidByAccounts.accountId2);
+      sidByAccounts.accountId2.should.not.equal(sidByAccounts.accountId3);
+      const account4 = await api.metatraderAccountApi.getAccount('accountId4');
+      const connection4 = await account4.connect();
+      await connection4.waitSynchronized({timeoutInSeconds: 3});
+      sidByAccounts.accountId.should.not.equal(sidByAccounts.accountId4);
+      await connection2.close();
+      const account5 = await api.metatraderAccountApi.getAccount('accountId5');
+      const connection5 = await account5.connect();
+      await connection5.waitSynchronized({timeoutInSeconds: 3});
+      sidByAccounts.accountId.should.equal(sidByAccounts.accountId5);
+    }).timeout(10000);
+
+    it('should attempt to resubscribe on disconnected packet', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 3}); 
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+      fakeServer.deleteStatusTask('accountId');
+      await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+        host: 'ps-mpa-0', instanceIndex: 0});
+      await new Promise(res => setTimeout(res, 50)); 
+      await clock.tickAsync(200);
+      await new Promise(res => setTimeout(res, 50)); 
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+      await clock.tickAsync(5000);
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+    });
+
+    it('should handle multiple streams in one instance number', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10}); 
+      let subscribeCalled = false;
+
+      fakeServer.enableSync = (socket) => {
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          if(data.type === 'subscribe') {
+            subscribeCalled = true;
+          } else if (data.type === 'synchronize') {
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          }
+        });
+      };
+      fakeServer.enableSync(server);
+      const statusTask = setInterval(() => fakeServer.emitStatus(server, 'accountId', 'ps-mpa-1'), 100);
+      await fakeServer.authenticate(server, {accountId: 'accountId'}, 'ps-mpa-1');
+      await new Promise(res => setTimeout(res, 50)); 
+      await clock.tickAsync(20000); 
+      fakeServer.deleteStatusTask('accountId');
+      await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+        host: 'ps-mpa-0', instanceIndex: 0});
+      await new Promise(res => setTimeout(res, 50)); 
+      await clock.tickAsync(10000); 
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+      subscribeCalled.should.equal(false);
+      await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+        host: 'ps-mpa-1', instanceIndex: 0});
+      clearInterval(statusTask);
+      await new Promise(res => setTimeout(res, 50)); 
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+    }).timeout(10000);
+
+    it('should not resubscribe if multiple streams and one timed out', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10}); 
+      let subscribeCalled = false;
+
+      fakeServer.enableSync = (socket) => {
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          if(data.type === 'subscribe') {
+            subscribeCalled = true;
+          } else if (data.type === 'synchronize') {
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          }
+        });
+      };
+      fakeServer.enableSync(server);
+      const statusTask = setInterval(() => fakeServer.emitStatus(server, 'accountId', 'ps-mpa-1'), 120);
+      await fakeServer.authenticate(server, {accountId: 'accountId'}, 'ps-mpa-1');
+      await new Promise(res => setTimeout(res, 50)); 
+      await clock.tickAsync(20000); 
+      fakeServer.deleteStatusTask('accountId');
+      await clock.tickAsync(55000); 
+      await new Promise(res => setTimeout(res, 50)); 
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+      subscribeCalled.should.equal(false);
+      clearInterval(statusTask);
+      await new Promise(res => setTimeout(res, 50)); 
+      await clock.tickAsync(65000); 
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+      subscribeCalled.should.equal(true);
+    }).timeout(10000);
+
+    it('should not synchronize if connection is closed', async () => {
+      let synchronizeCounter = 0;
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          if(data.type === 'subscribe') {
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
             fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-            await new Promise(res => setTimeout(res, 50)); 
             await fakeServer.authenticate(socket, data);
+          } else if (data.type === 'synchronize') {
+            synchronizeCounter++;
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          } else if (data.type === 'unsubscribe') {
+            fakeServer.deleteStatusTask(data.accountId);
+            await fakeServer.respond(socket, data);
           }
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        } else if (data.type === 'unsubscribe') {
-          delete sidByAccounts[data.accountId];
-          await fakeServer.respond(socket, data);
-        }
+        });
       });
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10}); 
+      sinon.assert.match(synchronizeCounter, 1);
+      const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+      const connection2 = await account2.connect();
+      await new Promise(res => setTimeout(res, 50)); 
+      await connection2.close();
+      try {
+        await connection2.waitSynchronized({timeoutInSeconds: 3}); 
+        throw new Error('TimeoutError extected');
+      } catch (err) {
+        err.name.should.equal('TimeoutError');
+      }
+      sinon.assert.match(synchronizeCounter, 1);
+    }).timeout(10000);
+
+    it('should not resubscribe after connection is closed', async () => {
+      let subscribeCounter = 0;
+
+      fakeServer.io.removeAllListeners('connect');
+      fakeServer.io.on('connect', socket => {
+        server = socket;
+        socket.emit('response', {type: 'response'});
+        socket.removeAllListeners('request');
+        //eslint-disable-next-line complexity
+        socket.on('request', async data => {
+          if(data.type === 'subscribe') {
+            subscribeCounter++;
+            await new Promise(res => setTimeout(res, 100)); 
+            await fakeServer.respond(socket, data);
+            fakeServer.deleteStatusTask(data.accountId);
+            fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+            await fakeServer.authenticate(socket, data);
+          } else if (data.type === 'synchronize') {
+            await fakeServer.respond(socket, data);
+            await fakeServer.syncAccount(socket, data);
+          } else if (data.type === 'waitSynchronized') {
+            await fakeServer.respond(socket, data);
+          } else if (data.type === 'getAccountInformation') {
+            await fakeServer.respondAccountInformation(socket, data);
+          } else if (data.type === 'unsubscribe') {
+            fakeServer.deleteStatusTask(data.accountId);
+            await fakeServer.respond(socket, data);
+          }
+        });
+      });
+
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10}); 
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+      subscribeCounter.should.equal(1);
+      await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+        host: 'ps-mpa-0', instanceIndex: 0});
+      await new Promise(res => setTimeout(res, 300)); 
+      await clock.tickAsync(100000); 
+      await new Promise(res => setTimeout(res, 200)); 
+      subscribeCounter.should.be.above(1);
+      const previousSubscribeCounter = subscribeCounter;
+      (connection.synchronized && connection.terminalState.connected 
+      && connection.terminalState.connectedToBroker).should.equal(true);
+      server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+        host: 'ps-mpa-0', instanceIndex: 0});
+      await connection.close();
+      await new Promise(res => setTimeout(res, 1000)); 
+      await clock.tickAsync(100000); 
+      await new Promise(res => setTimeout(res, 1000)); 
+      sinon.assert.match(subscribeCounter, previousSubscribeCounter);
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
+    }).timeout(10000);
+
+    it('should not resubscribe on timeout if connection is closed', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10}); 
+      fakeServer.deleteStatusTask('accountId');
+      connection.synchronized.should.equal(true);
+      await connection.close();
+      await new Promise(res => setTimeout(res, 100)); 
+      await clock.tickAsync(62000); 
+      connection.synchronized.should.equal(false);
     });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 3});
-    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
-    const connection2 = await account2.connect();
-    await connection2.waitSynchronized({timeoutInSeconds: 3});
-    const account3 = await api.metatraderAccountApi.getAccount('accountId3');
-    const connection3 = await account3.connect();
-    connection3.waitSynchronized({timeoutInSeconds: 5});
-    await clock.tickAsync(5000);
-    sidByAccounts.accountId.should.equal(sidByAccounts.accountId2);
-    sidByAccounts.accountId2.should.not.equal(sidByAccounts.accountId3);
-    const account4 = await api.metatraderAccountApi.getAccount('accountId4');
-    const connection4 = await account4.connect();
-    await connection4.waitSynchronized({timeoutInSeconds: 3});
-    sidByAccounts.accountId.should.not.equal(sidByAccounts.accountId4);
-    await connection2.close();
-    const account5 = await api.metatraderAccountApi.getAccount('accountId5');
-    const connection5 = await account5.connect();
-    await connection5.waitSynchronized({timeoutInSeconds: 3});
-    sidByAccounts.accountId.should.equal(sidByAccounts.accountId5);
-  }).timeout(10000);
 
-  it('should attempt to resubscribe on disconnected packet', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 3}); 
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-    fakeServer.deleteStatusTask('accountId');
-    await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
-      host: 'ps-mpa-0', instanceIndex: 0});
-    await new Promise(res => setTimeout(res, 50)); 
-    await clock.tickAsync(200);
-    await new Promise(res => setTimeout(res, 50)); 
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-    await clock.tickAsync(5000);
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-  });
+    it('should not send multiple subscribe requests if status arrives faster than subscribe', async () => {
+      let subscribeCounter = 0;
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = await account.connect();
+      await connection.waitSynchronized({timeoutInSeconds: 10}); 
+      fakeServer.disableSync();
+      fakeServer.deleteStatusTask('accountId');
+      await new Promise(res => setTimeout(res, 100)); 
+      await clock.tickAsync(120000); 
+      connection.synchronized.should.equal(false);
+      connection.terminalState.connected.should.equal(false);
+      connection.terminalState.connectedToBroker.should.equal(false);
 
-  it('should handle multiple streams in one instance number', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10}); 
-    let subscribeCalled = false;
-
-    fakeServer.enableSync = (socket) => {
-      socket.removeAllListeners('request');
+      server.removeAllListeners('request');
       //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        if(data.type === 'subscribe') {
-          subscribeCalled = true;
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        }
-      });
-    };
-    fakeServer.enableSync(server);
-    const statusTask = setInterval(() => fakeServer.emitStatus(server, 'accountId', 'ps-mpa-1'), 100);
-    await fakeServer.authenticate(server, {accountId: 'accountId'}, 'ps-mpa-1');
-    await new Promise(res => setTimeout(res, 50)); 
-    await clock.tickAsync(20000); 
-    fakeServer.deleteStatusTask('accountId');
-    await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
-      host: 'ps-mpa-0', instanceIndex: 0});
-    await new Promise(res => setTimeout(res, 50)); 
-    await clock.tickAsync(10000); 
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-    subscribeCalled.should.equal(false);
-    await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
-      host: 'ps-mpa-1', instanceIndex: 0});
-    clearInterval(statusTask);
-    await new Promise(res => setTimeout(res, 50)); 
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-  }).timeout(10000);
-
-  it('should not resubscribe if multiple streams and one timed out', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10}); 
-    let subscribeCalled = false;
-
-    fakeServer.enableSync = (socket) => {
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        if(data.type === 'subscribe') {
-          subscribeCalled = true;
-        } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        }
-      });
-    };
-    fakeServer.enableSync(server);
-    const statusTask = setInterval(() => fakeServer.emitStatus(server, 'accountId', 'ps-mpa-1'), 120);
-    await fakeServer.authenticate(server, {accountId: 'accountId'}, 'ps-mpa-1');
-    await new Promise(res => setTimeout(res, 50)); 
-    await clock.tickAsync(20000); 
-    fakeServer.deleteStatusTask('accountId');
-    await clock.tickAsync(55000); 
-    await new Promise(res => setTimeout(res, 50)); 
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-    subscribeCalled.should.equal(false);
-    clearInterval(statusTask);
-    await new Promise(res => setTimeout(res, 50)); 
-    await clock.tickAsync(65000); 
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-    subscribeCalled.should.equal(true);
-  }).timeout(10000);
-
-  it('should not synchronize if connection is closed', async () => {
-    let synchronizeCounter = 0;
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
-        if(data.type === 'subscribe') {
-          await new Promise(res => setTimeout(res, 200)); 
-          await fakeServer.respond(socket, data);
-          fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-          await fakeServer.authenticate(socket, data);
-        } else if (data.type === 'synchronize') {
-          synchronizeCounter++;
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
-        } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
-        } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
-        } else if (data.type === 'unsubscribe') {
-          fakeServer.deleteStatusTask(data.accountId);
-          await fakeServer.respond(socket, data);
-        }
-      });
-    });
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10}); 
-    sinon.assert.match(synchronizeCounter, 1);
-    const account2 = await api.metatraderAccountApi.getAccount('accountId2');
-    const connection2 = await account2.connect();
-    await new Promise(res => setTimeout(res, 50)); 
-    await connection2.close();
-    try {
-      await connection2.waitSynchronized({timeoutInSeconds: 3}); 
-      throw new Error('TimeoutError extected');
-    } catch (err) {
-      err.name.should.equal('TimeoutError');
-    }
-    sinon.assert.match(synchronizeCounter, 1);
-  }).timeout(10000);
-
-  it('should not resubscribe after connection is closed', async () => {
-    let subscribeCounter = 0;
-
-    fakeServer.io.removeAllListeners('connect');
-    fakeServer.io.on('connect', socket => {
-      server = socket;
-      socket.emit('response', {type: 'response'});
-      socket.removeAllListeners('request');
-      //eslint-disable-next-line complexity
-      socket.on('request', async data => {
+      server.on('request', async data => {
         if(data.type === 'subscribe') {
           subscribeCounter++;
-          await new Promise(res => setTimeout(res, 100)); 
-          await fakeServer.respond(socket, data);
+          await new Promise(res => setTimeout(res, 2800)); 
+          await fakeServer.respond(server, data);
           fakeServer.deleteStatusTask(data.accountId);
-          fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
-          await fakeServer.authenticate(socket, data);
+          fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(server, data.accountId), 1000);
+          await fakeServer.authenticate(server, data);
         } else if (data.type === 'synchronize') {
-          await fakeServer.respond(socket, data);
-          await fakeServer.syncAccount(socket, data);
+          await fakeServer.respond(server, data);
+          await fakeServer.syncAccount(server, data);
         } else if (data.type === 'waitSynchronized') {
-          await fakeServer.respond(socket, data);
+          await fakeServer.respond(server, data);
         } else if (data.type === 'getAccountInformation') {
-          await fakeServer.respondAccountInformation(socket, data);
+          await fakeServer.respondAccountInformation(server, data);
         } else if (data.type === 'unsubscribe') {
           fakeServer.deleteStatusTask(data.accountId);
-          await fakeServer.respond(socket, data);
+          await fakeServer.respond(server, data);
         }
       });
-    });
-
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10}); 
-    (connection.synchronized && connection.terminalState.connected 
+      fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(server, 'accountId'), 1000);
+      await new Promise(res => setTimeout(res, 100)); 
+      await clock.tickAsync(200000); 
+      await new Promise(res => setTimeout(res, 100)); 
+      (connection.synchronized && connection.terminalState.connected 
       && connection.terminalState.connectedToBroker).should.equal(true);
-    subscribeCounter.should.equal(1);
-    await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
-      host: 'ps-mpa-0', instanceIndex: 0});
-    await new Promise(res => setTimeout(res, 300)); 
-    await clock.tickAsync(100000); 
-    await new Promise(res => setTimeout(res, 200)); 
-    subscribeCounter.should.be.above(1);
-    const previousSubscribeCounter = subscribeCounter;
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-    server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
-      host: 'ps-mpa-0', instanceIndex: 0});
-    await connection.close();
-    await new Promise(res => setTimeout(res, 1000)); 
-    await clock.tickAsync(100000); 
-    await new Promise(res => setTimeout(res, 1000)); 
-    sinon.assert.match(subscribeCounter, previousSubscribeCounter);
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-  }).timeout(10000);
-
-  it('should not resubscribe on timeout if connection is closed', async () => {
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10}); 
-    fakeServer.deleteStatusTask('accountId');
-    connection.synchronized.should.equal(true);
-    await connection.close();
-    await new Promise(res => setTimeout(res, 100)); 
-    await clock.tickAsync(62000); 
-    connection.synchronized.should.equal(false);
+      sinon.assert.match(subscribeCounter, 1);
+    }).timeout(10000);
   });
-
-  it('should not send multiple subscribe requests if status arrives faster than subscribe', async () => {
-    let subscribeCounter = 0;
-    const account = await api.metatraderAccountApi.getAccount('accountId');
-    connection = await account.connect();
-    await connection.waitSynchronized({timeoutInSeconds: 10}); 
-    fakeServer.disableSync();
-    fakeServer.deleteStatusTask('accountId');
-    await new Promise(res => setTimeout(res, 100)); 
-    await clock.tickAsync(120000); 
-    connection.synchronized.should.equal(false);
-    connection.terminalState.connected.should.equal(false);
-    connection.terminalState.connectedToBroker.should.equal(false);
-
-    server.removeAllListeners('request');
-    //eslint-disable-next-line complexity
-    server.on('request', async data => {
-      if(data.type === 'subscribe') {
-        subscribeCounter++;
-        await new Promise(res => setTimeout(res, 2800)); 
-        await fakeServer.respond(server, data);
-        fakeServer.deleteStatusTask(data.accountId);
-        fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(server, data.accountId), 1000);
-        await fakeServer.authenticate(server, data);
-      } else if (data.type === 'synchronize') {
-        await fakeServer.respond(server, data);
-        await fakeServer.syncAccount(server, data);
-      } else if (data.type === 'waitSynchronized') {
-        await fakeServer.respond(server, data);
-      } else if (data.type === 'getAccountInformation') {
-        await fakeServer.respondAccountInformation(server, data);
-      } else if (data.type === 'unsubscribe') {
-        fakeServer.deleteStatusTask(data.accountId);
-        await fakeServer.respond(server, data);
-      }
-    });
-    fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(server, 'accountId'), 1000);
-    await new Promise(res => setTimeout(res, 100)); 
-    await clock.tickAsync(200000); 
-    await new Promise(res => setTimeout(res, 100)); 
-    (connection.synchronized && connection.terminalState.connected 
-      && connection.terminalState.connectedToBroker).should.equal(true);
-    sinon.assert.match(subscribeCounter, 1);
-  }).timeout(10000);
 });

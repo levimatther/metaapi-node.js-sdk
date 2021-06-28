@@ -16,8 +16,8 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
   constructor(connection) {
     super();
     this._connection = connection;
-    this._updateQuoteHealthStatusInterval = setInterval(this._updateQuoteHealthStatus.bind(this), 1000);
-    this._measureUptimeInterval = setInterval(this._measureUptime.bind(this), 1000);
+    this._updateQuoteHealthStatusInterval = setInterval(this._updateQuoteHealthStatus.bind(this), 30000);
+    this._measureUptimeInterval = setInterval(this._measureUptime.bind(this), 30000);
     this._minQuoteInterval = 60000;
     this._serverHealthStatus = {};
     this._uptimeReservoirs = {

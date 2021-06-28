@@ -23,6 +23,13 @@ import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
  */
 
 /**
+ * Options for processing websocket client events
+ * @typedef {Object} EventProcessingOpts
+ * @property {Boolean} [sequentialProcessing] an option to process synchronization events after finishing
+ * previous ones
+ */
+
+/**
  * MetaApi options
  * @typedef {Object} MetaApiOpts
  * @property {String} [application] application id
@@ -35,6 +42,7 @@ import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
  * @property {Boolean} [enableLatencyTracking] an option to enable latency tracking
  * @property {SynchronizationThrottlerOpts} [synchronizationThrottler] options for synchronization throttler
  * @property {RetryOpts} [retryOpts] options for request retries
+ * @property {EventProcessingOpts} [eventProcessing] options for request retries
  */
 
 /**
@@ -63,11 +71,13 @@ export default class MetaApi {
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
+    const eventProcessing = opts.eventProcessing;
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, {application, domain, requestTimeout,
-      connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts});
+      connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, 
+      eventProcessing});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, token, domain);

@@ -171,10 +171,10 @@ describe('SynchronizationThrottler', () => {
   it('should clear existing sync ids on disconnect', async () => {
     await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
-    throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     await new Promise(res => setTimeout(res, 20));
     sinon.assert.callCount(websocketClient._rpcRequest, 2);
     throttler.onDisconnect();
+    throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     await new Promise(res => setTimeout(res, 20));
     sinon.assert.callCount(websocketClient._rpcRequest, 3);
   });
@@ -227,5 +227,46 @@ describe('SynchronizationThrottler', () => {
     sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId1', {requestId: 'test1'});
     sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test2'});
     sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId5', {requestId: 'test5'});
+  });
+
+  /**
+   * @test {SynchronizationThrottler#scheduleSynchronize}
+   */
+  it('should not get queue stuck due to app synchronizations limit', async () => {
+    throttler._client.socketInstances = [{synchronizationThrottler: {synchronizingAccounts: [
+      'accountId21', 'accountId22', 'accountId23', 'accountId24', 'accountId25', 'accountId26',
+      'accountId27', 'accountId28', 'accountId29', 'accountId210', 'accountId211', 'accountId212', 
+      'accountId213', 'accountId214', 'accountId215']}}, {synchronizationThrottler: throttler}];
+    throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
+    throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
+    throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
+    await clock.tickAsync(5000);
+    sinon.assert.notCalled(websocketClient._rpcRequest);
+    throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts = 
+      throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts.slice(1);
+    await clock.tickAsync(5000);
+    sinon.assert.callCount(websocketClient._rpcRequest, 1);
+    throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts = 
+      throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts.slice(1);
+    await clock.tickAsync(5000);
+    sinon.assert.callCount(websocketClient._rpcRequest, 2);
+  });
+
+  /**
+   * @test {SynchronizationThrottler#removeSynchronizationId}
+   */
+  it('should not skip queue items when synchronization id is removed', async () => {
+    throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
+    throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
+    throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
+    throttler.scheduleSynchronize('accountId4', {requestId: 'test4'});
+    throttler.scheduleSynchronize('accountId5', {requestId: 'test5'});
+    await clock.tickAsync(2000);
+    throttler.removeSynchronizationId('test3');
+    await clock.tickAsync(2000);
+    throttler.removeSynchronizationId('test1');
+    throttler.removeSynchronizationId('test2');
+    await clock.tickAsync(2000);
+    sinon.assert.callCount(websocketClient._rpcRequest, 4);
   });
 });
