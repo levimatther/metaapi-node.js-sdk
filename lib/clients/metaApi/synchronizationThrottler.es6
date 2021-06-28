@@ -1,5 +1,7 @@
 'use strict';
 
+import TimeoutError from '../timeoutError';
+
 /**
  * Options for synchronization throttler
  * @typedef {Object} SynchronizationThrottlerOpts
@@ -33,7 +35,6 @@ export default class SynchronizationThrottler {
     this._synchronizationQueue = [];
     this._removeOldSyncIdsInterval = null;
     this._processQueueInterval = null;
-    this._isProcessingQueue = false;
   }
 
   /**
@@ -61,13 +62,13 @@ export default class SynchronizationThrottler {
     for (let key of Object.keys(this._synchronizationIds)) {
       if ((now - this._synchronizationIds[key]) > this._synchronizationTimeoutInSeconds * 1000) {
         delete this._synchronizationIds[key];
-        this._advanceQueue();
       }
     }
     while (this._synchronizationQueue.length && (Date.now() - this._synchronizationQueue[0].queueTime) > 
         this._queueTimeoutInSeconds * 1000) {
-      this._removeFromQueue(this._synchronizationQueue[0].synchronizationId);
+      this._removeFromQueue(this._synchronizationQueue[0].synchronizationId, 'timeout');
     }
+    this._advanceQueue();
   }
 
   /**
@@ -136,7 +137,7 @@ export default class SynchronizationThrottler {
       for (let key of Object.keys(this._accountsBySynchronizationIds)) {
         if(this._accountsBySynchronizationIds[key].accountId === accountId && 
           instanceIndex === this._accountsBySynchronizationIds[key].instanceIndex) {
-          this._removeFromQueue(key);
+          this._removeFromQueue(key, 'cancel');
           delete this._accountsBySynchronizationIds[key];
         }
       }
@@ -151,21 +152,31 @@ export default class SynchronizationThrottler {
    * Clears synchronization ids on disconnect
    */
   onDisconnect() {
+    this._synchronizationQueue.forEach(synchronization => {
+      synchronization.resolve('cancel');
+    });
     this._synchronizationIds = {};
-    this._advanceQueue();
+    this._accountsBySynchronizationIds = {};
+    this._synchronizationQueue = [];
+    this.stop();
+    this.start();
   }
 
-
   _advanceQueue() {
-    if (this.isSynchronizationAvailable && this._synchronizationQueue.length) {
-      this._synchronizationQueue[0].resolve(true);
+    let index = 0;
+    while(this.isSynchronizationAvailable && this._synchronizationQueue.length && 
+        index < this._synchronizationQueue.length) {
+      const queueItem = this._synchronizationQueue[index];
+      queueItem.resolve('synchronize');
+      this.updateSynchronizationId(queueItem.synchronizationId);
+      index++;
     }
   }
 
-  _removeFromQueue(synchronizationId) {
-    this._synchronizationQueue.forEach((item, i) => {
-      if(this._synchronizationQueue[i].synchronizationId === synchronizationId) {
-        this._synchronizationQueue[i].resolve(false);
+  _removeFromQueue(synchronizationId, result) {
+    this._synchronizationQueue.forEach((syncItem, i) => {
+      if(syncItem.synchronizationId === synchronizationId) {
+        syncItem.resolve(result);
       }
     });
     this._synchronizationQueue = this._synchronizationQueue.filter(item => 
@@ -173,18 +184,17 @@ export default class SynchronizationThrottler {
   }
 
   async _processQueueJob() {
-    if(!this._isProcessingQueue) {
-      this._isProcessingQueue = true;
-      try {
-        while (this._synchronizationQueue.length && 
-          (Object.values(this._synchronizationIds).length < this.maxConcurrentSynchronizations)) {
-          await this._synchronizationQueue[0].promise;
+    try {
+      while (this._synchronizationQueue.length) {
+        const queueItem = this._synchronizationQueue[0];
+        await this._synchronizationQueue[0].promise;
+        if(this._synchronizationQueue.length && this._synchronizationQueue[0].synchronizationId === 
+            queueItem.synchronizationId) {
           this._synchronizationQueue.shift();
         }
-      } catch (err) {
-        console.log('[' + (new Date()).toISOString() + '] Error processing queue job', err);
       }
-      this._isProcessingQueue = false;
+    } catch (err) {
+      console.log('[' + (new Date()).toISOString() + '] Error processing queue job', err);
     }
   }
 
@@ -214,12 +224,16 @@ export default class SynchronizationThrottler {
         queueTime: Date.now()
       });
       const result = await requestResolve;
-      if(!result) {
-        return null;
+      if(result === 'cancel') {
+        return false;
+      } else if(result === 'timeout') {
+        throw new TimeoutError(`Account ${accountId} synchronization ${synchronizationId}` +
+        ' timed out in synchronization queue');
       }
     }
     this.updateSynchronizationId(synchronizationId);
-    return await this._client._rpcRequest(accountId, request);
+    await this._client._rpcRequest(accountId, request);
+    return true;
   }
 
 }
