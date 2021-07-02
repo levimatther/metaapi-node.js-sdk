@@ -127,6 +127,22 @@ export default class SynchronizationThrottler {
   }
 
   /**
+   * Removes synchronizations from queue and from the list by parameters
+   * @param {String} accountId account id
+   * @param {Number} instanceIndex account instance index
+   * @param {String} host account host name
+   */
+  removeIdByParameters(accountId, instanceIndex, host) {
+    for (let key of Object.keys(this._accountsBySynchronizationIds)) {
+      if(this._accountsBySynchronizationIds[key].accountId === accountId &&
+          this._accountsBySynchronizationIds[key].instanceIndex === instanceIndex &&
+          this._accountsBySynchronizationIds[key].host === host) {
+        this.removeSynchronizationId(key);
+      }
+    }
+  }
+
+  /**
    * Removes synchronization id from slots and removes ids for the same account from the queue
    * @param {String} synchronizationId synchronization id
    */
@@ -134,9 +150,11 @@ export default class SynchronizationThrottler {
     if (this._accountsBySynchronizationIds[synchronizationId]) {
       const accountId = this._accountsBySynchronizationIds[synchronizationId].accountId;
       const instanceIndex = this._accountsBySynchronizationIds[synchronizationId].instanceIndex;
+      const host = this._accountsBySynchronizationIds[synchronizationId].host;
       for (let key of Object.keys(this._accountsBySynchronizationIds)) {
         if(this._accountsBySynchronizationIds[key].accountId === accountId && 
-          instanceIndex === this._accountsBySynchronizationIds[key].instanceIndex) {
+          this._accountsBySynchronizationIds[key].instanceIndex === instanceIndex &&
+          this._accountsBySynchronizationIds[key].host === host) {
           this._removeFromQueue(key, 'cancel');
           delete this._accountsBySynchronizationIds[key];
         }
@@ -211,7 +229,8 @@ export default class SynchronizationThrottler {
         this.removeSynchronizationId(key);
       }
     }
-    this._accountsBySynchronizationIds[synchronizationId] = {accountId, instanceIndex: request.instanceIndex};
+    this._accountsBySynchronizationIds[synchronizationId] = {accountId, instanceIndex: request.instanceIndex,
+      host: request.host};
     if(!this.isSynchronizationAvailable) {
       let resolve;
       let requestResolve = new Promise((res) => {

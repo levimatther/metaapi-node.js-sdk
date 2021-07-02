@@ -23,16 +23,19 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Constructs MetaApi websocket API client instance
+   * @param {HttpClient} httpClient HTTP client
    * @param {String} token authorization token
    * @param {Object} opts websocket client options
    */
   // eslint-disable-next-line complexity
-  constructor(token, opts) {
+  constructor(httpClient, token, opts) {
     opts = opts || {};
     opts.packetOrderingTimeout = opts.packetOrderingTimeout || 60;
     opts.synchronizationThrottler = opts.synchronizationThrottler || {};
+    this._httpClient = httpClient;
     this._application = opts.application || 'MetaApi';
-    this._url = `https://mt-client-api-v1.${opts.domain || 'agiliumtrade.agiliumtrade.ai'}`;
+    this._domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
+    this._url = `https://mt-client-api-v1.${this._domain}`;
     this._requestTimeout = (opts.requestTimeout || 60) * 1000;
     this._connectTimeout = (opts.connectTimeout || 60) * 1000;
     const retryOpts = opts.retryOpts || {};
@@ -43,6 +46,7 @@ export default class MetaApiWebsocketClient {
     this._subscribeCooldownInSeconds = retryOpts.subscribeCooldownInSeconds || 600;
     const eventProcessing = opts.eventProcessing || {};
     this._sequentialEventProcessing = eventProcessing.sequentialProcessing || false;
+    this._useSharedClientApi = opts.useSharedClientApi || false;
     this._token = token;
     this._synchronizationListeners = {};
     this._latencyListeners = [];
@@ -188,6 +192,7 @@ export default class MetaApiWebsocketClient {
       reject = rej;
     });
     const socketInstanceIndex = this._socketInstances.length;
+    const serverUrl = await this._getServerUrl();
     const instance = {
       id: socketInstanceIndex,
       connected: false,
@@ -196,7 +201,7 @@ export default class MetaApiWebsocketClient {
       connectResult: result,
       sessionId: randomstring.generate(32),
       isReconnecting: false,
-      socket: socketIO(this._url, {
+      socket: socketIO(serverUrl, {
         path: '/ws',
         reconnection: true,
         reconnectionDelay: 1000,
@@ -1060,7 +1065,7 @@ export default class MetaApiWebsocketClient {
 
   _tryReconnect(socketInstanceIndex) {
     const instance = this.socketInstances[socketInstanceIndex];
-    return new Promise((resolve) => setTimeout(() => {
+    return new Promise((resolve) => setTimeout(async () => {
       if (!instance.socket.connected && !instance.isReconnecting && instance.connected) {
         instance.sessionId = randomstring.generate(32);
         const clientId = Math.random();
@@ -1068,6 +1073,7 @@ export default class MetaApiWebsocketClient {
         instance.socket.io.opts.extraHeaders['Client-Id'] = clientId;
         instance.socket.io.opts.query.clientId = clientId;
         instance.isReconnecting = true;
+        instance.socket.io.uri = await this._getServerUrl();
         instance.socket.connect();
       }
       resolve();
@@ -1454,6 +1460,7 @@ export default class MetaApiWebsocketClient {
           } else {
             const onStreamClosedPromises = [];
             this._packetOrderer.onStreamClosed(instanceId);
+            socketInstance.synchronizationThrottler.removeIdByParameters(data.accountId, instanceNumber, data.host);
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onStreamClosedPromises.push(
                 Promise.resolve(listener.onStreamClosed(instanceIndex))
@@ -1874,6 +1881,23 @@ export default class MetaApiWebsocketClient {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('[' + (new Date()).toISOString() + '] Failed to process reconnected event', err);
+    }
+  }
+
+  async _getServerUrl() {
+    if(this._useSharedClientApi) {
+      return this._url;
+    } else {
+      const opts = {
+        url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
+        method: 'GET',
+        headers: {
+          'auth-token': this._token
+        },
+        json: true,
+      };
+      const response = await this._httpClient.request(opts);
+      return response.url;
     }
   }
 

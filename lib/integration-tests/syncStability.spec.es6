@@ -171,13 +171,17 @@ sequentialProcessing.forEach(param => {
 
     before(() => {
       sandbox = sinon.createSandbox();
+      const mockMath = Object.create(global.Math);
+      mockMath.random = () => 0.2;
+      global.Math = mockMath;
     });
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers({shouldAdvanceTime: true});
       api = new MetaApi('token', {application: 'application', domain: 'project-stock.agiliumlabs.cloud',
-        requestTimeout: 3, retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5, 
-          subscribeCooldownInSeconds: 6}, eventProcessing: { sequentialProcessing: param }});
+        useSharedClientApi: true, requestTimeout: 3, retryOpts: {
+          retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5, subscribeCooldownInSeconds: 6}, 
+        eventProcessing: { sequentialProcessing: param }});
       api.metatraderAccountApi._metatraderAccountClient.getAccount = (accountId) => ({
         _id:  accountId,
         login: '50194988',
@@ -389,7 +393,7 @@ sequentialProcessing.forEach(param => {
       await new Promise(res => setTimeout(res, 50)); 
       fakeServer.enableSync(server);
       server.disconnect();
-      await clock.tickAsync(3000);
+      await clock.tickAsync(7000);
       await new Promise(res => setTimeout(res, 50)); 
       connection.synchronized.should.equal(false);
       (connection2.synchronized && connection2.terminalState.connected 

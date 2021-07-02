@@ -269,4 +269,26 @@ describe('SynchronizationThrottler', () => {
     await clock.tickAsync(2000);
     sinon.assert.callCount(websocketClient._rpcRequest, 4);
   });
+
+  /**
+   * @test {SynchronizationThrottler#removeIdByParameters}
+   */
+  it('should remove id by parameters', async () => {
+    await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
+    await throttler.scheduleSynchronize('accountId2', {requestId: 'test2', instanceIndex: 0, host: 'ps-mpa-0'});
+    throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
+    throttler.scheduleSynchronize('accountId2', {requestId: 'test4', instanceIndex: 1, host: 'ps-mpa-1'});
+    throttler.scheduleSynchronize('accountId2', {requestId: 'test5', instanceIndex: 0, host: 'ps-mpa-2'});
+    throttler.scheduleSynchronize('accountId4', {requestId: 'test6'});
+    await new Promise(res => setTimeout(res, 50));
+    throttler.removeIdByParameters('accountId2', 0, 'ps-mpa-0');
+    throttler.removeIdByParameters('accountId2', 1, 'ps-mpa-1');
+    throttler.removeSynchronizationId('test1');
+    await new Promise(res => setTimeout(res, 50));
+    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId3', {requestId: 'test3'});
+    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test5', instanceIndex: 0,
+      host: 'ps-mpa-2'});
+    sinon.assert.callCount(websocketClient._rpcRequest, 4);
+  });
+
 });
