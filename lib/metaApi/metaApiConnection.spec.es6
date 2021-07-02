@@ -32,7 +32,7 @@ describe('MetaApiConnection', () => {
     removeApplication: () => {},
     trade: () => {},
     reconnect: () => {},
-    synchronize: () => {},
+    synchronize: () => true,
     ensureSubscribe: () => {},
     subscribeToMarketData: () => {},
     unsubscribeFromMarketData: () => {},
@@ -965,6 +965,7 @@ describe('MetaApiConnection', () => {
     api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected('1:ps-mpa-1', 1);
+    await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
@@ -981,6 +982,7 @@ describe('MetaApiConnection', () => {
     await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected('1:ps-mpa-1', 1);
+    await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
@@ -1082,6 +1084,7 @@ describe('MetaApiConnection', () => {
    */
   it('should set synchronized false on disconnect', async () => {
     await api.onConnected('1:ps-mpa-1', 2);
+    await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(api.synchronized, true);
     await api.onDisconnected('1:ps-mpa-1');
     sinon.assert.match(api.synchronized, false);
@@ -1092,6 +1095,7 @@ describe('MetaApiConnection', () => {
    */
   it('should delete state if stream closed', async () => {
     await api.onConnected('1:ps-mpa-1', 2);
+    await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(api.synchronized, true);
     await api.onStreamClosed('1:ps-mpa-1');
     sinon.assert.match(api.synchronized, false);

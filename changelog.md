@@ -15,6 +15,9 @@
   - improve stability during server-side application redeployments
   - disable synchronization after connection is closed
   - added copyFactoryRoles field to MetatraderAccount entity
+  - fixed synchronization queue
+  - breaking change: added sequential packet processing
+  - increased health status tracking interval to decrease CPU load
 
 12.4.3
   - fix specifications synchronization bug introduced in 12.4.1

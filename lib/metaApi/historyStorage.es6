@@ -40,21 +40,27 @@ export default class HistoryStorage extends SynchronizationListener {
   /**
    * Clears the storage and deletes persistent data
    */
-  async clear(){}
+  async clear(){
+    throw Error('Abstract method clear has no implementation');
+  }
 
   /**
    * Returns the time of the last history order record stored in the history storage
    * @param {String} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history order record stored in the history storage
    */
-  async lastHistoryOrderTime(instanceIndex) {}
+  async lastHistoryOrderTime(instanceIndex) {
+    throw Error('Abstract method lastHistoryOrderTime has no implementation');
+  }
 
   /**
    * Returns the time of the last history deal record stored in the history storage
    * @param {String} [instanceIndex] index of an account instance connected
    * @returns {Date} the time of the last history deal record stored in the history storage
    */
-  async lastDealTime(instanceIndex) {}
+  async lastDealTime(instanceIndex) {
+    throw Error('Abstract method lastDealTime has no implementation');
+  }
 
   /**
    * Invoked when a new MetaTrader history order is added
@@ -62,7 +68,9 @@ export default class HistoryStorage extends SynchronizationListener {
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onHistoryOrderAdded(instanceIndex, historyOrder) {}
+  async onHistoryOrderAdded(instanceIndex, historyOrder) {
+    throw Error('Abstract method onHistoryOrderAdded has no implementation');
+  }
 
   /**
    * Invoked when a new MetaTrader history deal is added
@@ -70,7 +78,9 @@ export default class HistoryStorage extends SynchronizationListener {
    * @param {MetatraderDeal} deal new MetaTrader history deal
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onDealAdded(instanceIndex, deal) {}
+  async onDealAdded(instanceIndex, deal) {
+    throw Error('Abstract method onDealAdded has no implementation');
+  }
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished

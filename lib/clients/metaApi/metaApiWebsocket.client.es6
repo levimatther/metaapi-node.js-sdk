@@ -41,6 +41,8 @@ export default class MetaApiWebsocketClient {
     this._maxRetryDelayInSeconds = retryOpts.maxDelayInSeconds || 30;
     this._maxAccountsPerInstance = 100;
     this._subscribeCooldownInSeconds = retryOpts.subscribeCooldownInSeconds || 600;
+    const eventProcessing = opts.eventProcessing || {};
+    this._sequentialEventProcessing = eventProcessing.sequentialProcessing || false;
     this._token = token;
     this._synchronizationListeners = {};
     this._latencyListeners = [];
@@ -51,6 +53,7 @@ export default class MetaApiWebsocketClient {
     this._synchronizationThrottlerOpts = opts.synchronizationThrottler;
     this._subscriptionManager = new SubscriptionManager(this);
     this._statusTimers = {};
+    this._eventQueues = {};
     this._subscribeLock = null;
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
@@ -302,8 +305,11 @@ export default class MetaApiWebsocketClient {
       if((!data.synchronizationId) ||
       instance.synchronizationThrottler.activeSynchronizationIds
         .includes(data.synchronizationId)) {
+        if(this._packetLogger) {
+          await this._packetLogger.logPacket(data);
+        }
         this._convertIsoTimeToDate(data);
-        await this._processSynchronizationPacket(data);
+        this.queuePacket(data);
       }
     });
     return result;
@@ -996,6 +1002,52 @@ export default class MetaApiWebsocketClient {
     this._synchronizationListeners = {};
     this._reconnectListeners = [];
   }
+  
+  /**
+   * Queues an account packet for processing
+   * @param {Object} packet packet to process
+   */
+  queuePacket(packet) {
+    const accountId = packet.accountId;
+    const packets = this._packetOrderer.restoreOrder(packet);
+    if(this._sequentialEventProcessing) {
+      const events = packets.map(packetItem => Promise.resolve(this._processSynchronizationPacket(packetItem)));
+      if (!this._eventQueues[accountId]) {
+        this._eventQueues[accountId] = events;
+        this._callAccountEvents(accountId);
+      } else {
+        this._eventQueues[accountId].concat(events);
+      }
+    } else {
+      packets.forEach(packetItem => this._processSynchronizationPacket(packetItem));
+    }
+  }
+
+  /**
+   * Queues account event for processing
+   * @param {String} accountId account id
+   * @param {Promise} event event to execute
+   */
+  queueEvent(accountId, event) {
+    if(this._sequentialEventProcessing) {
+      if (!this._eventQueues[accountId]) { 
+        this._eventQueues[accountId] = [event];
+        this._callAccountEvents(accountId);
+      } else {
+        this._eventQueues[accountId].push(event);
+      }
+    }
+  }
+
+  async _callAccountEvents(accountId) {
+    if(this._eventQueues[accountId]) {
+      while(this._eventQueues[accountId].length) {
+        await this._eventQueues[accountId][0];
+        this._eventQueues[accountId].shift();
+      }
+      delete this._eventQueues[accountId];
+    }
+  }
 
   async _reconnect(socketInstanceIndex) {
     const instance = this.socketInstances[socketInstanceIndex];
@@ -1351,453 +1403,447 @@ export default class MetaApiWebsocketClient {
    */
 
   // eslint-disable-next-line complexity,max-statements
-  async _processSynchronizationPacket(packet) {
+  async _processSynchronizationPacket(data) {
     try {
-      if(this._packetLogger) {
-        await this._packetLogger.logPacket(packet);
+      const socketInstance = this._socketInstances[this._socketInstancesByAccounts[data.accountId]];
+      if (data.synchronizationId && socketInstance) {
+        socketInstance.synchronizationThrottler.updateSynchronizationId(data.synchronizationId);
       }
-      let packets = this._packetOrderer.restoreOrder(packet);
-      for (let data of packets) {
-        const socketInstance = this._socketInstances[this._socketInstancesByAccounts[data.accountId]];
-        if (data.synchronizationId && socketInstance) {
-          socketInstance.synchronizationThrottler.updateSynchronizationId(data.synchronizationId);
+      const instanceNumber = data.instanceIndex || 0;
+      let instanceId = data.accountId + ':' + instanceNumber + ':' + (data.host || 0);
+      let instanceIndex = instanceNumber + ':' + (data.host || 0);
+
+      const isOnlyActiveInstance = () => {
+        const activeInstanceIds = Object.keys(this._connectedHosts).filter(instance => 
+          instance.startsWith(data.accountId + ':' + instanceNumber));
+        return !activeInstanceIds.length || activeInstanceIds.length === 1 && activeInstanceIds[0] === instanceId;
+      };
+
+      const cancelDisconnectTimer = () => {
+        if (this._statusTimers[instanceId]) {
+          clearTimeout(this._statusTimers[instanceId]);
         }
-        const instanceNumber = data.instanceIndex || 0;
-        let instanceId = data.accountId + ':' + instanceNumber + ':' + (data.host || 0);
-        let instanceIndex = instanceNumber + ':' + (data.host || 0);
+      };
 
-        const isOnlyActiveInstance = () => {
-          const activeInstanceIds = Object.keys(this._connectedHosts).filter(instance => 
-            instance.startsWith(data.accountId + ':' + instanceNumber));
-          return activeInstanceIds.length === 1 && activeInstanceIds[0] === instanceId;
-        };
-
-        const cancelDisconnectTimer = () => {
-          if (this._statusTimers[instanceId]) {
-            clearTimeout(this._statusTimers[instanceId]);
+      const resetDisconnectTimer = () => {
+        cancelDisconnectTimer();
+        this._statusTimers[instanceId] = setTimeout(async () => {
+          if(isOnlyActiveInstance()) {
+            this._subscriptionManager.onTimeout(data.accountId, instanceNumber);
           }
-        };
+          this.queueEvent(data.accountId, Promise.resolve(onDisconnected(true)));
+        }, 60000);
+      };
 
-        const resetDisconnectTimer = () => {
-          cancelDisconnectTimer();
-          this._statusTimers[instanceId] = setTimeout(async () => {
-            if(isOnlyActiveInstance()) {
-              this._subscriptionManager.onTimeout(data.accountId, instanceNumber);
+      const onDisconnected = async (isTimeout = false) => { 
+        if (this._connectedHosts[instanceId]) {
+          if(isOnlyActiveInstance()) {
+            const onDisconnectedPromises = [];
+            if(!isTimeout) {
+              onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, instanceNumber));
             }
-            await onDisconnected(true);
-          }, 60000);
-        };
-
-        const onDisconnected = async (isTimeout = false) => { 
-          if (this._connectedHosts[instanceId]) {
-            if(isOnlyActiveInstance()) {
-              const onDisconnectedPromises = [];
-              if(!isTimeout) {
-                onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, instanceNumber));
-              }
-              for (let listener of this._synchronizationListeners[data.accountId] || []) {
-                onDisconnectedPromises.push(
-                  Promise.resolve(listener.onDisconnected(instanceIndex))
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onDisconnectedPromises.push(
+                Promise.resolve(listener.onDisconnected(instanceIndex))
                   // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                     'about disconnected event', err))
-                );
-              }
-              await Promise.all(onDisconnectedPromises);
-            } else {
-              const onStreamClosedPromises = [];
-              this._packetOrderer.onStreamClosed(instanceId);
-              for (let listener of this._synchronizationListeners[data.accountId] || []) {
-                onStreamClosedPromises.push(
-                  Promise.resolve(listener.onStreamClosed(instanceIndex))
+              );
+            }
+            await Promise.all(onDisconnectedPromises);
+          } else {
+            const onStreamClosedPromises = [];
+            this._packetOrderer.onStreamClosed(instanceId);
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onStreamClosedPromises.push(
+                Promise.resolve(listener.onStreamClosed(instanceIndex))
                   // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                     'about stream closed event', err))
-                );
-              }
-              await Promise.all(onStreamClosedPromises);
+              );
             }
-            delete this._connectedHosts[instanceId];
+            await Promise.all(onStreamClosedPromises);
           }
-        };
-        if (data.type === 'authenticated') {
-          resetDisconnectTimer();
-          if((!data.sessionId) || (data.sessionId === socketInstance.sessionId)) {
-            this._connectedHosts[instanceId] = data.host;
-            const onConnectedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onConnectedPromises.push(
-                Promise.resolve(listener.onConnected(instanceIndex, data.replicas))
+          delete this._connectedHosts[instanceId];
+        }
+      };
+      if (data.type === 'authenticated') {
+        resetDisconnectTimer();
+        if((!data.sessionId) || (data.sessionId === socketInstance.sessionId)) {
+          this._connectedHosts[instanceId] = data.host;
+          const onConnectedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onConnectedPromises.push(
+              Promise.resolve(listener.onConnected(instanceIndex, data.replicas))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` + 
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` + 
                   'about connected event', err))
-              );
-            }
-            this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
-            await Promise.all(onConnectedPromises);
+            );
           }
-        } else if (data.type === 'disconnected') {
-          cancelDisconnectTimer();
-          await onDisconnected();
-        } else if (data.type === 'synchronizationStarted') {
-          const promises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            promises.push(
-              Promise.resolve(listener.onSynchronizationStarted(instanceIndex))
+          this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
+          await Promise.all(onConnectedPromises);
+        }
+      } else if (data.type === 'disconnected') {
+        cancelDisconnectTimer();
+        await onDisconnected();
+      } else if (data.type === 'synchronizationStarted') {
+        const promises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          promises.push(
+            Promise.resolve(listener.onSynchronizationStarted(instanceIndex))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+              .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                 'about synchronization started event', err))
-            );
-          }
-          await Promise.all(promises);
-        } else if (data.type === 'accountInformation') {
-          if (data.accountInformation) {
-            const onAccountInformationUpdatedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onAccountInformationUpdatedPromises.push(
-                Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about accountInformation event', err))
-              );
-            }
-            await Promise.all(onAccountInformationUpdatedPromises);
-          }
-        } else if (data.type === 'deals') {
-          for (let deal of (data.deals || [])) {
-            const onDealAddedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onDealAddedPromises.push(
-                Promise.resolve(listener.onDealAdded(instanceIndex, deal))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about deals event', err))
-              );
-            }
-            await Promise.all(onDealAddedPromises);
-          }
-        } else if (data.type === 'orders') {
-          const onOrderUpdatedPromises = [];
+          );
+        }
+        await Promise.all(promises);
+      } else if (data.type === 'accountInformation') {
+        if (data.accountInformation) {
+          const onAccountInformationUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onOrderUpdatedPromises.push(
-              Promise.resolve(listener.onOrdersReplaced(instanceIndex, data.orders || []))
-              // eslint-disable-next-line no-console
+            onAccountInformationUpdatedPromises.push(
+              Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
+                // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                'about orders event', err))
+                  'about accountInformation event', err))
             );
           }
-          await Promise.all(onOrderUpdatedPromises);
-        } else if (data.type === 'historyOrders') {
-          for (let historyOrder of (data.historyOrders || [])) {
-            const onHistoryOrderAddedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onHistoryOrderAddedPromises.push(
-                Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
+          await Promise.all(onAccountInformationUpdatedPromises);
+        }
+      } else if (data.type === 'deals') {
+        for (let deal of (data.deals || [])) {
+          const onDealAddedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onDealAddedPromises.push(
+              Promise.resolve(listener.onDealAdded(instanceIndex, deal))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about historyOrders event', err))
-              );
-            }
-            await Promise.all(onHistoryOrderAddedPromises);
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about deals event', err))
+            );
           }
-        } else if (data.type === 'positions') {
+          await Promise.all(onDealAddedPromises);
+        }
+      } else if (data.type === 'orders') {
+        const onOrderUpdatedPromises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          onOrderUpdatedPromises.push(
+            Promise.resolve(listener.onOrdersReplaced(instanceIndex, data.orders || []))
+              // eslint-disable-next-line no-console
+              .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about orders event', err))
+          );
+        }
+        await Promise.all(onOrderUpdatedPromises);
+      } else if (data.type === 'historyOrders') {
+        for (let historyOrder of (data.historyOrders || [])) {
+          const onHistoryOrderAddedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onHistoryOrderAddedPromises.push(
+              Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
+                // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about historyOrders event', err))
+            );
+          }
+          await Promise.all(onHistoryOrderAddedPromises);
+        }
+      } else if (data.type === 'positions') {
+        const onPositionUpdatedPromises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          onPositionUpdatedPromises.push(
+            Promise.resolve(listener.onPositionsReplaced(instanceIndex, data.positions || []))
+              // eslint-disable-next-line no-console
+              .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about positions event', err))
+          );
+        }
+        await Promise.all(onPositionUpdatedPromises);
+      } else if (data.type === 'update') {
+        if (data.accountInformation) {
+          const onAccountInformationUpdatedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onAccountInformationUpdatedPromises.push(
+              Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
+                // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about update event', err))
+            );
+          }
+          await Promise.all(onAccountInformationUpdatedPromises);
+        }
+        for (let position of (data.updatedPositions || [])) {
           const onPositionUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onPositionUpdatedPromises.push(
-              Promise.resolve(listener.onPositionsReplaced(instanceIndex, data.positions || []))
-              // eslint-disable-next-line no-console
+              Promise.resolve(listener.onPositionUpdated(instanceIndex, position))
+                // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                'about positions event', err))
+                  'about update event', err))
             );
           }
           await Promise.all(onPositionUpdatedPromises);
-        } else if (data.type === 'update') {
-          if (data.accountInformation) {
-            const onAccountInformationUpdatedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onAccountInformationUpdatedPromises.push(
-                Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
+        }
+        for (let positionId of (data.removedPositionIds || [])) {
+          const onPositionRemovedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onPositionRemovedPromises.push(
+              Promise.resolve(listener.onPositionRemoved(instanceIndex, positionId))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about update event', err))
-              );
-            }
-            await Promise.all(onAccountInformationUpdatedPromises);
+            );
           }
-          for (let position of (data.updatedPositions || [])) {
-            const onPositionUpdatedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onPositionUpdatedPromises.push(
-                Promise.resolve(listener.onPositionUpdated(instanceIndex, position))
+          await Promise.all(onPositionRemovedPromises);
+        }
+        for (let order of (data.updatedOrders || [])) {
+          const onOrderUpdatedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onOrderUpdatedPromises.push(
+              Promise.resolve(listener.onOrderUpdated(instanceIndex, order))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about update event', err))
-              );
-            }
-            await Promise.all(onPositionUpdatedPromises);
+            );
           }
-          for (let positionId of (data.removedPositionIds || [])) {
-            const onPositionRemovedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onPositionRemovedPromises.push(
-                Promise.resolve(listener.onPositionRemoved(instanceIndex, positionId))
+          await Promise.all(onOrderUpdatedPromises);
+        }
+        for (let orderId of (data.completedOrderIds || [])) {
+          const onOrderCompletedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onOrderCompletedPromises.push(
+              Promise.resolve(listener.onOrderCompleted(instanceIndex, orderId))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about update event', err))
-              );
-            }
-            await Promise.all(onPositionRemovedPromises);
+            );
           }
-          for (let order of (data.updatedOrders || [])) {
-            const onOrderUpdatedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onOrderUpdatedPromises.push(
-                Promise.resolve(listener.onOrderUpdated(instanceIndex, order))
+          await Promise.all(onOrderCompletedPromises);
+        }
+        for (let historyOrder of (data.historyOrders || [])) {
+          const onHistoryOrderAddedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onHistoryOrderAddedPromises.push(
+              Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about update event', err))
-              );
-            }
-            await Promise.all(onOrderUpdatedPromises);
+            );
           }
-          for (let orderId of (data.completedOrderIds || [])) {
-            const onOrderCompletedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onOrderCompletedPromises.push(
-                Promise.resolve(listener.onOrderCompleted(instanceIndex, orderId))
+          await Promise.all(onHistoryOrderAddedPromises);
+        }
+        for (let deal of (data.deals || [])) {
+          const onDealAddedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onDealAddedPromises.push(
+              Promise.resolve(listener.onDealAdded(instanceIndex, deal))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about update event', err))
-              );
-            }
-            await Promise.all(onOrderCompletedPromises);
+            );
           }
-          for (let historyOrder of (data.historyOrders || [])) {
-            const onHistoryOrderAddedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onHistoryOrderAddedPromises.push(
-                Promise.resolve(listener.onHistoryOrderAdded(instanceIndex, historyOrder))
+          await Promise.all(onDealAddedPromises);
+        }
+        if (data.timestamps) {
+          data.timestamps.clientProcessingFinished = new Date();
+          const onUpdatePromises = [];
+          // eslint-disable-next-line max-depth
+          for (let listener of this._latencyListeners || []) {
+            onUpdatePromises.push(
+              Promise.resolve(listener.onUpdate(data.accountId, data.timestamps))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about update event', err))
-              );
-            }
-            await Promise.all(onHistoryOrderAddedPromises);
-          }
-          for (let deal of (data.deals || [])) {
-            const onDealAddedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onDealAddedPromises.push(
-                Promise.resolve(listener.onDealAdded(instanceIndex, deal))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about update event', err))
-              );
-            }
-            await Promise.all(onDealAddedPromises);
-          }
-          if (data.timestamps) {
-            data.timestamps.clientProcessingFinished = new Date();
-            const onUpdatePromises = [];
-            // eslint-disable-next-line max-depth
-            for (let listener of this._latencyListeners || []) {
-              onUpdatePromises.push(
-                Promise.resolve(listener.onUpdate(data.accountId, data.timestamps))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify latency ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify latency ` +
                   'listener about update event', err))
-              );
-            }
-            await Promise.all(onUpdatePromises);
+            );
           }
-        } else if (data.type === 'dealSynchronizationFinished') {
-          const onDealSynchronizationFinishedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            if(socketInstance) {
-              socketInstance.synchronizationThrottler.removeSynchronizationId(data.synchronizationId);
-            }
-            onDealSynchronizationFinishedPromises.push(
-              Promise.resolve(listener.onDealSynchronizationFinished(instanceIndex, data.synchronizationId))
+          await Promise.all(onUpdatePromises);
+        }
+      } else if (data.type === 'dealSynchronizationFinished') {
+        const onDealSynchronizationFinishedPromises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          if(socketInstance) {
+            socketInstance.synchronizationThrottler.removeSynchronizationId(data.synchronizationId);
+          }
+          onDealSynchronizationFinishedPromises.push(
+            Promise.resolve(listener.onDealSynchronizationFinished(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
+              .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                   'dealSynchronizationFinished event', err))
-            );
-          }
-          await Promise.all(onDealSynchronizationFinishedPromises);
-        } else if (data.type === 'orderSynchronizationFinished') {
-          const onOrderSynchronizationFinishedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onOrderSynchronizationFinishedPromises.push(
-              Promise.resolve(listener.onOrderSynchronizationFinished(instanceIndex, data.synchronizationId))
+          );
+        }
+        await Promise.all(onDealSynchronizationFinishedPromises);
+      } else if (data.type === 'orderSynchronizationFinished') {
+        const onOrderSynchronizationFinishedPromises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          onOrderSynchronizationFinishedPromises.push(
+            Promise.resolve(listener.onOrderSynchronizationFinished(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
+              .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                   'orderSynchronizationFinished event', err))
-            );
-          }
-          await Promise.all(onOrderSynchronizationFinishedPromises);
-        } else if (data.type === 'status') {
-          if (!this._connectedHosts[instanceId]) {
-            if(this._statusTimers[instanceId] && data.authenticated && 
+          );
+        }
+        await Promise.all(onOrderSynchronizationFinishedPromises);
+      } else if (data.type === 'status') {
+        if (!this._connectedHosts[instanceId]) {
+          if(this._statusTimers[instanceId] && data.authenticated && 
               (this._subscriptionManager.isDisconnectedRetryMode(data.accountId, instanceNumber) || 
               !this._subscriptionManager.isAccountSubscribing(data.accountId, instanceNumber))) {
-              this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
-              await new Promise(res => setTimeout(res, 10));
-              // eslint-disable-next-line no-console
-              console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
+            this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
+            await new Promise(res => setTimeout(res, 10));
+            // eslint-disable-next-line no-console
+            console.log('[' + (new Date()).toISOString() + '] it seems like we are not connected to a running API ' +
                         'server yet, retrying subscription for account ' + instanceId);
-              this.ensureSubscribe(data.accountId, instanceNumber);
-            }
-          } else {
-            resetDisconnectTimer();
-            const onBrokerConnectionStatusChangedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onBrokerConnectionStatusChangedPromises.push(
-                Promise.resolve(listener.onBrokerConnectionStatusChanged(instanceIndex, !!data.connected))
+            this.ensureSubscribe(data.accountId, instanceNumber);
+          }
+        } else {
+          resetDisconnectTimer();
+          const onBrokerConnectionStatusChangedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onBrokerConnectionStatusChangedPromises.push(
+              Promise.resolve(listener.onBrokerConnectionStatusChanged(instanceIndex, !!data.connected))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                     'brokerConnectionStatusChanged event', err))
+            );
+          }
+          await Promise.all(onBrokerConnectionStatusChangedPromises);
+          if (data.healthStatus) {
+            const onHealthStatusPromises = [];
+            // eslint-disable-next-line max-depth
+            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+              onHealthStatusPromises.push(
+                Promise.resolve(listener.onHealthStatus(instanceIndex, data.healthStatus))
+                  // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
+                      'server-side healthStatus event', err))
               );
             }
-            await Promise.all(onBrokerConnectionStatusChangedPromises);
-            if (data.healthStatus) {
-              const onHealthStatusPromises = [];
-              // eslint-disable-next-line max-depth
-              for (let listener of this._synchronizationListeners[data.accountId] || []) {
-                onHealthStatusPromises.push(
-                  Promise.resolve(listener.onHealthStatus(instanceIndex, data.healthStatus))
-                  // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
-                      'server-side healthStatus event', err))
-                );
-              }
-              await Promise.all(onHealthStatusPromises);
-            }
+            await Promise.all(onHealthStatusPromises);
           }
-        } else if (data.type === 'downgradeSubscription') {
-          // eslint-disable-next-line no-console
-          console.log(`${data.accountId}:${instanceIndex}: Market data subscriptions for symbol ${data.symbol} were ` +
+        }
+      } else if (data.type === 'downgradeSubscription') {
+        // eslint-disable-next-line no-console
+        console.log(`${data.accountId}:${instanceIndex}: Market data subscriptions for symbol ${data.symbol} were ` +
             `downgraded by the server due to rate limits. Updated subscriptions: ${JSON.stringify(data.updates)}, ` +
             `removed subscriptions: ${JSON.stringify(data.unsubscriptions)}. Please read ` +
             'https://metaapi.cloud/docs/client/rateLimiting/ for more details.');
-          const onSubscriptionDowngradePromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onSubscriptionDowngradePromises.push(
-              Promise.resolve(listener.onSubscriptionDowngraded(instanceIndex, data.symbol, data.updates,
-                data.unsubscriptions))
+        const onSubscriptionDowngradePromises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          onSubscriptionDowngradePromises.push(
+            Promise.resolve(listener.onSubscriptionDowngraded(instanceIndex, data.symbol, data.updates,
+              data.unsubscriptions))
               // eslint-disable-next-line no-console
-                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+              .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                 'about subscription downgrade event', err))
-            );
-          }
-          await Promise.all(onSubscriptionDowngradePromises);
-        } else if (data.type === 'specifications') {
-          const onSymbolSpecificationsUpdatedPromises = [];
+          );
+        }
+        await Promise.all(onSubscriptionDowngradePromises);
+      } else if (data.type === 'specifications') {
+        const onSymbolSpecificationsUpdatedPromises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          onSymbolSpecificationsUpdatedPromises.push(
+            Promise.resolve(listener.onSymbolSpecificationsUpdated(instanceIndex, data.specifications || [],
+              data.removedSymbols || []))
+            // eslint-disable-next-line no-console
+              .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                'about specifications updated event', err))
+          );
+        }
+        await Promise.all(onSymbolSpecificationsUpdatedPromises);
+        for (let specification of (data.specifications || [])) {
+          const onSymbolSpecificationUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onSymbolSpecificationsUpdatedPromises.push(
-              Promise.resolve(listener.onSymbolSpecificationsUpdated(instanceIndex, data.specifications || [],
-                data.removedSymbols || []))
+            onSymbolSpecificationUpdatedPromises.push(
+              Promise.resolve(listener.onSymbolSpecificationUpdated(instanceIndex, specification))
                 // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                'about specifications updated event', err))
+                  'about specification updated event', err))
             );
           }
-          await Promise.all(onSymbolSpecificationsUpdatedPromises);
-          for (let specification of (data.specifications || [])) {
-            const onSymbolSpecificationUpdatedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onSymbolSpecificationUpdatedPromises.push(
-                Promise.resolve(listener.onSymbolSpecificationUpdated(instanceIndex, specification))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about specification updated event', err))
-              );
-            }
-            await Promise.all(onSymbolSpecificationUpdatedPromises);
-          }
-          for (let removedSymbol of (data.removedSymbols || [])) {
-            const onSymbolSpecificationRemovedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onSymbolSpecificationRemovedPromises.push(
-                Promise.resolve(listener.onSymbolSpecificationRemoved(instanceIndex, removedSymbol))
-                // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about specifications removed event', err))
-              );
-            }
-            await Promise.all(onSymbolSpecificationRemovedPromises);
-          }
-        } else if (data.type === 'prices') {
-          let prices = data.prices || [];
-          let candles = data.candles || [];
-          let ticks = data.ticks || [];
-          let books = data.books || [];
-          const onSymbolPricesUpdatedPromises = [];
+          await Promise.all(onSymbolSpecificationUpdatedPromises);
+        }
+        for (let removedSymbol of (data.removedSymbols || [])) {
+          const onSymbolSpecificationRemovedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            if (prices.length) {
-              onSymbolPricesUpdatedPromises.push(
-                Promise.resolve(listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin,
-                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+            onSymbolSpecificationRemovedPromises.push(
+              Promise.resolve(listener.onSymbolSpecificationRemoved(instanceIndex, removedSymbol))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                  'about specifications removed event', err))
+            );
+          }
+          await Promise.all(onSymbolSpecificationRemovedPromises);
+        }
+      } else if (data.type === 'prices') {
+        let prices = data.prices || [];
+        let candles = data.candles || [];
+        let ticks = data.ticks || [];
+        let books = data.books || [];
+        const onSymbolPricesUpdatedPromises = [];
+        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          if (prices.length) {
+            onSymbolPricesUpdatedPromises.push(
+              Promise.resolve(listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin,
+                data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+                // eslint-disable-next-line no-console
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about prices event', err))
-              );
-            }
-            if (candles.length) {
-              onSymbolPricesUpdatedPromises.push(
-                Promise.resolve(listener.onCandlesUpdated(instanceIndex, candles, data.equity, data.margin,
-                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+            );
+          }
+          if (candles.length) {
+            onSymbolPricesUpdatedPromises.push(
+              Promise.resolve(listener.onCandlesUpdated(instanceIndex, candles, data.equity, data.margin,
+                data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about candles event', err))
-              );
-            }
-            if (ticks.length) {
-              onSymbolPricesUpdatedPromises.push(
-                Promise.resolve(listener.onTicksUpdated(instanceIndex, ticks, data.equity, data.margin,
-                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+            );
+          }
+          if (ticks.length) {
+            onSymbolPricesUpdatedPromises.push(
+              Promise.resolve(listener.onTicksUpdated(instanceIndex, ticks, data.equity, data.margin,
+                data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about ticks event', err))
-              );
-            }
-            if (books.length) {
-              onSymbolPricesUpdatedPromises.push(
-                Promise.resolve(listener.onBooksUpdated(instanceIndex, books, data.equity, data.margin,
-                  data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
+            );
+          }
+          if (books.length) {
+            onSymbolPricesUpdatedPromises.push(
+              Promise.resolve(listener.onBooksUpdated(instanceIndex, books, data.equity, data.margin,
+                data.freeMargin, data.marginLevel, data.accountCurrencyExchangeRate))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about books event', err))
-              );
-            }
+            );
           }
-          await Promise.all(onSymbolPricesUpdatedPromises);
-          for (let price of prices) {
-            const onSymbolPriceUpdatedPromises = [];
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onSymbolPriceUpdatedPromises.push(
-                Promise.resolve(listener.onSymbolPriceUpdated(instanceIndex, price))
+        }
+        await Promise.all(onSymbolPricesUpdatedPromises);
+        for (let price of prices) {
+          const onSymbolPriceUpdatedPromises = [];
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onSymbolPriceUpdatedPromises.push(
+              Promise.resolve(listener.onSymbolPriceUpdated(instanceIndex, price))
                 // eslint-disable-next-line no-console
-                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about price event', err))
+            );
+          }
+          await Promise.all(onSymbolPriceUpdatedPromises);
+        }
+        for (let price of prices) {
+          if (price.timestamps) {
+            price.timestamps.clientProcessingFinished = new Date();
+            const onSymbolPricePromises = [];
+            // eslint-disable-next-line max-depth
+            for (let listener of this._latencyListeners || []) {
+              onSymbolPricePromises.push(
+                Promise.resolve(listener.onSymbolPrice(data.accountId, price.symbol, price.timestamps))
+                  // eslint-disable-next-line no-console
+                  .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify latency ` +
+                    'listener about price event', err))
               );
             }
-            await Promise.all(onSymbolPriceUpdatedPromises);
-          }
-          for (let price of prices) {
-            if (price.timestamps) {
-              price.timestamps.clientProcessingFinished = new Date();
-              const onSymbolPricePromises = [];
-              // eslint-disable-next-line max-depth
-              for (let listener of this._latencyListeners || []) {
-                onSymbolPricePromises.push(
-                  Promise.resolve(listener.onSymbolPrice(data.accountId, price.symbol, price.timestamps))
-                  // eslint-disable-next-line no-console
-                    .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify latency ` +
-                    'listener about price event', err))
-                );
-              }
-              await Promise.all(onSymbolPricePromises);
-            }
+            await Promise.all(onSymbolPricePromises);
           }
         }
       }
@@ -1820,10 +1866,10 @@ export default class MetaApiWebsocketClient {
       this._packetOrderer.onReconnected(reconnectAccountIds);
 
       for (let listener of reconnectListeners) {
-        Promise.resolve(listener.listener.onReconnected())
+        this.queueEvent(listener.accountId, Promise.resolve(listener.listener.onReconnected())
           // eslint-disable-next-line no-console
           .catch(err => 
-            console.error('[' + (new Date()).toISOString() + '] Failed to notify reconnect listener', err));
+            console.error('[' + (new Date()).toISOString() + '] Failed to notify reconnect listener', err)));
       }
     } catch (err) {
       // eslint-disable-next-line no-console

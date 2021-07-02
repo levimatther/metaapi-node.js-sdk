@@ -545,7 +545,7 @@ export default class MetaApiConnection extends SynchronizationListener {
           subscriptions = subscriptions.filter(s => s.type === subscription.type);
         }
       }
-      await this.unsubscribeFromMarketData(symbol, unsubscriptions);
+      this.unsubscribeFromMarketData(symbol, unsubscriptions);
     }
     if (updates && updates.length) {
       if (subscriptions) {
@@ -554,7 +554,7 @@ export default class MetaApiConnection extends SynchronizationListener {
             .forEach(s => s.intervalInMilliiseconds = subscription.intervalInMilliseconds);
         }
       }
-      await this.subscribeToMarketData(symbol, updates);
+      this.subscribeToMarketData(symbol, updates);
     }
     if (subscriptions && !subscriptions.length) {
       delete this._subscriptions[symbol];
@@ -694,7 +694,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     state.shouldSynchronize = key;
     state.synchronizationRetryIntervalInSeconds = 1;
     state.synchronized = false;
-    await this._ensureSynchronized(instanceIndex, key);
+    this._ensureSynchronized(instanceIndex, key);
     let indices = [];
     for (let i = 0; i < replicas; i++) {
       indices.push(i);
@@ -748,13 +748,10 @@ export default class MetaApiConnection extends SynchronizationListener {
   async onAccountInformationUpdated(instanceIndex, accountInformation) {
     for(let symbol of this.subscribedSymbols) {
       if(!this._terminalState.price(symbol)) {
-        try {
-          const instance = this.getInstanceNumber(instanceIndex);
-          await this.subscribeToMarketData(symbol, this._subscriptions[symbol].subscriptions, instance);
-        } catch (err) {
-          console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' 
-          + this._account.id + ':' + instanceIndex + ' failed to resubscribe to symbol ' + symbol, err);
-        }
+        const instance = this.getInstanceNumber(instanceIndex);
+        Promise.resolve(this.subscribeToMarketData(symbol, this._subscriptions[symbol].subscriptions, instance))
+          .catch(err => console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' 
+            + this._account.id + ':' + instanceIndex + ' failed to resubscribe to symbol ' + symbol, err));
       }
     }
   }
@@ -763,11 +760,14 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Invoked when connection to MetaApi websocket API restored after a disconnect
    * @return {Promise} promise which resolves when connection to MetaApi websocket API restored after a disconnect
    */
-  async onReconnected() {}
+  async onReconnected() {
+    this._stateByInstanceIndex = {};
+  }
 
   /**
    * Invoked when a stream for an instance index is closed
    * @param {String} instanceIndex index of an account instance connected
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onStreamClosed(instanceIndex) {
     delete this._stateByInstanceIndex[instanceIndex];
@@ -908,9 +908,11 @@ export default class MetaApiConnection extends SynchronizationListener {
     let state = this._getState(instanceIndex);
     if (state && !this._closed) {
       try {
-        await this.synchronize(instanceIndex);
-        state.synchronized = true;
-        state.synchronizationRetryIntervalInSeconds = 1;
+        const synchronizationResult = await this.synchronize(instanceIndex);
+        if(synchronizationResult) {
+          state.synchronized = true;
+          state.synchronizationRetryIntervalInSeconds = 1;
+        }
       } catch (err) {
         console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
           ':' + instanceIndex + ' failed to synchronize', err);
