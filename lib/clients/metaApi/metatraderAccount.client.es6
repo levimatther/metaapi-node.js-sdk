@@ -46,6 +46,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} baseCurrency 3-character ISO currency code of the account base currency. Default value is USD.
    * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
    * brokers. You should not alter this setting unless you understand what you are doing.
+   * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
+   * `PROVIDER` and `SUBSCRIBER`
    */
 
   /**
