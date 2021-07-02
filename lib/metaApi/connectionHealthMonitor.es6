@@ -16,8 +16,20 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
   constructor(connection) {
     super();
     this._connection = connection;
-    this._updateQuoteHealthStatusInterval = setInterval(this._updateQuoteHealthStatus.bind(this), 30000);
-    this._measureUptimeInterval = setInterval(this._measureUptime.bind(this), 30000);
+    const updateQuoteHealthStatusInterval = () => {
+      this._updateQuoteHealthStatus();
+      this._updateQuoteHealthStatusInterval = setTimeout(updateQuoteHealthStatusInterval.bind(this),
+        this._getRandomTimeout());
+    };
+    this._updateQuoteHealthStatusInterval = setTimeout(updateQuoteHealthStatusInterval.bind(this),
+      this._getRandomTimeout());
+    const measureUptimeInterval = () => {
+      this._measureUptime();
+      this._measureUptimeInterval = setTimeout(measureUptimeInterval.bind(this),
+        this._getRandomTimeout());
+    };
+    this._measureUptimeInterval = setTimeout(measureUptimeInterval.bind(this),
+      this._getRandomTimeout());
     this._minQuoteInterval = 60000;
     this._serverHealthStatus = {};
     this._uptimeReservoirs = {
@@ -32,8 +44,8 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
    * Stops health monitor
    */
   stop() {
-    clearInterval(this._updateQuoteHealthStatusInterval);
-    clearInterval(this._measureUptimeInterval);
+    clearTimeout(this._updateQuoteHealthStatusInterval);
+    clearTimeout(this._measureUptimeInterval);
   }
 
   /**
@@ -202,6 +214,10 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
       console.error('[' + (new Date()).toISOString() + '] failed to update quote streaming health status for account ' +
         this._connection.account.id, err);
     }
+  }
+
+  _getRandomTimeout() {
+    return (Math.random() * 59  + 1) * 1000;
   }
 
 }

@@ -14,6 +14,9 @@ describe('SubscriptionManager', () => {
 
   before(() => {
     sandbox = sinon.createSandbox();
+    const mockMath = Object.create(global.Math);
+    mockMath.random = () => 0.2;
+    global.Math = mockMath;
   });
 
   beforeEach(async () => {  
@@ -111,7 +114,7 @@ describe('SubscriptionManager', () => {
     manager.subscribe('accountId3');
     await clock.tickAsync(1000);
     manager.onReconnected(0, ['accountId', 'accountId2']);
-    await clock.tickAsync(1000);
+    await clock.tickAsync(2000);
     sinon.assert.callCount(client.subscribe, 5);
   });
 
@@ -128,7 +131,7 @@ describe('SubscriptionManager', () => {
     manager.subscribe('accountId');
     await clock.tickAsync(1000);
     manager.onReconnected(0, ['accountId']);
-    await clock.tickAsync(2000);
+    await clock.tickAsync(3000);
     sinon.assert.callCount(client.subscribe, 2);
   });
 

@@ -43,6 +43,7 @@ import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
  * @property {SynchronizationThrottlerOpts} [synchronizationThrottler] options for synchronization throttler
  * @property {RetryOpts} [retryOpts] options for request retries
  * @property {EventProcessingOpts} [eventProcessing] options for request retries
+ * @property {Boolean} [useSharedClientApi] option to use a shared server
  */
 
 /**
@@ -72,12 +73,13 @@ export default class MetaApi {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
     const eventProcessing = opts.eventProcessing;
+    const useSharedClientApi = opts.useSharedClientApi || false;
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
-    this._metaApiWebsocketClient = new MetaApiWebsocketClient(token, {application, domain, requestTimeout,
+    this._metaApiWebsocketClient = new MetaApiWebsocketClient(httpClient, token, {application, domain, requestTimeout,
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, 
-      eventProcessing});
+      eventProcessing, useSharedClientApi});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, token, domain);

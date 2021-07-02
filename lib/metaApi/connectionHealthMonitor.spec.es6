@@ -13,6 +13,9 @@ describe('ConnectionHealthMonitor', () => {
 
   before(() => {
     sandbox = sinon.createSandbox();
+    const mockMath = Object.create(global.Math);
+    mockMath.random = () => 0.4833333;
+    global.Math = mockMath;
   });
 
   beforeEach(() => {
@@ -67,9 +70,9 @@ describe('ConnectionHealthMonitor', () => {
      */
     it('should return average uptime', async () => {
       healthMonitor.onSymbolPriceUpdated('1:ps-mpa-1', prices[0]);
-      await clock.tickAsync(60000);
+      await clock.tickAsync(31000);
       clearInterval(updateInterval);
-      await clock.tickAsync(95000);
+      await clock.tickAsync(120000);
       sinon.assert.match(healthMonitor.uptime, {'1h': 60, '1d': 60, '1w': 60});
     });
 
@@ -92,7 +95,7 @@ describe('ConnectionHealthMonitor', () => {
       await clock.tickAsync(120000);
       sinon.assert.match(healthMonitor.uptime, {'1h': 20, '1d': 20, '1w': 20});
       connection.synchronized = true;
-      await clock.tickAsync(380000);
+      await clock.tickAsync(360000);
       sinon.assert.match(healthMonitor.uptime, {'1h': 50, '1d': 50, '1w': 50});
     });
 
@@ -160,7 +163,7 @@ describe('ConnectionHealthMonitor', () => {
      */
     it('should show as healthy if recently updated and in session', async () => {
       healthMonitor.onSymbolPriceUpdated('1:ps-mpa-1', prices[0]);
-      await clock.tickAsync(31000);
+      await clock.tickAsync(91000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, true);
     });
     
@@ -170,7 +173,7 @@ describe('ConnectionHealthMonitor', () => {
     it('should show as not healthy if old update and in session', async () => {
       healthMonitor.onSymbolPriceUpdated('1:ps-mpa-1', prices[0]);
       clearInterval(updateInterval);
-      await clock.tickAsync(61000);
+      await clock.tickAsync(91000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, false);
     });
     
@@ -180,7 +183,7 @@ describe('ConnectionHealthMonitor', () => {
     it('should show as healthy if not in session', async () => {
       healthMonitor.onSymbolPriceUpdated('1:ps-mpa-1', prices[1]);
       clearInterval(updateInterval);
-      await clock.tickAsync(61000);
+      await clock.tickAsync(91000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, true);
     });
     
@@ -191,7 +194,7 @@ describe('ConnectionHealthMonitor', () => {
       healthMonitor._connection.subscribedSymbols = [];
       healthMonitor.onSymbolPriceUpdated('1:ps-mpa-1', prices[0]);
       clearInterval(updateInterval);
-      await clock.tickAsync(61000);
+      await clock.tickAsync(91000);
       sinon.assert.match(healthMonitor.healthStatus.quoteStreamingHealthy, true);
     });
 

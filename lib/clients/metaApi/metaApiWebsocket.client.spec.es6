@@ -6,6 +6,7 @@ import MetaApiWebsocketClient from './metaApiWebsocket.client';
 import Server from 'socket.io';
 import NotConnectedError from './notConnectedError';
 import {InternalError} from '../errorHandler';
+import HttpClient from '../httpClient';
 
 const metaapiApiUrl = 'https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai';
 
@@ -19,16 +20,17 @@ describe('MetaApiWebsocketClient', () => {
   let server;
   let client;
   let sandbox;
+  let httpClient = new HttpClient();
 
   before(() => {
-    client = new MetaApiWebsocketClient('token', {application: 'application', 
-      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, retryOpts: {
-        retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
-    client.url = 'http://localhost:6784';
     sandbox = sinon.createSandbox();
   });
 
   beforeEach(async () => {
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true,
+      retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
+    client.url = 'http://localhost:6784';
     io = new Server(6784, {path: '/ws', pingTimeout: 1000000});
     io.on('connect', socket => {
       server = socket;
@@ -73,6 +75,55 @@ describe('MetaApiWebsocketClient', () => {
     await new Promise(res => setTimeout(res, 50));
     connectAmount.should.be.aboveOrEqual(2);
     clock.restore();
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#_getServerUrl}
+   */
+  it('should connect to dedicated server', async () => {
+    let positions = [{
+      id: '46214692',
+      type: 'POSITION_TYPE_BUY',
+      symbol: 'GBPUSD',
+      magic: 1000,
+      time: new Date('2020-04-15T02:45:06.521Z'),
+      updateTime: new Date('2020-04-15T02:45:06.521Z'),
+      openPrice: 1.26101,
+      currentPrice: 1.24883,
+      currentTickValue: 1,
+      volume: 0.07,
+      swap: 0,
+      profit: -85.25999999999966,
+      commission: -0.25,
+      clientId: 'TE_GBPUSD_7hyINWqAlE',
+      stopLoss: 1.17721,
+      unrealizedProfit: -85.25999999999901,
+      realizedProfit: -6.536993168992922e-13
+    }];
+    let resolve;
+    let promise = new Promise(res => resolve = res);
+    client.close();
+    io.close(() => resolve());
+    await promise;
+    io = new Server(6785, {path: '/ws', pingTimeout: 1000000});
+    sandbox.stub(httpClient, 'request').resolves({url: 'http://localhost:6785'});
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false,
+      retryOpts: { retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
+    io.on('connect', socket => {
+      server = socket;
+      if (socket.request._query['auth-token'] !== 'token') {
+        socket.emit({error: 'UnauthorizedError', message: 'Authorization token invalid'});
+        socket.close();
+      }
+      server.on('request', data => {
+        if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'RPC') {
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, positions});
+        }
+      });
+    });
+    let actual = await client.getPositions('accountId');
+    actual.should.match(positions);
   });
 
   /**

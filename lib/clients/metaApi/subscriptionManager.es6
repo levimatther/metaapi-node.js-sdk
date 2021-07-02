@@ -192,6 +192,7 @@ export default class SubscriptionManager {
               await new Promise(res => setTimeout(res, 1000));
             }
             delete this._awaitingResubscribe[accountId];
+            await new Promise(res => setTimeout(res, Math.random() * 5000));
             this.subscribe(accountId);
           }
         } catch (err) {
