@@ -48,8 +48,10 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * brokers. You should not alter this setting unless you understand what you are doing.
    * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} resourceSlots Number of resource slots to allocate to account. Please note that allocating extra
-   * resource slots is a paid option. Default is 1
+   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * results in better account performance under load which is useful for some applications. E.g. if you have many
+   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
    */
 
   /**
@@ -172,8 +174,10 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * brokers. You should not alter this setting unless you understand what you are doing.
    * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} resourceSlots Number of resource slots to allocate to account. Please note that allocating extra
-   * resource slots is a paid option. Default is 1
+   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * results in better account performance under load which is useful for some applications. E.g. if you have many
+   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
    */
 
   /**
@@ -309,8 +313,10 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Object} metadata extra information which can be stored together with your account
    * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} resourceSlots Number of resource slots to allocate to account. Please note that allocating extra
-   * resource slots is a paid option. Default is 1
+   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * results in better account performance under load which is useful for some applications. E.g. if you have many
+   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
    */
 
   /**
