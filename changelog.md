@@ -1,3 +1,6 @@
+13.1.0
+  - added resourceSlots field to MetatraderAccount model so that user can request extra resource allocation for specific accounts for an extra fee
+
 13.0.0
   - added baseCurrency field to the MetaTraderAccount model
   - fixed history storage timestamp processing (issue #6)

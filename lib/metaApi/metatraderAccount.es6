@@ -144,6 +144,41 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns user-defined account tags
+   * @return {Array<string>} user-defined account tags
+   */
+  get tags() {
+    return this._data.tags;
+  }
+
+  /**
+   * Returns account roles for CopyFactory2 application
+   * @return {Array<string>} account roles for CopyFactory2 application
+   */
+  get copyFactoryRoles() {
+    return this._data.copyFactoryRoles;
+  }
+
+  /**
+   * Returns number of resource slots to allocate to account. Please note that allocating extra resource slots is a
+   * paid option.
+   * @return {number} number of resource slots to allocate to account
+   */
+  get resourceSlots() {
+    return this._data.resourceSlots;
+  }
+
+  /**
+   * Returns 3-character ISO currency code of the account base currency. Default value is USD. The setting is to be used
+   * for copy trading accounts which use national currencies only, such as some Brazilian brokers. You should not alter
+   * this setting unless you understand what you are doing.
+   * @return {number} 3-character ISO currency code of the account base currency
+   */
+  get baseCurrency() {
+    return this._data.baseCurrency;
+  }
+
+  /**
    * Returns reliability value. Possible values are regular and high
    * @return {String} account reliability value
    */

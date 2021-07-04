@@ -48,6 +48,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * brokers. You should not alter this setting unless you understand what you are doing.
    * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
+   * @property {Number} resourceSlots Number of resource slots to allocate to account. Please note that allocating extra
+   * resource slots is a paid option. Default is 1
    */
 
   /**
@@ -168,6 +170,10 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} baseCurrency 3-character ISO currency code of the account base currency. Default value is USD.
    * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
    * brokers. You should not alter this setting unless you understand what you are doing.
+   * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
+   * `PROVIDER` and `SUBSCRIBER`
+   * @property {Number} resourceSlots Number of resource slots to allocate to account. Please note that allocating extra
+   * resource slots is a paid option. Default is 1
    */
 
   /**
@@ -301,6 +307,10 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Array<string>} [tags] MetaTrader account tags
    * @property {Array<Extension>} extensions API extensions
    * @property {Object} metadata extra information which can be stored together with your account
+   * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
+   * `PROVIDER` and `SUBSCRIBER`
+   * @property {Number} resourceSlots Number of resource slots to allocate to account. Please note that allocating extra
+   * resource slots is a paid option. Default is 1
    */
 
   /**
