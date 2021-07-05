@@ -174,7 +174,7 @@ await account.redeploy();
 ```
 
 ### Manage custom experts (EAs)
-Custom expert advisors can only be used for MT4 accounts on g1 infrastructure
+Custom expert advisors can only be used for MT4 accounts on g1 infrastructure. EAs which use DLLs are not supported.
 
 ### Creating an expert advisor via API
 You can use the code below to create an EA. Please note that preset field is a base64-encoded preset file.
