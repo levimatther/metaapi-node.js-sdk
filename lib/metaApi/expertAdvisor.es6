@@ -51,6 +51,7 @@ export default class ExpertAdvisor {
 
   /**
    * Reloads expert advisor from API
+   * (see https://metaapi.cloud/docs/provisioning/api/expertAdvisor/readExpertAdvisor/)
    * @returns {Promise} promise resolving when expert advisor is updated
    */
   async reload() {
@@ -59,6 +60,7 @@ export default class ExpertAdvisor {
 
   /**
    * Updates expert advisor data
+   * (see https://metaapi.cloud/docs/provisioning/api/expertAdvisor/updateExpertAdvisor/)
    * @param {NewExpertAdvisorDto} expert new expert advisor data
    * @returns {Promise} promise resolving when expert advisor is updated
    */
@@ -68,7 +70,8 @@ export default class ExpertAdvisor {
   }
 
   /**
-   * Uploads expert advisor file
+   * Uploads an expert advisor file. EAs which use DLLs are not supported
+   * (see https://metaapi.cloud/docs/provisioning/api/expertAdvisor/uploadEAFile/)
    * @param {String|Buffer} file expert advisor file
    * @returns {Promise} promise resolving when file upload is completed
    */
@@ -79,6 +82,7 @@ export default class ExpertAdvisor {
 
   /**
    * Removes expert advisor
+   * (see https://metaapi.cloud/docs/provisioning/api/expertAdvisor/deleteExpertAdvisor/)
    * @returns {Promise} promise resolving when expert advisor removed
    */
   async remove() {
