@@ -132,7 +132,7 @@ export default class MetaApiWebsocketClient {
   connected(socketInstanceIndex) {
     const instance = this._socketInstances.length > socketInstanceIndex ? 
       this._socketInstances[socketInstanceIndex] : null;
-    return (instance && instance.socket.connected) || false;
+    return (instance && instance.socket && instance.socket.connected) || false;
   }
 
   /**
@@ -192,7 +192,6 @@ export default class MetaApiWebsocketClient {
       reject = rej;
     });
     const socketInstanceIndex = this._socketInstances.length;
-    const serverUrl = await this._getServerUrl();
     const instance = {
       id: socketInstanceIndex,
       connected: false,
@@ -201,36 +200,46 @@ export default class MetaApiWebsocketClient {
       connectResult: result,
       sessionId: randomstring.generate(32),
       isReconnecting: false,
-      socket: socketIO(serverUrl, {
-        path: '/ws',
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        reconnectionAttempts: Infinity,
-        timeout: this._connectTimeout,
-        extraHeaders: {
-          'Client-Id': clientId
-        },
-        query: {
-          'auth-token': this._token,
-          clientId: clientId,
-          protocol: 2
-        }
-      }),
+      socket: null,
       synchronizationThrottler: new SynchronizationThrottler(this, socketInstanceIndex,
         this._synchronizationThrottlerOpts),
       subscribeLock: null
     };
-    instance.synchronizationThrottler.start();
-    const socketInstance = instance.socket;
-    this._socketInstances.push(instance);
     instance.connected = true;
+    this._socketInstances.push(instance);
+    const serverUrl = await this._getServerUrl();
+    instance.synchronizationThrottler.start();
+    const socketInstance = socketIO(serverUrl, {
+      path: '/ws',
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity,
+      timeout: this._connectTimeout,
+      extraHeaders: {
+        'Client-Id': clientId
+      },
+      query: {
+        'auth-token': this._token,
+        clientId: clientId,
+        protocol: 2
+      }
+    });
+    let firstConnect = true;
+    instance.socket = socketInstance;
     if (this._socketInstances.length === 1) {
       this._packetOrderer.start();
     } 
     socketInstance.on('connect', async () => {
+      const isSharedClientApi = socketInstance.io.uri === this._url;
       // eslint-disable-next-line no-console
-      console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connected to the MetaApi server');
+      console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connected to the MetaApi server '+
+        `via ${socketInstance.io.uri} via ${isSharedClientApi ? 'shared' : 'dedicated'} server`);
+      if (socketInstanceIndex === 0 && firstConnect && !isSharedClientApi) {
+        console.log('Please note that it can take up to 3 minutes for your dedicated server to start for the ' +
+        'first time. During this time it is OK if you see some connection errors.');
+        firstConnect = false;
+      }
       instance.isReconnecting = false;
       if (!resolved) {
         resolved = true;
