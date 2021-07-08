@@ -38,6 +38,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._subscriptions = {};
     this._stateByInstanceIndex = {};
     this._synchronized = false;
+    this._synchronizationListeners = [];
   }
 
   /**
@@ -671,6 +672,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {SynchronizationListener} listener synchronization listener to add
    */
   addSynchronizationListener(listener) {
+    this._synchronizationListeners.push(listener);
     this._websocketClient.addSynchronizationListener(this._account.id, listener);
   }
 
@@ -679,6 +681,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
   removeSynchronizationListener(listener) {
+    this._synchronizationListeners = this._synchronizationListeners.filter(l => l !== listener);
     this._websocketClient.removeSynchronizationListener(this._account.id, listener);
   }
 
@@ -856,6 +859,9 @@ export default class MetaApiConnection extends SynchronizationListener {
       this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._healthMonitor);
+      for (let listener of this._synchronizationListeners) {
+        this._websocketClient.removeSynchronizationListener(this._account.id, listener);
+      }
       this._websocketClient.removeReconnectListener(this);
       this._connectionRegistry.remove(this._account.id);
       this._healthMonitor.stop();
