@@ -1640,6 +1640,36 @@ describe('MetaApiWebsocketClient', () => {
     /**
      * @test {MetaApiWebsocketClient#_rpcRequest}
      */
+    it('should not retry request if connection closed between retries', async () => {
+      let requestCounter = 0;
+      let response = {type: 'response', accountId: 'accountId'};
+      server.on('request', async data => {
+        if (data.type === 'unsubscribe' && data.accountId === 'accountId') {
+          server.emit('response', Object.assign({requestId: data.requestId}, response));
+        }
+  
+        if (data.type === 'getOrders' && data.accountId === 'accountId' && data.application === 'RPC') {
+          requestCounter++;
+          server.emit('processingError', {
+            id: 1, error: 'NotSynchronizedError', message: 'Error message',
+            requestId: data.requestId
+          });
+        }
+      });
+      client.unsubscribe('accountId');
+      try {
+        await client.getOrders('accountId');
+        throw new Error('NotSynchronizedError expected');
+      } catch (err) {
+        err.name.should.equal('NotSynchronizedError');
+      }
+      requestCounter.should.equal(1);
+      client.socketInstancesByAccounts.should.not.have.property('accountId');
+    });
+  
+    /**
+     * @test {MetaApiWebsocketClient#_rpcRequest}
+     */
     it('should return timeout error if no server response received', async () => {
       let trade = {
         actionType: 'ORDER_TYPE_SELL',
