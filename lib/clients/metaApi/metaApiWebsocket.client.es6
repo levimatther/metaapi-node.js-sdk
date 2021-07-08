@@ -1170,6 +1170,9 @@ export default class MetaApiWebsocketClient {
         } else {
           throw err;
         }
+        if(this._socketInstancesByAccounts[accountId] === undefined) {
+          throw err;
+        }
       }
     }
   }
