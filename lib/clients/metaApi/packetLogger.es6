@@ -1,6 +1,7 @@
 'use strict';
 import fs from 'fs-extra';
 import moment from 'moment';
+import OptionsValidator from '../optionsValidator';
 
 /**
  * Packet logger options
@@ -22,11 +23,14 @@ export default class PacketLogger {
    * @param {PacketLoggerOpts} opts packet logger options
    */
   constructor(opts) {
+    const validator = new OptionsValidator();
     opts = opts || {};
-    this._fileNumberLimit = opts.fileNumberLimit || 12;
-    this._logFileSizeInHours = opts.logFileSizeInHours || 4;
-    this._compressSpecifications = opts.compressSpecifications !== undefined ? opts.compressSpecifications : true;
-    this._compressPrices = opts.compressPrices !== undefined ? opts.compressPrices : true;
+    this._fileNumberLimit = validator.validateNonZero(opts.fileNumberLimit, 12, 'packetLogger.fileNumberLimit');
+    this._logFileSizeInHours = validator.validateNonZero(opts.logFileSizeInHours, 4,
+      'packetLogger.logFileSizeInHours');
+    this._compressSpecifications = validator.validateBoolean(opts.compressSpecifications, true,
+      'packetLogger.compressSpecifications');
+    this._compressPrices =  validator.validateBoolean(opts.compressPrices, true, 'packetLogger.compressPrices');
     this._previousPrices = {};
     this._lastSNPacket = {};
     this._writeQueue = {};

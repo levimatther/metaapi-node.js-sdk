@@ -4,6 +4,7 @@ import randomstring from 'randomstring';
 import socketIO from 'socket.io-client';
 import TimeoutError from '../timeoutError';
 import {ValidationError, NotFoundError, InternalError, UnauthorizedError, TooManyRequestsError} from '../errorHandler';
+import OptionsValidator from '../optionsValidator';
 import NotSynchronizedError from './notSynchronizedError';
 import NotConnectedError from './notConnectedError';
 import TradeError from './tradeError';
@@ -29,24 +30,29 @@ export default class MetaApiWebsocketClient {
    */
   // eslint-disable-next-line complexity
   constructor(httpClient, token, opts) {
+    const validator = new OptionsValidator();
     opts = opts || {};
-    opts.packetOrderingTimeout = opts.packetOrderingTimeout || 60;
+    opts.packetOrderingTimeout = validator.validateNonZero(opts.packetOrderingTimeout, 60, 'packetOrderingTimeout');
     opts.synchronizationThrottler = opts.synchronizationThrottler || {};
     this._httpClient = httpClient;
     this._application = opts.application || 'MetaApi';
     this._domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
     this._url = `https://mt-client-api-v1.${this._domain}`;
-    this._requestTimeout = (opts.requestTimeout || 60) * 1000;
-    this._connectTimeout = (opts.connectTimeout || 60) * 1000;
+    this._requestTimeout = validator.validateNonZero(opts.requestTimeout, 60, 'requestTimeout') * 1000;
+    this._connectTimeout = validator.validateNonZero(opts.connectTimeout, 60, 'connectTimeout') * 1000;
     const retryOpts = opts.retryOpts || {};
-    this._retries = retryOpts.retries || 5;
-    this._minRetryDelayInSeconds = retryOpts.minDelayInSeconds || 1;
-    this._maxRetryDelayInSeconds = retryOpts.maxDelayInSeconds || 30;
+    this._retries = validator.validateNumber(retryOpts.retries, 5, 'retryOpts.retries');
+    this._minRetryDelayInSeconds = validator.validateNonZero(retryOpts.minDelayInSeconds, 1,
+      'retryOpts.minDelayInSeconds');
+    this._maxRetryDelayInSeconds = validator.validateNonZero(retryOpts.maxDelayInSeconds, 30,
+      'retryOpts.maxDelayInSeconds');
     this._maxAccountsPerInstance = 100;
-    this._subscribeCooldownInSeconds = retryOpts.subscribeCooldownInSeconds || 600;
+    this._subscribeCooldownInSeconds = validator.validateNonZero(retryOpts.subscribeCooldownInSeconds, 600, 
+      'retryOpts.subscribeCooldownInSeconds');
     const eventProcessing = opts.eventProcessing || {};
-    this._sequentialEventProcessing = eventProcessing.sequentialProcessing || false;
-    this._useSharedClientApi = opts.useSharedClientApi || false;
+    this._sequentialEventProcessing = validator.validateBoolean(eventProcessing.sequentialProcessing, false,
+      'eventProcessing.sequentialProcessing');
+    this._useSharedClientApi = validator.validateBoolean(opts.useSharedClientApi, false, 'useSharedClientApi');
     this._token = token;
     this._synchronizationListeners = {};
     this._latencyListeners = [];

@@ -1453,7 +1453,7 @@ describe('MetaApiWebsocketClient', () => {
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId', instanceIndex: 1,
         host: 'ps-mpa-1'}, update));
-      await new Promise(res => setTimeout(res, 50));
+      await new Promise(res => setTimeout(res, 100));
       sinon.assert.calledWith(listener.onAccountInformationUpdated, '1:ps-mpa-1', update.accountInformation);
       sinon.assert.calledWith(listener.onPositionUpdated, '1:ps-mpa-1', update.updatedPositions[0]);
       sinon.assert.calledWith(listener.onPositionRemoved, '1:ps-mpa-1', update.removedPositionIds[0]);

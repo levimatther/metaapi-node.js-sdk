@@ -11,6 +11,7 @@ import MetatraderDemoAccountClient from '../clients/metaApi/metatraderDemoAccoun
 import HistoricalMarketDataClient from '../clients/metaApi/historicalMarketData.client';
 import ConnectionRegistry from './connectionRegistry';
 import {ValidationError} from '../clients/errorHandler';
+import OptionsValidator from '../clients/optionsValidator';
 import LatencyMonitor from './latencyMonitor';
 import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
 
@@ -58,17 +59,20 @@ export default class MetaApi {
    */
   // eslint-disable-next-line complexity
   constructor(token, opts) {
+    const validator = new OptionsValidator();
     opts = opts || {};
     const application = opts.application || 'MetaApi';
     const domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
-    const requestTimeout = opts.requestTimeout || 60;
-    const historicalMarketDataRequestTimeout = opts.historicalMarketDataRequestTimeout || 240;
-    const connectTimeout = opts.connectTimeout || 60;
-    const packetOrderingTimeout = opts.packetOrderingTimeout || 60;
+    const requestTimeout = validator.validateNonZero(opts.requestTimeout, 60, 'requestTimeout');
+    const historicalMarketDataRequestTimeout = validator.validateNonZero(
+      opts.historicalMarketDataRequestTimeout, 240, 'historicalMarketDataRequestTimeout');
+    const connectTimeout = validator.validateNonZero(opts.connectTimeout, 60, 'connectTimeout');
+    const packetOrderingTimeout = validator.validateNonZero(opts.packetOrderingTimeout, 60, 'packetOrderingTimeout');
     const retryOpts = opts.retryOpts || {};
     const packetLogger = opts.packetLogger || {};
     const synchronizationThrottler = opts.synchronizationThrottler || {};
-    const demoAccountRequestTimeout = opts.demoAccountRequestTimeout || 240;
+    const demoAccountRequestTimeout = validator.validateNonZero(opts.demoAccountRequestTimeout, 240,
+      'demoAccountRequestTimeout');
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }

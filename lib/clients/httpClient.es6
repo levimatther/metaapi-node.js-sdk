@@ -5,6 +5,7 @@ import {
   UnauthorizedError, ForbiddenError, ApiError, ValidationError, InternalError, 
   NotFoundError, TooManyRequestsError, ConflictError
 } from './errorHandler';
+import OptionsValidator from './optionsValidator';
 import TimeoutError from './timeoutError';
 
 /**
@@ -26,10 +27,13 @@ export default class HttpClient {
    * @param {RetryOptions} [retryOpts] retry options
    */
   constructor(timeout = 60, retryOpts = {}) {
+    const validator = new OptionsValidator();
     this._timeout = timeout * 1000;
-    this._retries = retryOpts.retries || 5;
-    this._minRetryDelay = (retryOpts.minDelayInSeconds || 1) * 1000;
-    this._maxRetryDelay = (retryOpts.maxDelayInSeconds || 30) * 1000;
+    this._retries = validator.validateNumber(retryOpts.retries, 5, 'retryOpts.retries');
+    this._minRetryDelay = validator.validateNonZero(retryOpts.minDelayInSeconds, 1,
+      'retryOpts.minDelayInSeconds') * 1000;
+    this._maxRetryDelay = validator.validateNonZero(retryOpts.maxDelayInSeconds, 30,
+      'retryOpts.maxDelayInSeconds') * 1000;
   }
 
   /**
