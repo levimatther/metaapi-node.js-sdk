@@ -756,7 +756,9 @@ describe('MetaApiConnection', () => {
    */
   it('should subscribe to market data', async () => {
     sandbox.stub(client, 'subscribeToMarketData').resolves();
-    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
+    let promise = api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
+    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    await promise;
     sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
   });
 
@@ -1004,8 +1006,13 @@ describe('MetaApiConnection', () => {
    * @test {MetaApiConnection#onConnected}
    */
   it('should restore market data subscriptions on synchronization', async () => {
+    let callCount = 0;
     sandbox.stub(api.terminalState, 'price').callsFake((symbol) => {
-      return symbol === 'EURUSD' ? {symbol} : undefined;
+      callCount++;
+      if (callCount === 6) {
+        return undefined;
+      }
+      return {symbol};
     });
     await api.subscribeToMarketData('EURUSD');
     await api.subscribeToMarketData('AUDNZD');

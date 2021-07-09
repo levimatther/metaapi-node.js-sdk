@@ -501,12 +501,13 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
    * note that this feature is not fully implemented on server-side yet
    * @param {Number} instanceIndex instance index
+   * @param {number} [timeoutInSeconds] timeout to wait for prices in seconds, default is 30
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  async subscribeToMarketData(symbol, subscriptions, instanceIndex) {
+  async subscribeToMarketData(symbol, subscriptions, instanceIndex, timeoutInSeconds) {
     this._subscriptions[symbol] = {subscriptions};
     await this._websocketClient.subscribeToMarketData(this._account.id, instanceIndex, symbol, subscriptions);
-    return this.terminalState.waitForPrice(symbol);
+    return this.terminalState.waitForPrice(symbol, timeoutInSeconds);
   }
 
   /**
