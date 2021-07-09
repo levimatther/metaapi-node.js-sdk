@@ -1,6 +1,7 @@
 'use strict';
 
 import TimeoutError from '../timeoutError';
+import OptionsValidator from '../optionsValidator';
 
 /**
  * Options for synchronization throttler
@@ -24,10 +25,14 @@ export default class SynchronizationThrottler {
    * @param {SynchronizationThrottlerOpts} opts synchronization throttler options
    */
   constructor(client, socketInstanceIndex, opts) {
+    const validator = new OptionsValidator();
     opts = opts || {};
-    this._maxConcurrentSynchronizations = opts.maxConcurrentSynchronizations || 15;
-    this._queueTimeoutInSeconds = opts.queueTimeoutInSeconds || 300;
-    this._synchronizationTimeoutInSeconds = opts.synchronizationTimeoutInSeconds || 10;
+    this._maxConcurrentSynchronizations = validator.validateNonZero(opts.maxConcurrentSynchronizations, 15,
+      'synchronizationThrottler.maxConcurrentSynchronizations');
+    this._queueTimeoutInSeconds = validator.validateNonZero(opts.queueTimeoutInSeconds, 300,
+      'synchronizationThrottler.queueTimeoutInSeconds');
+    this._synchronizationTimeoutInSeconds = validator.validateNonZero(opts.synchronizationTimeoutInSeconds, 10,
+      'synchronizationThrottler.synchronizationTimeoutInSeconds');
     this._client = client;
     this._socketInstanceIndex = socketInstanceIndex;
     this._synchronizationIds = {};
