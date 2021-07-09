@@ -13,6 +13,7 @@ export default class TerminalState extends SynchronizationListener {
   constructor() {
     super();
     this._stateByInstanceIndex = {};
+    this._waitForPriceResolves = {};
   }
 
   /**
@@ -82,6 +83,23 @@ export default class TerminalState extends SynchronizationListener {
    */
   price(symbol) {
     return this._getBestState().pricesBySymbol[symbol];
+  }
+
+  /**
+   * Waits for price to be received
+   * @param {string} symbol symbol (e.g. currency pair or an index)
+   * @param {number} [timeoutInSeconds] timeout in seconds, default is 30
+   * @return {Promise<MetatraderSymbolPrice>} promise resolving with price or undefined if price has not been received
+   */
+  async waitForPrice(symbol, timeoutInSeconds = 30) {
+    this._waitForPriceResolves[symbol] = this._waitForPriceResolves[symbol] || [];
+    if (!this.price(symbol)) {
+      await Promise.race([
+        new Promise(res => this._waitForPriceResolves[symbol].push(res)),
+        new Promise(res => setTimeout(res, timeoutInSeconds * 1000))
+      ]);
+    }
+    return this.price(symbol);
   }
 
   /**
@@ -294,6 +312,13 @@ export default class TerminalState extends SynchronizationListener {
       for (let order of orders) {
         order.currentPrice = order.type === 'ORDER_TYPE_BUY' || order.type === 'ORDER_TYPE_BUY_LIMIT' ||
           order.type === 'ORDER_TYPE_BUY_STOP' || order.type === 'ORDER_TYPE_BUY_STOP_LIMIT' ? price.ask : price.bid;
+      }
+      let priceResolves = this._waitForPriceResolves[price.symbol] || [];
+      if (priceResolves.length) {
+        for (let resolve of priceResolves) {
+          resolve();
+        }
+        delete this._waitForPriceResolves[price.symbol];
       }
     }
     if (state.accountInformation) {

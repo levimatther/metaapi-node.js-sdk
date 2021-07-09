@@ -116,6 +116,17 @@ describe('TerminalState', () => {
 
   /**
    * @test {TerminalState#onSymbolPricesUpdated}
+   * @test {TerminalState#price}
+   */
+  it('should wait for price', async () => {
+    should.not.exist(state.price('EURUSD'));
+    let promise = state.waitForPrice('EURUSD');
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    (await promise).should.match({symbol: 'EURUSD', bid: 1, ask: 1.1});
+  });
+
+  /**
+   * @test {TerminalState#onSymbolPricesUpdated}
    * @test {TerminalState#accountInformation}
    * @test {TerminalState#positions}
    */

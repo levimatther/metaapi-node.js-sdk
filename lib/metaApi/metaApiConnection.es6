@@ -503,9 +503,10 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {Number} instanceIndex instance index
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(symbol, subscriptions, instanceIndex) {
+  async subscribeToMarketData(symbol, subscriptions, instanceIndex) {
     this._subscriptions[symbol] = {subscriptions};
-    return this._websocketClient.subscribeToMarketData(this._account.id, instanceIndex, symbol, subscriptions);
+    await this._websocketClient.subscribeToMarketData(this._account.id, instanceIndex, symbol, subscriptions);
+    return this.terminalState.waitForPrice(symbol);
   }
 
   /**
