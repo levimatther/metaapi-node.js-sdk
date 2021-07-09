@@ -240,7 +240,7 @@ export default class MetaApiWebsocketClient {
       const isSharedClientApi = socketInstance.io.uri === this._url;
       // eslint-disable-next-line no-console
       console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connected to the MetaApi server '+
-        `via ${socketInstance.io.uri} via ${isSharedClientApi ? 'shared' : 'dedicated'} server`);
+        `via ${socketInstance.io.uri} ${isSharedClientApi ? 'shared' : 'dedicated'} server`);
       if (socketInstanceIndex === 0 && firstConnect && !isSharedClientApi) {
         console.log('Please note that it can take up to 3 minutes for your dedicated server to start for the ' +
         'first time. During this time it is OK if you see some connection errors.');
