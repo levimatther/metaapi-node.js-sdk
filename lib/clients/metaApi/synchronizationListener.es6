@@ -76,12 +76,21 @@ export default class SynchronizationListener {
   async onAccountInformationUpdated(instanceIndex, accountInformation) {}
 
   /**
-   * Invoked when the positions are replaced as a result of initial terminal state synchronization
+   * Invoked when the positions are replaced as a result of initial terminal state synchronization. This method
+   * will be invoked only if server thinks the data was updated, otherwise invocation can be skipped
    * @param {String} instanceIndex index of an account instance connected
    * @param {Array<MetatraderPosition>} positions updated array of positions
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onPositionsReplaced(instanceIndex, positions) {}
+
+  /**
+   * Invoked when position synchronization fnished to indicate progress of an initial terminal state synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onPositionsSynchronized(instanceIndex, synchronizationId) {}
 
   /**
    * Invoked when MetaTrader position is updated
@@ -100,28 +109,38 @@ export default class SynchronizationListener {
   async onPositionRemoved(instanceIndex, positionId) {}
 
   /**
-   * Invoked when the orders are replaced as a result of initial terminal state synchronization
+   * Invoked when the pending orders are replaced as a result of initial terminal state synchronization. This method
+   * will be invoked only if server thinks the data was updated, otherwise invocation can be skipped
    * @param {String} instanceIndex index of an account instance connected
-   * @param {Array<MetatraderOrder>} orders updated array of orders
+   * @param {Array<MetatraderOrder>} orders updated array of pending orders
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onOrdersReplaced(instanceIndex, orders) {}
+  async onPendingOrdersReplaced(instanceIndex, orders) {}
 
   /**
-   * Invoked when MetaTrader order is updated
+   * Invoked when MetaTrader pending order is updated
    * @param {String} instanceIndex index of an account instance connected
-   * @param {MetatraderOrder} order updated MetaTrader order
+   * @param {MetatraderOrder} order updated MetaTrader pending order
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onOrderUpdated(instanceIndex, order) {}
+  async onPendingOrderUpdated(instanceIndex, order) {}
 
   /**
-   * Invoked when MetaTrader order is completed (executed or canceled)
+   * Invoked when MetaTrader pending order is completed (executed or canceled)
    * @param {String} instanceIndex index of an account instance connected
-   * @param {String} orderId completed MetaTrader order id
+   * @param {String} orderId completed MetaTrader pending order id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onOrderCompleted(instanceIndex, orderId) {}
+  async onPendingOrderCompleted(instanceIndex, orderId) {}
+
+  /**
+   * Invoked when pending order synchronization fnished to indicate progress of an initial terminal state
+   * synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onPendingOrdersSynchronized(instanceIndex, synchronizationId) {}
 
   /**
    * Invoked when a new MetaTrader history order is added
@@ -132,6 +151,15 @@ export default class SynchronizationListener {
   async onHistoryOrderAdded(instanceIndex, historyOrder) {}
 
   /**
+   * Invoked when a synchronization of history orders on a MetaTrader account have finished to indicate progress of an
+   * initial terminal state synchronization
+   * @param {String} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onHistoryOrdersSynchronized(instanceIndex, synchronizationId) {}
+
+  /**
    * Invoked when a new MetaTrader history deal is added
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
@@ -140,20 +168,13 @@ export default class SynchronizationListener {
   async onDealAdded(instanceIndex, deal) {}
 
   /**
-   * Invoked when a synchronization of history deals on a MetaTrader account have finished
+   * Invoked when a synchronization of history deals on a MetaTrader account have finished to indicate progress of an
+   * initial terminal state synchronization
    * @param {String} instanceIndex index of an account instance connected
    * @param {String} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onDealSynchronizationFinished(instanceIndex, synchronizationId) {}
-
-  /**
-   * Invoked when a synchronization of history orders on a MetaTrader account have finished
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} synchronizationId synchronization request id
-   * @return {Promise} promise which resolves when the asynchronous event is processed
-   */
-  async onOrderSynchronizationFinished(instanceIndex, synchronizationId) {}
+  async onDealsSynchronized(instanceIndex, synchronizationId) {}
 
   /**
    * Invoked when a symbol specification was updated
