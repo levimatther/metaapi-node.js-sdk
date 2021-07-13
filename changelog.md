@@ -1,15 +1,3 @@
-14.0.0
-  - breaking change: refactored SynchronizationListener class, namely:
-    - added onPositionsSynchronized method
-    - onPositionsReplaced is now invoked during synchronization only if server thinks terminal data have changed
-    - added onPendingOrdersSynchronized method
-    - onPendingOrdersReplaced is now invoked during synchronization only if server thinks terminal data have changed
-    - onOrdersReplaced was renamed to onPendingOrdersReplaced
-    - onOrderUpdated was renamed to onPendingOrderUpdated
-    - onOrderCompleted was renamed to onPendingOrderCompleted
-    - onOrderSynchronizationFinished was renamed to onHistoryOrdersSynchronized
-    - onDealSynchronizationFinished was renamed to onDealsSynchronized
-
 13.2.0
   - added options validation
   - added waitForPrice method into TerminalState class to make it possible to wait for price to arrive
