@@ -393,13 +393,15 @@ sequentialProcessing.forEach(param => {
       await new Promise(res => setTimeout(res, 50)); 
       fakeServer.enableSync(server);
       server.disconnect();
-      await clock.tickAsync(7000);
+      await clock.tickAsync(8000);
       await new Promise(res => setTimeout(res, 50)); 
       connection.synchronized.should.equal(false);
-      (connection2.synchronized && connection2.terminalState.connected 
-      && connection2.terminalState.connectedToBroker).should.equal(true);
-      (connection2.synchronized && connection2.terminalState.connected 
-        && connection2.terminalState.connectedToBroker).should.equal(true);
+      connection2.synchronized.should.equal(true);
+      connection2.terminalState.connected.should.equal(true);
+      connection2.terminalState.connectedToBroker.should.equal(true);
+      connection3.synchronized.should.equal(true);
+      connection3.terminalState.connected.should.equal(true);
+      connection3.terminalState.connectedToBroker.should.equal(true);
     });
 
     it('should limit subscriptions during per user 429 error', async () => {

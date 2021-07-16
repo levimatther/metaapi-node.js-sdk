@@ -2098,4 +2098,74 @@ describe('MetaApiWebsocketClient', () => {
     clock.restore();
   });
 
+  /**
+   * @test {MetaApiWebsocketClient#queuePacket}
+   */
+  it('should process packets in order', async () => {
+    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
+    let ordersCallTime = 0;
+    let positionsCallTime = 0;
+    let disconnectedCallTime = 0;
+    let listener = {
+      onConnected: () => {},
+      onDisconnected: async () => {
+        console.log('onDisconnected');
+        await new Promise(res => setTimeout(res, 5000));
+        disconnectedCallTime = Date.now();
+      },
+      onOrdersReplaced: async () => {
+        console.log('onOrdersReplaced');
+        await new Promise(res => setTimeout(res, 10000));
+        ordersCallTime = Date.now();
+      },
+      onPositionsReplaced: async () => {
+        console.log('onPositionsReplaced');
+        await new Promise(res => setTimeout(res, 1000));
+        positionsCallTime = Date.now();
+      },
+    };
+    let resolve;
+    let promise = new Promise(res => resolve = res);
+    client.close();
+    io.close(() => resolve());
+    await promise;
+    io = new Server(6785, {path: '/ws', pingTimeout: 1000000});
+    sandbox.stub(httpClient, 'request').resolves({url: 'http://localhost:6785'});
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false,
+      retryOpts: { retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5},
+      eventProcessing: {sequentialProcessing: true}});
+    io.on('connect', socket => {
+      server = socket;
+      if (socket.request._query['auth-token'] !== 'token') {
+        socket.emit({error: 'UnauthorizedError', message: 'Authorization token invalid'});
+        socket.close();
+      }
+      server.on('request', data => {
+        if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'RPC') {
+          server.emit('response', {type: 'response', accountId: data.accountId, 
+            requestId: data.requestId, positions: []});
+        }
+      });
+    });
+    await client.getPositions('accountId');
+    client.addSynchronizationListener('accountId', listener);
+    server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+      instanceIndex: 1, replicas: 2});
+    await new Promise(res => setTimeout(res, 50));
+    await clock.tickAsync(59000);
+    server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders: [], instanceIndex: 1,
+      host: 'ps-mpa-1'});
+    await new Promise(res => setTimeout(res, 50));
+    await clock.tickAsync(3000);
+    server.emit('synchronization', {type: 'positions', accountId: 'accountId', positions: [], instanceIndex: 1,
+      host: 'ps-mpa-1'});
+    await new Promise(res => setTimeout(res, 50));
+    await clock.tickAsync(20000);
+    await new Promise(res => setTimeout(res, 50));
+    (disconnectedCallTime).should.be.above(ordersCallTime);
+    (positionsCallTime).should.be.above(disconnectedCallTime);
+    clock.restore();
+  });
+
 });
