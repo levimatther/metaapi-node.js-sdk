@@ -1031,12 +1031,13 @@ export default class MetaApiWebsocketClient {
     const accountId = packet.accountId;
     const packets = this._packetOrderer.restoreOrder(packet);
     if(this._sequentialEventProcessing) {
-      const events = packets.map(packetItem => Promise.resolve(this._processSynchronizationPacket(packetItem)));
+      const events = packets.map(packetItem => () => 
+        Promise.resolve(this._processSynchronizationPacket(packetItem)));
       if (!this._eventQueues[accountId]) {
         this._eventQueues[accountId] = events;
         this._callAccountEvents(accountId);
       } else {
-        this._eventQueues[accountId].concat(events);
+        this._eventQueues[accountId] = this._eventQueues[accountId].concat(events);
       }
     } else {
       packets.forEach(packetItem => this._processSynchronizationPacket(packetItem));
@@ -1056,13 +1057,15 @@ export default class MetaApiWebsocketClient {
       } else {
         this._eventQueues[accountId].push(event);
       }
+    } else {
+      event();
     }
   }
 
   async _callAccountEvents(accountId) {
     if(this._eventQueues[accountId]) {
       while(this._eventQueues[accountId].length) {
-        await this._eventQueues[accountId][0];
+        await this._eventQueues[accountId][0]();
         this._eventQueues[accountId].shift();
       }
       delete this._eventQueues[accountId];
@@ -1455,7 +1458,7 @@ export default class MetaApiWebsocketClient {
           if(isOnlyActiveInstance()) {
             this._subscriptionManager.onTimeout(data.accountId, instanceNumber);
           }
-          this.queueEvent(data.accountId, Promise.resolve(onDisconnected(true)));
+          this.queueEvent(data.accountId, () => Promise.resolve(onDisconnected(true)));
         }, 60000);
       };
 
@@ -1891,7 +1894,7 @@ export default class MetaApiWebsocketClient {
       this._packetOrderer.onReconnected(reconnectAccountIds);
 
       for (let listener of reconnectListeners) {
-        this.queueEvent(listener.accountId, Promise.resolve(listener.listener.onReconnected())
+        this.queueEvent(listener.accountId, () => Promise.resolve(listener.listener.onReconnected())
           // eslint-disable-next-line no-console
           .catch(err => 
             console.error('[' + (new Date()).toISOString() + '] Failed to notify reconnect listener', err)));
