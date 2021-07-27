@@ -75,6 +75,7 @@ async function testMetaApiSynchronization() {
     console.log('orders:', terminalState.orders);
     console.log('specifications:', terminalState.specifications);
     console.log('EURUSD specification:', terminalState.specification('EURUSD'));
+    await connection.subscribeToMarketData('EURUSD');
     console.log('EURUSD price:', terminalState.price('EURUSD'));
 
     // trade
