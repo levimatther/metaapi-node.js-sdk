@@ -414,6 +414,7 @@ export default class TerminalState extends SynchronizationListener {
     };
   }
 
+  // eslint-disable-next-line complexity
   _getBestState() {
     let result;
     let maxUpdateTime;
