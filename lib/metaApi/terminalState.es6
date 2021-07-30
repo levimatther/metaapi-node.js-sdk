@@ -156,7 +156,7 @@ export default class TerminalState extends SynchronizationListener {
   onAccountInformationUpdated(instanceIndex, accountInformation) {
     let state = this._getState(instanceIndex);
     state.accountInformation = accountInformation;
-    state.initializationCounter++;
+    state.initializationCounter = 1;
   }
 
   /**
@@ -170,7 +170,7 @@ export default class TerminalState extends SynchronizationListener {
     state.positions = positions;
     state.removedPositions = {};
     state.positionsInitialized = true;
-    state.initializationCounter++;
+    state.initializationCounter = 2;
   }
 
   /**
@@ -219,7 +219,7 @@ export default class TerminalState extends SynchronizationListener {
     state.orders = orders;
     state.completedOrders = {};
     state.ordersInitialized = true;
-    state.initializationCounter++;
+    state.initializationCounter = 3;
   }
 
   /**
@@ -278,7 +278,7 @@ export default class TerminalState extends SynchronizationListener {
     for (let symbol of removedSymbols) {
       delete state.specificationsBySymbol[symbol];
     }
-    state.initializationCounter++;
+    state.specificationCount = Object.keys(state.specifications).length;
   }
 
   /**
@@ -409,7 +409,8 @@ export default class TerminalState extends SynchronizationListener {
       ordersInitialized: false,
       positionsInitialized: false,
       lastUpdateTime: 0,
-      initializationCounter: 0
+      initializationCounter: 0,
+      specificationCount: 0
     };
   }
 
@@ -417,11 +418,16 @@ export default class TerminalState extends SynchronizationListener {
     let result;
     let maxUpdateTime;
     let maxInitializationCounter;
+    let maxSpecificationCount;
     for (let state of Object.values(this._stateByInstanceIndex)) {
-      if (!maxUpdateTime || maxUpdateTime < state.lastUpdateTime ||
-        maxUpdateTime === state.lastUpdateTime && maxInitializationCounter < state.initializationCounter) {
+      if (!maxUpdateTime || maxInitializationCounter < state.initializationCounter ||
+        maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 3 &&
+        maxUpdateTime < state.lastUpdateTime ||
+        maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 0 &&
+        maxSpecificationCount < state.specificationCount) {
         maxUpdateTime = state.lastUpdateTime;
         maxInitializationCounter = state.initializationCounter;
+        maxSpecificationCount = state.specificationCount;
         result = state;
       }
     }
