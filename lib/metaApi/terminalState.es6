@@ -156,7 +156,7 @@ export default class TerminalState extends SynchronizationListener {
   onAccountInformationUpdated(instanceIndex, accountInformation) {
     let state = this._getState(instanceIndex);
     state.accountInformation = accountInformation;
-    state.lastUpdateTime = Math.max(1, state.lastUpdateTime);
+    state.initializationCounter++;
   }
 
   /**
@@ -170,6 +170,7 @@ export default class TerminalState extends SynchronizationListener {
     state.positions = positions;
     state.removedPositions = {};
     state.positionsInitialized = true;
+    state.initializationCounter++;
   }
 
   /**
@@ -218,6 +219,7 @@ export default class TerminalState extends SynchronizationListener {
     state.orders = orders;
     state.completedOrders = {};
     state.ordersInitialized = true;
+    state.initializationCounter++;
   }
 
   /**
@@ -276,6 +278,7 @@ export default class TerminalState extends SynchronizationListener {
     for (let symbol of removedSymbols) {
       delete state.specificationsBySymbol[symbol];
     }
+    state.initializationCounter++;
   }
 
   /**
@@ -405,16 +408,20 @@ export default class TerminalState extends SynchronizationListener {
       removedPositions: {},
       ordersInitialized: false,
       positionsInitialized: false,
-      lastUpdateTime: 0
+      lastUpdateTime: 0,
+      initializationCounter: 0
     };
   }
 
   _getBestState() {
     let result;
     let maxUpdateTime;
+    let maxInitializationCounter;
     for (let state of Object.values(this._stateByInstanceIndex)) {
-      if (!maxUpdateTime || maxUpdateTime < state.lastUpdateTime) {
+      if (!maxUpdateTime || maxUpdateTime < state.lastUpdateTime ||
+        maxUpdateTime === state.lastUpdateTime && maxInitializationCounter < state.initializationCounter) {
         maxUpdateTime = state.lastUpdateTime;
+        maxInitializationCounter = state.initializationCounter;
         result = state;
       }
     }
