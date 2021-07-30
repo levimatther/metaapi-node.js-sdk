@@ -1030,7 +1030,7 @@ export default class MetaApiWebsocketClient {
   queuePacket(packet) {
     const accountId = packet.accountId;
     const packets = this._packetOrderer.restoreOrder(packet);
-    if(this._sequentialEventProcessing) {
+    if(this._sequentialEventProcessing && packet.sequenceNumber !== undefined) {
       const events = packets.map(packetItem => () => 
         Promise.resolve(this._processSynchronizationPacket(packetItem)));
       if (!this._eventQueues[accountId]) {

@@ -2106,22 +2106,24 @@ describe('MetaApiWebsocketClient', () => {
     let ordersCallTime = 0;
     let positionsCallTime = 0;
     let disconnectedCallTime = 0;
+    let pricesCallTime = 0;
     let listener = {
       onConnected: () => {},
       onDisconnected: async () => {
-        console.log('onDisconnected');
         await new Promise(res => setTimeout(res, 5000));
         disconnectedCallTime = Date.now();
       },
       onOrdersReplaced: async () => {
-        console.log('onOrdersReplaced');
         await new Promise(res => setTimeout(res, 10000));
         ordersCallTime = Date.now();
       },
       onPositionsReplaced: async () => {
-        console.log('onPositionsReplaced');
         await new Promise(res => setTimeout(res, 1000));
         positionsCallTime = Date.now();
+      },
+      onSymbolPricesUpdated: async () => {
+        await new Promise(res => setTimeout(res, 1000));
+        pricesCallTime = Date.now();
       },
     };
     let resolve;
@@ -2150,19 +2152,26 @@ describe('MetaApiWebsocketClient', () => {
     });
     await client.getPositions('accountId');
     client.addSynchronizationListener('accountId', listener);
+    sandbox.stub(client._packetOrderer, 'restoreOrder').callsFake((arg) => {
+      return [arg];
+    });
     server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
-      instanceIndex: 1, replicas: 2});
+      instanceIndex: 1, replicas: 2, sequenceNumber: 1});
     await new Promise(res => setTimeout(res, 50));
     await clock.tickAsync(59000);
     server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders: [], instanceIndex: 1,
-      host: 'ps-mpa-1'});
+      host: 'ps-mpa-1', sequenceNumber: 2});
+    server.emit('synchronization', {type: 'prices', accountId: 'accountId', prices: [{symbol: 'EURUSD'}], 
+      instanceIndex: 1, host: 'ps-mpa-1', equity: 100, margin: 200, freeMargin: 400, marginLevel: 40000});
     await new Promise(res => setTimeout(res, 50));
     await clock.tickAsync(3000);
     server.emit('synchronization', {type: 'positions', accountId: 'accountId', positions: [], instanceIndex: 1,
-      host: 'ps-mpa-1'});
+      host: 'ps-mpa-1', sequenceNumber: 3});
     await new Promise(res => setTimeout(res, 50));
     await clock.tickAsync(20000);
     await new Promise(res => setTimeout(res, 50));
+    pricesCallTime.should.not.eql(0);
+    (ordersCallTime).should.be.above(pricesCallTime);
     (disconnectedCallTime).should.be.above(ordersCallTime);
     (positionsCallTime).should.be.above(disconnectedCallTime);
     clock.restore();
