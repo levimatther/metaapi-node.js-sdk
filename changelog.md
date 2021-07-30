@@ -1,4 +1,4 @@
-13.2.4
+13.2.5
   - fixed terminal state access during initial synchronization
 
 13.2.1

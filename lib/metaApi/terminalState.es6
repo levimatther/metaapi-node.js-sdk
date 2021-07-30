@@ -417,11 +417,11 @@ export default class TerminalState extends SynchronizationListener {
   // eslint-disable-next-line complexity
   _getBestState() {
     let result;
-    let maxUpdateTime;
-    let maxInitializationCounter;
-    let maxSpecificationCount;
+    let maxUpdateTime = -1;
+    let maxInitializationCounter = -1;
+    let maxSpecificationCount = -1;
     for (let state of Object.values(this._stateByInstanceIndex)) {
-      if (!maxUpdateTime || maxInitializationCounter < state.initializationCounter ||
+      if (maxInitializationCounter < state.initializationCounter ||
         maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 3 &&
         maxUpdateTime < state.lastUpdateTime ||
         maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 0 &&
