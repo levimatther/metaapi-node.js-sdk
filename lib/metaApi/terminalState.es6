@@ -154,7 +154,9 @@ export default class TerminalState extends SynchronizationListener {
    * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
    */
   onAccountInformationUpdated(instanceIndex, accountInformation) {
-    this._getState(instanceIndex).accountInformation = accountInformation;
+    let state = this._getState(instanceIndex);
+    state.accountInformation = accountInformation;
+    state.lastUpdateTime = Math.max(1, state.lastUpdateTime);
   }
 
   /**

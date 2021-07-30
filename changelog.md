@@ -1,3 +1,6 @@
+13.2.2
+  - fixed terminal state access during initial synchronization
+
 13.2.1
   - fixed sequential packet processing
 
