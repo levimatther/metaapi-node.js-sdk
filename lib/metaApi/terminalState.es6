@@ -321,7 +321,9 @@ export default class TerminalState extends SynchronizationListener {
       let priceResolves = this._waitForPriceResolves[price.symbol] || [];
       if (priceResolves.length) {
         for (let resolve of priceResolves) {
-          resolve();
+          if (instanceIndex === this._getBestState().instanceIndex) {
+            resolve();
+          }
         }
         delete this._waitForPriceResolves[price.symbol];
       }
@@ -389,13 +391,14 @@ export default class TerminalState extends SynchronizationListener {
   
   _getState(instanceIndex) {
     if (!this._stateByInstanceIndex['' + instanceIndex]) {
-      this._stateByInstanceIndex['' + instanceIndex] = this._constructTerminalState();
+      this._stateByInstanceIndex['' + instanceIndex] = this._constructTerminalState(instanceIndex);
     }
     return this._stateByInstanceIndex['' + instanceIndex];
   }
 
-  _constructTerminalState() {
+  _constructTerminalState(instanceIndex) {
     return {
+      instanceIndex,
       connected: false,
       connectedToBroker: false,
       accountInformation: undefined,
