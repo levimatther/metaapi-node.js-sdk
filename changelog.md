@@ -1,3 +1,6 @@
+13.2.6
+  - fixed waiting for prices in terminal state
+
 13.2.5
   - fixed terminal state access during initial synchronization
 
