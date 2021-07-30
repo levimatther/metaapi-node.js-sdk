@@ -1,3 +1,6 @@
+13.2.7
+  - immediately process packets without sequence number
+
 13.2.6
   - fixed waiting for prices in terminal state
 
