@@ -1,3 +1,6 @@
+13.2.8
+  - fixed selecting best terminal state for price and specification access
+
 13.2.7
   - immediately process packets without sequence number
 

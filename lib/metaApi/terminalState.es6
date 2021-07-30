@@ -73,7 +73,7 @@ export default class TerminalState extends SynchronizationListener {
    * symbol is not found
    */
   specification(symbol) {
-    return this._getBestState().specificationsBySymbol[symbol];
+    return this._getBestState(symbol).specificationsBySymbol[symbol];
   }
 
   /**
@@ -82,7 +82,7 @@ export default class TerminalState extends SynchronizationListener {
    * @return {MetatraderSymbolPrice} MetatraderSymbolPrice found or undefined if price for a symbol is not found
    */
   price(symbol) {
-    return this._getBestState().pricesBySymbol[symbol];
+    return this._getBestState(symbol).pricesBySymbol[symbol];
   }
 
   /**
@@ -321,9 +321,7 @@ export default class TerminalState extends SynchronizationListener {
       let priceResolves = this._waitForPriceResolves[price.symbol] || [];
       if (priceResolves.length) {
         for (let resolve of priceResolves) {
-          if (instanceIndex === this._getBestState().instanceIndex) {
-            resolve();
-          }
+          resolve();
         }
         delete this._waitForPriceResolves[price.symbol];
       }
@@ -418,7 +416,7 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   // eslint-disable-next-line complexity
-  _getBestState() {
+  _getBestState(symbol) {
     let result;
     let maxUpdateTime = -1;
     let maxInitializationCounter = -1;
@@ -429,10 +427,12 @@ export default class TerminalState extends SynchronizationListener {
         maxUpdateTime < state.lastUpdateTime ||
         maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 0 &&
         maxSpecificationCount < state.specificationCount) {
-        maxUpdateTime = state.lastUpdateTime;
-        maxInitializationCounter = state.initializationCounter;
-        maxSpecificationCount = state.specificationCount;
-        result = state;
+        if (!symbol || state.specificationsBySymbol[symbol] && state.pricesBySymbol[symbol]) {
+          maxUpdateTime = state.lastUpdateTime;
+          maxInitializationCounter = state.initializationCounter;
+          maxSpecificationCount = state.specificationCount;
+          result = state;
+        }
       }
     }
     return result || this._constructTerminalState();

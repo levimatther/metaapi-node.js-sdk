@@ -79,6 +79,7 @@ async function streamQuotes() {
       {type: 'ticks'},
       {type: 'marketDepth', intervalInMilliseconds: 5000}
     ]);
+    console.log('Price after subscribe:', connection.terminalState.price(symbol));
 
     console.log('[' + (new Date().toISOString()) + '] Synchronized successfully, streaming ' + symbol +
       ' market data now...');
