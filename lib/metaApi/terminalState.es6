@@ -73,7 +73,7 @@ export default class TerminalState extends SynchronizationListener {
    * symbol is not found
    */
   specification(symbol) {
-    return this._getBestState(symbol).specificationsBySymbol[symbol];
+    return this._getBestState(symbol, 'specification').specificationsBySymbol[symbol];
   }
 
   /**
@@ -82,7 +82,7 @@ export default class TerminalState extends SynchronizationListener {
    * @return {MetatraderSymbolPrice} MetatraderSymbolPrice found or undefined if price for a symbol is not found
    */
   price(symbol) {
-    return this._getBestState(symbol).pricesBySymbol[symbol];
+    return this._getBestState(symbol, 'price').pricesBySymbol[symbol];
   }
 
   /**
@@ -416,7 +416,7 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   // eslint-disable-next-line complexity
-  _getBestState(symbol) {
+  _getBestState(symbol, mode = 'default') {
     let result;
     let maxUpdateTime = -1;
     let maxInitializationCounter = -1;
@@ -427,7 +427,8 @@ export default class TerminalState extends SynchronizationListener {
         maxUpdateTime < state.lastUpdateTime ||
         maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 0 &&
         maxSpecificationCount < state.specificationCount) {
-        if (!symbol || state.specificationsBySymbol[symbol] && state.pricesBySymbol[symbol]) {
+        if (!symbol || (mode === 'specification' && state.specificationsBySymbol[symbol]) ||
+          (mode === 'price' && state.pricesBySymbol[symbol])) {
           maxUpdateTime = state.lastUpdateTime;
           maxInitializationCounter = state.initializationCounter;
           maxSpecificationCount = state.specificationCount;
