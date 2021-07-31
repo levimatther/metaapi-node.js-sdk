@@ -329,8 +329,10 @@ export default class MetaApiWebsocketClient {
           await this._packetLogger.logPacket(data);
         }
         this._convertIsoTimeToDate(data);
-        this.queuePacket(data);
+      } else {
+        data.type = 'noop';
       }
+      this.queuePacket(data);
     });
     return result;
   }
@@ -1029,7 +1031,7 @@ export default class MetaApiWebsocketClient {
    */
   queuePacket(packet) {
     const accountId = packet.accountId;
-    const packets = this._packetOrderer.restoreOrder(packet);
+    const packets = this._packetOrderer.restoreOrder(packet).filter(p => p.type !== 'noop');
     if(this._sequentialEventProcessing && packet.sequenceNumber !== undefined) {
       const events = packets.map(packetItem => () => 
         Promise.resolve(this._processSynchronizationPacket(packetItem)));
