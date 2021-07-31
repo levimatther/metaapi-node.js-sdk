@@ -2177,4 +2177,36 @@ describe('MetaApiWebsocketClient', () => {
     clock.restore();
   });
 
+  /**
+   * @test {MetaApiWebsocketClient#queuePacket}
+   */
+  it('should not process old synchronization packet without gaps in sequence numbers', async () => {
+    let listener = {
+      onSynchronizationStarted: sinon.fake(),
+      onOrdersReplaced: sinon.fake(),
+    };
+    client.addSynchronizationListener('accountId', listener);
+    sandbox.stub(client._packetOrderer, 'restoreOrder').callsFake(arg => [arg]);
+
+    sandbox.stub(client._socketInstances[0].synchronizationThrottler, 'activeSynchronizationIds').get(() => ['ABC']);
+    server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
+      sequenceNumber: 1, sequenceTimestamp: 1603124267178, synchronizationId: 'ABC'});
+    server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders: [],
+      sequenceNumber: 2, sequenceTimestamp: 1603124267181, synchronizationId: 'ABC'});
+    await new Promise(res => setTimeout(res, 50));
+    sinon.assert.calledOnce(listener.onSynchronizationStarted);
+    sinon.assert.calledOnce(listener.onOrdersReplaced);
+
+    sandbox.stub(client._socketInstances[0].synchronizationThrottler, 'activeSynchronizationIds').get(() => ['DEF']);
+    server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
+      sequenceNumber: 3, sequenceTimestamp: 1603124267190, synchronizationId: 'DEF'});
+    server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders: [],
+      sequenceNumber: 4, sequenceTimestamp: 1603124267192, synchronizationId: 'ABC'});
+    server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders: [],
+      sequenceNumber: 5, sequenceTimestamp: 1603124267195, synchronizationId: 'DEF'});
+    await new Promise(res => setTimeout(res, 50));
+    sinon.assert.calledTwice(listener.onSynchronizationStarted);
+    sinon.assert.calledTwice(listener.onOrdersReplaced);
+  });
+
 });

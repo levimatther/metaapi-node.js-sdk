@@ -1,3 +1,6 @@
+13.2.9
+  - fixed out of order synchronization packets came from the previous synchronizations
+
 13.2.8
   - fixed selecting best terminal state for price and specification access
 
