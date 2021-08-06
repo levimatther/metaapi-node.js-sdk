@@ -1,6 +1,6 @@
 'use strict';
 
-import md5 from 'md5';
+import crypto from 'crypto-js';
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 
 /**
@@ -566,7 +566,7 @@ export default class TerminalState extends SynchronizationListener {
     } else if(accountType === 'cloud-g2') {
       jsonItem = JSON.stringify(obj);
     }
-    return md5(jsonItem);
+    return crypto.MD5(jsonItem).toString();
   }
   
 }
