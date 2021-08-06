@@ -9,10 +9,13 @@ export default class ConnectionRegistry {
    * Constructs a MetaTrader connection registry instance
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
    * @param {String} application application id
+   * @param {String} refreshSubscriptionsOpts subscriptions refresh options
    */
-  constructor(metaApiWebsocketClient, application = 'MetaApi') {
+  constructor(metaApiWebsocketClient, application = 'MetaApi', refreshSubscriptionsOpts) {
+    refreshSubscriptionsOpts = refreshSubscriptionsOpts || {};
     this._metaApiWebsocketClient = metaApiWebsocketClient;
     this._application = application;
+    this._refreshSubscriptionsOpts = refreshSubscriptionsOpts;
     this._connections = {};
     this._connectionLocks = {};
   }
@@ -36,7 +39,7 @@ export default class ConnectionRegistry {
       let connectionLockResolve;
       this._connectionLocks[account.id] = {promise: new Promise(res => connectionLockResolve = res)};
       const connection = new MetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
-        historyStartTime);
+        historyStartTime, this._refreshSubscriptionsOpts);
       try {
         await connection.initialize();
         await connection.subscribe();

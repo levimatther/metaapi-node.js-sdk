@@ -1,5 +1,6 @@
 'use strict';
 
+import md5 from 'md5';
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 
 /**
@@ -64,6 +65,73 @@ export default class TerminalState extends SynchronizationListener {
    */
   get specifications() {
     return this._getBestState().specifications;
+  }
+
+  /**
+   * Returns hashes of terminal state data for incremental synchronization
+   * @param {String} accountType account type
+   * @returns {Object} hashes of terminal state data
+   */
+  getHashes(accountType) {
+
+    const sortByKey = (obj1, obj2, key) => {
+      if(obj1[key] < obj2[key]) {
+        return -1;
+      }
+      if(obj1[key] > obj2[key]) {
+        return 1;
+      }
+      return 0;
+    };
+    const specifications = JSON.parse(JSON.stringify(this.specifications));
+    specifications.sort((a,b) => sortByKey(a, b, 'symbol'));
+    if(accountType === 'cloud-g1') {
+      specifications.forEach(specification => {
+        delete specification.description;
+      });
+    }
+    const specificationsHash = this._getHash(specifications, accountType, ['digits']);
+
+    const positions = JSON.parse(JSON.stringify(this.positions));
+    positions.sort((a,b) => sortByKey(a, b, 'id'));
+    positions.forEach(position => {
+      delete position.profit;
+      delete position.unrealizedProfit;
+      delete position.realizedProfit;
+      delete position.currentPrice;
+      delete position.currentTickValue;
+      delete position.updateSequenceNumber;
+      delete position.accountCurrencyExchangeRate;
+      delete position.comment;
+      delete position.originalComment;
+      delete position.clientId;
+      if(accountType === 'cloud-g1') {
+        delete position.time;
+        delete position.updateTime;
+      }
+    });
+    const positionsHash = this._getHash(positions, accountType, ['magic']);
+
+    const orders = JSON.parse(JSON.stringify(this.orders));
+    orders.sort((a,b) => sortByKey(a, b, 'id'));
+    orders.forEach(order => {
+      delete order.currentPrice;
+      delete order.updateSequenceNumber;
+      delete order.accountCurrencyExchangeRate;
+      delete order.comment;
+      delete order.originalComment;
+      delete order.clientId;
+      if(accountType === 'cloud-g1') {
+        delete order.time;
+      }
+    });
+    const ordersHash = this._getHash(orders, accountType, ['magic']);
+
+    return {
+      specificationsMd5: specificationsHash,
+      positionsMd5: positionsHash,
+      ordersMd5: ordersHash
+    };
   }
 
   /**
@@ -132,20 +200,29 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when MetaTrader terminal state synchronization is started
    * @param {String} instanceIndex index of an account instance connected
+   * @param {Boolean} specificationsUpdated whether specifications are going to be updated during synchronization
+   * @param {Boolean} positionsUpdated whether positions are going to be updated during synchronization
+   * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSynchronizationStarted(instanceIndex) {
+  onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated) {
     let state = this._getState(instanceIndex);
     state.accountInformation = undefined;
-    state.positions = [];
-    state.orders = [];
-    state.specifications = [];
-    state.specificationsBySymbol = {};
     state.pricesBySymbol = {};
-    state.completedOrders = {};
-    state.removedPositions = {};
-    state.ordersInitialized = false;
-    state.positionsInitialized = false;
+    if(positionsUpdated) {
+      state.positions = [];
+      state.removedPositions = {};
+      state.positionsInitialized = false;
+    }
+    if(ordersUpdated) {
+      state.orders = [];
+      state.completedOrders = {};
+      state.ordersInitialized = false;
+    }
+    if(specificationsUpdated) {
+      state.specifications = [];
+      state.specificationsBySymbol = {};
+    }
   }
 
   /**
@@ -168,6 +245,16 @@ export default class TerminalState extends SynchronizationListener {
   onPositionsReplaced(instanceIndex, positions) {
     let state = this._getState(instanceIndex);
     state.positions = positions;
+  }
+
+  /**
+   * Invoked when position synchronization fnished to indicate progress of an initial terminal state synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onPositionsSynchronized(instanceIndex, synchronizationId) {
+    let state = this._getState(instanceIndex);
     state.removedPositions = {};
     state.positionsInitialized = true;
     state.initializationCounter = 2;
@@ -211,23 +298,35 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Invoked when the orders are replaced as a result of initial terminal state synchronization
    * @param {String} instanceIndex index of an account instance connected
-   * @param {Array<MetatraderOrder>} orders updated array of orders
+   * @param {Array<MetatraderOrder>} orders updated array of pending orders
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onOrdersReplaced(instanceIndex, orders) {
+  onPendingOrdersReplaced(instanceIndex, orders) {
     let state = this._getState(instanceIndex);
     state.orders = orders;
+  }
+
+  /**
+   * Invoked when pending order synchronization fnished to indicate progress of an initial terminal state
+   * synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onPendingOrdersSynchronized(instanceIndex, synchronizationId) {
+    let state = this._getState(instanceIndex);
     state.completedOrders = {};
     state.ordersInitialized = true;
     state.initializationCounter = 3;
   }
 
   /**
-   * Invoked when MetaTrader order is updated
+   * Invoked when MetaTrader pending order is updated
    * @param {String} instanceIndex index of an account instance connected
-   * @param {MetatraderOrder} order updated MetaTrader order
+   * @param {MetatraderOrder} order updated MetaTrader pending order
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onOrderUpdated(instanceIndex, order) {
+  onPendingOrderUpdated(instanceIndex, order) {
     let state = this._getState(instanceIndex);
     let index = state.orders.findIndex(o => o.id === order.id);
     if (index !== -1) {
@@ -238,11 +337,12 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
-   * Invoked when MetaTrader order is completed (executed or canceled)
+   * Invoked when MetaTrader pending order is completed (executed or canceled)
    * @param {String} instanceIndex index of an account instance connected
-   * @param {String} orderId completed MetaTrader order id
+   * @param {String} orderId completed MetaTrader pending order id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onOrderCompleted(instanceIndex, orderId) {
+  onPendingOrderCompleted(instanceIndex, orderId) {
     let state = this._getState(instanceIndex);
     let order = state.orders.find(o => o.id === orderId);
     if (!order) {
@@ -437,6 +537,36 @@ export default class TerminalState extends SynchronizationListener {
       }
     }
     return result || this._constructTerminalState();
+  }
+
+  _getHash(obj, accountType, integerKeys) {
+    let jsonItem = '';
+    if(accountType === 'cloud-g1') {
+      const stringify = (objFromJson, key) => {
+        if(typeof objFromJson === 'number') {
+          if(integerKeys.includes(key)) {
+            return objFromJson;
+          } else {
+            return objFromJson.toFixed(8);
+          }
+        } else if(Array.isArray(objFromJson)) {
+          return `[${objFromJson.map(item => stringify(item)).join(',')}]`; 
+        } else if (typeof objFromJson !== 'object' || objFromJson.getTime){
+          return JSON.stringify(objFromJson);
+        }
+    
+        let props = Object
+          .keys(objFromJson)
+          .map(keyItem => `"${keyItem}":${stringify(objFromJson[keyItem], keyItem)}`)
+          .join(',');
+        return `{${props}}`;
+      };
+    
+      jsonItem = stringify(obj);
+    } else if(accountType === 'cloud-g2') {
+      jsonItem = JSON.stringify(obj);
+    }
+    return md5(jsonItem);
   }
   
 }

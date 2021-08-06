@@ -27,7 +27,16 @@ import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
  * Options for processing websocket client events
  * @typedef {Object} EventProcessingOpts
  * @property {Boolean} [sequentialProcessing] an option to process synchronization events after finishing
- * previous ones
+ * previous ones, default value is true
+ */
+
+/**
+ * Subscriptions refresh options
+ * @typedef {Object} RefreshSubscriptionsOpts
+ * @property {Number} [minDelayInSeconds] minimum delay in seconds until subscriptions refresh request,
+ * default value is 1
+ * @property {Number} [maxDelayInSeconds] maximum delay in seconds until subscriptions refresh request,
+ * default value is 600
  */
 
 /**
@@ -45,6 +54,7 @@ import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
  * @property {RetryOpts} [retryOpts] options for request retries
  * @property {EventProcessingOpts} [eventProcessing] options for request retries
  * @property {Boolean} [useSharedClientApi] option to use a shared server
+ * @property {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
  */
 
 /**
@@ -78,6 +88,7 @@ export default class MetaApi {
     }
     const eventProcessing = opts.eventProcessing;
     const useSharedClientApi = opts.useSharedClientApi || false;
+    const refreshSubscriptionsOpts = opts.refreshSubscriptionsOpts || {};
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
@@ -85,7 +96,8 @@ export default class MetaApi {
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, 
       eventProcessing, useSharedClientApi});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
-    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application);
+    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application,
+      refreshSubscriptionsOpts);
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, token, domain);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient, this._connectionRegistry, 

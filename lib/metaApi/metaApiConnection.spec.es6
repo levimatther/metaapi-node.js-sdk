@@ -16,6 +16,7 @@ describe('MetaApiConnection', () => {
   let sandbox;
   let api;
   let account;
+  let clock;
   let client = {
     getAccountInformation: () => {},
     getPositions: () => {},
@@ -49,7 +50,9 @@ describe('MetaApiConnection', () => {
     saveUptime: () => {},
     waitSynchronized: () => {},
     unsubscribe: () => {},
+    refreshMarketDataSubscriptions: () => {}
   };
+  const emptyHash = 'd41d8cd98f00b204e9800998ecf8427e';
 
   let connectionRegistry = {
     connect: () => {},
@@ -68,10 +71,17 @@ describe('MetaApiConnection', () => {
       reload: () => {}
     };
     sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
-    api = new MetaApiConnection(client, account, undefined, connectionRegistry);
+    api = new MetaApiConnection(client, account, undefined, connectionRegistry, 0, {
+      minDelayInSeconds: 1,
+      maxDelayInSeconds: 1
+    });
+    clock = sinon.useFakeTimers({
+      shouldAdvanceTime: true
+    });
   });
 
   afterEach(() => {
+    clock.restore();
     sandbox.restore();
   });
 
@@ -689,18 +699,6 @@ describe('MetaApiConnection', () => {
    */
   describe('ensure subscribe', () => {
 
-    let clock;
-
-    beforeEach(() => {
-      clock = sinon.useFakeTimers({
-        shouldAdvanceTime: true
-      });
-    });
-
-    afterEach(async () => {
-      clock.restore();
-    });
-
     /**
      * @test {MetaApiConnection#subscribe}
      */
@@ -733,7 +731,7 @@ describe('MetaApiConnection', () => {
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize('1:ps-mpa-1');
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
   });
 
   /**
@@ -748,7 +746,7 @@ describe('MetaApiConnection', () => {
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize('1:ps-mpa-1');
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'));
+      new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
   });
 
   /**
@@ -969,7 +967,7 @@ describe('MetaApiConnection', () => {
     await api.onConnected('1:ps-mpa-1', 1);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
   });
 
   /**
@@ -986,7 +984,7 @@ describe('MetaApiConnection', () => {
     await api.onConnected('1:ps-mpa-1', 1);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
   });
 
   /**
@@ -1053,8 +1051,8 @@ describe('MetaApiConnection', () => {
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
       (Date.now() - startTime).should.be.approximately(50, 10);
-      api.onOrderSynchronizationFinished('1:ps-mpa-1', 'synchronizationId');
-      api.onDealSynchronizationFinished('1:ps-mpa-1', 'synchronizationId');
+      api.onHistoryOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
+      api.onDealsSynchronized('1:ps-mpa-1', 'synchronizationId');
       startTime = Date.now();
       await promise;
       (Date.now() - startTime).should.be.approximately(10, 10);
@@ -1106,6 +1104,27 @@ describe('MetaApiConnection', () => {
     sinon.assert.match(api.synchronized, true);
     await api.onStreamClosed('1:ps-mpa-1');
     sinon.assert.match(api.synchronized, false);
+  });
+
+  /**
+   * @test {MetaApiConnection#onDisconnected}
+   */
+  it('should create refresh subscriptions job', async () => {
+    sandbox.stub(client, 'refreshMarketDataSubscriptions').resolves();
+    sandbox.stub(client, 'subscribeToMarketData').resolves();
+    sandbox.stub(client, 'waitSynchronized').resolves();
+    await api.onSynchronizationStarted('1:ps-mpa-1');
+    await clock.tickAsync(50);
+    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, []);
+    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
+    await clock.tickAsync(1050);
+    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, 
+      [{symbol: 'EURUSD', subscriptions: [{type: 'quotes'}]}]);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
+    await api.onDisconnected('1:ps-mpa-1');
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
   });
 
 });
