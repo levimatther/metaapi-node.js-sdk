@@ -3,7 +3,7 @@
 import should from 'should';
 import sinon from 'sinon';
 import TerminalState from './terminalState';
-import md5 from 'md5';
+import crypto from 'crypto-js';
 
 /**
  * @test {TerminalState}
@@ -11,6 +11,7 @@ import md5 from 'md5';
 describe('TerminalState', () => {
 
   let state;
+  const md5 = (arg) => crypto.MD5(arg).toString();
 
   beforeEach(() => {
     state = new TerminalState();
