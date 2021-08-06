@@ -152,7 +152,7 @@ describe('MemoryHistoryStorage', () => {
    */
   it('should return saved order synchronization status', () => {
     storage.orderSynchronizationFinished.should.be.false();
-    storage.onOrderSynchronizationFinished(1);
+    storage.onHistoryOrdersSynchronized(1);
     storage.orderSynchronizationFinished.should.be.true();
   });
 
@@ -162,7 +162,7 @@ describe('MemoryHistoryStorage', () => {
   it('should return saved deal synchronization status', () => {
     storage._fileManager.updateDiskStorage = sandbox.stub();
     storage.dealSynchronizationFinished.should.be.false();
-    storage.onDealSynchronizationFinished(1);
+    storage.onDealsSynchronized(1);
     sinon.assert.calledOnce(storage._fileManager.updateDiskStorage);
     storage.dealSynchronizationFinished.should.be.true();
   });

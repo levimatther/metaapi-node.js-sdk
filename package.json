@@ -45,12 +45,13 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "13.2.8",
+  "version": "14.0.0",
   "dependencies": {
     "babel-runtime": "~6.26.0",
     "dotenv": "~8.2.0",
     "fs-extra": "~9.0.1",
     "idb": "~5.0.4",
+    "md5": "~2.3.0",
     "metaapi.cloud-copyfactory-sdk": "~2.1.0",
     "metaapi.cloud-metastats-sdk": "~1.0.0",
     "moment": "~2.29.1",

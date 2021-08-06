@@ -6,6 +6,7 @@ import SynchronizationListener from '../clients/metaApi/synchronizationListener'
 import TimeoutError from '../clients/timeoutError';
 import randomstring from 'randomstring';
 import ConnectionHealthMonitor from './connectionHealthMonitor';
+import OptionsValidator from '../clients/optionsValidator';
 
 /**
  * Exposes MetaApi MetaTrader API connection to consumers
@@ -20,9 +21,17 @@ export default class MetaApiConnection extends SynchronizationListener {
    * will be used.
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
    * @param {Date} [historyStartTime] history start sync time
+   * @param {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
    */
-  constructor(websocketClient, account, historyStorage, connectionRegistry, historyStartTime) {
+  constructor(websocketClient, account, historyStorage, connectionRegistry, historyStartTime,
+    refreshSubscriptionsOpts) {
     super();
+    refreshSubscriptionsOpts = refreshSubscriptionsOpts || {};
+    const validator = new OptionsValidator();
+    this._minSubscriptionRefreshInterval = validator.validateNonZero(refreshSubscriptionsOpts.minDelayInSeconds, 1,
+      'refreshSubscriptionsOpts.minDelayInSeconds');
+    this._maxSubscriptionRefreshInterval = validator.validateNonZero(refreshSubscriptionsOpts.maxDelayInSeconds, 600,
+      'refreshSubscriptionsOpts.maxDelayInSeconds');
     this._websocketClient = websocketClient;
     this._account = account;
     this._connectionRegistry = connectionRegistry;
@@ -37,6 +46,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._websocketClient.addReconnectListener(this, account.id);
     this._subscriptions = {};
     this._stateByInstanceIndex = {};
+    this._refreshMarketDataSubscriptionsJobs = {};
     this._synchronized = false;
     this._synchronizationListeners = [];
   }
@@ -472,8 +482,9 @@ export default class MetaApiConnection extends SynchronizationListener {
     ));
     let synchronizationId = randomstring.generate(32);
     this._getState(instanceIndex).lastSynchronizationId = synchronizationId;
+    const hashes = this.terminalState.getHashes(this._account.type);
     return this._websocketClient.synchronize(this._account.id, instance, host, synchronizationId,
-      startingHistoryOrderTime, startingDealTime);
+      startingHistoryOrderTime, startingDealTime, hashes.specificationsMd5, hashes.positionsMd5, hashes.ordersMd5);
   }
 
   /**
@@ -722,24 +733,30 @@ export default class MetaApiConnection extends SynchronizationListener {
     state.shouldSynchronize = undefined;
     state.synchronized = false;
     state.disconnected = true;
+    const instance = this.getInstanceNumber(instanceIndex);
+    delete this._refreshMarketDataSubscriptionsJobs[instance];
   }
 
   /**
-   * Invoked when a synchronization of history deals on a MetaTrader account have finished
+   * Invoked when a synchronization of history deals on a MetaTrader account have finished to indicate progress of an
+   * initial terminal state synchronization
    * @param {String} instanceIndex index of an account instance connected
    * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onDealSynchronizationFinished(instanceIndex, synchronizationId) {
+  async onDealsSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.dealsSynchronized[synchronizationId] = true;
   }
 
   /**
-   * Invoked when a synchronization of history orders on a MetaTrader account have finished
+   * Invoked when a synchronization of history orders on a MetaTrader account have finished to indicate progress of an
+   * initial terminal state synchronization
    * @param {String} instanceIndex index of an account instance connected
    * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onOrderSynchronizationFinished(instanceIndex, synchronizationId) {
+  async onHistoryOrdersSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.ordersSynchronized[synchronizationId] = true;
   }
@@ -767,6 +784,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async onReconnected() {
     this._stateByInstanceIndex = {};
+    this._refreshMarketDataSubscriptionsJobs = {};
   }
 
   /**
@@ -776,6 +794,22 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   async onStreamClosed(instanceIndex) {
     delete this._stateByInstanceIndex[instanceIndex];
+  }
+
+  /**
+   * Invoked when MetaTrader terminal state synchronization is started
+   * @param {String} instanceIndex index of an account instance connected
+   * @param {Boolean} specificationsUpdated whether specifications are going to be updated during synchronization
+   * @param {Boolean} positionsUpdated whether positions are going to be updated during synchronization
+   * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated) {
+    const instance = this.getInstanceNumber(instanceIndex);
+    delete this._refreshMarketDataSubscriptionsJobs[instance];
+    let sessionId = randomstring.generate(32);
+    this._refreshMarketDataSubscriptionsJobs[instance] = sessionId;
+    await this._refreshMarketDataSubscriptions(instance, sessionId);
   }
 
   /**
@@ -893,6 +927,33 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   get healthMonitor() {
     return this._healthMonitor;
+  }
+
+  async _refreshMarketDataSubscriptions(instanceNumber, session) {
+    try {
+      if (this._refreshMarketDataSubscriptionsJobs[instanceNumber] === session) {
+        const subscriptionsList = [];
+        Object.keys(this._subscriptions).forEach(key => {
+          const subscriptions = this.subscriptions(key);
+          const subscriptionsItem = {symbol: key};
+          if(subscriptions) {
+            subscriptionsItem.subscriptions = subscriptions;
+          }
+          subscriptionsList.push(subscriptionsItem);
+        });
+        await this._websocketClient.refreshMarketDataSubscriptions(this._account.id, instanceNumber,
+          subscriptionsList);
+      }
+    } catch (err) {
+      console.error(`Error refreshing market data subscriptions job for account ${this._account.id} ` +
+      `${instanceNumber}`, err);
+    } finally {
+      if (this._refreshMarketDataSubscriptionsJobs[instanceNumber] === session) {
+        let refreshInterval = (Math.random() * (this._maxSubscriptionRefreshInterval - 
+          this._minSubscriptionRefreshInterval) + this._minSubscriptionRefreshInterval) * 1000;
+        setTimeout(() => this._refreshMarketDataSubscriptions(instanceNumber, session), refreshInterval);
+      }
+    }
   }
 
   _generateStopOptions(stopLoss, takeProfit) {

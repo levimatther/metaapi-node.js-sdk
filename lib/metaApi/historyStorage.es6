@@ -83,19 +83,25 @@ export default class HistoryStorage extends SynchronizationListener {
   }
 
   /**
-   * Invoked when a synchronization of history deals on a MetaTrader account have finished
+   * Invoked when a synchronization of history deals on a MetaTrader account have finished to indicate progress of an
+   * initial terminal state synchronization
    * @param {String} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onDealSynchronizationFinished(instanceIndex) {
+  async onDealsSynchronized(instanceIndex, synchronizationId) {
     const instance = this.getInstanceNumber(instanceIndex);
     this._dealSynchronizationFinished['' + instance] = true;
   }
 
   /**
-   * Invoked when a synchronization of history orders on a MetaTrader account have finished
+   * Invoked when a synchronization of history orders on a MetaTrader account have finished to indicate progress of an
+   * initial terminal state synchronization
    * @param {String} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onOrderSynchronizationFinished(instanceIndex) {
+  async onHistoryOrdersSynchronized(instanceIndex, synchronizationId) {
     const instance = this.getInstanceNumber(instanceIndex);
     this._orderSynchronizationFinished['' + instance] = true;
   }

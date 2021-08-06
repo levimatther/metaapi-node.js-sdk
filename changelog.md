@@ -1,3 +1,18 @@
+14.0.0
+  - breaking change: refactored SynchronizationListener class, namely:
+   - added onPositionsSynchronized method
+   - onPositionsReplaced is now invoked during synchronization only if server thinks terminal data have changed
+   - added onPendingOrdersSynchronized method
+   - onPendingOrdersReplaced is now invoked during synchronization only if server thinks terminal data have changed
+   - onOrdersReplaced was renamed to onPendingOrdersReplaced
+   - onOrderUpdated was renamed to onPendingOrderUpdated
+   - onOrderCompleted was renamed to onPendingOrderCompleted
+   - onOrderSynchronizationFinished was renamed to onHistoryOrdersSynchronized
+   - onDealSynchronizationFinished was renamed to onDealsSynchronized
+  - breaking change: enabled sequential packet processing by default
+  - added incremental synchronization
+  - fix sequential packet processing
+
 13.2.9
   - fixed out of order synchronization packets came from the previous synchronizations
 

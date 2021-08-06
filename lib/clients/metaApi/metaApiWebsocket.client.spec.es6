@@ -21,6 +21,13 @@ describe('MetaApiWebsocketClient', () => {
   let client;
   let sandbox;
   let httpClient = new HttpClient();
+  const emptyHash = 'd41d8cd98f00b204e9800998ecf8427e';
+  const synchronizationThrottler = {
+    activeSynchronizationIds: ['synchronizationId'],
+    onDisconnect: () => {},
+    updateSynchronizationId: () => {}
+  };
+
 
   before(() => {
     sandbox = sinon.createSandbox();
@@ -1188,21 +1195,67 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
       await client.synchronize('accountId', 1, 'ps-mpa-1', 'synchronizationId', new Date('2020-01-01T00:00:00.000Z'),
-        new Date('2020-01-02T00:00:00.000Z'));
+        new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
       requestReceived.should.be.true();
     });
 
     it('should process synchronization started event', async () => {
+      client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
-        onSynchronizationStarted: () => {
-        }
+        onSynchronizationStarted: () => {},
+        onPositionsSynchronized: () => {},
+        onPendingOrdersSynchronized: () => {},
       };
       sandbox.stub(listener, 'onSynchronizationStarted').resolves();
+      sandbox.stub(listener, 'onPositionsSynchronized').resolves();
+      sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 1,
-        host: 'ps-mpa-1'});
-      await new Promise(res => setTimeout(res, 50));
-      sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1');
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      await new Promise(res => setTimeout(res, 100));
+      sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, true, true);
+      sinon.assert.notCalled(listener.onPositionsSynchronized);
+      sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
+    });
+
+    it('should process synchronization started event without updating positions', async () => {
+      client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
+      let listener = {
+        onSynchronizationStarted: () => {},
+        onPositionsSynchronized: () => {},
+        onPendingOrdersSynchronized: () => {},
+      };
+      sandbox.stub(listener, 'onSynchronizationStarted').resolves();
+      sandbox.stub(listener, 'onPositionsSynchronized').resolves();
+      sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 1,
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1', positionsUpdated: false,
+        ordersUpdated: true});
+      await new Promise(res => setTimeout(res, 100));
+      sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, false, true);
+      sinon.assert.calledWith(listener.onPositionsSynchronized, '1:ps-mpa-1', 'synchronizationId');
+      sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
+    });
+
+    it('should process synchronization started event without updating orders', async () => {
+      client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
+      let listener = {
+        onSynchronizationStarted: () => {},
+        onPositionsSynchronized: () => {},
+        onPendingOrdersSynchronized: () => {},
+      };
+      sandbox.stub(listener, 'onSynchronizationStarted').resolves();
+      sandbox.stub(listener, 'onPositionsSynchronized').resolves();
+      sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 1,
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1', positionsUpdated: true,
+        ordersUpdated: false});
+      await new Promise(res => setTimeout(res, 100));
+      sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, true, false);
+      sinon.assert.notCalled(listener.onPositionsSynchronized);
+      sinon.assert.calledWith(listener.onPendingOrdersSynchronized, '1:ps-mpa-1', 'synchronizationId');
     });
 
     it('should synchronize account information', async () => {
@@ -1249,16 +1302,19 @@ describe('MetaApiWebsocketClient', () => {
         unrealizedProfit: -85.25999999999901,
         realizedProfit: -6.536993168992922e-13
       }];
+      client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
-        onPositionsReplaced: () => {
-        }
+        onPositionsReplaced: () => {},
+        onPositionsSynchronized: () => {},
       };
       sandbox.stub(listener, 'onPositionsReplaced').resolves();
+      sandbox.stub(listener, 'onPositionsSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'positions', accountId: 'accountId', positions, instanceIndex: 1,
-        host: 'ps-mpa-1'});
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onPositionsReplaced, '1:ps-mpa-1', positions);
+      sinon.assert.calledWith(listener.onPositionsSynchronized, '1:ps-mpa-1', 'synchronizationId');
     });
 
     it('should synchronize orders', async () => {
@@ -1277,15 +1333,18 @@ describe('MetaApiWebsocketClient', () => {
         comment: 'COMMENT2'
       }];
       let listener = {
-        onOrdersReplaced: () => {
-        }
+        onPendingOrdersReplaced: () => {},
+        onPendingOrdersSynchronized: () => {},
       };
-      sandbox.stub(listener, 'onOrdersReplaced').resolves();
+      client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
+      sandbox.stub(listener, 'onPendingOrdersReplaced').resolves();
+      sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders, instanceIndex: 1,
-        host: 'ps-mpa-1'});
-      await new Promise(res => setTimeout(res, 50));
-      sinon.assert.calledWith(listener.onOrdersReplaced, '1:ps-mpa-1', orders);
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      await new Promise(res => setTimeout(res, 100));
+      sinon.assert.calledWith(listener.onPendingOrdersReplaced, '1:ps-mpa-1', orders);
+      sinon.assert.calledWith(listener.onPendingOrdersSynchronized, '1:ps-mpa-1', 'synchronizationId');
     });
 
     it('should synchronize history orders', async () => {
@@ -1428,26 +1487,19 @@ describe('MetaApiWebsocketClient', () => {
         }]
       };
       let listener = {
-        onAccountInformationUpdated: () => {
-        },
-        onPositionUpdated: () => {
-        },
-        onPositionRemoved: () => {
-        },
-        onOrderUpdated: () => {
-        },
-        onOrderCompleted: () => {
-        },
-        onHistoryOrderAdded: () => {
-        },
-        onDealAdded: () => {
-        }
+        onAccountInformationUpdated: () => {},
+        onPositionUpdated: () => {},
+        onPositionRemoved: () => {},
+        onPendingOrderUpdated: () => {},
+        onPendingOrderCompleted: () => {},
+        onHistoryOrderAdded: () => {},
+        onDealAdded: () => {}
       };
       sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
       sandbox.stub(listener, 'onPositionUpdated').resolves();
       sandbox.stub(listener, 'onPositionRemoved').resolves();
-      sandbox.stub(listener, 'onOrderUpdated').resolves();
-      sandbox.stub(listener, 'onOrderCompleted').resolves();
+      sandbox.stub(listener, 'onPendingOrderUpdated').resolves();
+      sandbox.stub(listener, 'onPendingOrderCompleted').resolves();
       sandbox.stub(listener, 'onHistoryOrderAdded').resolves();
       sandbox.stub(listener, 'onDealAdded').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -1457,8 +1509,8 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onAccountInformationUpdated, '1:ps-mpa-1', update.accountInformation);
       sinon.assert.calledWith(listener.onPositionUpdated, '1:ps-mpa-1', update.updatedPositions[0]);
       sinon.assert.calledWith(listener.onPositionRemoved, '1:ps-mpa-1', update.removedPositionIds[0]);
-      sinon.assert.calledWith(listener.onOrderUpdated, '1:ps-mpa-1', update.updatedOrders[0]);
-      sinon.assert.calledWith(listener.onOrderCompleted, '1:ps-mpa-1', update.completedOrderIds[0]);
+      sinon.assert.calledWith(listener.onPendingOrderUpdated, '1:ps-mpa-1', update.updatedOrders[0]);
+      sinon.assert.calledWith(listener.onPendingOrderCompleted, '1:ps-mpa-1', update.completedOrderIds[0]);
       sinon.assert.calledWith(listener.onHistoryOrderAdded, '1:ps-mpa-1', update.historyOrders[0]);
       sinon.assert.calledWith(listener.onDealAdded, '1:ps-mpa-1', update.deals[0]);
     });
@@ -1700,6 +1752,23 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
       await client.subscribeToMarketData('accountId', 1, 'EURUSD', [{type: 'quotes'}]);
+      requestReceived.should.be.true();
+    });
+
+    /**
+     * @test {MetaApiWebsocketClient#refreshMarketDataSubscriptions}
+     */
+    it('should refresh market data subscriptions', async () => {
+      let requestReceived = false;
+      server.on('request', data => {
+        if (data.type === 'refreshMarketDataSubscriptions' && data.accountId === 'accountId' && 
+          data.application === 'application' && data.instanceIndex === 1 &&
+          JSON.stringify(data.subscriptions) === JSON.stringify([{symbol: 'EURUSD'}])) {
+          requestReceived = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      await client.refreshMarketDataSubscriptions('accountId', 1, [{symbol: 'EURUSD'}]);
       requestReceived.should.be.true();
     });
 
@@ -2113,14 +2182,17 @@ describe('MetaApiWebsocketClient', () => {
         await new Promise(res => setTimeout(res, 5000));
         disconnectedCallTime = Date.now();
       },
-      onOrdersReplaced: async () => {
+      onPendingOrdersReplaced: async () => {
         await new Promise(res => setTimeout(res, 10000));
         ordersCallTime = Date.now();
       },
+      onPendingOrdersSynchronized: () => {},
       onPositionsReplaced: async () => {
         await new Promise(res => setTimeout(res, 1000));
         positionsCallTime = Date.now();
       },
+      onPositionsSynchronized: () => {},
+      onSymbolPriceUpdated: () => {},
       onSymbolPricesUpdated: async () => {
         await new Promise(res => setTimeout(res, 1000));
         pricesCallTime = Date.now();
@@ -2183,7 +2255,8 @@ describe('MetaApiWebsocketClient', () => {
   it('should not process old synchronization packet without gaps in sequence numbers', async () => {
     let listener = {
       onSynchronizationStarted: sinon.fake(),
-      onOrdersReplaced: sinon.fake(),
+      onPendingOrdersReplaced: sinon.fake(),
+      onPendingOrdersSynchronized: () => {}
     };
     client.addSynchronizationListener('accountId', listener);
     sandbox.stub(client._packetOrderer, 'restoreOrder').callsFake(arg => [arg]);
@@ -2195,7 +2268,7 @@ describe('MetaApiWebsocketClient', () => {
       sequenceNumber: 2, sequenceTimestamp: 1603124267181, synchronizationId: 'ABC'});
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledOnce(listener.onSynchronizationStarted);
-    sinon.assert.calledOnce(listener.onOrdersReplaced);
+    sinon.assert.calledOnce(listener.onPendingOrdersReplaced);
 
     sandbox.stub(client._socketInstances[0].synchronizationThrottler, 'activeSynchronizationIds').get(() => ['DEF']);
     server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
@@ -2206,7 +2279,7 @@ describe('MetaApiWebsocketClient', () => {
       sequenceNumber: 5, sequenceTimestamp: 1603124267195, synchronizationId: 'DEF'});
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledTwice(listener.onSynchronizationStarted);
-    sinon.assert.calledTwice(listener.onOrdersReplaced);
+    sinon.assert.calledTwice(listener.onPendingOrdersReplaced);
   });
 
 });

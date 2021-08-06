@@ -50,7 +50,7 @@ export default class MetaApiWebsocketClient {
     this._subscribeCooldownInSeconds = validator.validateNonZero(retryOpts.subscribeCooldownInSeconds, 600, 
       'retryOpts.subscribeCooldownInSeconds');
     const eventProcessing = opts.eventProcessing || {};
-    this._sequentialEventProcessing = validator.validateBoolean(eventProcessing.sequentialProcessing, false,
+    this._sequentialEventProcessing = validator.validateBoolean(eventProcessing.sequentialProcessing, true,
       'eventProcessing.sequentialProcessing');
     this._useSharedClientApi = validator.validateBoolean(opts.useSharedClientApi, false, 'useSharedClientApi');
     this._token = token;
@@ -65,6 +65,7 @@ export default class MetaApiWebsocketClient {
     this._statusTimers = {};
     this._eventQueues = {};
     this._subscribeLock = null;
+    this._firstConnect = true;
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
@@ -231,21 +232,13 @@ export default class MetaApiWebsocketClient {
         protocol: 2
       }
     });
-    let firstConnect = true;
     instance.socket = socketInstance;
     if (this._socketInstances.length === 1) {
       this._packetOrderer.start();
     } 
     socketInstance.on('connect', async () => {
-      const isSharedClientApi = socketInstance.io.uri === this._url;
       // eslint-disable-next-line no-console
-      console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connected to the MetaApi server '+
-        `via ${socketInstance.io.uri} ${isSharedClientApi ? 'shared' : 'dedicated'} server`);
-      if (socketInstanceIndex === 0 && firstConnect && !isSharedClientApi) {
-        console.log('Please note that it can take up to 3 minutes for your dedicated server to start for the ' +
-        'first time. During this time it is OK if you see some connection errors.');
-        firstConnect = false;
-      }
+      console.log('[' + (new Date()).toISOString() + '] MetaApi websocket client connected to the MetaApi server');
       instance.isReconnecting = false;
       if (!resolved) {
         resolved = true;
@@ -786,12 +779,17 @@ export default class MetaApiWebsocketClient {
    * the entire order history will be downloaded.
    * @param {Date} startingDealTime from what date to start deal synchronization from. If not specified, then all
    * history deals will be downloaded.
+   * @param {String} specificationsMd5 specifications MD5 hash
+   * @param {String} positionsMd5 positions MD5 hash
+   * @param {String} ordersMd5 orders MD5 hash
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime) {
+  synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime, 
+    specificationsMd5, positionsMd5, ordersMd5) {
     const syncThrottler = this._socketInstances[this._socketInstancesByAccounts[accountId]].synchronizationThrottler;
     return syncThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, 
-      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host});
+      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host,
+      specificationsMd5, positionsMd5, ordersMd5});
   }
 
   /**
@@ -831,6 +829,17 @@ export default class MetaApiWebsocketClient {
    */
   subscribeToMarketData(accountId, instanceNumber, symbol, subscriptions) {
     return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, subscriptions,
+      instanceIndex: instanceNumber});
+  }
+
+  /**
+   * Refreshes market data subscriptions on the server to prevent them from expiring
+   * @param {String} accountId id of the MetaTrader account
+   * @param {Number} instanceNumber instance index number
+   * @param {Array} subscriptions array of subscriptions to refresh
+   */
+  refreshMarketDataSubscriptions(accountId, instanceNumber, subscriptions) {
+    return this._rpcRequest(accountId, {type: 'refreshMarketDataSubscriptions', subscriptions,
       instanceIndex: instanceNumber});
   }
 
@@ -1087,14 +1096,18 @@ export default class MetaApiWebsocketClient {
     const instance = this.socketInstances[socketInstanceIndex];
     return new Promise((resolve) => setTimeout(async () => {
       if (!instance.socket.connected && !instance.isReconnecting && instance.connected) {
-        instance.sessionId = randomstring.generate(32);
-        const clientId = Math.random();
-        instance.socket.close();
-        instance.socket.io.opts.extraHeaders['Client-Id'] = clientId;
-        instance.socket.io.opts.query.clientId = clientId;
-        instance.isReconnecting = true;
-        instance.socket.io.uri = await this._getServerUrl();
-        instance.socket.connect();
+        try {
+          instance.sessionId = randomstring.generate(32);
+          const clientId = Math.random();
+          instance.socket.close();
+          instance.socket.io.opts.extraHeaders['Client-Id'] = clientId;
+          instance.socket.io.opts.query.clientId = clientId;
+          instance.isReconnecting = true;
+          instance.socket.io.uri = await this._getServerUrl();
+          instance.socket.connect();
+        } catch (error) {
+          instance.isReconnecting = false;
+        }
       }
       resolve();
     }, 1000));
@@ -1464,6 +1477,7 @@ export default class MetaApiWebsocketClient {
         }, 60000);
       };
 
+      // eslint-disable-next-line complexity
       const onDisconnected = async (isTimeout = false) => { 
         if (this._connectedHosts[instanceId]) {
           if(isOnlyActiveInstance()) {
@@ -1483,7 +1497,9 @@ export default class MetaApiWebsocketClient {
           } else {
             const onStreamClosedPromises = [];
             this._packetOrderer.onStreamClosed(instanceId);
-            socketInstance.synchronizationThrottler.removeIdByParameters(data.accountId, instanceNumber, data.host);
+            if(socketInstance) {
+              socketInstance.synchronizationThrottler.removeIdByParameters(data.accountId, instanceNumber, data.host);
+            }
             for (let listener of this._synchronizationListeners[data.accountId] || []) {
               onStreamClosedPromises.push(
                 Promise.resolve(listener.onStreamClosed(instanceIndex))
@@ -1499,7 +1515,7 @@ export default class MetaApiWebsocketClient {
       };
       if (data.type === 'authenticated') {
         resetDisconnectTimer();
-        if((!data.sessionId) || (data.sessionId === socketInstance.sessionId)) {
+        if((!data.sessionId) || socketInstance && (data.sessionId === socketInstance.sessionId)) {
           this._connectedHosts[instanceId] = data.host;
           const onConnectedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1520,7 +1536,18 @@ export default class MetaApiWebsocketClient {
         const promises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           promises.push(
-            Promise.resolve(listener.onSynchronizationStarted(instanceIndex))
+            Promise.resolve((async () => {
+              await listener.onSynchronizationStarted(instanceIndex, 
+                data.specificationsUpdated !== undefined ? data.specificationsUpdated : true,
+                data.positionsUpdated !== undefined ? data.positionsUpdated : true,
+                data.ordersUpdated !== undefined ? data.ordersUpdated : true);
+              if(data.positionsUpdated === false) {
+                await listener.onPositionsSynchronized(instanceIndex, data.synchronizationId);
+              }
+              if(data.ordersUpdated === false) {
+                await listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId);
+              }
+            })())
               // eslint-disable-next-line no-console
               .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                 'about synchronization started event', err))
@@ -1554,16 +1581,19 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onDealAddedPromises);
         }
       } else if (data.type === 'orders') {
-        const onOrderUpdatedPromises = [];
+        const onPendingOrdersReplacedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onOrderUpdatedPromises.push(
-            Promise.resolve(listener.onOrdersReplaced(instanceIndex, data.orders || []))
+          onPendingOrdersReplacedPromises.push(
+            Promise.resolve((async () => {
+              await listener.onPendingOrdersReplaced(instanceIndex, data.orders || []);
+              await listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId);
+            })())
               // eslint-disable-next-line no-console
               .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                 'about orders event', err))
           );
         }
-        await Promise.all(onOrderUpdatedPromises);
+        await Promise.all(onPendingOrdersReplacedPromises);
       } else if (data.type === 'historyOrders') {
         for (let historyOrder of (data.historyOrders || [])) {
           const onHistoryOrderAddedPromises = [];
@@ -1578,16 +1608,19 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onHistoryOrderAddedPromises);
         }
       } else if (data.type === 'positions') {
-        const onPositionUpdatedPromises = [];
+        const onPositionsReplacedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onPositionUpdatedPromises.push(
-            Promise.resolve(listener.onPositionsReplaced(instanceIndex, data.positions || []))
+          onPositionsReplacedPromises.push(
+            Promise.resolve((async () => {
+              await listener.onPositionsReplaced(instanceIndex, data.positions || []);
+              await listener.onPositionsSynchronized(instanceIndex, data.synchronizationId);
+            })())
               // eslint-disable-next-line no-console
               .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                 'about positions event', err))
           );
         }
-        await Promise.all(onPositionUpdatedPromises);
+        await Promise.all(onPositionsReplacedPromises);
       } else if (data.type === 'update') {
         if (data.accountInformation) {
           const onAccountInformationUpdatedPromises = [];
@@ -1626,28 +1659,28 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onPositionRemovedPromises);
         }
         for (let order of (data.updatedOrders || [])) {
-          const onOrderUpdatedPromises = [];
+          const onPendingOrderUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onOrderUpdatedPromises.push(
-              Promise.resolve(listener.onOrderUpdated(instanceIndex, order))
+            onPendingOrderUpdatedPromises.push(
+              Promise.resolve(listener.onPendingOrderUpdated(instanceIndex, order))
                 // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about update event', err))
             );
           }
-          await Promise.all(onOrderUpdatedPromises);
+          await Promise.all(onPendingOrderUpdatedPromises);
         }
         for (let orderId of (data.completedOrderIds || [])) {
-          const onOrderCompletedPromises = [];
+          const onPendingOrderCompletedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
-            onOrderCompletedPromises.push(
-              Promise.resolve(listener.onOrderCompleted(instanceIndex, orderId))
+            onPendingOrderCompletedPromises.push(
+              Promise.resolve(listener.onPendingOrderCompleted(instanceIndex, orderId))
                 // eslint-disable-next-line no-console
                 .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about update event', err))
             );
           }
-          await Promise.all(onOrderCompletedPromises);
+          await Promise.all(onPendingOrderCompletedPromises);
         }
         for (let historyOrder of (data.historyOrders || [])) {
           const onHistoryOrderAddedPromises = [];
@@ -1688,30 +1721,30 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onUpdatePromises);
         }
       } else if (data.type === 'dealSynchronizationFinished') {
-        const onDealSynchronizationFinishedPromises = [];
+        const onDealsSynchronizedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           if(socketInstance) {
             socketInstance.synchronizationThrottler.removeSynchronizationId(data.synchronizationId);
           }
-          onDealSynchronizationFinishedPromises.push(
-            Promise.resolve(listener.onDealSynchronizationFinished(instanceIndex, data.synchronizationId))
+          onDealsSynchronizedPromises.push(
+            Promise.resolve(listener.onDealsSynchronized(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
               .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                   'dealSynchronizationFinished event', err))
           );
         }
-        await Promise.all(onDealSynchronizationFinishedPromises);
+        await Promise.all(onDealsSynchronizedPromises);
       } else if (data.type === 'orderSynchronizationFinished') {
-        const onOrderSynchronizationFinishedPromises = [];
+        const onHistoryOrdersSynchronizedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
-          onOrderSynchronizationFinishedPromises.push(
-            Promise.resolve(listener.onOrderSynchronizationFinished(instanceIndex, data.synchronizationId))
+          onHistoryOrdersSynchronizedPromises.push(
+            Promise.resolve(listener.onHistoryOrdersSynchronized(instanceIndex, data.synchronizationId))
               // eslint-disable-next-line no-console
               .catch(err => console.error(`${data.accountId}:${instanceIndex}: Failed to notify listener about ` +
                   'orderSynchronizationFinished event', err))
           );
         }
-        await Promise.all(onOrderSynchronizationFinishedPromises);
+        await Promise.all(onHistoryOrdersSynchronizedPromises);
       } else if (data.type === 'status') {
         if (!this._connectedHosts[instanceId]) {
           if(this._statusTimers[instanceId] && data.authenticated && 
@@ -1896,10 +1929,10 @@ export default class MetaApiWebsocketClient {
       this._packetOrderer.onReconnected(reconnectAccountIds);
 
       for (let listener of reconnectListeners) {
-        this.queueEvent(listener.accountId, () => Promise.resolve(listener.listener.onReconnected())
+        Promise.resolve(listener.listener.onReconnected())
           // eslint-disable-next-line no-console
           .catch(err => 
-            console.error('[' + (new Date()).toISOString() + '] Failed to notify reconnect listener', err)));
+            console.error('[' + (new Date()).toISOString() + '] Failed to notify reconnect listener', err));
       }
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -1908,8 +1941,9 @@ export default class MetaApiWebsocketClient {
   }
 
   async _getServerUrl() {
+    let url;
     if(this._useSharedClientApi) {
-      return this._url;
+      url = this._url;
     } else {
       const opts = {
         url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
@@ -1920,8 +1954,18 @@ export default class MetaApiWebsocketClient {
         json: true,
       };
       const response = await this._httpClient.request(opts);
-      return response.url;
+      url = response.url;
     }
+    const isSharedClientApi = url === this._url;
+    // eslint-disable-next-line no-console
+    console.log('[' + (new Date()).toISOString() + '] Connecting MetaApi websocket client to the MetaApi server '+
+      `via ${url} ${isSharedClientApi ? 'shared' : 'dedicated'} server`);
+    if(this._firstConnect && !isSharedClientApi) {
+      console.log('Please note that it can take up to 3 minutes for your dedicated server to start for the ' +
+        'first time. During this time it is OK if you see some connection errors.');
+      this._firstConnect = false;
+    }
+    return url;
   }
 
 }
