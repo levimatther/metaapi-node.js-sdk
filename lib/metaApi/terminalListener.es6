@@ -18,7 +18,7 @@
  * Data update events are onPositionUpdated (invoked both for new and updated positions), onPositionRemoved,
  * onPendingOrderUpdated (invoked both for new and updated pending orders), onPendingOrderCompleted,
  * onHistoryOrderAdded, onDealAdded, onSymbolSpecificationUpdated, onSymbolSpecificationRemoved, onQuote,
- * onCandle, onTick, onBooks.
+ * onCandle, onTick, onBook.
  * There are also status events available such as onBrokerConnectionStatusChanged, onDisconnected,
  * onSubscriptionDowngraded.
  */
@@ -200,7 +200,7 @@ export default class TerminalListener {
    * @param {MetatraderBook} book updated MetaTrader order book
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onBooks(book) {}
+  async onBook(book) {}
 
   /**
    * Invoked when subscription downgrade has occurred
