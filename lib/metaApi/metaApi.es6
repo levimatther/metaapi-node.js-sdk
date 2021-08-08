@@ -14,6 +14,7 @@ import {ValidationError} from '../clients/errorHandler';
 import OptionsValidator from '../clients/optionsValidator';
 import LatencyMonitor from './latencyMonitor';
 import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
+import LoggerManager from '../logger';
 
 /**
  * Request retry options
@@ -61,6 +62,14 @@ import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
  * MetaApi MetaTrader API SDK
  */
 export default class MetaApi {
+
+  /**
+   * Enables using Log4js logger with extended log levels for debugging instead of
+   * console.* functions. Note that log4js configuration performed by the user.
+   */
+  static enableLog4jsLogging() {
+    LoggerManager.useLog4js();
+  }
 
   /**
    * Constructs MetaApi class instance
