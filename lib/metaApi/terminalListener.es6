@@ -3,13 +3,24 @@
 /**
  * Defines interface for a terminal listener class. You can extend your trading application implementation from
  * this class.
- *
  * Unlike low-level SynchronizationListener, when you use TerminalListener, the SDK will remove race conditions and most
  * events duplicates present on the transport layer. There is also a warranty that TeminalListener listener methods
  * will be invoked in sequence. No new event will be delivered until previous event have finished processing.
- *
  * So that it is much easier to create trading applicaitions using TerminalListener, especially if the application is a
  * complex one.
+ * Please note that some event listener methods can still receive event duplicates, so that they must be idempotent.
+ * The terminal lifecycle starts with onConnected event, followed by initial synchronization, followed by data updates.
+ * During initial synchronization the SDK will invoke the following methods in sequence: onSynchronizationStarted,
+ * onSymbolSpecificationUpdated, onSymbolSpecificationRemoved, onQuote, onAccountInformationUpdated,
+ * onPositionsReplaced (only if position data has changed), onPositionsSynchronized,
+ * onPendingOrdersReplaced (only if pending order data has changed), onPendingOrdersSynchronized,
+ * onHistoryOrderAdded, onHistoryOrdersSynchronized, onDealAdded, onDealsSynchronized.
+ * Data update events are onPositionUpdated (invoked both for new and updated positions), onPositionRemoved,
+ * onPendingOrderUpdated (invoked both for new and updated pending orders), onPendingOrderCompleted,
+ * onHistoryOrderAdded, onDealAdded, onSymbolSpecificationUpdated, onSymbolSpecificationRemoved, onQuote,
+ * onCandle, onTick, onBooks.
+ * There are also status events available such as onBrokerConnectionStatusChanged, onDisconnected,
+ * onSubscriptionDowngraded.
  */
 export default class TerminalListener {
 
@@ -164,67 +175,32 @@ export default class TerminalListener {
   async onSymbolSpecificationRemoved(symbol) {}
 
   /**
-   * Invoked when a symbol specifications were updated
-   * @param {Array<MetatraderSymbolSpecification>} specifications updated specifications
-   * @param {Array<String>} removedSymbols removed symbols
-   * @return {Promise} promise which resolves when the asynchronous event is processed
-   */
-  async onSymbolSpecificationsUpdated(specifications, removedSymbols) {}
-
-  /**
    * Invoked when a symbol price was updated
-   * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price
+   * @param {MetatraderSymbolPrice} quote updated MetaTrader symbol quote
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onSymbolPriceUpdated(price) {}
-
-  /**
-   * Invoked when prices for several symbols were updated
-   * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
-   * @param {Number} equity account liquidation value
-   * @param {Number} margin margin used
-   * @param {Number} freeMargin free margin
-   * @param {Number} marginLevel margin level calculated as % of equity/margin
-   * @param {Number} accountCurrencyExchangeRate current exchange rate of account currency into USD
-   * @return {Promise} promise which resolves when the asynchronous event is processed
-   */
-  async onSymbolPricesUpdated(prices, equity, margin, freeMargin, marginLevel, accountCurrencyExchangeRate) {}
+  async onQuote(quote) {}
 
   /**
    * Invoked when symbol candles were updated
-   * @param {Array<MetatraderCandle>} candles updated MetaTrader symbol candles
-   * @param {Number} equity account liquidation value
-   * @param {Number} margin margin used
-   * @param {Number} freeMargin free margin
-   * @param {Number} marginLevel margin level calculated as % of equity/margin
-   * @param {Number} accountCurrencyExchangeRate current exchange rate of account currency into USD
+   * @param {MetatraderCandle} candle updated MetaTrader symbol candle
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onCandlesUpdated(candles, equity, margin, freeMargin, marginLevel, accountCurrencyExchangeRate) {}
+  async onCandle(candles) {}
 
   /**
    * Invoked when symbol ticks were updated
-   * @param {Array<MetatraderTick>} ticks updated MetaTrader symbol ticks
-   * @param {Number} equity account liquidation value
-   * @param {Number} margin margin used
-   * @param {Number} freeMargin free margin
-   * @param {Number} marginLevel margin level calculated as % of equity/margin
-   * @param {Number} accountCurrencyExchangeRate current exchange rate of account currency into USD
+   * @param {MetatraderTick} tick updated MetaTrader symbol tick
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onTicksUpdated(ticks, equity, margin, freeMargin, marginLevel, accountCurrencyExchangeRate) {}
+  async onTick(tick) {}
 
   /**
    * Invoked when order books were updated
-   * @param {Array<MetatraderBook>} books updated MetaTrader order books
-   * @param {Number} equity account liquidation value
-   * @param {Number} margin margin used
-   * @param {Number} freeMargin free margin
-   * @param {Number} marginLevel margin level calculated as % of equity/margin
-   * @param {Number} accountCurrencyExchangeRate current exchange rate of account currency into USD
+   * @param {MetatraderBook} book updated MetaTrader order book
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onBooksUpdated(books, equity, margin, freeMargin, marginLevel, accountCurrencyExchangeRate) {}
+  async onBooks(book) {}
 
   /**
    * Invoked when subscription downgrade has occurred
