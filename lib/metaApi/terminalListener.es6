@@ -11,14 +11,15 @@
  * Please note that some event listener methods can still receive event duplicates, so that they must be idempotent.
  * The terminal lifecycle starts with onConnected event, followed by initial synchronization, followed by data updates.
  * During initial synchronization the SDK will invoke the following methods in sequence: onSynchronizationStarted,
- * onSymbolSpecificationUpdated, onSymbolSpecificationRemoved, onQuote, onAccountInformationUpdated,
- * onPositionsReplaced (only if position data has changed), onPositionsSynchronized,
- * onPendingOrdersReplaced (only if pending order data has changed), onPendingOrdersSynchronized,
+ * onSymbolSpecificationUpdated (invoked both for new and updated symbol specifications, can be skipped if
+ * specifications data has not changed), onSymbolSpecificationRemoved, onQuote, onAccountInformationUpdated,
+ * onPositionsReplaced (can be skipped if position data has not changed), onPositionsSynchronized,
+ * onPendingOrdersReplaced (can be skipped if pending order data has not changed), onPendingOrdersSynchronized,
  * onHistoryOrderAdded, onHistoryOrdersSynchronized, onDealAdded, onDealsSynchronized.
  * Data update events are onPositionUpdated (invoked both for new and updated positions), onPositionRemoved,
  * onPendingOrderUpdated (invoked both for new and updated pending orders), onPendingOrderCompleted,
- * onHistoryOrderAdded, onDealAdded, onSymbolSpecificationUpdated, onSymbolSpecificationRemoved, onQuote,
- * onCandle, onTick, onBook.
+ * onHistoryOrderAdded, onDealAdded, onSymbolSpecificationUpdated (invoked both for new and updated symbol
+ * specifications), onSymbolSpecificationRemoved, onQuote, onCandle, onTick, onBook.
  * There are also status events available such as onBrokerConnectionStatusChanged, onDisconnected,
  * onSubscriptionDowngraded.
  */
