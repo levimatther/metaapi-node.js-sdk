@@ -3,6 +3,7 @@
 import FileManager from './fileManager';
 import fs from 'fs-extra';
 import { TextEncoder } from 'util';
+import LoggerManager from '../../logger';
 
 
 /**
@@ -23,6 +24,7 @@ module.exports = class HistoryFileManager extends FileManager {
     this._historyOrdersSize = [];
     this._startNewOrderIndex = -1;
     this._isUpdating = false;
+    this._logger = LoggerManager.getLogger('HistoryFileManager');
   }
 
   /**
@@ -56,8 +58,7 @@ module.exports = class HistoryFileManager extends FileManager {
         history.lastHistoryOrderTimeByInstanceIndex = config.lastHistoryOrderTimeByInstanceIndex;
       }
     } catch(err) {
-      console.error(`[${(new Date()).toISOString()}] Failed to read ` + 
-      `history storage config of account ${accountId}`, err);
+      this._logger.error(`${accountId}: Failed to read history storage config`, err);
       await fs.remove(`./.metaapi/${accountId}-${application}-config.bin`);
     }
     try {
@@ -71,8 +72,7 @@ module.exports = class HistoryFileManager extends FileManager {
         });
       }
     } catch(err) {
-      console.error(`[${(new Date()).toISOString()}] Failed to read deals ` + 
-      `history storage of account ${accountId}`, err);
+      this._logger.error(`${accountId}: Failed to read deals history storage`, err);
       await fs.remove(`./.metaapi/${accountId}-${application}-deals.bin`);
     }
     try{
@@ -87,8 +87,7 @@ module.exports = class HistoryFileManager extends FileManager {
         });
       }
     } catch(err) {
-      console.error(`[${(new Date()).toISOString()}] Failed to read historyOrders ` + 
-      `history storage of account ${accountId}`, err);
+      this._logger.error(`${accountId} Failed to read historyOrders history storage`, err);
       await fs.remove(`./.metaapi/${accountId}-${application}-historyOrders.bin`);
     }
     return history;
@@ -128,8 +127,10 @@ module.exports = class HistoryFileManager extends FileManager {
           if(!await fs.pathExists(filePath)) {
             const deals = JSON.stringify(historyStorage.deals);
             fs.writeFile(filePath, deals, 'utf-8', (err) => {
-              if(err) {console.error(`[${(new Date()).toISOString()}] Error saving deals ` +
-          `on disk for account ${accountId}`, err);}});
+              if (err) {
+                this._logger.error(`${accountId}: Error saving deals on disk`, err);
+              }
+            });
             this._dealsSize = historyStorage.deals.map(item => getItemSize(item));
           } else {
             const replaceDeals = historyStorage.deals.slice(this._startNewDealIndex);
@@ -142,8 +143,10 @@ module.exports = class HistoryFileManager extends FileManager {
           if(!await fs.pathExists(filePath)) {
             const historyOrders = JSON.stringify(historyStorage.historyOrders);
             fs.writeFile(filePath, historyOrders, 'utf-8', (err) => {
-              if(err) {console.error(`[${(new Date()).toISOString()}] Error saving historyOrders ` + 
-          `on disk for account ${accountId}`, err);}});
+              if (err) {
+                this._logger.error(`${accountId}: Error saving historyOrders on disk`, err);
+              }
+            });
             this._historyOrdersSize = historyStorage.historyOrders.map(item => getItemSize(item));
           } else {
             const replaceOrders = historyStorage.historyOrders.slice(this._startNewOrderIndex);
@@ -153,8 +156,7 @@ module.exports = class HistoryFileManager extends FileManager {
           this._startNewOrderIndex = -1;
         }
       } catch(err) {
-        console.error(`[${(new Date()).toISOString()}] Error updating disk storage ` + 
-          `for account ${accountId}`, err);
+        this._logger.error(`${accountId}: Error updating disk storage`, err);
       }
       this._isUpdating = false;
     }
@@ -175,8 +177,7 @@ module.exports = class HistoryFileManager extends FileManager {
       };
       await fs.writeFile(filePath, JSON.stringify(config), 'utf-8');
     } catch (err) {
-      console.error(`[${(new Date()).toISOString()}] Error updating disk storage config ` + 
-          `for account ${accountId}`, err);
+      this._logger.error(`${accountId}: Error updating disk storage config`, err);
     }
   }
 

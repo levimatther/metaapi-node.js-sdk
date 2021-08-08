@@ -1,5 +1,6 @@
 const FileManager = require('./fileManager');
 const { openDB, deleteDB } = require('idb');
+const LoggerManager = require('../../logger');
 
 /**
  * History storage manager which saves and loads history to IndexedDB
@@ -14,6 +15,7 @@ module.exports = class BrowserHistoryManager extends FileManager {
    */
   constructor(accountId, application, historyStorage) {
     super(accountId, application, historyStorage);
+    this._logger = LoggerManager.getLogger('BrowserHistoryManager');
   }
 
   /**
@@ -40,8 +42,7 @@ module.exports = class BrowserHistoryManager extends FileManager {
       db.close();
       return history;
     } catch(err) {
-      console.error(`[${(new Date()).toISOString()}] Failed to get history from ` + 
-      `IndexedDB of account ${this._accountId}`, err);
+      this._logger.error(`${this._accountId}: Failed to get history from IndexedDB`, err);
     }
   }
 
@@ -59,8 +60,7 @@ module.exports = class BrowserHistoryManager extends FileManager {
         lastHistoryOrderTimeByInstanceIndex: this._historyStorage.lastHistoryOrderTimeByInstanceIndex});
       db.close();
     } catch(err) {
-      console.error(`[${(new Date()).toISOString()}] Failed to save history into ` + 
-        `IndexedDB of account ${this._accountId}`, err);
+      this._logger.error(`${this._accountId}: Failed to save history into IndexedDB`, err);
     }
   }
 
@@ -74,8 +74,7 @@ module.exports = class BrowserHistoryManager extends FileManager {
       await db.delete('historyOrders', this._accountId + '-' + this._application);
       db.close();
     } catch(err) {
-      console.error(`[${(new Date()).toISOString()}] Failed to delete history from ` + 
-      `IndexedDB of account ${this._accountId}`, err);
+      this._logger.error(`${this._accountId}: Failed to delete history from IndexedDB`, err);
     }
   }
 

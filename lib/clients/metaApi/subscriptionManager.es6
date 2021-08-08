@@ -1,3 +1,7 @@
+'use strict';
+
+import LoggerManager from '../../logger';
+
 /**
  * Subscription manager to handle account subscription logic
  */
@@ -11,6 +15,7 @@ export default class SubscriptionManager {
     this._websocketClient = websocketClient;
     this._subscriptions = {};
     this._awaitingResubscribe = {};
+    this._logger = LoggerManager.getLogger('SubscriptionManager');
   }
 
   /**
@@ -69,14 +74,14 @@ export default class SubscriptionManager {
         })};
         this._subscriptions[instanceId].task.resolve = resolveSubscribe;
         // eslint-disable-next-line no-inner-declarations
-        async function subscribeTask() {
+        let subscribeTask = async () => {
           try {
             await client.subscribe(accountId, instanceNumber);
           } catch (err) {
             if(err.name === 'TooManyRequestsError') {
               const socketInstanceIndex = client.socketInstancesByAccounts[accountId];
               if (err.metadata.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER') {
-                console.log(err);
+                this._logger.error(`${instanceId}: Failed to subscribe`, err);
               }
               if (['LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER', 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER', 
                 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER'].includes(err.metadata.type)) {
@@ -92,7 +97,7 @@ export default class SubscriptionManager {
             }
           }
           resolveSubscribe();
-        }
+        };
         subscribeTask();
         await this._subscriptions[instanceId].task.promise;
         if(!this._subscriptions[instanceId].shouldRetry) {
@@ -196,12 +201,11 @@ export default class SubscriptionManager {
             this.subscribe(accountId);
           }
         } catch (err) {
-          console.error('[' + (new Date()).toISOString() + '] Account ' + accountId + 
-          ' resubscribe task failed', err);
+          this._logger.error(`${accountId}: Account resubscribe task failed`, err);
         }
       });
     } catch (err) {
-      console.error('[' + (new Date()).toISOString() + '] Failed to process subscribe manager reconnected event', err);
+      this._logger.error('Failed to process subscribe manager reconnected event', err);
     }
   }
 }

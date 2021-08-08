@@ -2,6 +2,7 @@
 import fs from 'fs-extra';
 import moment from 'moment';
 import OptionsValidator from '../optionsValidator';
+import LoggerManager from '../../logger';
 
 /**
  * Packet logger options
@@ -35,6 +36,7 @@ export default class PacketLogger {
     this._lastSNPacket = {};
     this._writeQueue = {};
     this._root = './.metaapi/logs';
+    this._logger = LoggerManager.getLogger('PacketLogger');
     fs.ensureDir(this._root);
   }
 
@@ -190,18 +192,18 @@ export default class PacketLogger {
    * Writes logs to files
    */
   async _appendLogs() {
-    Object.keys(this._writeQueue).forEach(async key => {
-      const queue = this._writeQueue[key];
+    Object.keys(this._writeQueue).forEach(async accountId => {
+      const queue = this._writeQueue[accountId];
       if (!queue.isWriting && queue.queue.length) {
         queue.isWriting = true;
         try {
-          const filePath = await this.getFilePath(key);
+          const filePath = await this.getFilePath(accountId);
           const writeString = queue.queue.reduce((a,b) => a + 
           `[${moment().format('YYYY-MM-DD HH:mm:ss.SSS')}] ${b}\r\n` ,'');
           queue.queue = [];
           await fs.appendFile(filePath, writeString);  
         } catch(err) {
-          console.log('Error writing log', err);
+          this._logger.error(`${accountId}: Failed to record packet log`, err);
         }
         queue.isWriting = false;
       }

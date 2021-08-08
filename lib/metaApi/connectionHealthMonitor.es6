@@ -3,6 +3,7 @@
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 import moment from 'moment';
 import Reservoir from './reservoir/reservoir';
+import LoggerManager from '../logger';
 
 /**
  * Tracks connection health status
@@ -38,12 +39,14 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
       '1d': new Reservoir(24 * 60, 24 * 60 * 60 * 1000),
       '1w': new Reservoir(24 * 7, 7 * 24 * 60 * 60 * 1000),
     };
+    this._logger = LoggerManager.getLogger('ConnectionHealthMonitor');
   }
 
   /**
    * Stops health monitor
    */
   stop() {
+    this._logger.debug(`${this._connection.account.id}: Stopping the monitor`);
     clearTimeout(this._updateQuoteHealthStatusInterval);
     clearTimeout(this._measureUptimeInterval);
   }
@@ -60,8 +63,8 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
       this._offset = this._priceUpdatedAt.getTime() - brokerTimestamp;
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('[' + (new Date()).toISOString() + '] failed to update quote streaming health status on price ' +
-        'update for account ' + this._connection.account.id, err);
+      this._logger.error(`${this._connection.account.id}: Failed to update quote ` + 
+        'streaming health status on price update', err);
     }
   }
 
@@ -171,7 +174,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
         this._quotesHealthy ? 100 : 0));
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('[' + (new Date()).toISOString() + '] failed to measure uptime for account ' +
+      this._logger.error('failed to measure uptime for account ' +
         this._connection.account.id, err);
     }
   }
@@ -211,7 +214,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
         (Date.now() - this._priceUpdatedAt.getTime() < this._minQuoteInterval);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('[' + (new Date()).toISOString() + '] failed to update quote streaming health status for account ' +
+      this._logger.error('failed to update quote streaming health status for account ' +
         this._connection.account.id, err);
     }
   }

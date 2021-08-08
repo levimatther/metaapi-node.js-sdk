@@ -7,6 +7,7 @@ import TimeoutError from '../clients/timeoutError';
 import randomstring from 'randomstring';
 import ConnectionHealthMonitor from './connectionHealthMonitor';
 import OptionsValidator from '../clients/optionsValidator';
+import LoggerManager from '../logger';
 
 /**
  * Exposes MetaApi MetaTrader API connection to consumers
@@ -49,6 +50,7 @@ export default class MetaApiConnection extends SynchronizationListener {
     this._refreshMarketDataSubscriptionsJobs = {};
     this._synchronized = false;
     this._synchronizationListeners = [];
+    this._logger = LoggerManager.getLogger('MetaApiConnection');
   }
 
   /**
@@ -772,8 +774,8 @@ export default class MetaApiConnection extends SynchronizationListener {
       if(!this._terminalState.price(symbol)) {
         const instance = this.getInstanceNumber(instanceIndex);
         Promise.resolve(this.subscribeToMarketData(symbol, this._subscriptions[symbol].subscriptions, instance))
-          .catch(err => console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' 
-            + this._account.id + ':' + instanceIndex + ' failed to resubscribe to symbol ' + symbol, err));
+          .catch(err => this._logger.error('MetaApi websocket client for account ' + this._account.id +
+            ':' + instanceIndex + ' failed to resubscribe to symbol ' + symbol, err));
       }
     }
   }
@@ -888,7 +890,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Closes the connection. The instance of the class should no longer be used after this method is invoked.
    */
   async close() {
-    if(!this._closed) {
+    if (!this._closed) {
+      this._logger.debug(`${this._account.id}: Closing connection`);
       this._stateByInstanceIndex = {};
       await this._websocketClient.unsubscribe(this._account.id);
       this._websocketClient.removeSynchronizationListener(this._account.id, this);
@@ -945,7 +948,7 @@ export default class MetaApiConnection extends SynchronizationListener {
           subscriptionsList);
       }
     } catch (err) {
-      console.error(`Error refreshing market data subscriptions job for account ${this._account.id} ` +
+      this._logger.error(`Error refreshing market data subscriptions job for account ${this._account.id} ` +
       `${instanceNumber}`, err);
     } finally {
       if (this._refreshMarketDataSubscriptionsJobs[instanceNumber] === session) {
@@ -983,7 +986,7 @@ export default class MetaApiConnection extends SynchronizationListener {
           state.synchronizationRetryIntervalInSeconds = 1;
         }
       } catch (err) {
-        console.error('[' + (new Date()).toISOString() + '] MetaApi websocket client for account ' + this._account.id +
+        this._logger.error('MetaApi websocket client for account ' + this._account.id +
           ':' + instanceIndex + ' failed to synchronize', err);
         if (state.shouldSynchronize === key) {
           setTimeout(this._ensureSynchronized.bind(this, instanceIndex, key),
