@@ -10,7 +10,7 @@ let log4jsEnabled = false;
 class LoggerManager {
 
   /**
-   * Enable using Log4js logger with extended log levels for debugging instead of
+   * Enables using Log4js logger with extended log levels for debugging instead of
    * console.* functions. Note that log4js configuration performed by the user.
    */
   static useLog4js() {
