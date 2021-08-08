@@ -1,3 +1,6 @@
+14.1.0
+  - added support for log4js logger to use instead of console.* functions
+
 14.0.0
   - breaking change: refactored SynchronizationListener class, namely:
    - added onPositionsSynchronized method

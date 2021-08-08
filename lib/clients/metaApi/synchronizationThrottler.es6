@@ -2,6 +2,7 @@
 
 import TimeoutError from '../timeoutError';
 import OptionsValidator from '../optionsValidator';
+import LoggerManager from '../../logger';
 
 /**
  * Options for synchronization throttler
@@ -40,6 +41,7 @@ export default class SynchronizationThrottler {
     this._synchronizationQueue = [];
     this._removeOldSyncIdsInterval = null;
     this._processQueueInterval = null;
+    this._logger = LoggerManager.getLogger('SynchronizationThrottler');
   }
 
   /**
@@ -217,7 +219,7 @@ export default class SynchronizationThrottler {
         }
       }
     } catch (err) {
-      console.log('[' + (new Date()).toISOString() + '] Error processing queue job', err);
+      this._logger.error('Error processing queue job', err);
     }
   }
 
