@@ -1,3 +1,6 @@
+14.2.2
+  - fixed processing of subscriptions to market data
+
 14.2.1
   - fixed incremental synchronization event order
 
