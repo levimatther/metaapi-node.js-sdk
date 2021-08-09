@@ -518,7 +518,23 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise} promise which resolves when subscription request was processed
    */
   async subscribeToMarketData(symbol, subscriptions, instanceIndex, timeoutInSeconds) {
-    this._subscriptions[symbol] = {subscriptions};
+    subscriptions = subscriptions || [{type: 'quotes'}];
+    if(this._subscriptions[symbol]) {
+      const prevSubscriptions = this._subscriptions[symbol].subscriptions;
+      subscriptions.forEach(subscription => {
+        const index = subscription.type === 'candles' ? 
+          prevSubscriptions.findIndex(item => item.type === subscription.type && 
+            item.timeframe === subscription.timeframe) :
+          prevSubscriptions.findIndex(item => item.type === subscription.type);
+        if(index === -1){
+          prevSubscriptions.push(subscription);
+        } else {
+          prevSubscriptions[index] = subscription;
+        }
+      });
+    } else {
+      this._subscriptions[symbol] = {subscriptions};
+    }
     await this._websocketClient.subscribeToMarketData(this._account.id, instanceIndex, symbol, subscriptions);
     return this.terminalState.waitForPrice(symbol, timeoutInSeconds);
   }
@@ -536,7 +552,9 @@ export default class MetaApiConnection extends SynchronizationListener {
       delete this._subscriptions[symbol];
     } else if (this._subscriptions[symbol]) {
       this._subscriptions[symbol].subscriptions = this._subscriptions[symbol].subscriptions
-        .filter(s => !subscriptions.find(s2 => s.type === s2.type));
+        .filter(s => s.type === 'candles' ? 
+          !subscriptions.find(s2 => s.type === s2.type && s.timeframe === s2.timeframe) : 
+          !subscriptions.find(s2 => s.type === s2.type));
       if (!this._subscriptions[symbol].subscriptions.length) {
         delete this._subscriptions[symbol];
       }
