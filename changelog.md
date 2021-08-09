@@ -1,3 +1,6 @@
+14.2.0
+  - upgrade to 2.2.0 CopyFactory SDK
+
 14.1.0
   - added support for log4js logger to use instead of console.* functions
 
