@@ -65,6 +65,7 @@ export default class MetaApiWebsocketClient {
     this._subscriptionManager = new SubscriptionManager(this);
     this._statusTimers = {};
     this._eventQueues = {};
+    this._synchronizationFlags = {};
     this._subscribeLock = null;
     this._firstConnect = true;
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
@@ -1542,6 +1543,11 @@ export default class MetaApiWebsocketClient {
         await onDisconnected();
       } else if (data.type === 'synchronizationStarted') {
         const promises = [];
+        this._synchronizationFlags[data.synchronizationId] = {
+          accountId: data.accountId,
+          positionsUpdated: data.positionsUpdated !== undefined ? data.positionsUpdated : true,
+          ordersUpdated: data.ordersUpdated !== undefined ? data.ordersUpdated : true
+        };
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           promises.push(
             Promise.resolve((async () => {
@@ -1549,12 +1555,6 @@ export default class MetaApiWebsocketClient {
                 data.specificationsUpdated !== undefined ? data.specificationsUpdated : true,
                 data.positionsUpdated !== undefined ? data.positionsUpdated : true,
                 data.ordersUpdated !== undefined ? data.ordersUpdated : true);
-              if(data.positionsUpdated === false) {
-                await listener.onPositionsSynchronized(instanceIndex, data.synchronizationId);
-              }
-              if(data.ordersUpdated === false) {
-                await listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId);
-              }
             })())
               // eslint-disable-next-line no-console
               .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
@@ -1567,13 +1567,24 @@ export default class MetaApiWebsocketClient {
           const onAccountInformationUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
             onAccountInformationUpdatedPromises.push(
-              Promise.resolve(listener.onAccountInformationUpdated(instanceIndex, data.accountInformation))
+              Promise.resolve((async () => {
+                await listener.onAccountInformationUpdated(instanceIndex, data.accountInformation);
+                if (this._synchronizationFlags[data.synchronizationId]) {
+                  if(!this._synchronizationFlags[data.synchronizationId].positionsUpdated) {
+                    await listener.onPositionsSynchronized(instanceIndex, data.synchronizationId);
+                  }
+                  if(!this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
+                    await listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId);
+                  }
+                }
+              })())
                 // eslint-disable-next-line no-console
                 .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
                   'about accountInformation event', err))
             );
           }
           await Promise.all(onAccountInformationUpdatedPromises);
+          delete this._synchronizationFlags[data.synchronizationId];
         }
       } else if (data.type === 'deals') {
         for (let deal of (data.deals || [])) {
@@ -1932,6 +1943,12 @@ export default class MetaApiWebsocketClient {
           reconnectListeners.push(listener);
         }
       }
+      Object.keys(this._synchronizationFlags).forEach(synchronizationId => {
+        if (this._socketInstancesByAccounts[this._synchronizationFlags[synchronizationId].accountId]
+            === socketInstanceIndex) {
+          delete this._synchronizationFlags[synchronizationId];
+        }
+      });
       const reconnectAccountIds = reconnectListeners.map(listener => listener.accountId);
       this._subscriptionManager.onReconnected(socketInstanceIndex, reconnectAccountIds);
       this._packetOrderer.onReconnected(reconnectAccountIds);

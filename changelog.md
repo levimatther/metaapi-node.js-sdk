@@ -1,3 +1,6 @@
+14.2.1
+  - fixed incremental synchronization event order
+
 14.2.0
   - upgrade to 2.2.0 CopyFactory SDK
 
