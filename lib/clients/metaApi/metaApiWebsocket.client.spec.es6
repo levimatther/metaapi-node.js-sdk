@@ -27,7 +27,17 @@ describe('MetaApiWebsocketClient', () => {
     onDisconnect: () => {},
     updateSynchronizationId: () => {}
   };
-
+  let accountInformation = {
+    broker: 'True ECN Trading Ltd',
+    currency: 'USD',
+    server: 'ICMarketsSC-Demo',
+    balance: 7319.9,
+    equity: 7306.649913200001,
+    margin: 184.1,
+    freeMargin: 7120.22,
+    leverage: 100,
+    marginLevel: 3967.58283542
+  };
 
   before(() => {
     sandbox = sinon.createSandbox();
@@ -137,17 +147,6 @@ describe('MetaApiWebsocketClient', () => {
    * @test {MetaApiWebsocketClient#getAccountInformation}
    */
   it('should retrieve MetaTrader account information from API', async () => {
-    let accountInformation = {
-      broker: 'True ECN Trading Ltd',
-      currency: 'USD',
-      server: 'ICMarketsSC-Demo',
-      balance: 7319.9,
-      equity: 7306.649913200001,
-      margin: 184.1,
-      freeMargin: 7120.22,
-      leverage: 100,
-      marginLevel: 3967.58283542
-    };
     server.on('request', data => {
       if (data.type === 'getAccountInformation' && data.accountId === 'accountId' &&
         data.application === 'RPC') {
@@ -1205,6 +1204,7 @@ describe('MetaApiWebsocketClient', () => {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
         onPendingOrdersSynchronized: () => {},
+        onAccountInformationUpdated: () => {},
       };
       sandbox.stub(listener, 'onSynchronizationStarted').resolves();
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
@@ -1212,6 +1212,8 @@ describe('MetaApiWebsocketClient', () => {
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 1,
         synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+        accountInformation, instanceIndex: 1, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
       await new Promise(res => setTimeout(res, 100));
       sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, true, true);
       sinon.assert.notCalled(listener.onPositionsSynchronized);
@@ -1224,6 +1226,7 @@ describe('MetaApiWebsocketClient', () => {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
         onPendingOrdersSynchronized: () => {},
+        onAccountInformationUpdated: () => {},
       };
       sandbox.stub(listener, 'onSynchronizationStarted').resolves();
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
@@ -1232,6 +1235,8 @@ describe('MetaApiWebsocketClient', () => {
       server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 1,
         synchronizationId: 'synchronizationId', host: 'ps-mpa-1', positionsUpdated: false,
         ordersUpdated: true});
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+        accountInformation, instanceIndex: 1, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
       await new Promise(res => setTimeout(res, 100));
       sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, false, true);
       sinon.assert.calledWith(listener.onPositionsSynchronized, '1:ps-mpa-1', 'synchronizationId');
@@ -1244,6 +1249,7 @@ describe('MetaApiWebsocketClient', () => {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
         onPendingOrdersSynchronized: () => {},
+        onAccountInformationUpdated: () => {},
       };
       sandbox.stub(listener, 'onSynchronizationStarted').resolves();
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
@@ -1252,6 +1258,8 @@ describe('MetaApiWebsocketClient', () => {
       server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 1,
         synchronizationId: 'synchronizationId', host: 'ps-mpa-1', positionsUpdated: true,
         ordersUpdated: false});
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+        accountInformation, instanceIndex: 1, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
       await new Promise(res => setTimeout(res, 100));
       sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, true, false);
       sinon.assert.notCalled(listener.onPositionsSynchronized);
@@ -1259,17 +1267,6 @@ describe('MetaApiWebsocketClient', () => {
     });
 
     it('should synchronize account information', async () => {
-      let accountInformation = {
-        broker: 'True ECN Trading Ltd',
-        currency: 'USD',
-        server: 'ICMarketsSC-Demo',
-        balance: 7319.9,
-        equity: 7306.649913200001,
-        margin: 184.1,
-        freeMargin: 7120.22,
-        leverage: 100,
-        marginLevel: 3967.58283542
-      };
       let listener = {
         onAccountInformationUpdated: () => {
         }
