@@ -922,6 +922,7 @@ export default class MetaApiConnection extends SynchronizationListener {
       this._websocketClient.removeReconnectListener(this);
       this._connectionRegistry.remove(this._account.id);
       this._healthMonitor.stop();
+      this._refreshMarketDataSubscriptionsJobs = {};
       this._closed = true;
     }
   }

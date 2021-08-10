@@ -281,7 +281,10 @@ describe('SynchronizationThrottler', () => {
     throttler.scheduleSynchronize('accountId2', {requestId: 'test5', instanceIndex: 0, host: 'ps-mpa-2'});
     throttler.scheduleSynchronize('accountId4', {requestId: 'test6'});
     await new Promise(res => setTimeout(res, 50));
+    throttler.scheduleSynchronize('accountId2', {requestId: 'test7', instanceIndex: 0, host: 'ps-mpa-3'});
+    await new Promise(res => setTimeout(res, 50));
     throttler.removeIdByParameters('accountId2', 0, 'ps-mpa-0');
+    throttler.removeIdByParameters('accountId2', 0, 'ps-mpa-3');
     throttler.removeIdByParameters('accountId2', 1, 'ps-mpa-1');
     throttler.removeSynchronizationId('test1');
     await new Promise(res => setTimeout(res, 50));
