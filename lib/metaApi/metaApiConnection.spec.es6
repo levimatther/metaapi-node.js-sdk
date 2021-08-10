@@ -1140,6 +1140,12 @@ describe('MetaApiConnection', () => {
     await api.onDisconnected('1:ps-mpa-1');
     await clock.tickAsync(1050);
     sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
+    await api.onSynchronizationStarted('1:ps-mpa-1');
+    await clock.tickAsync(50);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
+    await api.close();
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
   });
 
 });

@@ -232,7 +232,8 @@ export default class SynchronizationThrottler {
     const synchronizationId = request.requestId;
     for (let key of Object.keys(this._accountsBySynchronizationIds)) {
       if(this._accountsBySynchronizationIds[key].accountId === accountId &&
-        this._accountsBySynchronizationIds[key].instanceIndex === request.instanceIndex) {
+        this._accountsBySynchronizationIds[key].instanceIndex === request.instanceIndex &&
+        this._accountsBySynchronizationIds[key].host === request.host) {
         this.removeSynchronizationId(key);
       }
     }
