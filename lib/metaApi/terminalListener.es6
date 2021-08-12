@@ -20,7 +20,7 @@
  * onPendingOrderUpdated (invoked both for new and updated pending orders), onPendingOrderCompleted,
  * onHistoryOrderAdded, onDealAdded, onSymbolSpecificationUpdated (invoked both for new and updated symbol
  * specifications), onSymbolSpecificationRemoved, onQuote, onCandle, onTick, onBook.
- * There are also status events available such as onBrokerConnectionStatusChanged, onDisconnected,
+ * There are also status events available such as onBrokerConnectionStatus, onDisconnected,
  * onSubscriptionDowngraded.
  */
 export default class TerminalListener {
@@ -58,7 +58,7 @@ export default class TerminalListener {
    * @param {Boolean} connected is MetaTrader terminal is connected to broker
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onBrokerConnectionStatusChanged(connected) {}
+  async onBrokerConnectionStatus(connected) {}
 
   /**
    * Invoked when MetaTrader terminal state synchronization is started
