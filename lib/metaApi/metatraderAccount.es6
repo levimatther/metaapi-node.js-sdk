@@ -163,11 +163,26 @@ export default class MetatraderAccount {
    * Returns number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
-   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
+   * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
+   * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
+   * is billed as 2 standard resource slots.  Default is 1.
    * @return {number} number of resource slots to allocate to account
    */
   get resourceSlots() {
     return this._data.resourceSlots;
+  }
+
+  /**
+   * Returns the number of CopyFactory 2 resource slots to allocate to account.
+   * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
+   * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
+   * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
+   * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
+   * Default is 1.
+   * @return {number} number of CopyFactory 2 resource slots to allocate to account
+   */
+  get copyFactoryResourceSlots() {
+    return this._data.copyFactoryResourceSlots;
   }
 
   /**

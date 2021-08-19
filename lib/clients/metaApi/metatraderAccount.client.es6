@@ -40,18 +40,27 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Array<Extension>} extensions API extensions
-   * @property {Object} metadata extra information which can be stored together with your account
-   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and high. Default is regular
-   * @property {String} baseCurrency 3-character ISO currency code of the account base currency. Default value is USD.
+   * @property {Array<Extension>} [extensions] API extensions
+   * @property {Object} [metadata] extra information which can be stored together with your account
+   * @property {String} [reliability] used to increase the reliability of the account. Allowed values are regular and
+   * high. Default is regular
+   * @property {String} [baseCurrency] 3-character ISO currency code of the account base currency. Default value is USD.
    * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
    * brokers. You should not alter this setting unless you understand what you are doing.
-   * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
+   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
-   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
+   * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
+   * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
+   * is billed as 2 standard resource slots.  Default is 1.
+   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
+   * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
+   * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
+   * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
+   * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
+   * Default is 1.
    */
 
   /**
