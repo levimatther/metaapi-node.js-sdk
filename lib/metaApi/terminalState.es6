@@ -64,7 +64,7 @@ export default class TerminalState extends SynchronizationListener {
    * trading terminal
    */
   get specifications() {
-    return this._getBestState().specifications;
+    return Object.values(this._getBestState().specificationsBySymbol);
   }
 
   /**
@@ -220,7 +220,6 @@ export default class TerminalState extends SynchronizationListener {
       state.ordersInitialized = false;
     }
     if(specificationsUpdated) {
-      state.specifications = [];
       state.specificationsBySymbol = {};
     }
   }
@@ -366,19 +365,12 @@ export default class TerminalState extends SynchronizationListener {
   onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
     let state = this._getState(instanceIndex);
     for (let specification of specifications) {
-      let index = state.specifications.findIndex(s => s.symbol === specification.symbol);
-      if (index !== -1) {
-        state.specifications[index] = specification;
-      } else {
-        state.specifications.push(specification);
-      }
       state.specificationsBySymbol[specification.symbol] = specification;
     }
-    state.specifications = state.specifications.filter(s => !removedSymbols.includes(s.symbol));
     for (let symbol of removedSymbols) {
       delete state.specificationsBySymbol[symbol];
     }
-    state.specificationCount = Object.keys(state.specifications).length;
+    state.specificationCount = Object.keys(state.specificationsBySymbol).length;
   }
 
   /**
@@ -502,7 +494,6 @@ export default class TerminalState extends SynchronizationListener {
       accountInformation: undefined,
       positions: [],
       orders: [],
-      specifications: [],
       specificationsBySymbol: {},
       pricesBySymbol: {},
       completedOrders: {},

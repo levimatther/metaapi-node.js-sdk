@@ -1,5 +1,6 @@
 14.3.0
   - added copyFactoryResourceSlots field to make it possible specify resource slots for CopyFactory 2 application
+  - improved performance of terminal state
 
 14.2.2
   - fixed processing of subscriptions to market data
