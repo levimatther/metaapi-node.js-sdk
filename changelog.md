@@ -1,3 +1,6 @@
+14.3.1
+  - added logging event delays
+
 14.3.0
   - added copyFactoryResourceSlots field to make it possible specify resource slots for CopyFactory 2 application
   - improved performance of terminal state
