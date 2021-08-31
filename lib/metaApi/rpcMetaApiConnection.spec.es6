@@ -2,16 +2,16 @@
 
 import should from 'should';
 import sinon from 'sinon';
-import MetaApiConnection from './metaApiConnection';
+import RpcMetaApiConnection from './rpcMetaApiConnection';
 import NotSynchronizedError from '../clients/metaApi/notSynchronizedError';
-import randomstring from 'randomstring';
 import HistoryFileManager from './historyFileManager/index';
+import TimeoutError from '../clients/timeoutError';
 
 /**
  * @test {MetaApiConnection}
  */
 // eslint-disable-next-line max-statements
-describe('MetaApiConnection', () => {
+describe('RpcMetaApiConnection', () => {
 
   let sandbox;
   let api;
@@ -33,31 +33,13 @@ describe('MetaApiConnection', () => {
     removeApplication: () => {},
     trade: () => {},
     reconnect: () => {},
-    synchronize: () => true,
-    ensureSubscribe: () => {},
-    subscribeToMarketData: () => {},
-    unsubscribeFromMarketData: () => {},
-    addSynchronizationListener: () => {},
-    addReconnectListener: () => {},
-    removeSynchronizationListener: () => {},
-    removeReconnectListener: () => {},
     getSymbols: () => {},
     getSymbolSpecification: () => {},
     getSymbolPrice: () => {},
     getCandle: () => {},
     getTick: () => {},
     getBook: () => {},
-    saveUptime: () => {},
     waitSynchronized: () => {},
-    unsubscribe: () => {},
-    refreshMarketDataSubscriptions: () => {}
-  };
-  const emptyHash = 'd41d8cd98f00b204e9800998ecf8427e';
-
-  let connectionRegistry = {
-    connect: () => {},
-    remove: () => {},
-    application: 'MetaApi'
   };
 
   before(() => {
@@ -71,10 +53,7 @@ describe('MetaApiConnection', () => {
       reload: () => {}
     };
     sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
-    api = new MetaApiConnection(client, account, undefined, connectionRegistry, 0, {
-      minDelayInSeconds: 1,
-      maxDelayInSeconds: 1
-    });
+    api = new RpcMetaApiConnection(client, account);
     clock = sinon.useFakeTimers({
       shouldAdvanceTime: true
     });
@@ -83,6 +62,31 @@ describe('MetaApiConnection', () => {
   afterEach(() => {
     clock.restore();
     sandbox.restore();
+  });
+
+  /**
+   * @test {MetaApiConnection#waitSynchronized}
+   */
+  it('should wait until RPC application is synchronized', async () => {
+    sandbox.stub(client, 'waitSynchronized').onFirstCall().rejects(new TimeoutError('test'))
+      .onSecondCall().rejects(new TimeoutError('test'))
+      .onThirdCall().resolves('response');
+  });
+
+  /**
+   * @test {MetaApiConnection#waitSynchronized}
+   */
+  it('should time out waiting for synchronization', async () => {
+    sandbox.stub(client, 'waitSynchronized').callsFake(async () => {
+      await new Promise(res => setTimeout(res, 100)); 
+      throw new TimeoutError('test');
+    });
+    try {
+      await api.waitSynchronized(0.09); 
+      throw new Error('TimeoutError extected');
+    } catch (err) {
+      err.name.should.equal('TimeoutError');
+    }
   });
 
   /**
@@ -395,21 +399,8 @@ describe('MetaApiConnection', () => {
    */
   it('should remove history', async () => {
     sandbox.stub(client, 'removeHistory').resolves();
-    sandbox.stub(api.historyStorage, 'clear').resolves();
     await api.removeHistory('app');
     sinon.assert.calledWith(client.removeHistory, 'accountId', 'app');
-    sinon.assert.calledOnce(api.historyStorage.clear);
-  });
-
-  /**
-   * @test {MetaApiConnection#removeApplication}
-   */
-  it('should remove application', async () => {
-    sandbox.stub(client, 'removeApplication').resolves();
-    sandbox.stub(api.historyStorage, 'clear').resolves();
-    await api.removeApplication();
-    sinon.assert.calledWith(client.removeApplication, 'accountId');
-    sinon.assert.calledOnce(api.historyStorage.clear);
   });
 
   /**
@@ -695,122 +686,6 @@ describe('MetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#subscribe}
-   */
-  describe('ensure subscribe', () => {
-
-    /**
-     * @test {MetaApiConnection#subscribe}
-     */
-    it('should subscribe to terminal', async () => {
-      sandbox.stub(client, 'ensureSubscribe').resolves();
-      await api.subscribe();
-      sinon.assert.calledWith(client.ensureSubscribe, 'accountId');
-    });
-
-  });
-
-  /**
-   * @test {MetaApiConnection#synchronize}
-   */
-  it('should not subscribe if connection is closed', async () => {
-    const ensureSubscribeStub = sandbox.stub(client, 'ensureSubscribe').resolves();
-    await api.close();
-    await api.subscribe();
-    sinon.assert.notCalled(ensureSubscribeStub);
-  });
-
-  /**
-   * @test {MetaApiConnection#synchronize}
-   */
-  it('should synchronize state with terminal', async () => {
-    sandbox.stub(client, 'synchronize').resolves();
-    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize('1:ps-mpa-1');
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
-  });
-
-  /**
-   * @test {MetaApiConnection#synchronize}
-   */
-  it('should synchronize state with terminal from specified time', async () => {
-    sandbox.stub(client, 'synchronize').resolves();
-    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry,
-      new Date('2020-10-07T00:00:00.000Z'));
-    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize('1:ps-mpa-1');
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
-  });
-
-  /**
-   * @test {MetaApiConnection#subscribeToMarketData}
-   */
-  it('should subscribe to market data', async () => {
-    sandbox.stub(client, 'subscribeToMarketData').resolves();
-    let promise = api.subscribeToMarketData('EURUSD', undefined, 1);
-    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
-    await promise;
-    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
-    sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}]);
-    await api.subscribeToMarketData('EURUSD', [{type: 'books'}, {type: 'candles', timeframe: '1m'}], 1);
-    sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}, {type: 'books'},
-      {type: 'candles', timeframe: '1m'}]);
-    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}, {type: 'candles', timeframe: '5m'}], 1);
-    sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}, {type: 'books'},
-      {type: 'candles', timeframe: '1m'}, {type: 'candles', timeframe: '5m'}]);
-  });
-
-  /**
-   * @test {MetaApiConnection#unsubscribeFromMarketData}
-   */
-  it('should unsubscribe from market data', async () => {
-    await api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1',
-      [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
-    sandbox.stub(client, 'unsubscribeFromMarketData').resolves();
-    await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}], 1);
-    sinon.assert.calledWith(client.unsubscribeFromMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
-    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}, {type: 'books'},
-      {type: 'candles', timeframe: '1m'}, {type: 'candles', timeframe: '5m'}], 1);
-    sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}, {type: 'books'},
-      {type: 'candles', timeframe: '1m'}, {type: 'candles', timeframe: '5m'}]);
-    await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}, {type: 'candles', timeframe: '5m'}], 1);
-    sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'books'}, {type: 'candles', timeframe: '1m'}]);
-  });
-
-  describe('onSubscriptionDowngrade', () => {
-
-    /**
-     * @test {MetaApiConnection#onSubscriptionDowngrade}
-     */
-    it('should unsubscribe during market data subscription downgrade', async () => {
-      sandbox.stub(api, 'subscribeToMarketData').resolves();
-      sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
-      await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', undefined, [{type: 'ticks'}, {type: 'books'}]);
-      sinon.assert.calledWith(api.unsubscribeFromMarketData, 'EURUSD', [{type: 'ticks'}, {type: 'books'}]);
-      sinon.assert.notCalled(api.subscribeToMarketData);
-    });
-
-    /**
-     * @test {MetaApiConnection#onSubscriptionDowngrade}
-     */
-    it('should update market data subscription on downgrade', async () => {
-      sandbox.stub(api, 'subscribeToMarketData').resolves();
-      sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
-      await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
-      sinon.assert.calledWith(api.subscribeToMarketData, 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
-      sinon.assert.notCalled(api.unsubscribeFromMarketData);
-    });
-
-  });
-
-  /**
    * @test {MetaApiConnection#getSymbols}
    */
   it('should retrieve symbols', async () => {
@@ -923,229 +798,6 @@ describe('MetaApiConnection', () => {
     let actual = await api.getBook('AUDNZD');
     actual.should.match(book);
     sinon.assert.calledWith(client.getBook, 'accountId', 'AUDNZD');
-  });
-
-  /**
-   * @test {MetaApiConnection#saveUptime}
-   */
-  it('should save uptime stats to the server', async () => {
-    sandbox.stub(client, 'saveUptime').resolves();
-    await api.saveUptime({'1h': 100});
-    sinon.assert.calledWith(client.saveUptime, 'accountId', {'1h': 100});
-  });
-
-  /**
-   * @test {MetaApiConnection#terminalState}
-   * @test {MetaApiConnection#historyStorage}
-   */
-  it('should initialize listeners, terminal state and history storage for accounts with user synch mode', async () => {
-    sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    should.exist(api.terminalState);
-    should.exist(api.historyStorage);
-    sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api);
-    sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api.terminalState);
-    sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api.historyStorage);
-  });
-
-  /**
-   * @test {MetaApiConnection#addSynchronizationListener}
-   */
-  it('should add synchronization listeners', async () => {
-    sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    let listener = {};
-    api.addSynchronizationListener(listener);
-    sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', listener);
-  });
-
-  /**
-   * @test {MetaApiConnection#removeSynchronizationListener}
-   */
-  it('should remove synchronization listeners', async () => {
-    sandbox.stub(client, 'removeSynchronizationListener').returns();
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    let listener = {};
-    api.removeSynchronizationListener(listener);
-    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', listener);
-  });
-
-  /**
-   * @test {MetaApiConnection#onConnected}
-   */
-  it('should sychronize on connection', async () => {
-    sandbox.stub(client, 'synchronize').resolves();
-    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected('1:ps-mpa-1', 1);
-    await new Promise(res => setTimeout(res, 50));
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
-  });
-
-  /**
-   * @test {MetaApiConnection#onConnected}
-   */
-  it('should maintain synchronization if connection has failed', async () => {
-    let stub = sandbox.stub(client, 'synchronize');
-    stub.onFirstCall().throws(new Error('test error'));
-    stub.onSecondCall().resolves();
-    sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected('1:ps-mpa-1', 1);
-    await new Promise(res => setTimeout(res, 50));
-    sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
-  });
-
-  /**
-   * @test {MetaApiConnection#onConnected}
-   */
-  it('should not synchronize if connection is closed', async () => {
-    let synchronizeStub = sandbox.stub(client, 'synchronize');
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.close();
-    await api.onConnected('1:ps-mpa-1', 1);
-    sinon.assert.notCalled(synchronizeStub);
-  });
-
-  /**
-   * @test {MetaApiConnection#onConnected}
-   */
-  it('should restore market data subscriptions on synchronization', async () => {
-    let callCount = 0;
-    sandbox.stub(api.terminalState, 'price').callsFake((symbol) => {
-      callCount++;
-      if (callCount === 6) {
-        return undefined;
-      }
-      return {symbol};
-    });
-    await api.subscribeToMarketData('EURUSD');
-    await api.subscribeToMarketData('AUDNZD');
-    const subscribeStub = sandbox.stub(client, 'subscribeToMarketData').resolves();
-    await api.onAccountInformationUpdated('1:ps-mpa-1', {});
-    sinon.assert.callCount(subscribeStub, 1);
-    sinon.assert.calledWith(subscribeStub, 'accountId', 1, 'AUDNZD');
-  });
-
-  /**
-   * @test {MetaApiConnection#close}
-   */
-  it('should unsubscribe from events on close', async () => {
-    sandbox.stub(client, 'addSynchronizationListener').returns();
-    sandbox.stub(client, 'removeSynchronizationListener').returns();
-    sandbox.stub(client, 'unsubscribe').resolves();
-    sandbox.stub(connectionRegistry, 'remove').returns();
-    api = new MetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
-    await api.close();
-    sinon.assert.calledWith(client.unsubscribe, 'accountId');
-    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
-    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
-    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.historyStorage);
-    sinon.assert.calledWith(connectionRegistry.remove, 'accountId');
-  });
-
-  describe('waitSynchronized', () => {
-
-    /**
-     * @test {MetaApiConnection#waitSynchronized}
-     */
-    it('should wait util synchronization complete', async () => {
-      sandbox.stub(client, 'waitSynchronized').resolves();
-      sinon.assert.match(await api.isSynchronized('1:ps-mpa-1'), false);
-      (await api.isSynchronized()).should.equal(false);
-      let promise = api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
-        timeoutInSeconds: 1, intervalInMilliseconds: 10});
-      let startTime = Date.now();
-      await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
-      (Date.now() - startTime).should.be.approximately(50, 10);
-      api.onHistoryOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-      api.onDealsSynchronized('1:ps-mpa-1', 'synchronizationId');
-      startTime = Date.now();
-      await promise;
-      (Date.now() - startTime).should.be.approximately(10, 10);
-      (await api.isSynchronized('1:ps-mpa-1', 'synchronizationId')).should.equal(true);
-    });
-
-    /**
-     * @test {MetaApiConnection#waitSynchronized}
-     */
-    it('should time out waiting for synchronization complete', async () => {
-      try {
-        await api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
-          timeoutInSeconds: 1, intervalInMilliseconds: 10});
-        throw new Error('TimeoutError is expected');
-      } catch (err) {
-        err.name.should.equal('TimeoutError');
-      }
-      (await api.isSynchronized('synchronizationId')).should.equal(false);
-    });
-
-  });
-
-  /**
-   * @test {MetaApiConnection#initialize}
-   */
-  it('should load data to history storage from disk', async () => {
-    sandbox.stub(api.historyStorage, 'initialize').resolves();
-    await api.initialize();
-    sinon.assert.calledOnce(api.historyStorage.initialize);
-  });
-
-  /**
-   * @test {MetaApiConnection#onDisconnected}
-   */
-  it('should set synchronized false on disconnect', async () => {
-    await api.onConnected('1:ps-mpa-1', 2);
-    await new Promise(res => setTimeout(res, 50));
-    sinon.assert.match(api.synchronized, true);
-    await api.onDisconnected('1:ps-mpa-1');
-    sinon.assert.match(api.synchronized, false);
-  });
-
-  /**
-   * @test {MetaApiConnection#onDisconnected}
-   */
-  it('should delete state if stream closed', async () => {
-    await api.onConnected('1:ps-mpa-1', 2);
-    await new Promise(res => setTimeout(res, 50));
-    sinon.assert.match(api.synchronized, true);
-    await api.onStreamClosed('1:ps-mpa-1');
-    sinon.assert.match(api.synchronized, false);
-  });
-
-  /**
-   * @test {MetaApiConnection#onDisconnected}
-   */
-  it('should create refresh subscriptions job', async () => {
-    sandbox.stub(client, 'refreshMarketDataSubscriptions').resolves();
-    sandbox.stub(client, 'subscribeToMarketData').resolves();
-    sandbox.stub(client, 'waitSynchronized').resolves();
-    await api.onSynchronizationStarted('1:ps-mpa-1');
-    await clock.tickAsync(50);
-    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, []);
-    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
-    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
-    await clock.tickAsync(1050);
-    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, 
-      [{symbol: 'EURUSD', subscriptions: [{type: 'quotes'}]}]);
-    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
-    await api.onDisconnected('1:ps-mpa-1');
-    await clock.tickAsync(1050);
-    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
-    await api.onSynchronizationStarted('1:ps-mpa-1');
-    await clock.tickAsync(50);
-    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
-    await api.close();
-    await clock.tickAsync(1050);
-    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
   });
 
 });

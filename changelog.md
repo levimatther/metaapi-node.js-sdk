@@ -1,3 +1,10 @@
+15.0.0
+  - breaking change: divided MetaApiConnection class into:
+    - RpcMetaApiConnection for RPC requests
+    - StreamingMetaApiConnection for terminal synchronization
+  - added symbol validation for subscribeToMarketData
+  - refactored terminal state storage
+
 14.3.1
   - added logging event delays
 

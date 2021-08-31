@@ -696,7 +696,7 @@ describe('MetatraderAccountApi', () => {
       loadDataFromDisk: () => ({deals: [], historyOrders: []})
     };
     sandbox.spy(connectionRegistry, 'connect');
-    await account.connect(storage);
+    await account.getStreamingConnection(storage);
     sinon.assert.calledWith(connectionRegistry.connect, account, storage);
   });
 

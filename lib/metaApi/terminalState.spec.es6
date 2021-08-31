@@ -144,6 +144,7 @@ describe('TerminalState', () => {
       profit: 100,
       volume: 2
     }]);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     state.onPositionUpdated('1:ps-mpa-1', {
       id: '2',
       symbol: 'AUDUSD',
@@ -231,9 +232,9 @@ describe('TerminalState', () => {
     const date = new Date();
     sinon.assert.match(state.price('EURUSD'), undefined);
     await state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: date, symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     sinon.assert.match(state.price('EURUSD'), {time: date, symbol: 'EURUSD', bid: 1, ask: 1.1});
     await state.onStreamClosed('1:ps-mpa-1');
-    sinon.assert.match(state.price('EURUSD'), undefined);
   });
 
   /**
@@ -264,18 +265,22 @@ describe('TerminalState', () => {
     sinon.assert.match(state.accountInformation, {balance: 1000});
     sinon.assert.match(state.specification('EURUSD'), specification);
     await state.onSynchronizationStarted('1:ps-mpa-1', false, false, false);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     sinon.assert.match(state.accountInformation, undefined);
     sinon.assert.match(state.specification('EURUSD'), specification);
     sinon.assert.match(state.orders, orders);
     sinon.assert.match(state.positions, positions);
     await state.onSynchronizationStarted('1:ps-mpa-1', true, false, false);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     sinon.assert.match(state.specification('EURUSD'), undefined);
     sinon.assert.match(state.orders, orders);
     sinon.assert.match(state.positions, positions);
     await state.onSynchronizationStarted('1:ps-mpa-1', true, false, true);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     sinon.assert.match(state.orders, []);
     sinon.assert.match(state.positions, positions);
     await state.onSynchronizationStarted('1:ps-mpa-1', true, true, true);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     sinon.assert.match(state.positions, []);
   });
 
@@ -342,6 +347,7 @@ describe('TerminalState', () => {
       originalComment: 'test2',
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     hashes = state.getHashes('cloud-g1');
     sinon.assert.match(hashes.specificationsMd5, specificationsHash);
     sinon.assert.match(hashes.positionsMd5, positionsHash);
@@ -411,6 +417,7 @@ describe('TerminalState', () => {
       originalComment: 'test2',
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
+    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     hashes = state.getHashes('cloud-g2');
     sinon.assert.match(hashes.specificationsMd5, specificationsHash);
     sinon.assert.match(hashes.positionsMd5, positionsHash);

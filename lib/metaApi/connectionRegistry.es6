@@ -1,4 +1,4 @@
-import MetaApiConnection from './metaApiConnection';
+import StreamingMetaApiConnection from './streamingMetaApiConnection';
 
 /**
  * Manages account connections
@@ -38,7 +38,7 @@ export default class ConnectionRegistry {
       }
       let connectionLockResolve;
       this._connectionLocks[account.id] = {promise: new Promise(res => connectionLockResolve = res)};
-      const connection = new MetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
+      const connection = new StreamingMetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
         historyStartTime, this._refreshSubscriptionsOpts);
       try {
         await connection.initialize();
