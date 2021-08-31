@@ -15,6 +15,18 @@ export default class TerminalState extends SynchronizationListener {
     super();
     this._stateByInstanceIndex = {};
     this._waitForPriceResolves = {};
+    this._combinedState = {
+      accountInformation: undefined,
+      positions: [],
+      orders: [],
+      specificationsBySymbol: {},
+      pricesBySymbol: {},
+      completedOrders: {},
+      removedPositions: {},
+      ordersInitialized: false,
+      positionsInitialized: false,
+      lastUpdateTime: 0
+    };
   }
 
   /**
@@ -39,7 +51,7 @@ export default class TerminalState extends SynchronizationListener {
    * @returns {MetatraderAccountInformation} local copy of account information
    */
   get accountInformation() {
-    return this._getBestState().accountInformation;
+    return this._combinedState.accountInformation;
   }
 
   /**
@@ -47,7 +59,7 @@ export default class TerminalState extends SynchronizationListener {
    * @returns {Array<MetatraderPosition>} a local copy of MetaTrader positions opened
    */
   get positions() {
-    return this._getBestState().positions;
+    return this._combinedState.positions;
   }
 
   /**
@@ -55,7 +67,7 @@ export default class TerminalState extends SynchronizationListener {
    * @returns {Array<MetatraderOrder>} a local copy of MetaTrader orders opened
    */
   get orders() {
-    return this._getBestState().orders;
+    return this._combinedState.orders;
   }
 
   /**
@@ -64,7 +76,7 @@ export default class TerminalState extends SynchronizationListener {
    * trading terminal
    */
   get specifications() {
-    return Object.values(this._getBestState().specificationsBySymbol);
+    return Object.values(this._combinedState.specificationsBySymbol);
   }
 
   /**
@@ -141,7 +153,7 @@ export default class TerminalState extends SynchronizationListener {
    * symbol is not found
    */
   specification(symbol) {
-    return this._getBestState(symbol, 'specification').specificationsBySymbol[symbol];
+    return this._combinedState.specificationsBySymbol[symbol];
   }
 
   /**
@@ -150,7 +162,7 @@ export default class TerminalState extends SynchronizationListener {
    * @return {MetatraderSymbolPrice} MetatraderSymbolPrice found or undefined if price for a symbol is not found
    */
   price(symbol) {
-    return this._getBestState(symbol, 'price').pricesBySymbol[symbol];
+    return this._combinedState.pricesBySymbol[symbol];
   }
 
   /**
@@ -232,7 +244,7 @@ export default class TerminalState extends SynchronizationListener {
   onAccountInformationUpdated(instanceIndex, accountInformation) {
     let state = this._getState(instanceIndex);
     state.accountInformation = accountInformation;
-    state.initializationCounter = 1;
+    this._combinedState.accountInformation = accountInformation;
   }
 
   /**
@@ -256,7 +268,6 @@ export default class TerminalState extends SynchronizationListener {
     let state = this._getState(instanceIndex);
     state.removedPositions = {};
     state.positionsInitialized = true;
-    state.initializationCounter = 2;
   }
 
   /**
@@ -265,13 +276,18 @@ export default class TerminalState extends SynchronizationListener {
    * @param {MetatraderPosition} position updated MetaTrader position
    */
   onPositionUpdated(instanceIndex, position) {
-    let state = this._getState(instanceIndex);
-    let index = state.positions.findIndex(p => p.id === position.id);
-    if (index !== -1) {
-      state.positions[index] = position;
-    } else if (!state.removedPositions[position.id]) {
-      state.positions.push(position);
-    }
+    let instanceState = this._getState(instanceIndex);
+
+    const updatePosition = (state) => {
+      let index = state.positions.findIndex(p => p.id === position.id);
+      if (index !== -1) {
+        state.positions[index] = position;
+      } else if (!state.removedPositions[position.id]) {
+        state.positions.push(position);
+      }
+    };
+    updatePosition(instanceState);
+    updatePosition(this._combinedState);
   }
 
   /**
@@ -280,18 +296,23 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} positionId removed MetaTrader position id
    */
   onPositionRemoved(instanceIndex, positionId) {
-    let state = this._getState(instanceIndex);
-    let position = state.positions.find(p => p.id === positionId);
-    if (!position) {
-      for (let e of Object.entries(state.removedPositions)) {
-        if (e[1] + 5 * 60 * 1000 < Date.now()) {
-          delete state.removedPositions[e[0]];
+    let instanceState = this._getState(instanceIndex);
+
+    const removePosition = (state) => {
+      let position = state.positions.find(p => p.id === positionId);
+      if (!position) {
+        for (let e of Object.entries(state.removedPositions)) {
+          if (e[1] + 5 * 60 * 1000 < Date.now()) {
+            delete state.removedPositions[e[0]];
+          }
         }
+        state.removedPositions[positionId] = Date.now();
+      } else {
+        state.positions = state.positions.filter(p => p.id !== positionId);
       }
-      state.removedPositions[positionId] = Date.now();
-    } else {
-      state.positions = state.positions.filter(p => p.id !== positionId);
-    }
+    };
+    removePosition(instanceState);
+    removePosition(this._combinedState);
   }
 
   /**
@@ -316,7 +337,14 @@ export default class TerminalState extends SynchronizationListener {
     let state = this._getState(instanceIndex);
     state.completedOrders = {};
     state.ordersInitialized = true;
-    state.initializationCounter = 3;
+    this._combinedState.accountInformation = state.accountInformation;
+    this._combinedState.positions = state.positions;
+    this._combinedState.orders = state.orders;
+    this._combinedState.specificationsBySymbol = state.specificationsBySymbol;
+    this._combinedState.positionsInitialized = true;
+    this._combinedState.ordersInitialized = true;
+    this._combinedState.completedOrders = {};
+    this._combinedState.removedPositions = {};
   }
 
   /**
@@ -326,13 +354,18 @@ export default class TerminalState extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onPendingOrderUpdated(instanceIndex, order) {
-    let state = this._getState(instanceIndex);
-    let index = state.orders.findIndex(o => o.id === order.id);
-    if (index !== -1) {
-      state.orders[index] = order;
-    } else if (!state.completedOrders[order.id]) {
-      state.orders.push(order);
-    }
+    let instanceState = this._getState(instanceIndex);
+    
+    const updatePendingOrder = (state) => {
+      let index = state.orders.findIndex(o => o.id === order.id);
+      if (index !== -1) {
+        state.orders[index] = order;
+      } else if (!state.completedOrders[order.id]) {
+        state.orders.push(order);
+      }
+    };
+    updatePendingOrder(instanceState);
+    updatePendingOrder(this._combinedState);
   }
 
   /**
@@ -342,18 +375,23 @@ export default class TerminalState extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onPendingOrderCompleted(instanceIndex, orderId) {
-    let state = this._getState(instanceIndex);
-    let order = state.orders.find(o => o.id === orderId);
-    if (!order) {
-      for (let e of Object.entries(state.completedOrders)) {
-        if (e[1] + 5 * 60 * 1000 < Date.now()) {
-          delete state.completedOrders[e[0]];
+    let instanceState = this._getState(instanceIndex);
+
+    const completeOrder = (state) => {
+      let order = state.orders.find(o => o.id === orderId);
+      if (!order) {
+        for (let e of Object.entries(state.completedOrders)) {
+          if (e[1] + 5 * 60 * 1000 < Date.now()) {
+            delete state.completedOrders[e[0]];
+          }
         }
+        state.completedOrders[orderId] = Date.now();
+      } else {
+        state.orders = state.orders.filter(o => o.id !== orderId);
       }
-      state.completedOrders[orderId] = Date.now();
-    } else {
-      state.orders = state.orders.filter(o => o.id !== orderId);
-    }
+    };
+    completeOrder(instanceState);
+    completeOrder(this._combinedState);
   }
 
   /**
@@ -363,14 +401,18 @@ export default class TerminalState extends SynchronizationListener {
    * @param {Array<String>} removedSymbols removed symbols
    */
   onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
-    let state = this._getState(instanceIndex);
-    for (let specification of specifications) {
-      state.specificationsBySymbol[specification.symbol] = specification;
-    }
-    for (let symbol of removedSymbols) {
-      delete state.specificationsBySymbol[symbol];
-    }
-    state.specificationCount = Object.keys(state.specificationsBySymbol).length;
+    let instanceState = this._getState(instanceIndex);
+
+    const updateSpecifications = (state) => {
+      for (let specification of specifications) {
+        state.specificationsBySymbol[specification.symbol] = specification;
+      }
+      for (let symbol of removedSymbols) {
+        delete state.specificationsBySymbol[symbol];
+      }
+    };
+    updateSpecifications(instanceState);
+    updateSpecifications(this._combinedState);
   }
 
   /**
@@ -384,60 +426,67 @@ export default class TerminalState extends SynchronizationListener {
    */
   // eslint-disable-next-line complexity
   onSymbolPricesUpdated(instanceIndex, prices, equity, margin, freeMargin, marginLevel) {
-    let state = this._getState(instanceIndex);
-    state.lastUpdateTime = Math.max(prices.map(p => p.time.getTime()));
-    let pricesInitialized = false;
-    for (let price of prices || []) {
-      state.pricesBySymbol[price.symbol] = price;
-      let positions = state.positions.filter(p => p.symbol === price.symbol);
-      let otherPositions = state.positions.filter(p => p.symbol !== price.symbol);
-      let orders = state.orders.filter(o => o.symbol === price.symbol);
-      pricesInitialized = true;
-      for (let position of otherPositions) {
-        let p = state.pricesBySymbol[position.symbol];
-        if (p) {
-          if (position.unrealizedProfit === undefined) {
-            this._updatePositionProfits(position, p);
+    let instanceState = this._getState(instanceIndex);
+
+    // eslint-disable-next-line complexity
+    const updateSymbolPrices = (state) => {
+      state.lastUpdateTime = Math.max(prices.map(p => p.time.getTime()));
+      let pricesInitialized = false;
+      for (let price of prices || []) {
+        state.pricesBySymbol[price.symbol] = price;
+        let positions = state.positions.filter(p => p.symbol === price.symbol);
+        let otherPositions = state.positions.filter(p => p.symbol !== price.symbol);
+        let orders = state.orders.filter(o => o.symbol === price.symbol);
+        pricesInitialized = true;
+        for (let position of otherPositions) {
+          let p = state.pricesBySymbol[position.symbol];
+          if (p) {
+            if (position.unrealizedProfit === undefined) {
+              this._updatePositionProfits(position, p);
+            }
+          } else {
+            pricesInitialized = false;
           }
-        } else {
-          pricesInitialized = false;
         }
-      }
-      for (let position of positions) {
-        this._updatePositionProfits(position, price);
-      }
-      for (let order of orders) {
-        order.currentPrice = order.type === 'ORDER_TYPE_BUY' || order.type === 'ORDER_TYPE_BUY_LIMIT' ||
+        for (let position of positions) {
+          this._updatePositionProfits(position, price);
+        }
+        for (let order of orders) {
+          order.currentPrice = order.type === 'ORDER_TYPE_BUY' || order.type === 'ORDER_TYPE_BUY_LIMIT' ||
           order.type === 'ORDER_TYPE_BUY_STOP' || order.type === 'ORDER_TYPE_BUY_STOP_LIMIT' ? price.ask : price.bid;
-      }
-      let priceResolves = this._waitForPriceResolves[price.symbol] || [];
-      if (priceResolves.length) {
-        for (let resolve of priceResolves) {
-          resolve();
         }
-        delete this._waitForPriceResolves[price.symbol];
+        let priceResolves = this._waitForPriceResolves[price.symbol] || [];
+        if (priceResolves.length) {
+          for (let resolve of priceResolves) {
+            resolve();
+          }
+          delete this._waitForPriceResolves[price.symbol];
+        }
       }
-    }
-    if (state.accountInformation) {
-      if (state.positionsInitialized && pricesInitialized) {
-        if (state.accountInformation.platform === 'mt5') {
-          state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
+      if (state.accountInformation) {
+        if (state.positionsInitialized && pricesInitialized) {
+          if (state.accountInformation.platform === 'mt5') {
+            state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
             state.positions.reduce((acc, p) => acc +
               Math.round((p.unrealizedProfit || 0) * 100) / 100 + Math.round((p.swap || 0) * 100) / 100, 0);
-        } else {
-          state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
+          } else {
+            state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
             state.positions.reduce((acc, p) => acc + Math.round((p.swap || 0) * 100) / 100 +
               Math.round((p.commission || 0) * 100) / 100 + Math.round((p.unrealizedProfit || 0) * 100) / 100, 0);
+          }
+          state.accountInformation.equity = Math.round(state.accountInformation.equity * 100) / 100;
+        } else {
+          state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.equity;
         }
-        state.accountInformation.equity = Math.round(state.accountInformation.equity * 100) / 100;
-      } else {
-        state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.equity;
+        state.accountInformation.margin = margin !== undefined ? margin : state.accountInformation.margin;
+        state.accountInformation.freeMargin = freeMargin !== undefined ? freeMargin : 
+          state.accountInformation.freeMargin;
+        state.accountInformation.marginLevel = freeMargin !== undefined ? marginLevel :
+          state.accountInformation.marginLevel;
       }
-      state.accountInformation.margin = margin !== undefined ? margin : state.accountInformation.margin;
-      state.accountInformation.freeMargin = freeMargin !== undefined ? freeMargin : state.accountInformation.freeMargin;
-      state.accountInformation.marginLevel = freeMargin !== undefined ? marginLevel :
-        state.accountInformation.marginLevel;
-    }
+    };
+    updateSymbolPrices(instanceState);
+    updateSymbolPrices(this._combinedState);
   }
 
   /**
@@ -501,33 +550,7 @@ export default class TerminalState extends SynchronizationListener {
       ordersInitialized: false,
       positionsInitialized: false,
       lastUpdateTime: 0,
-      initializationCounter: 0,
-      specificationCount: 0
     };
-  }
-
-  // eslint-disable-next-line complexity
-  _getBestState(symbol, mode = 'default') {
-    let result;
-    let maxUpdateTime = -1;
-    let maxInitializationCounter = -1;
-    let maxSpecificationCount = -1;
-    for (let state of Object.values(this._stateByInstanceIndex)) {
-      if (maxInitializationCounter < state.initializationCounter ||
-        maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 3 &&
-        maxUpdateTime < state.lastUpdateTime ||
-        maxInitializationCounter === state.initializationCounter && maxInitializationCounter === 0 &&
-        maxSpecificationCount < state.specificationCount) {
-        if (!symbol || (mode === 'specification' && state.specificationsBySymbol[symbol]) ||
-          (mode === 'price' && state.pricesBySymbol[symbol])) {
-          maxUpdateTime = state.lastUpdateTime;
-          maxInitializationCounter = state.initializationCounter;
-          maxSpecificationCount = state.specificationCount;
-          result = state;
-        }
-      }
-    }
-    return result || this._constructTerminalState();
   }
 
   _getHash(obj, accountType, integerKeys) {

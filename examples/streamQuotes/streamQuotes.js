@@ -58,7 +58,7 @@ async function streamQuotes() {
     }
 
     // connect to MetaApi API
-    let connection = await account.connect();
+    let connection = await account.getStreamingConnection();
 
     const quoteListener = new QuoteListener();
     connection.addSynchronizationListener(quoteListener);

@@ -2,7 +2,7 @@
 
 import should from 'should';
 import sinon from 'sinon';
-import MetaApiConnection from './metaApiConnection';
+import StreamingMetaApiConnection from './streamingMetaApiConnection';
 import ConnectionRegistry from './connectionRegistry';
 
 /**
@@ -29,8 +29,8 @@ describe('ConnectionRegistry', () => {
   
   beforeEach(() => {
     registry = new ConnectionRegistry(metaApiWebsocketClient);
-    sandbox.stub(MetaApiConnection.prototype, 'initialize').resolves();
-    sandbox.stub(MetaApiConnection.prototype, 'subscribe').resolves();
+    sandbox.stub(StreamingMetaApiConnection.prototype, 'initialize').resolves();
+    sandbox.stub(StreamingMetaApiConnection.prototype, 'subscribe').resolves();
   });
 
   afterEach(() => {
@@ -43,7 +43,7 @@ describe('ConnectionRegistry', () => {
   it('should connect and add connection to registry', async () => {
     let account = {id: 'id'};
     let connection = await registry.connect(account, storage);
-    (connection instanceof MetaApiConnection).should.be.true();
+    (connection instanceof StreamingMetaApiConnection).should.be.true();
     connection.historyStorage.should.equal(storage);
     sinon.assert.calledOnce(connection.initialize);
     sinon.assert.calledOnce(connection.subscribe);

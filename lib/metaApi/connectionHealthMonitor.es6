@@ -12,7 +12,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 
   /**
    * Constructs the listener
-   * @param {MetaApiConnection} connection MetaApi connection instance
+   * @param {StreamingMetaApiConnection} connection MetaApi connection instance
    */
   constructor(connection) {
     super();

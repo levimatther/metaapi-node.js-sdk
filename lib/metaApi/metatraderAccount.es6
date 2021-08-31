@@ -1,7 +1,8 @@
 'use strict';
 
 import TimeoutError from '../clients/timeoutError';
-import MetaApiConnection from './metaApiConnection';
+import StreamingMetaApiConnection from './streamingMetaApiConnection';
+import RpcMetaApiConnection from './rpcMetaApiConnection';
 import HistoryFileManager from './historyFileManager/index';
 import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
@@ -369,8 +370,16 @@ export default class MetatraderAccount {
    * @param {Date} [historyStartTime] history start time. Used for tests
    * @returns {MetaApiConnection} MetaApi connection
    */
-  async connect(historyStorage, historyStartTime) {
+  async getStreamingConnection(historyStorage, historyStartTime) {
     return await this._connectionRegistry.connect(this, historyStorage, historyStartTime);
+  }
+
+  /**
+   * Connects to MetaApi via RPC connection.
+   * @returns {RpcMetaApiConnection} MetaApi connection
+   */
+  async getRPCConnection() {
+    return new RpcMetaApiConnection(this._metaApiWebsocketClient, this);
   }
 
   /**

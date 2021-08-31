@@ -220,7 +220,7 @@ simple trading apps.
 
 ### Query account information, positions, orders and history via RPC API
 ```javascript
-const connection = await account.connect();
+const connection = await account.getRPCConnection();
 
 await connection.waitSynchronized();
 
@@ -250,7 +250,7 @@ console.log(await connection.getDealsByTimeRange(startTime, endTime));
 
 ### Query contract specifications and quotes via RPC API
 ```javascript
-const connection = await account.connect();
+const connection = await account.getRPCConnection();
 
 await connection.waitSynchronized();
 
@@ -286,9 +286,10 @@ ticks = account.getHistoricalTicks('EURUSD', undefined, 0, 1000);
 Real-time streaming API is good for developing trading applications like trade copiers or automated trading strategies.
 The API synchronizes the terminal state locally so that you can query local copy of the terminal state really fast.
 
-#### Synchronizing and reading teminal state
+#### Synchronizing and reading terminal state
 ```javascript
 const account = await api.metatraderAccountApi.getAccount('accountId');
+const connection = await account.getStreamingConnection();
 
 // access local copy of terminal state
 const terminalState = connection.terminalState;
@@ -329,7 +330,7 @@ let historyStorage = new MongodbHistoryStorage();
 
 // Note: if you will not specify history storage, then in-memory storage
 // will be used (instance of MemoryHistoryStorage)
-const connection = await account.connect(historyStorage);
+const connection = await account.getStreamingConnection(historyStorage);
 
 // access history storage
 historyStorage = connection.historyStorage;
@@ -359,7 +360,7 @@ connection.removeSynchronizationListener(listener);
 
 ### Retrieve contract specifications and quotes via streaming API
 ```javascript
-const connection = await account.connect();
+const connection = await account.getStreamingConnection();
 
 await connection.waitSynchronized();
 
@@ -377,7 +378,9 @@ await connection.unsubscribeFromMarketData('GBPUSD');
 
 ### Execute trades (both RPC and streaming APIs)
 ```javascript
-const connection = await account.connect();
+const connection = await account.getRPCConnection();
+// or
+const connection = await account.getStreamingConnection();
 
 await connection.waitSynchronized();
 
