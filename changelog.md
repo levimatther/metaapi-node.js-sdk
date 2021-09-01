@@ -4,6 +4,7 @@
     - StreamingMetaApiConnection for terminal synchronization
   - added symbol validation for subscribeToMarketData
   - refactored terminal state storage
+  - fixed historical market data HTTP requests for symbols with special characters
 
 14.3.1
   - added logging event delays
