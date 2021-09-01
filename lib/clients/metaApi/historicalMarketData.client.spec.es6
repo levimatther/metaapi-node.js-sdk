@@ -67,6 +67,42 @@ describe('HistoricalMarketDataClient', () => {
   });
 
   /**
+   * @test {HistoricalMarketDataClient#getHistoricalCandles}
+   */
+  it('should download historical candles from API for symbol with special characters', async () => {
+    let expected = [{
+      symbol: 'GBPJPY#',
+      timeframe: '15m',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      open: 1.03297,
+      high: 1.06309,
+      low: 1.02705,
+      close: 1.043,
+      tickVolume: 1435,
+      spread: 17,
+      volume: 345
+    }];
+    requestStub.resolves(expected);
+    let candles = await client.getHistoricalCandles('accountId', 'GBPJPY#', '15m', new Date('2020-04-07T03:45:00.000Z'),
+      1);
+    candles.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/GBPJPY%23/` +
+          'timeframes/15m/candles',
+      method: 'GET',
+      qs: {
+        startTime: new Date('2020-04-07T03:45:00.000Z'),
+        limit: 1
+      },
+      headers: {
+        'auth-token': token
+      },
+      json: true
+    });
+  });
+  
+  /**
    * @test {HistoricalMarketDataClient#getHistoricalTicks}
    */
   it('should download historical ticks from API', async () => {
@@ -85,6 +121,38 @@ describe('HistoricalMarketDataClient', () => {
     ticks.should.equal(expected);
     sinon.assert.calledOnceWithExactly(httpClient.request, {
       url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/AUDNZD/ticks`,
+      method: 'GET',
+      qs: {
+        startTime: new Date('2020-04-07T03:45:00.000Z'),
+        offset: 0,
+        limit: 1
+      },
+      headers: {
+        'auth-token': token
+      },
+      json: true
+    });
+  });
+
+  /**
+   * @test {HistoricalMarketDataClient#getHistoricalTicks}
+   */
+  it('should download historical ticks from API for symbol with special characters', async () => {
+    let expected = [{
+      symbol: 'GBPJPY#',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      bid: 1.05297,
+      ask: 1.05309,
+      last: 0.5298,
+      volume: 0.13,
+      side: 'buy'
+    }];
+    requestStub.resolves(expected);
+    let ticks = await client.getHistoricalTicks('accountId', 'GBPJPY#', new Date('2020-04-07T03:45:00.000Z'), 0, 1);
+    ticks.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/GBPJPY%23/ticks`,
       method: 'GET',
       qs: {
         startTime: new Date('2020-04-07T03:45:00.000Z'),

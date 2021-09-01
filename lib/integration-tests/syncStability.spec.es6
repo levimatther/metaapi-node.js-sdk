@@ -391,7 +391,7 @@ sequentialProcessing.forEach(param => {
         fakeServer.start();
       }, 3000);
       await new Promise(res => setTimeout(res, 50));
-      clock.tickAsync(10000);
+      clock.tickAsync(7000);
       await connection.waitSynchronized({timeoutInSeconds: 10});
       const response = connection.terminalState.accountInformation;
       sinon.assert.match(response, accountInformation);

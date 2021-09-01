@@ -32,6 +32,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
    */
   async getHistoricalCandles(accountId, symbol, timeframe, startTime, limit) {
+    symbol = encodeURIComponent(symbol);
     const opts = {
       url: `${this._host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/` +
         `timeframes/${timeframe}/candles`,
@@ -64,6 +65,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
    */
   async getHistoricalTicks(accountId, symbol, startTime, offset, limit) {
+    symbol = encodeURIComponent(symbol);
     const opts = {
       url: `${this._host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/ticks`,
       method: 'GET',
