@@ -425,9 +425,7 @@ export default class MetaApiWebsocketClient {
    * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',
    * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into account base
    * currency (USD if you did not override it)
-   * @property {String} [originalComment] position original comment (present if possible to restore from history)
-   * @property {String} [updatePending] flag indicating that position original comment and clientId was not identified
-   * yet and will be updated in a future packet
+   * @property {String} [brokerComment] current comment value on broker side (possibly overriden by the broker)
    */
 
   /**
@@ -482,16 +480,13 @@ export default class MetaApiWebsocketClient {
    * @property {String} positionId order position id. Present only if the order has a position attached to it
    * @property {String} [comment] order comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @property {String} originalComment optional order original comment (present if possible to restore original comment
-   * from history)
+   * @property {String} [brokerComment] current comment value on broker side (possibly overriden by the broker)
    * @property {String} [clientId] client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} platform platform id (mt4 or mt5)
-   * @property {Boolean} [updatePending] flag indicating that order client id and original comment was not
-   * identified yet and will be updated in a future synchronization packet
    * @property {String} reason order opening reason. One of ORDER_REASON_CLIENT, ORDER_REASON_MOBILE, ORDER_REASON_WEB,
    * ORDER_REASON_EXPERT, ORDER_REASON_SL, ORDER_REASON_TP, ORDER_REASON_SO, ORDER_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_reason.
@@ -622,16 +617,13 @@ export default class MetaApiWebsocketClient {
    * @property {String} [orderId] id of order the deal relates to
    * @property {String} [comment] deal comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
-   * @property {String} [originalComment] deal original comment (present if possible to restore original comment
-   * from history)
+   * @property {String} [brokerComment] current comment value on broker side (possibly overriden by the broker)
    * @property {String} [clientId] client-assigned id. The id value can be assigned when submitting a trade and
    * will be present on position, history orders and history deals related to the trade. You can use this field to bind
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} platform platform id (mt4 or mt5)
-   * @property {Boolean} [updatePending] flag indicating that deal client id and original comment was not
-   * identified yet and will be updated in a future synchronization packet
    * @property {String} [reason] optional deal execution reason. One of DEAL_REASON_CLIENT, DEAL_REASON_MOBILE,
    * DEAL_REASON_WEB, DEAL_REASON_EXPERT, DEAL_REASON_SL, DEAL_REASON_TP, DEAL_REASON_SO, DEAL_REASON_ROLLOVER,
    * DEAL_REASON_VMARGIN, DEAL_REASON_SPLIT, DEAL_REASON_UNKNOWN. See

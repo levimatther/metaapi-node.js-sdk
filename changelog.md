@@ -5,6 +5,7 @@
   - added symbol validation for subscribeToMarketData
   - refactored terminal state storage
   - fixed historical market data HTTP requests for symbols with special characters
+  - breaking change: removed updatePending, originalComment fields, added brokerComment field
 
 14.3.1
   - added logging event delays
