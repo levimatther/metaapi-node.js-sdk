@@ -115,7 +115,7 @@ export default class TerminalState extends SynchronizationListener {
       delete position.updateSequenceNumber;
       delete position.accountCurrencyExchangeRate;
       delete position.comment;
-      delete position.originalComment;
+      delete position.brokerComment;
       delete position.clientId;
       if(accountType === 'cloud-g1') {
         delete position.time;
@@ -131,7 +131,7 @@ export default class TerminalState extends SynchronizationListener {
       delete order.updateSequenceNumber;
       delete order.accountCurrencyExchangeRate;
       delete order.comment;
-      delete order.originalComment;
+      delete order.brokerComment;
       delete order.clientId;
       if(accountType === 'cloud-g1') {
         delete order.time;
