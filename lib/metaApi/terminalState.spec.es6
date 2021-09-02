@@ -327,7 +327,7 @@ describe('TerminalState', () => {
       updateSequenceNumber: 13246,
       accountCurrencyExchangeRate: 1,
       comment: 'test',
-      originalComment: 'test2',
+      brokerComment: 'test2',
     }]);
     await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
       id: '46871284',
@@ -344,7 +344,7 @@ describe('TerminalState', () => {
       comment: 'COMMENT2',
       updateSequenceNumber: 13246,
       accountCurrencyExchangeRate: 1,
-      originalComment: 'test2',
+      brokerComment: 'test2',
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
     state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
@@ -397,7 +397,7 @@ describe('TerminalState', () => {
       updateSequenceNumber: 13246,
       accountCurrencyExchangeRate: 1,
       comment: 'test',
-      originalComment: 'test2',
+      brokerComment: 'test2',
     }]);
     await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
       id: '46871284',
@@ -414,7 +414,7 @@ describe('TerminalState', () => {
       comment: 'COMMENT2',
       updateSequenceNumber: 13246,
       accountCurrencyExchangeRate: 1,
-      originalComment: 'test2',
+      brokerComment: 'test2',
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
     state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
