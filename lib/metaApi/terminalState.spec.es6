@@ -288,7 +288,6 @@ describe('TerminalState', () => {
    * @test {TerminalState#getHashes}
    */
   it('should return hashes for terminal state data for cloud-g1 accounts', async () => {
-    const emptyHash = 'd751713988987e9331980363e24189ce';
     const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01000000},{"symbol":"EURUSD",' +
       '"tickSize":0.00000100,"contractSize":1.00000000,"maxVolume":30000.00000000,' +
       '"hedgedMarginUsesLargerLeg":false,"digits":3}]');
@@ -299,9 +298,9 @@ describe('TerminalState', () => {
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","openPrice":1.03000000,' +
       '"volume":0.01000000,"currentVolume":0.01000000}]');
     let hashes = state.getHashes('cloud-g1');
-    sinon.assert.match(hashes.specificationsMd5, emptyHash);
-    sinon.assert.match(hashes.positionsMd5, emptyHash);
-    sinon.assert.match(hashes.ordersMd5, emptyHash);
+    sinon.assert.match(hashes.specificationsMd5, null);
+    sinon.assert.match(hashes.positionsMd5, null);
+    sinon.assert.match(hashes.ordersMd5, null);
     await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
       {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
       {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
@@ -358,7 +357,6 @@ describe('TerminalState', () => {
    * @test {TerminalState#getHashes}
    */
   it('should return hashes for terminal state data for cloud-g2 accounts', async () => {
-    const emptyHash = 'd751713988987e9331980363e24189ce';
     const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01,"description":"Test1"},' +
       '{"symbol":"EURUSD","tickSize":0.000001,"contractSize":1,"maxVolume":30000,' +
       '"hedgedMarginUsesLargerLeg":false,"digits":3,"description":"Test2"}]');
@@ -369,9 +367,9 @@ describe('TerminalState', () => {
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","time":"2020-04-20T08:38:58.270Z","openPrice":1.03,' +
       '"volume":0.01,"currentVolume":0.01}]');
     let hashes = state.getHashes('cloud-g2');
-    sinon.assert.match(hashes.specificationsMd5, emptyHash);
-    sinon.assert.match(hashes.positionsMd5, emptyHash);
-    sinon.assert.match(hashes.ordersMd5, emptyHash);
+    sinon.assert.match(hashes.specificationsMd5, null);
+    sinon.assert.match(hashes.positionsMd5, null);
+    sinon.assert.match(hashes.ordersMd5, null);
     await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
       {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
       {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
