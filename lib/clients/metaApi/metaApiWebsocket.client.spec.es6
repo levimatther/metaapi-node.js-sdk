@@ -1033,6 +1033,7 @@ describe('MetaApiWebsocketClient', () => {
       await clock.tickAsync(55000);
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onDisconnected, '1:ps-mpa-1');
+      await clock.tickAsync(10000);
       clock.restore();
     });
 
@@ -1220,12 +1221,50 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
     });
 
-    it('should process synchronization started event without updating positions', async () => {
+    it('should process synchronization started event with no updates', async () => {
       client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
         onPendingOrdersSynchronized: () => {},
+        onAccountInformationUpdated: () => {},
+      };
+      sandbox.stub(listener, 'onSynchronizationStarted').resolves();
+      sandbox.stub(listener, 'onPositionsSynchronized').resolves();
+      sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 1,
+        specificationsUpdated: false, positionsUpdated: false, ordersUpdated: false,
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+        accountInformation, instanceIndex: 1, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', false, false, false);
+      sinon.assert.calledWith(listener.onPositionsSynchronized, '1:ps-mpa-1', 'synchronizationId');
+      sinon.assert.calledWith(listener.onPendingOrdersSynchronized, '1:ps-mpa-1', 'synchronizationId');
+    });
+
+    it('should process synchronization started event without updating positions', async () => {
+      let orders = [{
+        id: '46871284',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        state: 'ORDER_STATE_PLACED',
+        symbol: 'AUDNZD',
+        magic: 123456,
+        platform: 'mt5',
+        time: new Date('2020-04-20T08:38:58.270Z'),
+        openPrice: 1.03,
+        currentPrice: 1.05206,
+        volume: 0.01,
+        currentVolume: 0.01,
+        comment: 'COMMENT2'
+      }];
+      client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
+      let listener = {
+        onSynchronizationStarted: () => {},
+        onPositionsSynchronized: () => {},
+        onPendingOrdersSynchronized: () => {},
+        onPendingOrdersReplaced: () => {},
         onAccountInformationUpdated: () => {},
       };
       sandbox.stub(listener, 'onSynchronizationStarted').resolves();
@@ -1241,14 +1280,39 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, false, true);
       sinon.assert.calledWith(listener.onPositionsSynchronized, '1:ps-mpa-1', 'synchronizationId');
       sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
+      server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders, instanceIndex: 1,
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      await new Promise(res => setTimeout(res, 100));
+      sinon.assert.calledWith(listener.onPendingOrdersSynchronized, '1:ps-mpa-1', 'synchronizationId');
     });
 
     it('should process synchronization started event without updating orders', async () => {
+      let positions = [{
+        id: '46214692',
+        type: 'POSITION_TYPE_BUY',
+        symbol: 'GBPUSD',
+        magic: 1000,
+        time: '2020-04-15T02:45:06.521Z',
+        updateTime: '2020-04-15T02:45:06.521Z',
+        openPrice: 1.26101,
+        currentPrice: 1.24883,
+        currentTickValue: 1,
+        volume: 0.07,
+        swap: 0,
+        profit: -85.25999999999966,
+        commission: -0.25,
+        clientId: 'TE_GBPUSD_7hyINWqAlE',
+        stopLoss: 1.17721,
+        unrealizedProfit: -85.25999999999901,
+        realizedProfit: -6.536993168992922e-13
+      }];
+
       client._socketInstances[0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
         onPendingOrdersSynchronized: () => {},
+        onPositionsReplaced: () => {},
         onAccountInformationUpdated: () => {},
       };
       sandbox.stub(listener, 'onSynchronizationStarted').resolves();
@@ -1263,6 +1327,11 @@ describe('MetaApiWebsocketClient', () => {
       await new Promise(res => setTimeout(res, 100));
       sinon.assert.calledWith(listener.onSynchronizationStarted, '1:ps-mpa-1', true, true, false);
       sinon.assert.notCalled(listener.onPositionsSynchronized);
+      sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
+      server.emit('synchronization', {type: 'positions', accountId: 'accountId', positions, instanceIndex: 1,
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledWith(listener.onPositionsSynchronized, '1:ps-mpa-1', 'synchronizationId');
       sinon.assert.calledWith(listener.onPendingOrdersSynchronized, '1:ps-mpa-1', 'synchronizationId');
     });
 

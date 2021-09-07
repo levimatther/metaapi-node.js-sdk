@@ -25,13 +25,6 @@ import LoggerManager from '../logger';
  */
 
 /**
- * Options for processing websocket client events
- * @typedef {Object} EventProcessingOpts
- * @property {Boolean} [sequentialProcessing] an option to process synchronization events after finishing
- * previous ones, default value is true
- */
-
-/**
  * Subscriptions refresh options
  * @typedef {Object} RefreshSubscriptionsOpts
  * @property {Number} [minDelayInSeconds] minimum delay in seconds until subscriptions refresh request,
@@ -53,7 +46,6 @@ import LoggerManager from '../logger';
  * @property {Boolean} [enableLatencyTracking] an option to enable latency tracking
  * @property {SynchronizationThrottlerOpts} [synchronizationThrottler] options for synchronization throttler
  * @property {RetryOpts} [retryOpts] options for request retries
- * @property {EventProcessingOpts} [eventProcessing] options for request retries
  * @property {Boolean} [useSharedClientApi] option to use a shared server
  * @property {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
  */
@@ -95,15 +87,13 @@ export default class MetaApi {
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
-    const eventProcessing = opts.eventProcessing;
     const useSharedClientApi = opts.useSharedClientApi || false;
     const refreshSubscriptionsOpts = opts.refreshSubscriptionsOpts || {};
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(httpClient, token, {application, domain, requestTimeout,
-      connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, 
-      eventProcessing, useSharedClientApi});
+      connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, useSharedClientApi});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application,
       refreshSubscriptionsOpts);

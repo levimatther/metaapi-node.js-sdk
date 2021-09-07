@@ -102,7 +102,8 @@ export default class TerminalState extends SynchronizationListener {
         delete specification.description;
       });
     }
-    const specificationsHash = this._getHash(specifications, accountType, ['digits']);
+    const specificationsHash = this.specifications.length ? 
+      this._getHash(specifications, accountType, ['digits']) : null;
 
     const positions = JSON.parse(JSON.stringify(this.positions));
     positions.sort((a,b) => sortByKey(a, b, 'id'));
@@ -122,7 +123,7 @@ export default class TerminalState extends SynchronizationListener {
         delete position.updateTime;
       }
     });
-    const positionsHash = this._getHash(positions, accountType, ['magic']);
+    const positionsHash = this.positions.length ? this._getHash(positions, accountType, ['magic']) : null;
 
     const orders = JSON.parse(JSON.stringify(this.orders));
     orders.sort((a,b) => sortByKey(a, b, 'id'));
@@ -137,7 +138,7 @@ export default class TerminalState extends SynchronizationListener {
         delete order.time;
       }
     });
-    const ordersHash = this._getHash(orders, accountType, ['magic']);
+    const ordersHash = this.orders.length ? this._getHash(orders, accountType, ['magic']) : null;
 
     return {
       specificationsMd5: specificationsHash,

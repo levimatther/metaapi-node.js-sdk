@@ -50,9 +50,7 @@ export default class MetaApiWebsocketClient {
     this._maxAccountsPerInstance = 100;
     this._subscribeCooldownInSeconds = validator.validateNonZero(retryOpts.subscribeCooldownInSeconds, 600, 
       'retryOpts.subscribeCooldownInSeconds');
-    const eventProcessing = opts.eventProcessing || {};
-    this._sequentialEventProcessing = validator.validateBoolean(eventProcessing.sequentialProcessing, true,
-      'eventProcessing.sequentialProcessing');
+    this._sequentialEventProcessing = true;
     this._useSharedClientApi = validator.validateBoolean(opts.useSharedClientApi, false, 'useSharedClientApi');
     this._token = token;
     this._synchronizationListeners = {};
@@ -1588,12 +1586,11 @@ export default class MetaApiWebsocketClient {
                 await _processEvent(Promise.resolve(
                   listener.onAccountInformationUpdated(instanceIndex, data.accountInformation)),
                 'onAccountInformationUpdated');
-                if (this._synchronizationFlags[data.synchronizationId]) {
-                  if(!this._synchronizationFlags[data.synchronizationId].positionsUpdated) {
-                    await _processEvent(Promise.resolve(
-                      listener.onPositionsSynchronized(instanceIndex, data.synchronizationId)),
-                    'onPositionsSynchronized');
-                  }
+                if(this._synchronizationFlags[data.synchronizationId] && 
+                    !this._synchronizationFlags[data.synchronizationId].positionsUpdated) {
+                  await _processEvent(Promise.resolve(
+                    listener.onPositionsSynchronized(instanceIndex, data.synchronizationId)),
+                  'onPositionsSynchronized');
                   if(!this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
                     await _processEvent(Promise.resolve(
                       listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId)),
@@ -1607,7 +1604,11 @@ export default class MetaApiWebsocketClient {
             );
           }
           await Promise.all(onAccountInformationUpdatedPromises);
-          delete this._synchronizationFlags[data.synchronizationId];
+          if(this._synchronizationFlags[data.synchronizationId] && 
+              !this._synchronizationFlags[data.synchronizationId].positionsUpdated && 
+              !this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
+            delete this._synchronizationFlags[data.synchronizationId];
+          }
         }
       } else if (data.type === 'deals') {
         for (let deal of (data.deals || [])) {
@@ -1641,6 +1642,9 @@ export default class MetaApiWebsocketClient {
           );
         }
         await Promise.all(onPendingOrdersReplacedPromises);
+        if(this._synchronizationFlags[data.synchronizationId]) {
+          delete this._synchronizationFlags[data.synchronizationId];
+        }
       } else if (data.type === 'historyOrders') {
         for (let historyOrder of (data.historyOrders || [])) {
           const onHistoryOrderAddedPromises = [];
@@ -1667,6 +1671,12 @@ export default class MetaApiWebsocketClient {
               await _processEvent(Promise.resolve(
                 listener.onPositionsSynchronized(instanceIndex, data.synchronizationId)),
               'onPositionsSynchronized');
+              if(this._synchronizationFlags[data.synchronizationId] && 
+                !this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
+                await _processEvent(Promise.resolve(
+                  listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId)),
+                'onPendingOrdersSynchronized');
+              }
             })())
               // eslint-disable-next-line no-console
               .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
@@ -1674,6 +1684,10 @@ export default class MetaApiWebsocketClient {
           );
         }
         await Promise.all(onPositionsReplacedPromises);
+        if(this._synchronizationFlags[data.synchronizationId] && 
+          !this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
+          delete this._synchronizationFlags[data.synchronizationId];
+        }
       } else if (data.type === 'update') {
         if (data.accountInformation) {
           const onAccountInformationUpdatedPromises = [];
