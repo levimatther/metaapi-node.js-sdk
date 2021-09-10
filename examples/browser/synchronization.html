@@ -36,7 +36,7 @@
           console.log(account);
           log('Waiting for API server to connect to broker (may take couple of minutes)');
           return account.waitConnected()
-            .then(() => account.connect())
+            .then(() => account.getStreamingConnection())
             .then(connection => {
               log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history size)');
               return connection.waitSynchronized()
