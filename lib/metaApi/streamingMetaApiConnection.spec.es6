@@ -52,7 +52,6 @@ describe('StreamingMetaApiConnection', () => {
     unsubscribe: () => {},
     refreshMarketDataSubscriptions: () => {}
   };
-  const emptyHash = 'd41d8cd98f00b204e9800998ecf8427e';
 
   let connectionRegistry = {
     connect: () => {},
@@ -427,7 +426,7 @@ describe('StreamingMetaApiConnection', () => {
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize('1:ps-mpa-1');
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), null, null, null);
   });
 
   /**
@@ -442,7 +441,7 @@ describe('StreamingMetaApiConnection', () => {
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize('1:ps-mpa-1');
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
+      new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'), null, null, null);
   });
 
   /**
@@ -578,7 +577,7 @@ describe('StreamingMetaApiConnection', () => {
     await api.onConnected('1:ps-mpa-1', 1);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), null, null, null);
   });
 
   /**
@@ -595,7 +594,7 @@ describe('StreamingMetaApiConnection', () => {
     await api.onConnected('1:ps-mpa-1', 1);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
-      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
+      new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'), null, null, null);
   });
 
   /**
