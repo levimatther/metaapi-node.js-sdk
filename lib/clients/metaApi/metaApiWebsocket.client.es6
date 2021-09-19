@@ -470,7 +470,7 @@ export default class MetaApiWebsocketClient {
    * @property {String} symbol order symbol
    * @property {Number} openPrice order open price (market price for market orders, limit price for limit orders or stop
    * price for stop orders)
-   * @property {Number} currentPrice current price
+   * @property {Number} [currentPrice] current price, filled for pending orders only. Not filled for history orders.
    * @property {Number} [stopLoss] order stop loss price
    * @property {Number} [takeProfit] order take profit price
    * @property {Number} volume order requested quantity
