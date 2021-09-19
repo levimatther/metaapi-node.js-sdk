@@ -1,5 +1,6 @@
 15.0.1
   - currentPrice is now filled for pending orders only, not for history orders
+  - fix terminal state hashing
 
 15.0.0
   - breaking change: divided MetaApiConnection class into:
