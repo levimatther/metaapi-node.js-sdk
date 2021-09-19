@@ -123,7 +123,8 @@ export default class TerminalState extends SynchronizationListener {
         delete position.updateTime;
       }
     });
-    const positionsHash = this.positions.length ? this._getHash(positions, accountType, ['magic']) : null;
+    const positionsHash = this._combinedState.positionsInitialized ? 
+      this._getHash(positions, accountType, ['magic']) : null;
 
     const orders = JSON.parse(JSON.stringify(this.orders));
     orders.sort((a,b) => sortByKey(a, b, 'id'));
@@ -138,7 +139,8 @@ export default class TerminalState extends SynchronizationListener {
         delete order.time;
       }
     });
-    const ordersHash = this.orders.length ? this._getHash(orders, accountType, ['magic']) : null;
+    const ordersHash = this._combinedState.ordersInitialized ? 
+      this._getHash(orders, accountType, ['magic']) : null;
 
     return {
       specificationsMd5: specificationsHash,
