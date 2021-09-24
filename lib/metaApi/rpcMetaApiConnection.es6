@@ -164,10 +164,13 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * Retrieves latest price for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolPrice/).
    * @param {String} symbol symbol to retrieve price for
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
-  getSymbolPrice(symbol) {
-    return this._websocketClient.getSymbolPrice(this._account.id, symbol);
+  getSymbolPrice(symbol, keepSubscription) {
+    return this._websocketClient.getSymbolPrice(this._account.id, symbol, keepSubscription);
   }
 
   /**
@@ -177,30 +180,39 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @param {string} timeframe defines the timeframe according to which the candle must be generated. Allowed values for
    * MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values
    * for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
-  getCandle(symbol, timeframe) {
-    return this._websocketClient.getCandle(this._account.id, symbol, timeframe);
+  getCandle(symbol, timeframe, keepSubscription = false) {
+    return this._websocketClient.getCandle(this._account.id, symbol, timeframe, keepSubscription);
   }
 
   /**
-   * Retrieves latest tick for a symbol (see
+   * Retrieves latest tick for a symbol. MT4 G1 accounts do not support this API (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readTick/).
    * @param {String} symbol symbol to retrieve tick for
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
    */
-  getTick(symbol) {
-    return this._websocketClient.getTick(this._account.id, symbol);
+  getTick(symbol, keepSubscription = false) {
+    return this._websocketClient.getTick(this._account.id, symbol, keepSubscription);
   }
 
   /**
-   * Retrieves latest order book for a symbol (see
+   * Retrieves latest order book for a symbol. MT4 accounts do not support this API (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readBook/).
-   * @param {String} symbol symbol to retrieve order book for
+   * @param {string} symbol symbol to retrieve order book for
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderTick>} promise which resolves when order book is retrieved
    */
-  getBook(symbol) {
-    return this._websocketClient.getBook(this._account.id, symbol);
+  getBook(symbol, keepSubscription = false) {
+    return this._websocketClient.getBook(this._account.id, symbol, keepSubscription);
   }
 
   /**

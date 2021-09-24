@@ -702,11 +702,11 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getSymbolPrice' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
-        data.application === 'RPC') {
+        data.application === 'RPC' && data.keepSubscription === true) {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, price});
       }
     });
-    let actual = await client.getSymbolPrice('accountId', 'AUDNZD');
+    let actual = await client.getSymbolPrice('accountId', 'AUDNZD', true);
     actual.should.match(price);
   });
 
@@ -729,11 +729,11 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getCandle' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
-        data.application === 'RPC' && data.timeframe === '15m') {
+        data.application === 'RPC' && data.timeframe === '15m' && data.keepSubscription === true) {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, candle});
       }
     });
-    let actual = await client.getCandle('accountId', 'AUDNZD', '15m');
+    let actual = await client.getCandle('accountId', 'AUDNZD', '15m', true);
     actual.should.match(candle);
   });
 
@@ -753,11 +753,11 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getTick' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
-        data.application === 'RPC') {
+        data.application === 'RPC' && data.keepSubscription === true) {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, tick});
       }
     });
-    let actual = await client.getTick('accountId', 'AUDNZD');
+    let actual = await client.getTick('accountId', 'AUDNZD', true);
     actual.should.match(tick);
   });
 
@@ -784,11 +784,11 @@ describe('MetaApiWebsocketClient', () => {
     };
     server.on('request', data => {
       if (data.type === 'getBook' && data.accountId === 'accountId' && data.symbol === 'AUDNZD' &&
-        data.application === 'RPC') {
+        data.application === 'RPC' && data.keepSubscription === true) {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, book});
       }
     });
-    let actual = await client.getBook('accountId', 'AUDNZD');
+    let actual = await client.getBook('accountId', 'AUDNZD', true);
     actual.should.match(book);
   });
 

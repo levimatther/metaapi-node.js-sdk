@@ -725,9 +725,9 @@ describe('RpcMetaApiConnection', () => {
       lossTickValue: 0.59736
     };
     sandbox.stub(client, 'getSymbolPrice').resolves(price);
-    let actual = await api.getSymbolPrice('AUDNZD');
+    let actual = await api.getSymbolPrice('AUDNZD', true);
     actual.should.match(price);
-    sinon.assert.calledWith(client.getSymbolPrice, 'accountId', 'AUDNZD');
+    sinon.assert.calledWith(client.getSymbolPrice, 'accountId', 'AUDNZD', true);
   });
 
   /**
@@ -748,9 +748,9 @@ describe('RpcMetaApiConnection', () => {
       volume: 345
     };
     sandbox.stub(client, 'getCandle').resolves(candle);
-    let actual = await api.getCandle('AUDNZD', '15m');
+    let actual = await api.getCandle('AUDNZD', '15m', true);
     actual.should.match(candle);
-    sinon.assert.calledWith(client.getCandle, 'accountId', 'AUDNZD', '15m');
+    sinon.assert.calledWith(client.getCandle, 'accountId', 'AUDNZD', '15m', true);
   });
 
   /**
@@ -768,9 +768,9 @@ describe('RpcMetaApiConnection', () => {
       side: 'buy'
     };
     sandbox.stub(client, 'getTick').resolves(tick);
-    let actual = await api.getTick('AUDNZD');
+    let actual = await api.getTick('AUDNZD', true);
     actual.should.match(tick);
-    sinon.assert.calledWith(client.getTick, 'accountId', 'AUDNZD');
+    sinon.assert.calledWith(client.getTick, 'accountId', 'AUDNZD', true);
   });
 
   /**
@@ -795,9 +795,9 @@ describe('RpcMetaApiConnection', () => {
       ]
     };
     sandbox.stub(client, 'getBook').resolves(book);
-    let actual = await api.getBook('AUDNZD');
+    let actual = await api.getBook('AUDNZD', true);
     actual.should.match(book);
-    sinon.assert.calledWith(client.getBook, 'accountId', 'AUDNZD');
+    sinon.assert.calledWith(client.getBook, 'accountId', 'AUDNZD', true);
   });
 
 });

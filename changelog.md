@@ -1,3 +1,7 @@
+15.1.0
+ - added option to keep server-side subscription when retrieving latest market data via RPC API
+ - upgraded CopyFactory API to 3.1.0
+
 15.0.1
   - currentPrice is now filled for pending orders only, not for history orders
 

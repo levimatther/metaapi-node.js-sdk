@@ -889,10 +889,14 @@ export default class MetaApiWebsocketClient {
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolPrice/).
    * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
    * @param {String} symbol symbol to retrieve price for
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
-  async getSymbolPrice(accountId, symbol) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbolPrice', symbol});
+  async getSymbolPrice(accountId, symbol, keepSubscription = false) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbolPrice', symbol,
+      keepSubscription});
     return response.price;
   }
 
@@ -904,34 +908,44 @@ export default class MetaApiWebsocketClient {
    * @param {string} timeframe defines the timeframe according to which the candle must be generated. Allowed values for
    * MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values
    * for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
-  async getCandle(accountId, symbol, timeframe) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getCandle', symbol, timeframe});
+  async getCandle(accountId, symbol, timeframe, keepSubscription = false) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getCandle', symbol, timeframe,
+      keepSubscription});
     return response.candle;
   }
 
   /**
-   * Retrieves latest tick for a symbol (see
+   * Retrieves latest tick for a symbol. MT4 G1 accounts do not support this API (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readTick/).
    * @param {string} accountId id of the MetaTrader account to retrieve symbol tick for
    * @param {string} symbol symbol to retrieve tick for
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
    */
-  async getTick(accountId, symbol) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getTick', symbol});
+  async getTick(accountId, symbol, keepSubscription = false) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getTick', symbol, keepSubscription});
     return response.tick;
   }
 
   /**
-   * Retrieves latest order book for a symbol (see
+   * Retrieves latest order book for a symbol. MT4 accounts do not support this API (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readBook/).
    * @param {string} accountId id of the MetaTrader account to retrieve symbol order book for
    * @param {string} symbol symbol to retrieve order book for
+   * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
+   * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
+   * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderBook>} promise which resolves when order book is retrieved
    */
-  async getBook(accountId, symbol) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getBook', symbol});
+  async getBook(accountId, symbol, keepSubscription = false) {
+    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getBook', symbol, keepSubscription});
     return response.book;
   }
 
