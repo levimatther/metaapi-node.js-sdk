@@ -442,16 +442,17 @@ export default class MetatraderAccount {
   }
   
   /**
-     * Returns historical ticks for a specific symbol from the MetaTrader account.
-     * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
-     * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
-     * @param {Date} [startTime] time to start loading ticks from. Note that candles are loaded in forward direction, so
-     * this should be the earliest time. Leave empty to request latest candles.
-     * @param {number} [offset] number of ticks to skip (you can use it to avoid requesting ticks from previous request
-     * twice)
-     * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
-     * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
-     */
+   * Returns historical ticks for a specific symbol from the MetaTrader account. This API is not supported by MT4
+   * accounts.
+   * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
+   * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
+   * @param {Date} [startTime] time to start loading ticks from. Note that candles are loaded in forward direction, so
+   * this should be the earliest time. Leave empty to request latest candles.
+   * @param {number} [offset] number of ticks to skip (you can use it to avoid requesting ticks from previous request
+   * twice)
+   * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
+   * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
+   */
   getHistoricalTicks(symbol, startTime, offset, limit) {
     return this._historicalMarketDataClient.getHistoricalTicks(this.id, symbol, startTime, offset, limit);
   }

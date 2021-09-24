@@ -53,7 +53,8 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
   }
 
   /**
-   * Returns historical ticks for a specific symbol from a MetaTrader account.
+   * Returns historical ticks for a specific symbol from a MetaTrader account. This API is not supported by MT4
+   * accounts.
    * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
    * @param {string} accountId MetaTrader account id
    * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
