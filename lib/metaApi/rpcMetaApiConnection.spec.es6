@@ -417,7 +417,7 @@ describe('RpcMetaApiConnection', () => {
       clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY', symbol: 'GBPUSD',
-      volume: 0.07, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      volume: 0.07, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -435,7 +435,7 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY', symbol: 'GBPUSD',
       volume: 0.07, stopLoss: 0.1, stopLossUnits: 'RELATIVE_PRICE', takeProfit: 2000,
-      takeProfitUnits: 'RELATIVE_POINTS', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      takeProfitUnits: 'RELATIVE_POINTS', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -452,7 +452,7 @@ describe('RpcMetaApiConnection', () => {
       clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL', symbol: 'GBPUSD',
-      volume: 0.07, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      volume: 0.07, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -470,7 +470,7 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_LIMIT',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -488,7 +488,7 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_LIMIT',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -506,7 +506,7 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_STOP',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -524,7 +524,7 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_STOP',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -542,7 +542,7 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLimitPrice: 1.4, stopLoss: 0.9, takeProfit: 2.0,
-      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -560,7 +560,7 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
       symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLimitPrice: 1.1, stopLoss: 2.0, takeProfit: 0.9,
-      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -576,7 +576,7 @@ describe('RpcMetaApiConnection', () => {
     let actual = await api.modifyPosition('46870472', 2.0, 0.9);
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_MODIFY',
-      positionId: '46870472', stopLoss: 2.0, takeProfit: 0.9}));
+      positionId: '46870472', stopLoss: 2.0, takeProfit: 0.9}), 'RPC');
   });
 
   /**
@@ -593,7 +593,7 @@ describe('RpcMetaApiConnection', () => {
       clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_PARTIAL',
-      positionId: '46870472', volume: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      positionId: '46870472', volume: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -609,7 +609,7 @@ describe('RpcMetaApiConnection', () => {
     let actual = await api.closePosition('46870472', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_ID',
-      positionId: '46870472', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      positionId: '46870472', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -626,7 +626,8 @@ describe('RpcMetaApiConnection', () => {
     let actual = await api.closeBy('46870472', '46870482', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_BY',
-      positionId: '46870472', closeByPositionId: '46870482', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      positionId: '46870472', closeByPositionId: '46870482', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}),
+    'RPC');
   });
 
   /**
@@ -642,7 +643,7 @@ describe('RpcMetaApiConnection', () => {
     let actual = await api.closePositionsBySymbol('EURUSD', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITIONS_CLOSE_SYMBOL',
-      symbol: 'EURUSD', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
+      symbol: 'EURUSD', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}), 'RPC');
   });
 
   /**
@@ -658,7 +659,7 @@ describe('RpcMetaApiConnection', () => {
     let actual = await api.modifyOrder('46870472', 1.0, 2.0, 0.9);
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_MODIFY', orderId: '46870472',
-      openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9}));
+      openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9}), 'RPC');
   });
 
   /**
@@ -673,7 +674,8 @@ describe('RpcMetaApiConnection', () => {
     sandbox.stub(client, 'trade').resolves(tradeResult);
     let actual = await api.cancelOrder('46870472');
     actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_CANCEL', orderId: '46870472'}));
+    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_CANCEL', orderId: '46870472'}),
+      'RPC');
   });
 
   /**

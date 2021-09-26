@@ -1,5 +1,4 @@
 let MetaApi = require('metaapi.cloud-sdk').default;
-let SynchronizationListener = require('metaapi.cloud-sdk').SynchronizationListener;
 
 let token = process.env.TOKEN || '<put in your token here>';
 let accountId = process.env.ACCOUNT_ID || '<put in your account id here>';

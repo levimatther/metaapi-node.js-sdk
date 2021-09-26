@@ -13,7 +13,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    */
   constructor(websocketClient, account) {
-    super(websocketClient, account);
+    super(websocketClient, account, 'RPC');
     this._logger = LoggerManager.getLogger('MetaApiConnection');
   }
 
@@ -226,7 +226,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
     // eslint-disable-next-line
     while(true) {
       try {
-        await this._websocketClient.waitSynchronized(this._account.id, 0, 'RPC', 5);
+        await this._websocketClient.waitSynchronized(this._account.id, 0, 'RPC', 5, 'RPC');
         break;
       } catch (err) {
         if(Date.now() > startTime + timeoutInSeconds * 1000) {

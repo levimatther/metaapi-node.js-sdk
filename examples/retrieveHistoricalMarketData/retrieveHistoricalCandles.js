@@ -1,5 +1,4 @@
 let MetaApi = require('metaapi.cloud-sdk').default;
-let SynchronizationListener = require('metaapi.cloud-sdk').SynchronizationListener;
 
 let token = process.env.TOKEN || '<put in your token here>';
 let accountId = process.env.ACCOUNT_ID || '<put in your account id here>';
@@ -30,7 +29,7 @@ async function retrieveHistoricalCandles() {
     console.log(`Downloading ${pages}K latest candles for ${symbol}`);
     let startedAt = Date.now();
     let startTime;
-    let candles
+    let candles;
     for (let i = 0; i < pages; i++) {
       // the API to retrieve historical market data is currently available for G1 and MT4 G2 only
       let newCandles = await account.getHistoricalCandles(symbol, '1m', startTime);

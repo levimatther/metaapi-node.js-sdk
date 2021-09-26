@@ -721,11 +721,13 @@ export default class MetaApiWebsocketClient {
    * Execute a trade on a connected MetaTrader account (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {String} accountId id of the MetaTrader account to execute trade for
    * @param {MetatraderTrade} trade trade to execute (see docs for possible trade types)
+   * @param {String} [application] application to use
    * @returns {Promise<MetatraderTradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
-  async trade(accountId, trade) {
-    let response = await this._rpcRequest(accountId, {type: 'trade', trade});
+  async trade(accountId, trade, application) {
+    let response = await this._rpcRequest(accountId, {type: 'trade', trade,
+      application: application || this._application});
     response.response = response.response || {};
     response.response.stringCode = response.response.stringCode || response.response.description;
     response.response.numericCode = response.response.numericCode !== undefined ? response.response.numericCode :
@@ -797,11 +799,12 @@ export default class MetaApiWebsocketClient {
    * @param {Number} instanceNumber instance index number
    * @param {String} applicationPattern MetaApi application regular expression pattern, default is .*
    * @param {Number} timeoutInSeconds timeout in seconds, default is 300 seconds
+   * @param {String} [application] application to synchronize with
    * @returns {Promise} promise which resolves when synchronization started
    */
-  waitSynchronized(accountId, instanceNumber, applicationPattern, timeoutInSeconds) {
+  waitSynchronized(accountId, instanceNumber, applicationPattern, timeoutInSeconds, application) {
     return this._rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds,
-      instanceIndex: instanceNumber},
+      instanceIndex: instanceNumber, application: application || this._application},
     timeoutInSeconds + 1);
   }
 
