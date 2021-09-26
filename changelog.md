@@ -1,5 +1,5 @@
 15.1.1
- - fixed rpc connection requests
+ - fixed application field in rpc connection requests
 
 15.1.0
  - added option to keep server-side subscription when retrieving latest market data via RPC API
