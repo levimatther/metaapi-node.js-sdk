@@ -1,12 +1,6 @@
 'use strict';
 
-import TerminalState from './terminalState';
-import MemoryHistoryStorage from './memoryHistoryStorage';
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
-import TimeoutError from '../clients/timeoutError';
-import randomstring from 'randomstring';
-import ConnectionHealthMonitor from './connectionHealthMonitor';
-import OptionsValidator from '../clients/optionsValidator';
 import LoggerManager from '../logger';
 
 /**
@@ -18,12 +12,14 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Constructs MetaApi MetaTrader Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
    * @param {MetatraderAccount} account MetaTrader account id to connect to
+   * @param {String} [application] application to use
    */
-  constructor(websocketClient, account) {
+  constructor(websocketClient, account, application) {
     super();
     this._websocketClient = websocketClient;
     this._account = account;
     this._logger = LoggerManager.getLogger('MetaApiConnection');
+    this._application = application;
   }
 
   /**
@@ -93,7 +89,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createMarketBuyOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY', symbol, volume},
-      this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
 
   /**
@@ -108,7 +104,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createMarketSellOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL', symbol, volume},
-      this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
 
   /**
@@ -124,7 +120,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createLimitBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_LIMIT', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
 
   /**
@@ -140,7 +136,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createLimitSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_LIMIT', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
 
   /**
@@ -156,7 +152,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
 
   /**
@@ -172,7 +168,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
 
   /**
@@ -189,7 +185,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopLimitBuyOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
-      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}),
+    this._application);
   }
 
   /**
@@ -206,7 +203,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopLimitSellOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
-      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
+      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}),
+    this._application);
   }
 
   /**
@@ -219,7 +217,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   modifyPosition(positionId, stopLoss, takeProfit) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_MODIFY', positionId},
-      this._generateStopOptions(stopLoss, takeProfit)));
+      this._generateStopOptions(stopLoss, takeProfit)), this._application);
   }
 
   /**
@@ -232,7 +230,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closePositionPartially(positionId, volume, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_PARTIAL', positionId,
-      volume}, options || {}));
+      volume}, options || {}), this._application);
   }
 
   /**
@@ -244,7 +242,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closePosition(positionId, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_ID', positionId},
-      options || {}));
+      options || {}), this._application);
   }
 
   /**
@@ -257,7 +255,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closeBy(positionId, oppositePositionId, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_BY', positionId,
-      closeByPositionId: oppositePositionId}, options || {}));
+      closeByPositionId: oppositePositionId}, options || {}), this._application);
   }
 
   /**
@@ -269,7 +267,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closePositionsBySymbol(symbol, options = {}) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITIONS_CLOSE_SYMBOL', symbol},
-      options || {}));
+      options || {}), this._application);
   }
 
   /**
@@ -283,7 +281,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   modifyOrder(orderId, openPrice, stopLoss, takeProfit) {
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_MODIFY', orderId, openPrice},
-      this._generateStopOptions(stopLoss, takeProfit)));
+      this._generateStopOptions(stopLoss, takeProfit)), this._application);
   }
 
   /**
@@ -293,7 +291,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   cancelOrder(orderId) {
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_CANCEL', orderId});
+    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_CANCEL', orderId}, this._application);
   }
 
   /**

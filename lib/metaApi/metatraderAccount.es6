@@ -1,7 +1,6 @@
 'use strict';
 
 import TimeoutError from '../clients/timeoutError';
-import StreamingMetaApiConnection from './streamingMetaApiConnection';
 import RpcMetaApiConnection from './rpcMetaApiConnection';
 import HistoryFileManager from './historyFileManager/index';
 import ExpertAdvisor from './expertAdvisor';

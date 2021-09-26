@@ -56,10 +56,10 @@ async function testMetaApiSynchronization() {
 
     // wait until account is deployed and connected to broker
     // eslint-disable-next-line semi
-    console.log('Deploying account')
+    console.log('Deploying account');
     await account.deploy();
     // eslint-disable-next-line semi
-    console.log('Waiting for API server to connect to broker (may take couple of minutes)')
+    console.log('Waiting for API server to connect to broker (may take couple of minutes)');
     await account.waitConnected();
 
     // connect to MetaApi API

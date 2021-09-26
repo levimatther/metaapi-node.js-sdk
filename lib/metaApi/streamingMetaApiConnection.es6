@@ -2,7 +2,6 @@
 
 import TerminalState from './terminalState';
 import MemoryHistoryStorage from './memoryHistoryStorage';
-import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 import TimeoutError from '../clients/timeoutError';
 import randomstring from 'randomstring';
 import ConnectionHealthMonitor from './connectionHealthMonitor';

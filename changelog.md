@@ -1,3 +1,6 @@
+15.1.1
+ - fixed rpc connection requests
+
 15.1.0
  - added option to keep server-side subscription when retrieving latest market data via RPC API
  - upgdated CopyFactory API to 3.1.0

@@ -110,15 +110,6 @@ function toArray_(p) {
   return arr;
 }
 
-function toValueArray_(p) {
-  var arr = [];
-  if (p.left) arr = arr.concat(toArray_(p.left));
-  arr.push(p.key.data);
-  if (p.right) arr = arr.concat(toArray_(p.right));
-  return arr;
-}
-
-
 var AVLTree = function(comparer) {
   if (!comparer) comparer = comparer_;
   var AVL = {
