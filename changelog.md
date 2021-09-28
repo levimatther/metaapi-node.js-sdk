@@ -1,3 +1,6 @@
+15.1.2
+  - fix synchronization after redeploy
+
 15.1.1
  - fixed application field in rpc connection requests
 
