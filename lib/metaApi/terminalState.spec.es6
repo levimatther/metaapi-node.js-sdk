@@ -297,7 +297,7 @@ describe('TerminalState', () => {
     const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","openPrice":1.03000000,' +
       '"volume":0.01000000,"currentVolume":0.01000000}]');
-    let hashes = state.getHashes('cloud-g1');
+    let hashes = state.getHashes('cloud-g1', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, null);
     sinon.assert.match(hashes.positionsMd5, null);
     sinon.assert.match(hashes.ordersMd5, null);
@@ -347,7 +347,7 @@ describe('TerminalState', () => {
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
     state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-    hashes = state.getHashes('cloud-g1');
+    hashes = state.getHashes('cloud-g1', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, specificationsHash);
     sinon.assert.match(hashes.positionsMd5, positionsHash);
     sinon.assert.match(hashes.ordersMd5, ordersHash);
@@ -366,7 +366,7 @@ describe('TerminalState', () => {
     const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","time":"2020-04-20T08:38:58.270Z","openPrice":1.03,' +
       '"volume":0.01,"currentVolume":0.01}]');
-    let hashes = state.getHashes('cloud-g2');
+    let hashes = state.getHashes('cloud-g2', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, null);
     sinon.assert.match(hashes.positionsMd5, null);
     sinon.assert.match(hashes.ordersMd5, null);
@@ -416,7 +416,7 @@ describe('TerminalState', () => {
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
     state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-    hashes = state.getHashes('cloud-g2');
+    hashes = state.getHashes('cloud-g2', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, specificationsHash);
     sinon.assert.match(hashes.positionsMd5, positionsHash);
     sinon.assert.match(hashes.ordersMd5, ordersHash);

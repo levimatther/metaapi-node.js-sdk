@@ -82,9 +82,11 @@ export default class TerminalState extends SynchronizationListener {
   /**
    * Returns hashes of terminal state data for incremental synchronization
    * @param {String} accountType account type
+   * @param {String} instanceIndex index of instance to get hashes of
    * @returns {Object} hashes of terminal state data
    */
-  getHashes(accountType) {
+  getHashes(accountType, instanceIndex) {
+    const state = this._getState(instanceIndex);
 
     const sortByKey = (obj1, obj2, key) => {
       if(obj1[key] < obj2[key]) {
@@ -95,17 +97,17 @@ export default class TerminalState extends SynchronizationListener {
       }
       return 0;
     };
-    const specifications = JSON.parse(JSON.stringify(this.specifications));
+    const specifications = JSON.parse(JSON.stringify(Object.values(state.specificationsBySymbol)));
     specifications.sort((a,b) => sortByKey(a, b, 'symbol'));
     if(accountType === 'cloud-g1') {
       specifications.forEach(specification => {
         delete specification.description;
       });
     }
-    const specificationsHash = this.specifications.length ? 
+    const specificationsHash = specifications.length ? 
       this._getHash(specifications, accountType, ['digits']) : null;
 
-    const positions = JSON.parse(JSON.stringify(this.positions));
+    const positions = JSON.parse(JSON.stringify(state.positions));
     positions.sort((a,b) => sortByKey(a, b, 'id'));
     positions.forEach(position => {
       delete position.profit;
@@ -123,10 +125,10 @@ export default class TerminalState extends SynchronizationListener {
         delete position.updateTime;
       }
     });
-    const positionsHash = this._combinedState.positionsInitialized ? 
+    const positionsHash = state.positionsInitialized ? 
       this._getHash(positions, accountType, ['magic']) : null;
 
-    const orders = JSON.parse(JSON.stringify(this.orders));
+    const orders = JSON.parse(JSON.stringify(state.orders));
     orders.sort((a,b) => sortByKey(a, b, 'id'));
     orders.forEach(order => {
       delete order.currentPrice;
@@ -139,7 +141,7 @@ export default class TerminalState extends SynchronizationListener {
         delete order.time;
       }
     });
-    const ordersHash = this._combinedState.ordersInitialized ? 
+    const ordersHash = state.ordersInitialized ? 
       this._getHash(orders, accountType, ['magic']) : null;
 
     return {
@@ -339,6 +341,7 @@ export default class TerminalState extends SynchronizationListener {
   async onPendingOrdersSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.completedOrders = {};
+    state.positionsInitialized = true;
     state.ordersInitialized = true;
     this._combinedState.accountInformation = state.accountInformation;
     this._combinedState.positions = state.positions;
