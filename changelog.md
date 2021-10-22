@@ -1,3 +1,6 @@
+15.1.3
+  - fixed upload of provisioning profile file buffers
+
 15.1.2
   - fix synchronization after redeploy
 

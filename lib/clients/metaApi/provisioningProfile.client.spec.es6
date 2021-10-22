@@ -162,8 +162,13 @@ describe('ProvisioningProfileClient', () => {
       headers: {
         'auth-token': token
       },
-      formData: {
-        file
+      formData: { 
+        file: { 
+          options: { 
+            filename: 'serverFile' 
+          }, 
+          value: file 
+        } 
       },
       json: true,
     });
