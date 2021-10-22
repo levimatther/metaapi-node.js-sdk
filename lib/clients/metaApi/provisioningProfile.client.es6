@@ -130,6 +130,13 @@ export default class ProvisioningProfileClient extends MetaApiClient {
     }
     if (typeof file === 'string') {
       file = fs.createReadStream(file);
+    } else {
+      file = {
+        value: file,
+        options: {
+          filename: 'serverFile'
+        }
+      };
     }
     const opts = {
       method: 'PUT',
