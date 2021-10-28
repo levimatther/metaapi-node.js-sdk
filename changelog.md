@@ -1,3 +1,6 @@
+15.1.4
+  - added point field to symbol specification
+
 15.1.3
   - fixed upload of provisioning profile file buffers
 

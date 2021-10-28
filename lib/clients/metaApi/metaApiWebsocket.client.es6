@@ -1372,6 +1372,7 @@ export default class MetaApiWebsocketClient {
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_order_gtc_mode for more
    * details
    * @property {Number} digits digits after a decimal point
+   * @property {Number} point point size
    * @property {String} [path] path in the symbol tree
    * @property {String} description symbol description
    * @property {Date} [startTime] date of the symbol trade beginning (usually used for futures)
