@@ -144,6 +144,85 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#_getServerUrl}
+   */
+  it('should throw error if region not found', async () => {
+    client.close();
+    sandbox.stub(httpClient, 'request').callsFake(arg => {
+      if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
+        'users/current/regions') {
+        return ['canada', 'us-west'];
+      }
+    });
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'wrong',
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false});
+    try {
+      await client._getServerUrl();
+      should.fail('Not found error expected');
+    } catch (err) {
+      err.name.should.equal('NotFoundError');
+    }
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#_getServerUrl}
+   */
+  it('should connect to legacy url if default region selected', async () => {
+    client.close();
+    sandbox.stub(httpClient, 'request').callsFake(arg => {
+      if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
+        'users/current/regions') {
+        return ['canada', 'us-west'];
+      }
+    });
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'canada',
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
+    const url = await client._getServerUrl();
+    should(url).eql('https://mt-client-api-v1.project-stock.agiliumlabs.cloud');
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#_getServerUrl}
+   */
+  it('should connect to shared selected region', async () => {
+    client.close();
+    sandbox.stub(httpClient, 'request').callsFake(arg => {
+      if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
+        'users/current/regions') {
+        return ['canada', 'us-west'];
+      }
+    });
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'us-west',
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
+    const url = await client._getServerUrl();
+    should(url).eql('https://mt-client-api-v1.us-west.project-stock.agiliumlabs.cloud');
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#_getServerUrl}
+   */
+  it('should connect to dedicated selected region', async () => {
+    client.close();
+    sandbox.stub(httpClient, 'request').callsFake(arg => {
+      if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
+        'users/current/regions') {
+        return ['canada', 'us-west'];
+      } else if (arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
+      'users/current/servers/mt-client-api') {
+        return {
+          url: 'http://localhost:8081',
+          hostname: 'mt-client-api-dedicated',
+          domain: 'project-stock.agiliumlabs.cloud'
+        };
+      }
+    });
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'us-west',
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
+    const url = await client._getServerUrl();
+    should(url).eql('https://mt-client-api-v1.us-west.project-stock.agiliumlabs.cloud');
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#getAccountInformation}
    */
   it('should retrieve MetaTrader account information from API', async () => {

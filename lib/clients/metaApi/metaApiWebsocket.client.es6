@@ -38,7 +38,9 @@ export default class MetaApiWebsocketClient {
     this._httpClient = httpClient;
     this._application = opts.application || 'MetaApi';
     this._domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
-    this._url = `https://mt-client-api-v1.${this._domain}`;
+    this._region = opts.region;
+    this._hostname = 'mt-client-api-v1';
+    this._url = `https://${this._hostname}.${this._domain}`;
     this._requestTimeout = validator.validateNonZero(opts.requestTimeout, 60, 'requestTimeout') * 1000;
     this._connectTimeout = validator.validateNonZero(opts.connectTimeout, 60, 'connectTimeout') * 1000;
     const retryOpts = opts.retryOpts || {};
@@ -2056,10 +2058,38 @@ export default class MetaApiWebsocketClient {
     }
   }
 
+  // eslint-disable-next-line complexity
   async _getServerUrl() {
+    let isDefaultRegion = !this._region;
+    if(this._region) {
+      const opts = {
+        url: `https://mt-provisioning-api-v1.${this._domain}/users/current/regions`,
+        method: 'GET',
+        headers: {
+          'auth-token': this._token
+        },
+        json: true,
+      };
+      const regions = await this._httpClient.request(opts);
+      if(!regions.includes(this._region)) {
+        const errorMessage = `The region "${this._region}" you are trying to connect to does not exist ` +
+          'or is not available to you. Please specify a correct region name in the ' +
+          'region MetaApi constructor option.';
+        this._logger.error(errorMessage);
+        throw new NotFoundError(errorMessage);
+      }
+      if(this._region === regions[0]) {
+        isDefaultRegion = true;
+      }
+    }
+
     let url;
     if(this._useSharedClientApi) {
-      url = this._url;
+      if(isDefaultRegion) {
+        url = this._url;
+      } else {
+        url = `https://${this._hostname}.${this._region}.${this._domain}`;
+      }
     } else {
       const opts = {
         url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
@@ -2070,9 +2100,13 @@ export default class MetaApiWebsocketClient {
         json: true,
       };
       const response = await this._httpClient.request(opts);
-      url = response.url;
+      if(isDefaultRegion) {
+        url = response.url;
+      } else {
+        url = `https://${response.hostname}.${this._region}.${response.domain}`;
+      }
     }
-    const isSharedClientApi = url === this._url;
+    const isSharedClientApi = [this._url, `https://${this._hostname}.${this._region}.${this._domain}`].includes(url);
     let logMessage = 'Connecting MetaApi websocket client to the MetaApi server ' +
       `via ${url} ${isSharedClientApi ? 'shared' : 'dedicated'} server.`;
     if(this._firstConnect && !isSharedClientApi) {
