@@ -195,11 +195,9 @@ export default class MetaApiWebsocketClient {
    */
   async connect() {
     let clientId = Math.random();
-    let resolve, reject;
-    let resolved = false;
+    let resolve;
     let result = new Promise((res, rej) => {
       resolve = res;
-      reject = rej;
     });
     const socketInstanceIndex = this._socketInstances.length;
     const instance = {
@@ -217,8 +215,8 @@ export default class MetaApiWebsocketClient {
     };
     instance.connected = true;
     this._socketInstances.push(instance);
-    const serverUrl = await this._getServerUrl();
     instance.synchronizationThrottler.start();
+    const serverUrl = await this._getServerUrl(socketInstanceIndex);
     const socketInstance = socketIO(serverUrl, {
       path: '/ws',
       reconnection: true,
@@ -243,8 +241,8 @@ export default class MetaApiWebsocketClient {
       // eslint-disable-next-line no-console
       this._logger.info('MetaApi websocket client connected to the MetaApi server');
       instance.isReconnecting = false;
-      if (!resolved) {
-        resolved = true;
+      if (!instance.resolved) {
+        instance.resolved = true;
         resolve();
       } else {
         await this._fireReconnected(instance.id);
@@ -257,22 +255,20 @@ export default class MetaApiWebsocketClient {
       instance.isReconnecting = false;
       await this._fireReconnected(instance.id);
     });
-    socketInstance.on('connect_error', (err) => {
+    socketInstance.on('connect_error', async (err) => {
       // eslint-disable-next-line no-console
       this._logger.error('MetaApi websocket client connection error', err);
       instance.isReconnecting = false;
-      if (!resolved) {
-        resolved = true;
-        reject(err);
+      if (!instance.resolved) {
+        await this._reconnect(instance.id);
       }
     });
-    socketInstance.on('connect_timeout', (timeout) => {
+    socketInstance.on('connect_timeout', async (timeout) => {
       // eslint-disable-next-line no-console
       this._logger.error('MetaApi websocket client connection timeout');
       instance.isReconnecting = false;
-      if (!resolved) {
-        resolved = true;
-        reject(new TimeoutError('MetaApi websocket client connection timed out'));
+      if (!instance.resolved) {
+        await this._reconnect(instance.id);
       }
     });
     socketInstance.on('disconnect', async (reason) => {
@@ -1120,7 +1116,7 @@ export default class MetaApiWebsocketClient {
           instance.socket.io.opts.extraHeaders['Client-Id'] = clientId;
           instance.socket.io.opts.query.clientId = clientId;
           instance.isReconnecting = true;
-          instance.socket.io.uri = await this._getServerUrl();
+          instance.socket.io.uri = await this._getServerUrl(socketInstanceIndex);
           instance.socket.connect();
         } catch (error) {
           instance.isReconnecting = false;
@@ -2059,63 +2055,70 @@ export default class MetaApiWebsocketClient {
   }
 
   // eslint-disable-next-line complexity
-  async _getServerUrl() {
-    let isDefaultRegion = !this._region;
-    if(this._region) {
-      const opts = {
-        url: `https://mt-provisioning-api-v1.${this._domain}/users/current/regions`,
-        method: 'GET',
-        headers: {
-          'auth-token': this._token
-        },
-        json: true,
-      };
-      const regions = await this._httpClient.request(opts);
-      if(!regions.includes(this._region)) {
-        const errorMessage = `The region "${this._region}" you are trying to connect to does not exist ` +
+  async _getServerUrl(socketInstanceIndex) {
+    while(this.socketInstances[socketInstanceIndex].connected) {
+      try {
+        let isDefaultRegion = !this._region;
+        if(this._region) {
+          const opts = {
+            url: `https://mt-provisioning-api-v1.${this._domain}/users/current/regions`,
+            method: 'GET',
+            headers: {
+              'auth-token': this._token
+            },
+            json: true,
+          };
+          const regions = await this._httpClient.request(opts);
+          if(!regions.includes(this._region)) {
+            const errorMessage = `The region "${this._region}" you are trying to connect to does not exist ` +
           'or is not available to you. Please specify a correct region name in the ' +
           'region MetaApi constructor option.';
-        this._logger.error(errorMessage);
-        throw new NotFoundError(errorMessage);
-      }
-      if(this._region === regions[0]) {
-        isDefaultRegion = true;
-      }
-    }
+            throw new NotFoundError(errorMessage);
+          }
+          if(this._region === regions[0]) {
+            isDefaultRegion = true;
+          }
+        }
 
-    let url;
-    if(this._useSharedClientApi) {
-      if(isDefaultRegion) {
-        url = this._url;
-      } else {
-        url = `https://${this._hostname}.${this._region}.${this._domain}`;
-      }
-    } else {
-      const opts = {
-        url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
-        method: 'GET',
-        headers: {
-          'auth-token': this._token
-        },
-        json: true,
-      };
-      const response = await this._httpClient.request(opts);
-      if(isDefaultRegion) {
-        url = response.url;
-      } else {
-        url = `https://${response.hostname}.${this._region}.${response.domain}`;
-      }
-    }
-    const isSharedClientApi = [this._url, `https://${this._hostname}.${this._region}.${this._domain}`].includes(url);
-    let logMessage = 'Connecting MetaApi websocket client to the MetaApi server ' +
+        let url;
+        if(this._useSharedClientApi) {
+          if(isDefaultRegion) {
+            url = this._url;
+          } else {
+            url = `https://${this._hostname}.${this._region}.${this._domain}`;
+          }
+        } else {
+          const opts = {
+            url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
+            method: 'GET',
+            headers: {
+              'auth-token': this._token
+            },
+            json: true,
+          };
+          const response = await this._httpClient.request(opts);
+          if(isDefaultRegion) {
+            url = response.url;
+          } else {
+            url = `https://${response.hostname}.${this._region}.${response.domain}`;
+          }
+        }
+        const isSharedClientApi = [this._url, `https://${this._hostname}.${this._region}.${this._domain}`]
+          .includes(url);
+        let logMessage = 'Connecting MetaApi websocket client to the MetaApi server ' +
       `via ${url} ${isSharedClientApi ? 'shared' : 'dedicated'} server.`;
-    if(this._firstConnect && !isSharedClientApi) {
-      logMessage += ' Please note that it can take up to 3 minutes for your dedicated server to start for the ' +
+        if(this._firstConnect && !isSharedClientApi) {
+          logMessage += ' Please note that it can take up to 3 minutes for your dedicated server to start for the ' +
         'first time. During this time it is OK if you see some connection errors.';
-      this._firstConnect = false;
+          this._firstConnect = false;
+        }
+        this._logger.info(logMessage);
+        return url;
+      } catch (error) {
+        this._logger.error(error);
+        await new Promise(res => setTimeout(res, 1000));
+      }
     }
-    this._logger.info(logMessage);
-    return url;
   }
 
 }
