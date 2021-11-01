@@ -46,7 +46,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     this._websocketClient.addReconnectListener(this, account.id);
     this._subscriptions = {};
     this._stateByInstanceIndex = {};
-    this._refreshMarketDataSubscriptionsJobs = {};
+    this._refreshMarketDataSubscriptionSessions = {};
+    this._refreshMarketDataSubscriptionTimeouts = {};
     this._synchronized = false;
     this._synchronizationListeners = [];
     this._logger = LoggerManager.getLogger('MetaApiConnection');
@@ -304,7 +305,9 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     state.synchronized = false;
     state.disconnected = true;
     const instance = this.getInstanceNumber(instanceIndex);
-    delete this._refreshMarketDataSubscriptionsJobs[instance];
+    delete this._refreshMarketDataSubscriptionSessions[instance];
+    clearTimeout(this._refreshMarketDataSubscriptionTimeouts[instance]);
+    delete this._refreshMarketDataSubscriptionTimeouts[instance];
   }
 
   /**
@@ -337,7 +340,9 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   async onReconnected() {
     this._stateByInstanceIndex = {};
-    this._refreshMarketDataSubscriptionsJobs = {};
+    this._refreshMarketDataSubscriptionSessions = {};
+    Object.values(this._refreshMarketDataSubscriptionTimeouts).forEach(timeout => clearTimeout(timeout));
+    this._refreshMarketDataSubscriptionTimeouts = {};
   }
 
   /**
@@ -359,9 +364,11 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   async onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated) {
     const instance = this.getInstanceNumber(instanceIndex);
-    delete this._refreshMarketDataSubscriptionsJobs[instance];
+    delete this._refreshMarketDataSubscriptionSessions[instance];
     let sessionId = randomstring.generate(32);
-    this._refreshMarketDataSubscriptionsJobs[instance] = sessionId;
+    this._refreshMarketDataSubscriptionSessions[instance] = sessionId;
+    clearTimeout(this._refreshMarketDataSubscriptionTimeouts[instance]);
+    delete this._refreshMarketDataSubscriptionTimeouts[instance];
     await this._refreshMarketDataSubscriptions(instance, sessionId);
   }
 
@@ -452,10 +459,13 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       for (let listener of this._synchronizationListeners) {
         this._websocketClient.removeSynchronizationListener(this._account.id, listener);
       }
+      this._synchronizationListeners = [];
       this._websocketClient.removeReconnectListener(this);
       this._connectionRegistry.remove(this._account.id);
       this._healthMonitor.stop();
-      this._refreshMarketDataSubscriptionsJobs = {};
+      this._refreshMarketDataSubscriptionSessions = {};
+      Object.values(this._refreshMarketDataSubscriptionTimeouts).forEach(timeout => clearTimeout(timeout));
+      this._refreshMarketDataSubscriptionTimeouts = {};
       this._closed = true;
     }
   }
@@ -486,7 +496,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
 
   async _refreshMarketDataSubscriptions(instanceNumber, session) {
     try {
-      if (this._refreshMarketDataSubscriptionsJobs[instanceNumber] === session) {
+      if (this._refreshMarketDataSubscriptionSessions[instanceNumber] === session) {
         const subscriptionsList = [];
         Object.keys(this._subscriptions).forEach(key => {
           const subscriptions = this.subscriptions(key);
@@ -503,10 +513,11 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       this._logger.error(`Error refreshing market data subscriptions job for account ${this._account.id} ` +
       `${instanceNumber}`, err);
     } finally {
-      if (this._refreshMarketDataSubscriptionsJobs[instanceNumber] === session) {
+      if (this._refreshMarketDataSubscriptionSessions[instanceNumber] === session) {
         let refreshInterval = (Math.random() * (this._maxSubscriptionRefreshInterval - 
           this._minSubscriptionRefreshInterval) + this._minSubscriptionRefreshInterval) * 1000;
-        setTimeout(() => this._refreshMarketDataSubscriptions(instanceNumber, session), refreshInterval);
+        this._refreshMarketDataSubscriptionTimeouts[instanceNumber] = setTimeout(() =>
+          this._refreshMarketDataSubscriptions(instanceNumber, session), refreshInterval);
       }
     }
   }
