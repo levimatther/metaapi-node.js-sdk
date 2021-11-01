@@ -1,5 +1,6 @@
 15.1.5
   - added reconnection if first connection attempt fails
+  - fixed potential memory leaks
 
 15.1.4
   - added point field to symbol specification
