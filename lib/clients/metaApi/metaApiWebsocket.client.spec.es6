@@ -144,24 +144,90 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
+   * @test {MetaApiWebsocketClient#connect}
+   */
+  it('should retry connection if first attempt timed out', async () => {
+    let positions = [{
+      id: '46214692',
+      type: 'POSITION_TYPE_BUY',
+      symbol: 'GBPUSD',
+      magic: 1000,
+      time: new Date('2020-04-15T02:45:06.521Z'),
+      updateTime: new Date('2020-04-15T02:45:06.521Z'),
+      openPrice: 1.26101,
+      currentPrice: 1.24883,
+      currentTickValue: 1,
+      volume: 0.07,
+      swap: 0,
+      profit: -85.25999999999966,
+      commission: -0.25,
+      clientId: 'TE_GBPUSD_7hyINWqAlE',
+      stopLoss: 1.17721,
+      unrealizedProfit: -85.25999999999901,
+      realizedProfit: -6.536993168992922e-13
+    }];
+    let resolve;
+    let promise = new Promise(res => resolve = res);
+    client.close();
+    io.close(() => resolve());
+    await promise;
+    sandbox.stub(httpClient, 'request').resolves({url: 'http://localhost:6785'});
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false,
+      connectTimeout: 0.1,
+      retryOpts: { retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
+    (async () => {
+      await new Promise(res => setTimeout(res, 200));
+      io = new Server(6785, {path: '/ws', pingTimeout: 30000});
+      io.on('connect', socket => {
+        server = socket;
+        server.on('request', data => {
+          if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'RPC') {
+            server.emit('response', {type: 'response', accountId: data.accountId, 
+              requestId: data.requestId, positions});
+          }
+        });
+      });
+    })();
+    let actual = await client.getPositions('accountId');
+    actual.should.match(positions);
+    io.close();
+  });
+
+  /**
    * @test {MetaApiWebsocketClient#_getServerUrl}
    */
-  it('should throw error if region not found', async () => {
+  it('should retry if region not found', async () => {
+    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
+    let resolve;
+    let promise = new Promise(res => resolve = res);
     client.close();
+    io.close(() => resolve());
+    await promise;
+    let retryCounter = 0;
     sandbox.stub(httpClient, 'request').callsFake(arg => {
       if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
         'users/current/regions') {
-        return ['canada', 'us-west'];
+        retryCounter++;
+        if(retryCounter < 3) {
+          return ['canada', 'us-west'];
+        } else {
+          return ['canada', 'us-west', 'germany'];
+        }
       }
     });
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'wrong',
-      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false});
-    try {
-      await client._getServerUrl();
-      should.fail('Not found error expected');
-    } catch (err) {
-      err.name.should.equal('NotFoundError');
-    }
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'germany',
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
+    client._socketInstances = [{
+      connected: true,
+      requestResolves: [],
+      socket: {close: () => {}}
+    }];
+    clock.tickAsync(5000);
+    const url = await client._getServerUrl(0);
+    should(url).eql('https://mt-client-api-v1.germany.project-stock.agiliumlabs.cloud');
+    io.close();
+    clock.restore();
   });
 
   /**
@@ -177,7 +243,12 @@ describe('MetaApiWebsocketClient', () => {
     });
     client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'canada',
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
-    const url = await client._getServerUrl();
+    client._socketInstances = [{
+      connected: true,
+      requestResolves: [],
+      socket: {close: () => {}}
+    }];
+    const url = await client._getServerUrl(0);
     should(url).eql('https://mt-client-api-v1.project-stock.agiliumlabs.cloud');
   });
 
@@ -194,7 +265,12 @@ describe('MetaApiWebsocketClient', () => {
     });
     client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'us-west',
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
-    const url = await client._getServerUrl();
+    client._socketInstances = [{
+      connected: true,
+      requestResolves: [],
+      socket: {close: () => {}}
+    }];
+    const url = await client._getServerUrl(0);
     should(url).eql('https://mt-client-api-v1.us-west.project-stock.agiliumlabs.cloud');
   });
 
@@ -218,7 +294,12 @@ describe('MetaApiWebsocketClient', () => {
     });
     client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'us-west',
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
-    const url = await client._getServerUrl();
+    client._socketInstances = [{
+      connected: true,
+      requestResolves: [],
+      socket: {close: () => {}}
+    }];
+    const url = await client._getServerUrl(0);
     should(url).eql('https://mt-client-api-v1.us-west.project-stock.agiliumlabs.cloud');
   });
 

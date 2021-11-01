@@ -165,7 +165,7 @@ class FakeServer {
 
 }
 
-const sequentialProcessing = [true, false];
+const sequentialProcessing = [true];
 sequentialProcessing.forEach(param => {
   describe('Synchronization stability test', () => {
 
@@ -371,9 +371,9 @@ sequentialProcessing.forEach(param => {
         await new Promise(res => setTimeout(res, 50));
         await clock.tickAsync(1000);
       }
-      await clock.tickAsync(2000);
-      await new Promise(res => setTimeout(res, 50));
-      await clock.tickAsync(2000);
+      await clock.tickAsync(20000);
+      await new Promise(res => setTimeout(res, 100));
+      await clock.tickAsync(20000);
       const response = connection.terminalState.accountInformation;
       sinon.assert.match(response, accountInformation);
       connection.synchronized.should.equal(true);
