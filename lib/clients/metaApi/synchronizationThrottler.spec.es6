@@ -17,11 +17,11 @@ describe('SynchronizationThrottler', () => {
       shouldAdvanceTime: true
     });
     websocketClient = {
-      _rpcRequest: (accountId, request, timeoutInSeconds) => {},
+      rpcRequest: (accountId, request, timeoutInSeconds) => {},
       subscribedAccountIds: () => new Array(11),
       socketInstances: [{synchronizationThrottler: {synchronizingAccounts: []}}],
     };  
-    websocketClient._rpcRequest = sandbox.stub();
+    websocketClient.rpcRequest = sandbox.stub();
     throttler = new SynchronizationThrottler(websocketClient, 0);
     throttler.start();
   });
@@ -37,7 +37,7 @@ describe('SynchronizationThrottler', () => {
     await throttler.scheduleSynchronize('accountId', {requestId: 'test'});
     sinon.assert.match(throttler._synchronizationIds, {test: 1601892000000});
     throttler.removeSynchronizationId('test');
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId', {requestId: 'test'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId', {requestId: 'test'});
     sinon.assert.match(throttler._synchronizationIds, {});
   });
 
@@ -50,8 +50,8 @@ describe('SynchronizationThrottler', () => {
     sinon.assert.match(throttler._synchronizationIds, {test: 1601892000000, test1: 1601892000000});
     throttler.removeSynchronizationId('test', 0);
     sinon.assert.match(throttler._synchronizationIds, {test1: 1601892000000});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId', {requestId: 'test', instanceIndex: 0});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId', {requestId: 'test1', instanceIndex: 1});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId', {requestId: 'test', instanceIndex: 0});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId', {requestId: 'test1', instanceIndex: 1});
     sinon.assert.match(throttler._synchronizationIds, {});
   });
 
@@ -61,14 +61,14 @@ describe('SynchronizationThrottler', () => {
   it('should wait for other sync requests to finish if slots are full', async () => {
     await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId1', {requestId: 'test1'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test2'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId1', {requestId: 'test1'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId2', {requestId: 'test2'});
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 2);
+    sinon.assert.callCount(websocketClient.rpcRequest, 2);
     throttler.removeSynchronizationId('test1');
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
   });
 
   /**
@@ -79,10 +79,10 @@ describe('SynchronizationThrottler', () => {
     await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
     await throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId1', {requestId: 'test1'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test2'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId3', {requestId: 'test3'});
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId1', {requestId: 'test1'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId2', {requestId: 'test2'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId3', {requestId: 'test3'});
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
   });
 
   /**
@@ -98,10 +98,10 @@ describe('SynchronizationThrottler', () => {
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     throttler.scheduleSynchronize('accountId4', {requestId: 'test4'});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 2);
+    sinon.assert.callCount(websocketClient.rpcRequest, 2);
     throttler.removeSynchronizationId('test1');
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
   });
 
   /**
@@ -112,10 +112,10 @@ describe('SynchronizationThrottler', () => {
     throttler.scheduleSynchronize('accountId', {requestId: 'test1', instanceIndex: 1});
     throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId', {requestId: 'test', instanceIndex: 0});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId', {requestId: 'test1', instanceIndex: 1});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test2'});
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId', {requestId: 'test', instanceIndex: 0});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId', {requestId: 'test1', instanceIndex: 1});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId2', {requestId: 'test2'});
     sinon.assert.match(throttler._synchronizationIds, {});
   });
 
@@ -127,9 +127,9 @@ describe('SynchronizationThrottler', () => {
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 2);
+    sinon.assert.callCount(websocketClient.rpcRequest, 2);
     await clock.tickAsync(11000);
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
   });
 
   /**
@@ -140,15 +140,15 @@ describe('SynchronizationThrottler', () => {
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 2);
+    sinon.assert.callCount(websocketClient.rpcRequest, 2);
     await clock.tickAsync(11000);
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
     await clock.tickAsync(11000);
     throttler.updateSynchronizationId('test1');
     throttler.scheduleSynchronize('accountId4', {requestId: 'test4'});
     throttler.scheduleSynchronize('accountId5', {requestId: 'test5'});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 4);
+    sinon.assert.callCount(websocketClient.rpcRequest, 4);
   });
 
   /**
@@ -162,7 +162,7 @@ describe('SynchronizationThrottler', () => {
     throttler.scheduleSynchronize('accountId3', {requestId: 'test5'});
     throttler.scheduleSynchronize('accountId1', {requestId: 'test3', instanceIndex: 0});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 4);
+    sinon.assert.callCount(websocketClient.rpcRequest, 4);
   });
 
   /**
@@ -172,11 +172,11 @@ describe('SynchronizationThrottler', () => {
     await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 2);
+    sinon.assert.callCount(websocketClient.rpcRequest, 2);
     throttler.onDisconnect();
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     await new Promise(res => setTimeout(res, 20));
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
   });
 
   /**
@@ -194,13 +194,13 @@ describe('SynchronizationThrottler', () => {
     throttler.scheduleSynchronize('accountId5', {requestId: 'test9'});
     throttler.scheduleSynchronize('accountId3', {requestId: 'test10', instanceIndex: 0});
     await clock.tickAsync(53000);
-    sinon.assert.callCount(websocketClient._rpcRequest, 6);
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId1', {requestId: 'test1'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test2'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId3', {requestId: 'test8'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId3', {requestId: 'test10', instanceIndex: 0});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId4', {requestId: 'test7'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId5', {requestId: 'test9'});
+    sinon.assert.callCount(websocketClient.rpcRequest, 6);
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId1', {requestId: 'test1'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId2', {requestId: 'test2'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId3', {requestId: 'test8'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId3', {requestId: 'test10', instanceIndex: 0});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId4', {requestId: 'test7'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId5', {requestId: 'test9'});
   });
 
   /**
@@ -223,10 +223,10 @@ describe('SynchronizationThrottler', () => {
       throttler.updateSynchronizationId('test2');
     }
     await clock.tickAsync(33000);
-    sinon.assert.callCount(websocketClient._rpcRequest, 3);
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId1', {requestId: 'test1'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test2'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId5', {requestId: 'test5'});
+    sinon.assert.callCount(websocketClient.rpcRequest, 3);
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId1', {requestId: 'test1'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId2', {requestId: 'test2'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId5', {requestId: 'test5'});
   });
 
   /**
@@ -241,15 +241,15 @@ describe('SynchronizationThrottler', () => {
     throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
     throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
     await clock.tickAsync(5000);
-    sinon.assert.notCalled(websocketClient._rpcRequest);
+    sinon.assert.notCalled(websocketClient.rpcRequest);
     throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts = 
       throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts.slice(1);
     await clock.tickAsync(5000);
-    sinon.assert.callCount(websocketClient._rpcRequest, 1);
+    sinon.assert.callCount(websocketClient.rpcRequest, 1);
     throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts = 
       throttler._client.socketInstances[0].synchronizationThrottler.synchronizingAccounts.slice(1);
     await clock.tickAsync(5000);
-    sinon.assert.callCount(websocketClient._rpcRequest, 2);
+    sinon.assert.callCount(websocketClient.rpcRequest, 2);
   });
 
   /**
@@ -267,7 +267,7 @@ describe('SynchronizationThrottler', () => {
     throttler.removeSynchronizationId('test1');
     throttler.removeSynchronizationId('test2');
     await clock.tickAsync(2000);
-    sinon.assert.callCount(websocketClient._rpcRequest, 4);
+    sinon.assert.callCount(websocketClient.rpcRequest, 4);
   });
 
   /**
@@ -288,10 +288,10 @@ describe('SynchronizationThrottler', () => {
     throttler.removeIdByParameters('accountId2', 1, 'ps-mpa-1');
     throttler.removeSynchronizationId('test1');
     await new Promise(res => setTimeout(res, 50));
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId3', {requestId: 'test3'});
-    sinon.assert.calledWith(websocketClient._rpcRequest, 'accountId2', {requestId: 'test5', instanceIndex: 0,
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId3', {requestId: 'test3'});
+    sinon.assert.calledWith(websocketClient.rpcRequest, 'accountId2', {requestId: 'test5', instanceIndex: 0,
       host: 'ps-mpa-2'});
-    sinon.assert.callCount(websocketClient._rpcRequest, 4);
+    sinon.assert.callCount(websocketClient.rpcRequest, 4);
   });
 
 });

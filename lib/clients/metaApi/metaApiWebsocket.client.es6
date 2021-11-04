@@ -29,7 +29,7 @@ export default class MetaApiWebsocketClient {
    * @param {String} token authorization token
    * @param {Object} opts websocket client options
    */
-  // eslint-disable-next-line complexity
+  // eslint-disable-next-line complexity,max-statements
   constructor(httpClient, token, opts) {
     const validator = new OptionsValidator();
     opts = opts || {};
@@ -54,6 +54,8 @@ export default class MetaApiWebsocketClient {
       'retryOpts.subscribeCooldownInSeconds');
     this._sequentialEventProcessing = true;
     this._useSharedClientApi = validator.validateBoolean(opts.useSharedClientApi, false, 'useSharedClientApi');
+    this._unsubscribeThrottlingInterval = validator.validateNonZero(opts.unsubscribeThrottlingIntervalInSeconds, 10,
+      'unsubscribeThrottlingIntervalInSeconds') * 1000;
     this._token = token;
     this._synchronizationListeners = {};
     this._latencyListeners = [];
@@ -68,6 +70,7 @@ export default class MetaApiWebsocketClient {
     this._synchronizationFlags = {};
     this._subscribeLock = null;
     this._firstConnect = true;
+    this._lastRequestsTime = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
@@ -86,10 +89,12 @@ export default class MetaApiWebsocketClient {
    * @param {Date} receivedAt time the packet was received at
    */
   onOutOfOrderPacket(accountId, instanceIndex, expectedSequenceNumber, actualSequenceNumber, packet, receivedAt) {
-    this._logger.error('MetaApi websocket client received an out of order ' +
-      `packet type ${packet.type} for account id ${accountId}:${instanceIndex}. Expected s/n ` +
-      `${expectedSequenceNumber} does not match the actual of ${actualSequenceNumber}`);
-    this.ensureSubscribe(accountId, instanceIndex);
+    if (this._subscriptionManager.isSubscriptionActive(accountId, instanceIndex)) {
+      this._logger.error('MetaApi websocket client received an out of order ' +
+        `packet type ${packet.type} for account id ${accountId}:${instanceIndex}. Expected s/n ` +
+        `${expectedSequenceNumber} does not match the actual of ${actualSequenceNumber}`);
+      this.ensureSubscribe(accountId, instanceIndex);
+    }
   }
 
   /**
@@ -319,11 +324,19 @@ export default class MetaApiWebsocketClient {
       this._logger.trace(() => `${data.accountId}:${data.instanceIndex}: Sync packet received: ${JSON.stringify({
         type: data.type, sequenceNumber: data.sequenceNumber, sequenceTimestamp: data.sequenceTimestamp,
         synchronizationId: data.synchronizationId, application: data.application, host: data.host})}`);
-      if((!data.synchronizationId) ||
-      instance.synchronizationThrottler.activeSynchronizationIds
-        .includes(data.synchronizationId)) {
-        if(this._packetLogger) {
+      let activeSynchronizationIds = instance.synchronizationThrottler.activeSynchronizationIds; 
+      if (!data.synchronizationId || activeSynchronizationIds.includes(data.synchronizationId)) {
+        if (this._packetLogger) {
           await this._packetLogger.logPacket(data);
+        }
+        if (!this._subscriptionManager.isSubscriptionActive(data.accountId, data.instanceIndex) &&
+          data.type !== 'disconnected') {
+          if (this._throttleRequest('unsubscribe', data.accountId, this._unsubscribeThrottlingInterval)) {
+            this.unsubscribe(data.accountId).catch(err => {
+              this._logger.warn(`${data.accountId}:${data.instanceIndex || 0}: failed to unsubscribe`, err);
+            });
+          }
+          return;
         }
         this._convertIsoTimeToDate(data);
       } else {
@@ -384,7 +397,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderAccountInformation>} promise resolving with account information
    */
   async getAccountInformation(accountId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getAccountInformation'});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getAccountInformation'});
     return response.accountInformation;
   }
 
@@ -431,7 +444,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<Array<MetatraderPosition>} promise resolving with array of open positions
    */
   async getPositions(accountId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getPositions'});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getPositions'});
     return response.positions;
   }
 
@@ -443,7 +456,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise<MetatraderPosition>} promise resolving with MetaTrader position found
    */
   async getPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getPosition', positionId});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getPosition', positionId});
     return response.position;
   }
 
@@ -507,7 +520,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise<Array<MetatraderOrder>>} promise resolving with open MetaTrader orders
    */
   async getOrders(accountId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getOrders'});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getOrders'});
     return response.orders;
   }
 
@@ -519,7 +532,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise<MetatraderOrder>} promise resolving with metatrader order found
    */
   async getOrder(accountId, orderId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getOrder', orderId});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getOrder', orderId});
     return response.order;
   }
 
@@ -539,7 +552,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByTicket(accountId, ticket) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByTicket', ticket});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByTicket', ticket});
     return {
       historyOrders: response.historyOrders,
       synchronizing: response.synchronizing
@@ -554,7 +567,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByPosition',
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByPosition',
       positionId});
     return {
       historyOrders: response.historyOrders,
@@ -573,7 +586,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   async getHistoryOrdersByTimeRange(accountId, startTime, endTime, offset = 0, limit = 1000) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByTimeRange',
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getHistoryOrdersByTimeRange',
       startTime, endTime, offset, limit});
     return {
       historyOrders: response.historyOrders,
@@ -636,7 +649,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByTicket(accountId, ticket) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getDealsByTicket', ticket});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getDealsByTicket', ticket});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -651,7 +664,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByPosition(accountId, positionId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getDealsByPosition', positionId});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getDealsByPosition', positionId});
     return {
       deals: response.deals,
       synchronizing: response.synchronizing
@@ -669,7 +682,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   async getDealsByTimeRange(accountId, startTime, endTime, offset = 0, limit = 1000) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getDealsByTimeRange', startTime,
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getDealsByTimeRange', startTime,
       endTime, offset, limit});
     return {
       deals: response.deals,
@@ -685,7 +698,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory(accountId, application) {
-    return this._rpcRequest(accountId, {application, type: 'removeHistory'});
+    return this.rpcRequest(accountId, {application, type: 'removeHistory'});
   }
 
   /**
@@ -695,7 +708,7 @@ export default class MetaApiWebsocketClient {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeApplication(accountId) {
-    return this._rpcRequest(accountId, {type: 'removeApplication'});
+    return this.rpcRequest(accountId, {type: 'removeApplication'});
   }
 
   /**
@@ -724,7 +737,7 @@ export default class MetaApiWebsocketClient {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   async trade(accountId, trade, application) {
-    let response = await this._rpcRequest(accountId, {type: 'trade', trade,
+    let response = await this.rpcRequest(accountId, {type: 'trade', trade,
       application: application || this._application});
     response.response = response.response || {};
     response.response.stringCode = response.response.stringCode || response.response.description;
@@ -744,7 +757,7 @@ export default class MetaApiWebsocketClient {
    * @param {Number} [instanceNumber] instance index number
    */
   ensureSubscribe(accountId, instanceNumber) {
-    this._subscriptionManager.subscribe(accountId, instanceNumber);
+    this._subscriptionManager.scheduleSubscribe(accountId, instanceNumber);
   }
 
   /**
@@ -754,7 +767,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when subscription started
    */
   subscribe(accountId, instanceNumber) {
-    return this._rpcRequest(accountId, {type: 'subscribe', instanceIndex: instanceNumber});
+    return this._subscriptionManager.subscribe(accountId, instanceNumber);
   }
 
   /**
@@ -763,7 +776,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when reconnection started
    */
   reconnect(accountId) {
-    return this._rpcRequest(accountId, {type: 'reconnect'});
+    return this.rpcRequest(accountId, {type: 'reconnect'});
   }
 
   /**
@@ -801,7 +814,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when synchronization started
    */
   waitSynchronized(accountId, instanceNumber, applicationPattern, timeoutInSeconds, application) {
-    return this._rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds,
+    return this.rpcRequest(accountId, {type: 'waitSynchronized', applicationPattern, timeoutInSeconds,
       instanceIndex: instanceNumber, application: application || this._application},
     timeoutInSeconds + 1);
   }
@@ -827,7 +840,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when subscription request was processed
    */
   subscribeToMarketData(accountId, instanceNumber, symbol, subscriptions) {
-    return this._rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, subscriptions,
+    return this.rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, subscriptions,
       instanceIndex: instanceNumber});
   }
 
@@ -838,7 +851,7 @@ export default class MetaApiWebsocketClient {
    * @param {Array} subscriptions array of subscriptions to refresh
    */
   refreshMarketDataSubscriptions(accountId, instanceNumber, subscriptions) {
-    return this._rpcRequest(accountId, {type: 'refreshMarketDataSubscriptions', subscriptions,
+    return this.rpcRequest(accountId, {type: 'refreshMarketDataSubscriptions', subscriptions,
       instanceIndex: instanceNumber});
   }
 
@@ -858,7 +871,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
   unsubscribeFromMarketData(accountId, instanceNumber, symbol, subscriptions) {
-    return this._rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, subscriptions,
+    return this.rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, subscriptions,
       instanceIndex: instanceNumber});
   }
 
@@ -869,7 +882,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<Array<string>>} promise which resolves when symbols are retrieved
    */
   async getSymbols(accountId) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbols'});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getSymbols'});
     return response.symbols;
   }
 
@@ -881,7 +894,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
    */
   async getSymbolSpecification(accountId, symbol) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbolSpecification', symbol});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getSymbolSpecification', symbol});
     return response.specification;
   }
 
@@ -896,7 +909,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
   async getSymbolPrice(accountId, symbol, keepSubscription = false) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getSymbolPrice', symbol,
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getSymbolPrice', symbol,
       keepSubscription});
     return response.price;
   }
@@ -915,7 +928,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
   async getCandle(accountId, symbol, timeframe, keepSubscription = false) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getCandle', symbol, timeframe,
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getCandle', symbol, timeframe,
       keepSubscription});
     return response.candle;
   }
@@ -931,7 +944,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
    */
   async getTick(accountId, symbol, keepSubscription = false) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getTick', symbol, keepSubscription});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getTick', symbol, keepSubscription});
     return response.tick;
   }
 
@@ -946,33 +959,32 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise<MetatraderBook>} promise which resolves when order book is retrieved
    */
   async getBook(accountId, symbol, keepSubscription = false) {
-    let response = await this._rpcRequest(accountId, {application: 'RPC', type: 'getBook', symbol, keepSubscription});
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getBook', symbol, keepSubscription});
     return response.book;
   }
 
   /**
    * Sends client uptime stats to the server.
-   * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
+   * @param {String} accountId id of the MetaTrader account to save uptime
    * @param {Object} uptime uptime statistics to send to the server
    * @returns {Promise} promise which resolves when uptime statistics is submitted
    */
   saveUptime(accountId, uptime) {
-    return this._rpcRequest(accountId, {type: 'saveUptime', uptime});
+    return this.rpcRequest(accountId, {type: 'saveUptime', uptime});
   }
 
   /**
    * Unsubscribe from account (see
    * https://metaapi.cloud/docs/client/websocket/api/synchronizing/unsubscribe).
-   * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
+   * @param {String} accountId id of the MetaTrader account to unsubscribe
    * @returns {Promise} promise which resolves when socket unsubscribed
    */
   async unsubscribe(accountId) {
-    this._subscriptionManager.cancelAccount(accountId);
     try {
-      await this._rpcRequest(accountId, {type: 'unsubscribe'});
+      await this._subscriptionManager.unsubscribe(accountId);
       delete this._socketInstancesByAccounts[accountId];
     } catch (err) {
-      if(!(err instanceof NotFoundError)) {
+      if (!(['TimeoutError', 'NotFoundError'].includes(err.name))) {
         throw err;
       }
     }
@@ -1126,8 +1138,14 @@ export default class MetaApiWebsocketClient {
     }, 1000));
   }
 
+  /**
+   * Makes a RPC request
+   * @param {String} accountId metatrader account id
+   * @param {Object} request base request data
+   * @param {Number} [timeoutInSeconds] request timeout in seconds
+   */
   //eslint-disable-next-line complexity, max-statements
-  async _rpcRequest(accountId, request, timeoutInSeconds) {
+  async rpcRequest(accountId, request, timeoutInSeconds) {
     let socketInstanceIndex = null;
     if (this._socketInstancesByAccounts[accountId] !== undefined) {
       socketInstanceIndex = this._socketInstancesByAccounts[accountId];
@@ -1221,9 +1239,11 @@ export default class MetaApiWebsocketClient {
     let result = Promise.race([
       new Promise((resolve, reject) => socketInstance.requestResolves[requestId] = 
         {resolve, reject, type: request.type}),
-      new Promise((resolve, reject) => setTimeout(() => reject(new TimeoutError('MetaApi websocket client ' + 
-        `request ${request.requestId} of type ${request.type} timed out. Please make sure your account is connected ` +
-          'to broker before retrying your request.')), (timeoutInSeconds * 1000) || this._requestTimeout))
+      new Promise((resolve, reject) => setTimeout(() => {
+        reject(new TimeoutError(`MetaApi websocket client request ${request.requestId} of type ${request.type} ` +
+          'timed out. Please make sure your account is connected to broker before retrying your request.'));
+        delete socketInstance.requestResolves[requestId];
+      }, (timeoutInSeconds * 1000) || this._requestTimeout))
     ]);
     request.accountId = accountId;
     request.application = request.application || this._application;
@@ -1506,11 +1526,12 @@ export default class MetaApiWebsocketClient {
 
       const resetDisconnectTimer = () => {
         cancelDisconnectTimer();
-        this._statusTimers[instanceId] = setTimeout(async () => {
+        this._statusTimers[instanceId] = setTimeout(() => {
           if(isOnlyActiveInstance()) {
             this._subscriptionManager.onTimeout(data.accountId, instanceNumber);
           }
           this.queueEvent(data.accountId, () => Promise.resolve(onDisconnected(true)));
+          clearTimeout(this._statusTimers[instanceId]);
         }, 60000);
       };
 
@@ -2119,6 +2140,16 @@ export default class MetaApiWebsocketClient {
         await new Promise(res => setTimeout(res, 1000));
       }
     }
+  }
+
+  _throttleRequest(type, accountId, timeInMs) {
+    this._lastRequestsTime[type] = this._lastRequestsTime[type] || {};
+    let lastTime = this._lastRequestsTime[type][accountId];
+    if (!lastTime || (lastTime < Date.now() - timeInMs)) {
+      this._lastRequestsTime[type][accountId] = Date.now();
+      return !!lastTime;
+    }
+    return false;
   }
 
 }

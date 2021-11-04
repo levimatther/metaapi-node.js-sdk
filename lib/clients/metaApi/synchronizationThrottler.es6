@@ -259,7 +259,7 @@ export default class SynchronizationThrottler {
       }
     }
     this.updateSynchronizationId(synchronizationId);
-    await this._client._rpcRequest(accountId, request);
+    await this._client.rpcRequest(accountId, request);
     return true;
   }
 

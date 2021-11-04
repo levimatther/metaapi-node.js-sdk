@@ -22,11 +22,11 @@ describe('SubscriptionManager', () => {
   beforeEach(async () => {  
     const socketInstances = [{socket: {connected: true}}, {socket: {connected: false}}];
     client = {
-      subscribe: () => {},
       connect: () => {},
       connected: (socketInstanceIndex) => socketInstances[socketInstanceIndex].socket.connected,
       socketInstances: socketInstances,
-      socketInstancesByAccounts: {accountId: 0}
+      socketInstancesByAccounts: {accountId: 0},
+      rpcRequest: () => {}
     };
     clock = sinon.useFakeTimers({shouldAdvanceTime: true});
     manager = new SubscriptionManager(client);
@@ -38,68 +38,68 @@ describe('SubscriptionManager', () => {
   });
 
   /**
-   * @test {SubscriptionManager#subscribe}
+   * @test {SubscriptionManager#scheduleSubscribe}
    */
   it('should subscribe to terminal', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
+    sandbox.stub(client, 'rpcRequest').resolves();
     setTimeout(() => {
       manager.cancelSubscribe('accountId:0');
     }, 50);
-    await manager.subscribe('accountId');
-    sinon.assert.calledWith(client.subscribe, 'accountId', undefined);
+    await manager.scheduleSubscribe('accountId');
+    sinon.assert.calledWith(client.rpcRequest, 'accountId', {type: 'subscribe', instanceIndex: undefined});
   });
 
   /**
-   * @test {SubscriptionManager#subscribe}
+   * @test {SubscriptionManager#scheduleSubscribe}
    */
   it('should retry subscribe if no response received', async () => {
     const response = {type: 'response', accountId: 'accountId', requestId: 'requestId'};
-    sandbox.stub(client, 'subscribe')
+    sandbox.stub(client, 'rpcRequest')
       .onFirstCall().resolves(new TimeoutError('timeout'))
       .onSecondCall().resolves(response)
       .onThirdCall().resolves(response);
     setTimeout(() => {
       manager.cancelSubscribe('accountId:0');
     }, 3600);
-    manager.subscribe('accountId');
+    manager.scheduleSubscribe('accountId');
     await clock.tickAsync(10000);
-    sinon.assert.calledTwice(client.subscribe);
-    sinon.assert.calledWith(client.subscribe, 'accountId', undefined);
+    sinon.assert.calledTwice(client.rpcRequest);
+    sinon.assert.calledWith(client.rpcRequest, 'accountId', {type: 'subscribe', instanceIndex: undefined});
   });
 
   /**
-   * @test {SubscriptionManager#subscribe}
+   * @test {SubscriptionManager#scheduleSubscribe}
    */
   it('should wait for recommended time if too many requests error received', async () => {
     const response = {type: 'response', accountId: 'accountId', requestId: 'requestId'};
-    sandbox.stub(client, 'subscribe')
+    sandbox.stub(client, 'rpcRequest')
       .onFirstCall().rejects(new TooManyRequestsError('timeout', {
         periodInMinutes: 60, maxRequestsForPeriod: 10000,
         type: 'LIMIT_REQUEST_RATE_PER_USER',
         recommendedRetryTime: new Date(Date.now() + 5000)}))
       .onSecondCall().resolves(response)
       .onThirdCall().resolves(response);
-    manager.subscribe('accountId');
+    manager.scheduleSubscribe('accountId');
     await clock.tickAsync(3600);
-    sinon.assert.callCount(client.subscribe, 1);
+    sinon.assert.callCount(client.rpcRequest, 1);
     await clock.tickAsync(2000);
     manager.cancelSubscribe('accountId:0');
-    sinon.assert.callCount(client.subscribe, 2);
+    sinon.assert.callCount(client.rpcRequest, 2);
   });
 
   /**
    * @test {SubscriptionManager#onReconnected}
    */
   it('should cancel all subscriptions on reconnect', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
+    sandbox.stub(client, 'rpcRequest').resolves();
     client.socketInstancesByAccounts = {accountId: 0, accountId2: 0, accountId3: 1};
-    manager.subscribe('accountId');
-    manager.subscribe('accountId2');
-    manager.subscribe('accountId3');
+    manager.scheduleSubscribe('accountId');
+    manager.scheduleSubscribe('accountId2');
+    manager.scheduleSubscribe('accountId3');
     await clock.tickAsync(1000);
     manager.onReconnected(0, []);
     await clock.tickAsync(5000);
-    sinon.assert.callCount(client.subscribe, 4);
+    sinon.assert.callCount(client.rpcRequest, 4);
   });
 
   /**
@@ -107,53 +107,53 @@ describe('SubscriptionManager', () => {
    */
   it('should restart subscriptions on reconnect', async () => {
     sandbox.stub(client, 'connect').resolves();
-    sandbox.stub(client, 'subscribe').resolves();
+    sandbox.stub(client, 'rpcRequest').resolves();
     client.socketInstancesByAccounts = {accountId: 0, accountId2: 0, accountId3: 0};
-    manager.subscribe('accountId');
-    manager.subscribe('accountId2');
-    manager.subscribe('accountId3');
+    manager.scheduleSubscribe('accountId');
+    manager.scheduleSubscribe('accountId2');
+    manager.scheduleSubscribe('accountId3');
     await clock.tickAsync(1000);
     manager.onReconnected(0, ['accountId', 'accountId2']);
     await clock.tickAsync(2000);
-    sinon.assert.callCount(client.subscribe, 5);
+    sinon.assert.callCount(client.rpcRequest, 5);
   });
 
   /**
    * @test {SubscriptionManager#onReconnected}
    */
   it('should wait until previous subscription ends on reconnect', async () => {
-    sandbox.stub(client, 'subscribe').callsFake(async () => {
+    sandbox.stub(client, 'rpcRequest').callsFake(async () => {
       await new Promise(res => setTimeout(res, 2000));
     });
 
     sandbox.stub(client, 'connect').resolves();
     client.socketInstancesByAccounts = {accountId: 0};
-    manager.subscribe('accountId');
+    manager.scheduleSubscribe('accountId');
     await clock.tickAsync(1000);
     manager.onReconnected(0, ['accountId']);
     await clock.tickAsync(3000);
-    sinon.assert.callCount(client.subscribe, 2);
+    sinon.assert.callCount(client.rpcRequest, 2);
   });
 
   /**
-   * @test {SubscriptionManager#subscribe}
+   * @test {SubscriptionManager#scheduleSubscribe}
    */
   it('should not send multiple subscribe requests at the same time', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
-    manager.subscribe('accountId');
-    manager.subscribe('accountId');
+    sandbox.stub(client, 'rpcRequest').resolves();
+    manager.scheduleSubscribe('accountId');
+    manager.scheduleSubscribe('accountId');
     await clock.tickAsync(1000);
     manager.cancelSubscribe('accountId:0');
     await clock.tickAsync(2500);
-    sinon.assert.calledWith(client.subscribe, 'accountId', undefined);
-    sinon.assert.calledOnce(client.subscribe);
+    sinon.assert.calledWith(client.rpcRequest, 'accountId', {type: 'subscribe', instanceIndex: undefined});
+    sinon.assert.calledOnce(client.rpcRequest);
   });
 
   /**
    * @test {SubscriptionManager#onTimeout}
    */
   it('should resubscribe on timeout', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
+    sandbox.stub(client, 'rpcRequest').resolves();
     client.socketInstances[0].socket.connected = true;
     client.socketInstancesByAccounts.accountId2 = 1;
     setTimeout(() => {
@@ -163,35 +163,35 @@ describe('SubscriptionManager', () => {
     manager.onTimeout('accountId');
     manager.onTimeout('accountId2');
     await clock.tickAsync(200);
-    sinon.assert.calledWith(client.subscribe, 'accountId', undefined);
-    sinon.assert.callCount(client.subscribe, 1);
+    sinon.assert.calledWith(client.rpcRequest, 'accountId', {type: 'subscribe', instanceIndex: undefined});
+    sinon.assert.callCount(client.rpcRequest, 1);
   });
 
   /**
    * @test {SubscriptionManager#onTimeout}
    */
   it('should not retry subscribe to terminal if connection is closed', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
+    sandbox.stub(client, 'rpcRequest').resolves();
     client.socketInstances[0].socket.connected = false;
     setTimeout(() => {
       manager.cancelSubscribe('accountId:0');
     }, 100);
     manager.onTimeout('accountId');
     await clock.tickAsync(200);
-    sinon.assert.notCalled(client.subscribe);
+    sinon.assert.notCalled(client.rpcRequest);
   });
 
   /**
    * @test {SubscriptionManager#cancelAccount}
    */
   it('should cancel all subscriptions for an account', async () => {
-    sandbox.stub(client, 'subscribe').resolves();
-    manager.subscribe('accountId', 0);
-    manager.subscribe('accountId', 1);
+    sandbox.stub(client, 'rpcRequest').resolves();
+    manager.scheduleSubscribe('accountId', 0);
+    manager.scheduleSubscribe('accountId', 1);
     await clock.tickAsync(100);
     manager.cancelAccount('accountId');
     await clock.tickAsync(500);
-    sinon.assert.calledTwice(client.subscribe);
+    sinon.assert.calledTwice(client.rpcRequest);
   });
 
   /**
@@ -203,12 +203,12 @@ describe('SubscriptionManager', () => {
       await subscribe();
       await new Promise(res => setTimeout(res, 400));
     };
-    client.subscribe = delaySubscribe;
-    manager.subscribe('accountId');
+    client.rpcRequest = delaySubscribe;
+    manager.scheduleSubscribe('accountId');
     await clock.tickAsync(50);
     manager.cancelSubscribe('accountId:0');
     await clock.tickAsync(50);
-    manager.subscribe('accountId');
+    manager.scheduleSubscribe('accountId');
     await clock.tickAsync(50);
     sinon.assert.calledTwice(subscribe);
   });
@@ -217,7 +217,7 @@ describe('SubscriptionManager', () => {
    * @test {SubscriptionManager#cancelSubscribe}
    */
   it('should check if account is subscribing', async () => {
-    manager.subscribe('accountId', 1);
+    manager.scheduleSubscribe('accountId', 1);
     await clock.tickAsync(50);
     sinon.assert.match(manager.isAccountSubscribing('accountId'), true);
     sinon.assert.match(manager.isAccountSubscribing('accountId', 0), false);

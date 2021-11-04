@@ -54,7 +54,7 @@ describe('HttpClient#request', () => {
         should.not.exist(response);
       } catch (err) {
         err.name.should.be.eql('ApiError');
-        err.message.should.be.eql('ETIMEDOUT');
+        err.message.should.be.equalOneOf('ETIMEDOUT', 'ESOCKETTIMEDOUT');
       }
     }).timeout(10000);
 
