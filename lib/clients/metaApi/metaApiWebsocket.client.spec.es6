@@ -969,48 +969,125 @@ describe('MetaApiWebsocketClient', () => {
   /**
    * @test {MetaApiWebsocketClient#unsubscribe}
    */
-  it('should unsubscribe from account data', async () => {
-    let requestReceived = false;
+  describe('unsubscription', () => {
 
-    let response = {type: 'response', accountId: 'accountId'};
-    server.on('request', data => {
-      if (data.type === 'unsubscribe' && data.accountId === 'accountId') {
-        requestReceived = true;
-        server.emit('response', Object.assign({requestId: data.requestId}, response));
-      }
-    });
-    await client.unsubscribe('accountId');
-    sinon.assert.match(requestReceived, true);
-    client.socketInstancesByAccounts.should.not.have.property('accountId');
-  });
-
-  /**
+    /**
    * @test {MetaApiWebsocketClient#unsubscribe}
    */
-  it('should ignore not found exception on unsubscribe', async () => {
-    server.on('request', data => {
-      server.emit('processingError', {
-        id: 1, error: 'ValidationError', message: 'Validation failed',
-        details: [{parameter: 'volume', message: 'Required value.'}], requestId: data.requestId
+    it('should unsubscribe from account data', async () => {
+      let requestReceived = false;
+
+      let response = {type: 'response', accountId: 'accountId'};
+      server.on('request', data => {
+        if (data.type === 'unsubscribe' && data.accountId === 'accountId') {
+          requestReceived = true;
+          server.emit('response', Object.assign({requestId: data.requestId}, response));
+        }
       });
-    });
-    try {
       await client.unsubscribe('accountId');
-      throw new Error('ValidationError extected');
-    } catch (err) {
-      err.name.should.equal('ValidationError');
-      err.details.should.match([{
-        parameter: 'volume',
-        message: 'Required value.'
-      }]);
-    }
-    server.removeAllListeners('request');
-    server.on('request', data => {
-      server.emit('processingError', {
-        id: 1, error: 'NotFoundError', message: 'Account not found', requestId: data.requestId
-      });
+      sinon.assert.match(requestReceived, true);
+      client.socketInstancesByAccounts.should.not.have.property('accountId');
     });
-    await client.unsubscribe('accountId');
+
+    /**
+     * @test {MetaApiWebsocketClient#unsubscribe}
+     */
+    it('should ignore not found exception on unsubscribe', async () => {
+      server.on('request', data => {
+        server.emit('processingError', {
+          id: 1, error: 'ValidationError', message: 'Validation failed',
+          details: [{parameter: 'volume', message: 'Required value.'}], requestId: data.requestId
+        });
+      });
+      try {
+        await client.unsubscribe('accountId');
+        throw new Error('ValidationError extected');
+      } catch (err) {
+        err.name.should.equal('ValidationError');
+        err.details.should.match([{
+          parameter: 'volume',
+          message: 'Required value.'
+        }]);
+      }
+      server.removeAllListeners('request');
+      server.on('request', data => {
+        server.emit('processingError', {
+          id: 1, error: 'NotFoundError', message: 'Account not found', requestId: data.requestId
+        });
+      });
+      await client.unsubscribe('accountId');
+    });
+
+    /**
+     * @test {MetaApiWebsocketClient#unsubscribe}
+     */
+    it('should ignore timeout error on unsubscribe', async () => {
+      let clock = sandbox.useFakeTimers({shouldAdvanceTime: true});
+      let promise = client.unsubscribe('accountId').catch(() => {});
+      await clock.tickAsync(15000);
+      await promise;
+    }).timeout(20000);
+
+    /**
+     * @test {MetaApiWebsocketClient#unsubscribe}
+     */
+    it('should repeat unsubscription on synchronization packets if account must be unsubscribed', async () => {
+      let subscribeServerHandler = sandbox.stub();
+      let unsubscribeServerHandler = sandbox.stub();
+      let clock = sandbox.useFakeTimers({shouldAdvanceTime: true});
+      server.on('request', data => {
+        let serverHandler;
+        if (data.type === 'subscribe' && data.accountId === 'accountId') {
+          serverHandler = subscribeServerHandler;
+        } else if (data.type === 'unsubscribe' && data.accountId === 'accountId') {
+          serverHandler = unsubscribeServerHandler;
+        }
+        if (serverHandler) {
+          serverHandler();
+          let response = {type: 'response', accountId: 'accountId'};
+          server.emit('response', Object.assign({requestId: data.requestId}, response));
+        }
+      });
+      // Subscribing
+      await client.subscribe('accountId', 1);
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledOnce(subscribeServerHandler);
+      // Unsubscribing
+      await client.unsubscribe('accountId');
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledOnce(unsubscribeServerHandler);
+      // Sending a packet, should throttle first repeat unsubscribe request
+      server.emit('synchronization', {
+        type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
+        instanceIndex: 1
+      });
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledOnce(unsubscribeServerHandler);
+      // Repeat a packet after a while, should unsubscribe again
+      await clock.tickAsync(11000);
+      server.emit('synchronization', {
+        type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
+        instanceIndex: 1
+      });
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledTwice(unsubscribeServerHandler);
+      // Repeat a packet, should throttle unsubscribe request
+      server.emit('synchronization', {
+        type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
+        instanceIndex: 1
+      });
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledTwice(unsubscribeServerHandler);
+      // Repeat a packet after a while, should not throttle unsubscribe request
+      await clock.tickAsync(11000);
+      server.emit('synchronization', {
+        type: 'status', accountId: 'accountId', host: 'ps-mpa-1', connected: true,
+        instanceIndex: 1
+      });
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledThrice(unsubscribeServerHandler);
+    });
+
   });
 
   describe('error handling', () => {
@@ -1116,6 +1193,10 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   describe('connection status synchronization', () => {
+
+    beforeEach(() => {
+      sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    });
 
     afterEach(() => {
       client.removeAllListeners();
@@ -1311,6 +1392,10 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   describe('terminal state synchronization', () => {
+
+    beforeEach(() => {
+      sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    });
 
     afterEach(() => {
       client.removeAllListeners();
@@ -1745,12 +1830,16 @@ describe('MetaApiWebsocketClient', () => {
 
   describe('market data synchronization', () => {
 
+    beforeEach(() => {
+      sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    });
+
     afterEach(() => {
       client.removeAllListeners();
     });
 
     /**
-     * @test {MetaApiWebsocketClient#_rpcRequest}
+     * @test {MetaApiWebsocketClient#rpcRequest}
      */
     it('should retry request on failure', async () => {
       let requestCounter = 0;
@@ -1780,7 +1869,7 @@ describe('MetaApiWebsocketClient', () => {
     }).timeout(20000);
 
     /**
-     * @test {MetaApiWebsocketClient#_rpcRequest}
+     * @test {MetaApiWebsocketClient#rpcRequest}
      */
     it('should wait specified amount of time on too many requests error', async () => {
       let requestCounter = 0;
@@ -1821,7 +1910,7 @@ describe('MetaApiWebsocketClient', () => {
     }).timeout(10000);
 
     /**
-     * @test {MetaApiWebsocketClient#_rpcRequest}
+     * @test {MetaApiWebsocketClient#rpcRequest}
      */
     it('should return too many requests exception if recommended time is beyond max request time', async () => {
       let requestCounter = 0;
@@ -1865,7 +1954,7 @@ describe('MetaApiWebsocketClient', () => {
     }).timeout(10000);    
 
     /**
-     * @test {MetaApiWebsocketClient#_rpcRequest}
+     * @test {MetaApiWebsocketClient#rpcRequest}
      */
     it('should not retry request on validation error', async () => {
       let requestCounter = 0;
@@ -1890,7 +1979,7 @@ describe('MetaApiWebsocketClient', () => {
     }).timeout(6000);
     
     /**
-     * @test {MetaApiWebsocketClient#_rpcRequest}
+     * @test {MetaApiWebsocketClient#rpcRequest}
      */
     it('should not retry trade requests on fail', async () => {
       let requestCounter = 0;
@@ -1916,7 +2005,7 @@ describe('MetaApiWebsocketClient', () => {
     }).timeout(6000);
 
     /**
-     * @test {MetaApiWebsocketClient#_rpcRequest}
+     * @test {MetaApiWebsocketClient#rpcRequest}
      */
     it('should not retry request if connection closed between retries', async () => {
       let requestCounter = 0;
@@ -1946,7 +2035,7 @@ describe('MetaApiWebsocketClient', () => {
     });
   
     /**
-     * @test {MetaApiWebsocketClient#_rpcRequest}
+     * @test {MetaApiWebsocketClient#rpcRequest}
      */
     it('should return timeout error if no server response received', async () => {
       let trade = {
@@ -2144,6 +2233,10 @@ describe('MetaApiWebsocketClient', () => {
 
   describe('latency monitoring', () => {
 
+    beforeEach(() => {
+      sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    });
+
     /**
      * @test {LatencyListener#onResponse}
      */
@@ -2338,7 +2431,7 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
-   * @test {MetaApiWebsocketClient#_rpcRequest}
+   * @test {MetaApiWebsocketClient#rpcRequest}
    */
   it('should remove reconnect listener', async () => {
     const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
@@ -2435,6 +2528,7 @@ describe('MetaApiWebsocketClient', () => {
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false,
       retryOpts: { retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5},
       eventProcessing: {sequentialProcessing: true}});
+    sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
     io.on('connect', socket => {
       server = socket;
       if (socket.request._query['auth-token'] !== 'token') {
@@ -2485,6 +2579,7 @@ describe('MetaApiWebsocketClient', () => {
       onPendingOrdersSynchronized: () => {}
     };
     client.addSynchronizationListener('accountId', listener);
+    sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
     sandbox.stub(client._packetOrderer, 'restoreOrder').callsFake(arg => [arg]);
 
     sandbox.stub(client._socketInstances[0].synchronizationThrottler, 'activeSynchronizationIds').get(() => ['ABC']);

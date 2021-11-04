@@ -49,6 +49,8 @@ import LoggerManager from '../logger';
  * @property {RetryOpts} [retryOpts] options for request retries
  * @property {Boolean} [useSharedClientApi] option to use a shared server
  * @property {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
+ * @property {Number} [unsubscribeThrottlingIntervalInSeconds] a timeout in seconds for throttling repeat unsubscribe
+ * requests when synchronization packets still arrive after unsubscription, default is 10 seconds
  */
 
 /**
@@ -95,7 +97,7 @@ export default class MetaApi {
     let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(httpClient, token, {application, domain, requestTimeout,
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, useSharedClientApi, 
-      region: opts.region});
+      region: opts.region, unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application,
       refreshSubscriptionsOpts);
