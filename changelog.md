@@ -1,5 +1,6 @@
 15.1.6
   - fixed potential memory leaks
+  - updated MetaStats SDK to 1.1.0
 
 15.1.5
   - added reconnection if first connection attempt fails
