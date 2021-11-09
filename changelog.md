@@ -1,3 +1,6 @@
+15.1.7
+  - fixed ensuring unsubscribed for accounts with high reliability
+
 15.1.6
   - fixed potential memory leaks
   - updated MetaStats SDK to 1.1.0

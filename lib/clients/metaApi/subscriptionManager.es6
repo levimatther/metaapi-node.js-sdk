@@ -50,13 +50,12 @@ export default class SubscriptionManager {
   }
 
   /**
-   * Returns whether an instance subscription is active
+   * Returns whether an account subscription is active
    * @param {String} accountId account id
-   * @param {Number} instanceNumber instance index number
    * @returns {Boolean} instance actual subscribe state
    */
-  isSubscriptionActive(accountId, instanceNumber) {
-    return !!this._subscriptionState[accountId + ':' + (instanceNumber || 0)];
+  isSubscriptionActive(accountId) {
+    return !!this._subscriptionState[accountId];
   }
 
   /**
@@ -66,8 +65,7 @@ export default class SubscriptionManager {
    * @returns {Promise} promise which resolves when subscription started
    */
   subscribe(accountId, instanceNumber) {
-    let instanceId = accountId + ':' + (instanceNumber || 0);
-    this._subscriptionState[instanceId] = true;
+    this._subscriptionState[accountId] = true;
     return this._websocketClient.rpcRequest(accountId, {type: 'subscribe', instanceIndex: instanceNumber});
   }
 
@@ -153,9 +151,7 @@ export default class SubscriptionManager {
    */
   async unsubscribe(accountId) {
     this.cancelAccount(accountId);
-    for (let instanceId of Object.keys(this._subscriptionState).filter(key => key.startsWith(accountId))) {
-      delete this._subscriptionState[instanceId];
-    }
+    delete this._subscriptionState[accountId];
     return this._websocketClient.rpcRequest(accountId, {type: 'unsubscribe'});
   }
 

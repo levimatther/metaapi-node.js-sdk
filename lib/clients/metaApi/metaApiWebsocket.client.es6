@@ -89,7 +89,7 @@ export default class MetaApiWebsocketClient {
    * @param {Date} receivedAt time the packet was received at
    */
   onOutOfOrderPacket(accountId, instanceIndex, expectedSequenceNumber, actualSequenceNumber, packet, receivedAt) {
-    if (this._subscriptionManager.isSubscriptionActive(accountId, instanceIndex)) {
+    if (this._subscriptionManager.isSubscriptionActive(accountId)) {
       this._logger.error('MetaApi websocket client received an out of order ' +
         `packet type ${packet.type} for account id ${accountId}:${instanceIndex}. Expected s/n ` +
         `${expectedSequenceNumber} does not match the actual of ${actualSequenceNumber}`);
@@ -329,8 +329,7 @@ export default class MetaApiWebsocketClient {
         if (this._packetLogger) {
           await this._packetLogger.logPacket(data);
         }
-        if (!this._subscriptionManager.isSubscriptionActive(data.accountId, data.instanceIndex) &&
-          data.type !== 'disconnected') {
+        if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && data.type !== 'disconnected') {
           if (this._throttleRequest('unsubscribe', data.accountId, this._unsubscribeThrottlingInterval)) {
             this.unsubscribe(data.accountId).catch(err => {
               this._logger.warn(`${data.accountId}:${data.instanceIndex || 0}: failed to unsubscribe`, err);
