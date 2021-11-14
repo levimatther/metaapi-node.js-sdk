@@ -57,11 +57,15 @@ async function streamQuotes() {
       await account.waitConnected();
     }
 
-    // connect to MetaApi API
-    let connection = await account.getStreamingConnection();
+    // create connection
+    let connection = account.getStreamingConnection();
 
+    // add listener
     const quoteListener = new QuoteListener();
     connection.addSynchronizationListener(quoteListener);
+
+    // connect to MetaApi API
+    await connection.connect();
 
     // wait until terminal state synchronized to the local state
     console.log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history ' +

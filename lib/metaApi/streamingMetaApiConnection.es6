@@ -54,6 +54,23 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   }
 
   /**
+   * Opens the connection. Can only be called the first time, next calls will be ignored.
+   * @return {Promise} promise resolving when the connection is opened
+   */
+  async connect() {
+    if (!this._opened) {
+      this._opened = true;
+      try {
+        await this.initialize();
+        await this.subscribe();
+      } catch (err) {
+        await this.close();
+        throw err;
+      }
+    }
+  }
+
+  /**
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
    * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
    * @param {String} [application] application to remove history for
@@ -451,6 +468,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     if (!this._closed) {
       this._logger.debug(`${this._account.id}: Closing connection`);
       this._stateByInstanceIndex = {};
+      this._connectionRegistry.remove(this._account.id);
       await this._websocketClient.unsubscribe(this._account.id);
       this._websocketClient.removeSynchronizationListener(this._account.id, this);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
@@ -461,7 +479,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       }
       this._synchronizationListeners = [];
       this._websocketClient.removeReconnectListener(this);
-      this._connectionRegistry.remove(this._account.id);
       this._healthMonitor.stop();
       this._refreshMarketDataSubscriptionSessions = {};
       Object.values(this._refreshMarketDataSubscriptionTimeouts).forEach(timeout => clearTimeout(timeout));

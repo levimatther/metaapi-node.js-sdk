@@ -25,31 +25,15 @@ export default class ConnectionRegistry {
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage
    * @param {Date} [historyStartTime] history start time
+   * @return {StreamingMetaApiConnection} streaming metaapi connection
    */
-  async connect(account, historyStorage, historyStartTime) {
+  connect(account, historyStorage, historyStartTime) {
     if (this._connections[account.id]) {
       return this._connections[account.id];
-    } else {
-      while (this._connectionLocks[account.id]) {
-        await this._connectionLocks[account.id].promise;
-      }
-      if (this._connections[account.id]) {
-        return this._connections[account.id];
-      }
-      let connectionLockResolve;
-      this._connectionLocks[account.id] = {promise: new Promise(res => connectionLockResolve = res)};
-      const connection = new StreamingMetaApiConnection(this._metaApiWebsocketClient, account, historyStorage, this,
-        historyStartTime, this._refreshSubscriptionsOpts);
-      try {
-        await connection.initialize();
-        await connection.subscribe();
-        this._connections[account.id] = connection;
-      } finally {
-        delete this._connectionLocks[account.id];
-        connectionLockResolve();
-      }
-      return connection;
     }
+    this._connections[account.id] = new StreamingMetaApiConnection(this._metaApiWebsocketClient, account,
+      historyStorage, this, historyStartTime, this._refreshSubscriptionsOpts);
+    return this._connections[account.id];
   }
 
   /**

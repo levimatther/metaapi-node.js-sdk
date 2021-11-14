@@ -48,7 +48,7 @@ describe('MT4 sync positions test', () => {
       }
       await account.deploy();
       await account.waitConnected();
-      let connection = await account.connect();
+      let connection = account.getRPCConnection();
       await connection.waitSynchronized({timeoutInSeconds: 600}); 
       const startPositions = connection.terminalState.positions.length;
       const positionIds = [];

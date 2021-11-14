@@ -220,7 +220,7 @@ simple trading apps.
 
 ### Query account information, positions, orders and history via RPC API
 ```javascript
-const connection = await account.getRPCConnection();
+const connection = account.getRPCConnection();
 
 await connection.waitSynchronized();
 
@@ -250,7 +250,7 @@ console.log(await connection.getDealsByTimeRange(startTime, endTime));
 
 ### Query contract specifications and quotes via RPC API
 ```javascript
-const connection = await account.getRPCConnection();
+const connection = account.getRPCConnection();
 
 await connection.waitSynchronized();
 
@@ -289,7 +289,8 @@ The API synchronizes the terminal state locally so that you can query local copy
 #### Synchronizing and reading terminal state
 ```javascript
 const account = await api.metatraderAccountApi.getAccount('accountId');
-const connection = await account.getStreamingConnection();
+const connection = account.getStreamingConnection();
+await connection.connect();
 
 // access local copy of terminal state
 const terminalState = connection.terminalState;
@@ -330,7 +331,8 @@ let historyStorage = new MongodbHistoryStorage();
 
 // Note: if you will not specify history storage, then in-memory storage
 // will be used (instance of MemoryHistoryStorage)
-const connection = await account.getStreamingConnection(historyStorage);
+const connection = account.getStreamingConnection(historyStorage);
+await connection.connect();
 
 // access history storage
 historyStorage = connection.historyStorage;
@@ -350,9 +352,15 @@ class MySynchronizationListener extends SynchronizationListener {
   // override abstract methods you want to receive notifications for
 }
 
+// retrieving a connection
+const connection = account.getStreamingConnection(historyStorage);
+
 // now add the listener
 const listener = new MySynchronizationListener();
 connection.addSynchronizationListener(listener);
+
+// open the connection after adding listeners
+await connection.connect();
 
 // remove the listener when no longer needed
 connection.removeSynchronizationListener(listener);
@@ -360,7 +368,8 @@ connection.removeSynchronizationListener(listener);
 
 ### Retrieve contract specifications and quotes via streaming API
 ```javascript
-const connection = await account.getStreamingConnection();
+const connection = account.getStreamingConnection();
+await connection.connect();
 
 await connection.waitSynchronized();
 
@@ -378,9 +387,10 @@ await connection.unsubscribeFromMarketData('GBPUSD');
 
 ### Execute trades (both RPC and streaming APIs)
 ```javascript
-const connection = await account.getRPCConnection();
+const connection = account.getRPCConnection();
 // or
-const connection = await account.getStreamingConnection();
+const connection = account.getStreamingConnection();
+await connection.connect(); // needed only for streaming connection
 
 await connection.waitSynchronized();
 
