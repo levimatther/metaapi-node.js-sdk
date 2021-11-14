@@ -59,7 +59,8 @@ async function testMetaApiSynchronization() {
     await account.waitConnected();
 
     // connect to MetaApi API
-    let connection = await account.getStreamingConnection();
+    let connection = account.getStreamingConnection();
+    await connection.connect();
 
     // wait until terminal state synchronized to the local state
     console.log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history size)');

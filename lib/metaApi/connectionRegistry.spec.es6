@@ -42,7 +42,8 @@ describe('ConnectionRegistry', () => {
    */
   it('should connect and add connection to registry', async () => {
     let account = {id: 'id'};
-    let connection = await registry.connect(account, storage);
+    let connection = registry.connect(account, storage);
+    await connection.connect();
     (connection instanceof StreamingMetaApiConnection).should.be.true();
     connection.historyStorage.should.equal(storage);
     sinon.assert.calledOnce(connection.initialize);
@@ -55,9 +56,12 @@ describe('ConnectionRegistry', () => {
    */
   it('should return the same connection on second connect if same account id', async () => {
     let accounts = [{id: 'id0'}, {id: 'id1'}];
-    let connection0 = await registry.connect(accounts[0], storage);
-    let connection02 = await registry.connect(accounts[0], storage);
-    let connection1 = await registry.connect(accounts[1], storage);
+    let connection0 = registry.connect(accounts[0], storage);
+    let connection02 = registry.connect(accounts[0], storage);
+    let connection1 = registry.connect(accounts[1], storage);
+    await connection0.connect();
+    await connection02.connect();
+    await connection1.connect();
     sinon.assert.called(connection0.initialize);
     sinon.assert.called(connection0.subscribe);
     sinon.assert.called(connection1.initialize);

@@ -367,17 +367,17 @@ export default class MetatraderAccount {
    * Connects to MetaApi. There is only one connection per account. Subsequent calls to this method will return the same connection.
    * @param {HistoryStorage} historyStorage optional history storage
    * @param {Date} [historyStartTime] history start time. Used for tests
-   * @returns {MetaApiConnection} MetaApi connection
+   * @return {StreamingMetaApiConnection} MetaApi connection
    */
-  async getStreamingConnection(historyStorage, historyStartTime) {
-    return await this._connectionRegistry.connect(this, historyStorage, historyStartTime);
+  getStreamingConnection(historyStorage, historyStartTime) {
+    return this._connectionRegistry.connect(this, historyStorage, historyStartTime);
   }
 
   /**
    * Connects to MetaApi via RPC connection.
    * @returns {RpcMetaApiConnection} MetaApi connection
    */
-  async getRPCConnection() {
+  getRPCConnection() {
     return new RpcMetaApiConnection(this._metaApiWebsocketClient, this);
   }
 
