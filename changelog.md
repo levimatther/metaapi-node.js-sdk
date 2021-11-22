@@ -1,5 +1,6 @@
 16.0.0
   - breaking change: fixed opening streaming connection - now it must be opened explicitly after creating a streaming connection
+  - updated MetaStats SDK to 2.0.0
 
 15.1.7
   - fixed ensuring unsubscribed for accounts with high reliability
