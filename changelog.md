@@ -1,3 +1,6 @@
+16.0.1
+  - added typings for public classes and objects
+
 16.0.0
   - breaking change: fixed opening streaming connection - now it must be opened explicitly after creating a streaming connection
   - updated MetaStats SDK to 2.0.0
