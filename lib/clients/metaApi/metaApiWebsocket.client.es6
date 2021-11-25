@@ -1356,7 +1356,7 @@ export default class MetaApiWebsocketClient {
    * positions of one symbol). Two margin calculation methods are possible for hedged positions. The calculation method
    * is defined by the broker
    * @property {Boolean} [hedgedMarginUsesLargerLeg] calculating hedging margin using the larger leg (Buy or Sell)
-   * @properties {String} marginCurrency margin currency
+   * @property {String} marginCurrency margin currency
    * @property {String} priceCalculationMode contract price calculation mode. One of SYMBOL_CALC_MODE_UNKNOWN,
    * SYMBOL_CALC_MODE_FOREX, SYMBOL_CALC_MODE_FOREX_NO_LEVERAGE, SYMBOL_CALC_MODE_FUTURES, SYMBOL_CALC_MODE_CFD,
    * SYMBOL_CALC_MODE_CFDINDEX, SYMBOL_CALC_MODE_CFDLEVERAGE, SYMBOL_CALC_MODE_EXCH_STOCKS,
