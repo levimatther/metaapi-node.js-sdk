@@ -16,14 +16,14 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
   /**
    * Stops health monitor
    */
-  stop();
+  stop(): void;
   
   /**
    * Invoked when a symbol price was updated
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price
    */
-  onSymbolPriceUpdated(instanceIndex: String, price: MetatraderSymbolPrice);
+  onSymbolPriceUpdated(instanceIndex: String, price: MetatraderSymbolPrice): Promise<any>;
   
   /**
    * Invoked when a server-side application health status is received from MetaApi
@@ -62,7 +62,7 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
 /**
  * Connection health status
  */
-declare type ConnectionHealthStatus = {
+export declare type ConnectionHealthStatus = {
 
   /**
    * flag indicating successful connection to API server

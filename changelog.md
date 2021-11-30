@@ -1,3 +1,7 @@
+16.0.2
+  - fixed typings return types
+  - fixed export declared types in typings
+
 16.0.1
   - added typings for public classes and objects
 

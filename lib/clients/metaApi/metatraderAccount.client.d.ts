@@ -95,7 +95,7 @@ export default class MetatraderAccountClient {
 /**
  * Extension model
  */
-declare type Extension = {
+export declare type Extension = {
 
   /**
    * extension id
@@ -111,28 +111,28 @@ declare type Extension = {
 /**
  * Account type
  */
-declare type Type = 'cloud' | 'self-hosted'
+export declare type Type = 'cloud' | 'self-hosted'
 
 /**
  * Account state
  */
-declare type State = 'CREATED' | 'DEPLOYING' | 'DEPLOYED' | 'DEPLOY_FAILED' | 'UNDEPLOYING' | 'UNDEPLOYED' |
+export declare type State = 'CREATED' | 'DEPLOYING' | 'DEPLOYED' | 'DEPLOY_FAILED' | 'UNDEPLOYING' | 'UNDEPLOYED' |
  'UNDEPLOY_FAILED' | 'DELETING' | 'DELETE_FAILED' | 'REDEPLOY_FAILED'
 
 /**
  * MT version
  */
-declare type Version = 4 | 5
+export declare type Version = 4 | 5
 
 /**
  * Account connection status
  */
-declare type ConnectionStatus = 'CONNECTED' | 'DISCONNECTED' | 'DISCONNECTED_FROM_BROKER'
+export declare type ConnectionStatus = 'CONNECTED' | 'DISCONNECTED' | 'DISCONNECTED_FROM_BROKER'
 
 /**
  * Account filter
  */
-declare type AccountsFilter = {
+export declare type AccountsFilter = {
 
   /**
    * search offset (defaults to 0) (must be greater or equal to 0)
@@ -179,7 +179,7 @@ declare type AccountsFilter = {
 /**
  * MetaTrader account model
  */
-declare type MetatraderAccountDto = {
+export declare type MetatraderAccountDto = {
 
   /**
    * account unique identifier
@@ -317,7 +317,7 @@ declare type MetatraderAccountDto = {
 /**
  * New MetaTrader account model
  */
-declare type NewMetatraderAccountDto = {
+export declare type NewMetatraderAccountDto = {
 
   /**
    * MetaTrader account human-readable name in the MetaApi app
@@ -420,7 +420,7 @@ declare type NewMetatraderAccountDto = {
 /**
  * MetaTrader account id model
  */
-declare type MetatraderAccountIdDto = {
+export declare type MetatraderAccountIdDto = {
 
   /**
    * MetaTrader account unique identifier
@@ -431,7 +431,7 @@ declare type MetatraderAccountIdDto = {
 /**
  * Updated MetaTrader account data
  */
-declare type MetatraderAccountUpdateDto = {
+export declare type MetatraderAccountUpdateDto = {
 
   /**
    * MetaTrader account human-readable name in the MetaApi app

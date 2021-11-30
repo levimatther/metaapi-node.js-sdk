@@ -84,20 +84,20 @@ export default class TerminalState extends SynchronizationListener {
    * Invoked when connection to MetaTrader terminal established
    * @param {String} instanceIndex index of an account instance connected
    */
-  onConnected(instanceIndex: String);
+  onConnected(instanceIndex: String): Promise<any>;
   
   /**
    * Invoked when connection to MetaTrader terminal terminated
    * @param {String} instanceIndex index of an account instance connected
    */
-  onDisconnected(instanceIndex: String);
+  onDisconnected(instanceIndex: String): Promise<any>;
   
   /**
    * Invoked when broker connection status have changed
    * @param {String} instanceIndex index of an account instance connected
    * @param {Boolean} connected is MetaTrader terminal is connected to broker
    */
-  onBrokerConnectionStatusChanged(instanceIndex: String, connected: Boolean);
+  onBrokerConnectionStatusChanged(instanceIndex: String, connected: Boolean): Promise<any>;
   
   /**
    * Invoked when MetaTrader terminal state synchronization is started
@@ -114,7 +114,7 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
    */
-  onAccountInformationUpdated(instanceIndex: String, accountInformation: MetatraderAccountInformation);
+  onAccountInformationUpdated(instanceIndex: String, accountInformation: MetatraderAccountInformation): Promise<any>;
   
   /**
    * Invoked when the positions are replaced as a result of initial terminal state synchronization
@@ -137,14 +137,14 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderPosition} position updated MetaTrader position
    */
-  onPositionUpdated(instanceIndex: String, position: MetatraderPosition);
+  onPositionUpdated(instanceIndex: String, position: MetatraderPosition): Promise<any>;
   
   /**
    * Invoked when MetaTrader position is removed
    * @param {String} instanceIndex index of an account instance connected
    * @param {String} positionId removed MetaTrader position id
    */
-  onPositionRemoved(instanceIndex: String, positionId: String);
+  onPositionRemoved(instanceIndex: String, positionId: String): Promise<any>;
   
   /**
    * Invoked when the orders are replaced as a result of initial terminal state synchronization
@@ -185,7 +185,7 @@ export default class TerminalState extends SynchronizationListener {
    * @param {Array<MetatraderSymbolSpecification>} specifications updated specifications
    * @param {Array<String>} removedSymbols removed symbols
    */
-  onSymbolSpecificationsUpdated(instanceIndex: String, specifications: Array<MetatraderSymbolSpecification>, removedSymbols: Array<String>);
+  onSymbolSpecificationsUpdated(instanceIndex: String, specifications: Array<MetatraderSymbolSpecification>, removedSymbols: Array<String>): Promise<any>;
   
   /**
    * Invoked when prices for several symbols were updated
@@ -196,7 +196,7 @@ export default class TerminalState extends SynchronizationListener {
    * @param {Number} freeMargin free margin
    * @param {Number} marginLevel margin level calculated as % of equity/margin
    */
-  onSymbolPricesUpdated(instanceIndex: String, prices: Array<MetatraderSymbolPrice>, equity: Number, margin: Number, freeMargin: Number, marginLevel: Number);
+  onSymbolPricesUpdated(instanceIndex: String, prices: Array<MetatraderSymbolPrice>, equity: Number, margin: Number, freeMargin: Number, marginLevel: Number): Promise<any>;
   
   /**
    * Invoked when a stream for an instance index is closed

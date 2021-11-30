@@ -78,7 +78,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {number} [timeoutInSeconds] timeout to wait for prices in seconds, default is 30
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(symbol: String, subscriptions: Array<MarketDataSubscription>, instanceIndex: Number, timeoutInSeconds: Number): Promise<any>;
+  subscribeToMarketData(symbol: String, subscriptions: Array<MarketDataSubscription>, instanceIndex: Number, timeoutInSeconds?: Number): Promise<any>;
   
   /**
    * Unsubscribes from market data of specified symbol (see
@@ -136,13 +136,13 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * Adds synchronization listener
    * @param {SynchronizationListener} listener synchronization listener to add
    */
-  addSynchronizationListener(listener: SynchronizationListener);
+  addSynchronizationListener(listener: SynchronizationListener): void;
   
   /**
    * Removes synchronization listener for specific account
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
-  removeSynchronizationListener(listener: SynchronizationListener);
+  removeSynchronizationListener(listener: SynchronizationListener): void;
   
   /**
    * Invoked when connection to MetaTrader terminal established
@@ -156,7 +156,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * Invoked when connection to MetaTrader terminal terminated
    * @param {String} instanceIndex index of an account instance connected
    */
-  onDisconnected(instanceIndex: String);
+  onDisconnected(instanceIndex: String): Promise<any>;
   
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished to indicate progress of an
@@ -219,7 +219,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Closes the connection. The instance of the class should no longer be used after this method is invoked.
    */
-  close();
+  close(): Promise<void>;
   
   /**
    * Returns synchronization status
@@ -243,7 +243,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
 /**
  * Synchronization options
  */
-declare type SynchronizationOptions = {
+export declare type SynchronizationOptions = {
 
   /**
    * application regular expression pattern, default is .*

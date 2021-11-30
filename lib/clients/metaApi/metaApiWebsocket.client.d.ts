@@ -26,7 +26,7 @@ export default class MetaApiWebsocketClient {
    * @param {Object} packet packet data
    * @param {Date} receivedAt time the packet was received at
    */
-   onOutOfOrderPacket(accountId: String, instanceIndex: Number, expectedSequenceNumber: Number, actualSequenceNumber: Number, packet: Object, receivedAt: Date);
+   onOutOfOrderPacket(accountId: String, instanceIndex: Number, expectedSequenceNumber: Number, actualSequenceNumber: Number, packet: Object, receivedAt: Date): void;
   
    /**
    * Patch server URL for use in unit tests
@@ -72,7 +72,7 @@ export default class MetaApiWebsocketClient {
    * @param {Number} socketInstanceIndex socket instance index
    * @param {TooManyRequestsErrorMetadata} metadata TooManyRequestsError metadata
    */
-  lockSocketInstance(socketInstanceIndex: Number, metadata: TooManyRequestsErrorMetadata);
+  lockSocketInstance(socketInstanceIndex: Number, metadata: TooManyRequestsErrorMetadata): Promise<void>;
   
   /**
    * Connects to MetaApi server via socket.io protocol
@@ -83,7 +83,7 @@ export default class MetaApiWebsocketClient {
   /**
    * Closes connection to MetaApi server
    */
-  close();
+  close(): void;
   
   /**
    * Returns account information for a specified MetaTrader account (see
@@ -218,7 +218,7 @@ export default class MetaApiWebsocketClient {
    * @param {String} accountId account id to subscribe
    * @param {Number} [instanceNumber] instance index number
    */
-  ensureSubscribe(accountId: String, instanceNumber: Number);
+  ensureSubscribe(accountId: String, instanceNumber: Number): void;
   
   /**
    * Subscribes to the Metatrader terminal events (see https://metaapi.cloud/docs/client/websocket/api/subscribe/).
@@ -283,7 +283,7 @@ export default class MetaApiWebsocketClient {
    * @param {Number} instanceNumber instance index number
    * @param {Array} subscriptions array of subscriptions to refresh
    */
-  refreshMarketDataSubscriptions(accountId: String, instanceNumber: Number, subscriptions: Array<MarketDataSubscription>);
+  refreshMarketDataSubscriptions(accountId: String, instanceNumber: Number, subscriptions: Array<MarketDataSubscription>): Promise<any>;
   
   /**
    * Unsubscribes from market data of specified symbol (see
@@ -373,69 +373,69 @@ export default class MetaApiWebsocketClient {
   saveUptime(accountId: String, uptime: Object): Promise<any>;
   
   /**
-   * Sends client uptime stats to the server.
-   * @param {String} accountId id of the MetaTrader account to save uptime
-   * @param {Object} uptime uptime statistics to send to the server
-   * @returns {Promise} promise which resolves when uptime statistics is submitted
+   * Unsubscribe from account (see
+   * https://metaapi.cloud/docs/client/websocket/api/synchronizing/unsubscribe).
+   * @param {String} accountId id of the MetaTrader account to unsubscribe
+   * @returns {Promise} promise which resolves when socket unsubscribed
    */
-  saveUptime(accountId: String, uptime: Object): Promise<any>;
-  
+  unsubscribe(accountId: String): Promise<void>;
+
   /**
    * Adds synchronization listener for specific account
    * @param {String} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add
    */
-  addSynchronizationListener(accountId: String, listener: SynchronizationListener);
+  addSynchronizationListener(accountId: String, listener: SynchronizationListener): void;
   
   /**
    * Removes synchronization listener for specific account
    * @param {String} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
-  removeSynchronizationListener(accountId: String, listener: SynchronizationListener);
+  removeSynchronizationListener(accountId: String, listener: SynchronizationListener): void;
   
   /**
    * Adds latency listener
    * @param {LatencyListener} listener latency listener to add
    */
-  addLatencyListener(listener: LatencyListener);
+  addLatencyListener(listener: LatencyListener): void;
   
   /**
    * Removes latency listener
    * @param {LatencyListener} listener latency listener to remove
    */
-  removeLatencyListener(listener: LatencyListener);
+  removeLatencyListener(listener: LatencyListener): void;
   
   /**
    * Adds reconnect listener
    * @param {ReconnectListener} listener reconnect listener to add
    * @param {String} accountId account id of listener
    */
-  addReconnectListener(listener: ReconnectListener, accountId: String);
+  addReconnectListener(listener: ReconnectListener, accountId: String): void;
   
   /**
    * Removes reconnect listener
    * @param {ReconnectListener} listener listener to remove
    */
-  removeReconnectListener(listener: ReconnectListener);
+  removeReconnectListener(listener: ReconnectListener): void;
   
   /**
    * Removes all listeners. Intended for use in unit tests.
    */
-  removeAllListeners();
+  removeAllListeners(): void;
   
   /**
    * Queues an account packet for processing
    * @param {Object} packet packet to process
    */
-  queuePacket(packet: Object);
+  queuePacket(packet: Object): void;
   
   /**
    * Queues account event for processing
    * @param {String} accountId account id
    * @param {Promise} event event to execute
    */
-  queueEvent(accountId: String, event: Promise<any>);
+  queueEvent(accountId: String, event: Promise<any>): void;
   
   /**
    * Makes a RPC request
@@ -443,13 +443,13 @@ export default class MetaApiWebsocketClient {
    * @param {Object} request base request data
    * @param {Number} [timeoutInSeconds] request timeout in seconds
    */
-  rpcRequest(accountId: String, request: Object, timeoutInSeconds: Number);
+  rpcRequest(accountId: String, request: Object, timeoutInSeconds: Number): Promise<any>;
 }
 
 /**
  * MetaTrader account information (see https://metaapi.cloud/docs/client/models/metatraderAccountInformation/)
  */
-declare type MetatraderAccountInformation = {
+export declare type MetatraderAccountInformation = {
 
   /**
    * platform id (mt4 or mt5)
@@ -536,7 +536,7 @@ declare type MetatraderAccountInformation = {
 /**
  * MetaTrader position
  */
-declare type MetatraderPosition = {
+export declare type MetatraderPosition = {
 
   /**
    * position id (ticket number)
@@ -665,7 +665,7 @@ declare type MetatraderPosition = {
 /**
  * MetaTrader order
  */
-declare type MetatraderOrder = {
+export declare type MetatraderOrder = {
 
   /**
    * order id (ticket number)
@@ -827,7 +827,7 @@ declare type MetatraderOrder = {
 /**
  * MetaTrader history orders search query response
  */
-declare type MetatraderHistoryOrders = {
+export declare type MetatraderHistoryOrders = {
 
   /**
    * array of history orders returned
@@ -844,7 +844,7 @@ declare type MetatraderHistoryOrders = {
 /**
  * MetaTrader history deals search query response
  */
-declare type MetatraderDeals = {
+export declare type MetatraderDeals = {
 
   /**
    * array of history deals returned
@@ -861,7 +861,7 @@ declare type MetatraderDeals = {
 /**
  * MetaTrader deal
  */
-declare type MetatraderDeal = {
+export declare type MetatraderDeal = {
 
   /**
    * deal id (ticket number)
@@ -981,7 +981,7 @@ declare type MetatraderDeal = {
 /**
  * MetaTrader trade response
  */
-declare type MetatraderTradeResponse = {
+export declare type MetatraderTradeResponse = {
 
   /**
    * numeric response code, see
@@ -1019,7 +1019,7 @@ declare type MetatraderTradeResponse = {
 /**
  * Market data subscription
  */
-declare type MarketDataSubscription = {
+export declare type MarketDataSubscription = {
 
   /**
    * subscription type, one of quotes, candles, ticks, or marketDepth
@@ -1043,7 +1043,7 @@ declare type MarketDataSubscription = {
 /**
  * Market data unsubscription
  */
-declare type MarketDataUnsubscription = {
+export declare type MarketDataUnsubscription = {
 
   /**
    * subscription type, one of quotes, candles, ticks, or marketDepth
@@ -1055,7 +1055,7 @@ declare type MarketDataUnsubscription = {
  * MetaTrader symbol specification. Contains symbol specification (see
  * https://metaapi.cloud/docs/client/models/metatraderSymbolSpecification/)
  */
-declare type MetatraderSymbolSpecification = {
+export declare type MetatraderSymbolSpecification = {
 
   /**
    * symbol (e.g. a currency pair or an index)
@@ -1286,7 +1286,7 @@ declare type MetatraderSymbolSpecification = {
  * MetaTrader symbol price. Contains current price for a symbol (see
  * https://metaapi.cloud/docs/client/models/metatraderSymbolPrice/)
  */
-declare type MetatraderSymbolPrice = {
+export declare type MetatraderSymbolPrice = {
 
   /**
    * symbol (e.g. a currency pair or an index)
@@ -1333,7 +1333,7 @@ declare type MetatraderSymbolPrice = {
 /**
  * MetaTrader candle
  */
-declare type MetatraderCandle = {
+export declare type MetatraderCandle = {
 
   /**
    * symbol (e.g. currency pair or an index)
@@ -1395,7 +1395,7 @@ declare type MetatraderCandle = {
 /**
  * MetaTrader tick data
  */
-declare type MetatraderTick = {
+export declare type MetatraderTick = {
 
   /**
    * symbol (e.g. a currency pair or an index)
@@ -1441,7 +1441,7 @@ declare type MetatraderTick = {
 /**
  * MetaTrader order book
  */
-declare type MetatraderBook = {
+export declare type MetatraderBook = {
 
   /**
    * symbol (e.g. a currency pair or an index)
@@ -1467,7 +1467,7 @@ declare type MetatraderBook = {
 /**
  *  MetaTrader trade
  */
-declare type MetatraderTrade = {
+export declare type MetatraderTrade = {
 
   /**
    * type, enum: ORDER_TYPE_SELL, ORDER_TYPE_BUY, ORDER_TYPE_BUY_LIMIT, ORDER_TYPE_SELL_LIMIT,ORDER_TYPE_BUY_STOP, ORDER_TYPE_SELL_STOP, POSITION_MODIFY, POSITION_PARTIAL, POSITION_CLOSE_ID,POSITIONS_CLOSE_SYMBOL, ORDER_MODIFY, ORDER_CANCEL, POSITION_CLOSE_BY, ORDER_TYPE_BUY_STOP_LIMIT, ORDER_TYPE_SELL_STOP_LIMIT.
@@ -1563,7 +1563,7 @@ declare type MetatraderTrade = {
 /**
  * Metatrader trade or quote session
  */
-declare type MetatraderSession = {
+export declare type MetatraderSession = {
 
   /**
    * session start time, in hh.mm.ss.SSS format
@@ -1579,7 +1579,7 @@ declare type MetatraderSession = {
 /**
  * Metatrader trade or quote session container, indexed by weekday
  */
-declare type MetatraderSessions = {
+export declare type MetatraderSessions = {
 
   /**
    * array of sessions for SUNDAY
@@ -1620,7 +1620,7 @@ declare type MetatraderSessions = {
 /**
  * MetaTrader order book entry
  */
-declare type MetatraderBookEntry = {
+export declare type MetatraderBookEntry = {
 
   /**
    * entry type, one of BOOK_TYPE_SELL, BOOK_TYPE_BUY, BOOK_TYPE_SELL_MARKET,

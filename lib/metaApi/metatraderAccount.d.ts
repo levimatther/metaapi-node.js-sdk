@@ -1,6 +1,6 @@
 import MetatraderAccountClient, { Extension } from "../clients/metaApi/metatraderAccount.client";
 import { MetatraderAccountDto } from "../clients/metaApi/metatraderAccount.client";
-import MetaApiWebsocketClient, { MetatraderTick } from "../clients/metaApi/metaApiWebsocket.client";
+import MetaApiWebsocketClient, { MetatraderCandle, MetatraderTick } from "../clients/metaApi/metaApiWebsocket.client";
 import ConnectionRegistry from "./connectionRegistry";
 import ExpertAdvisorClient, { NewExpertAdvisorDto } from "../clients/metaApi/expertAdvisor.client";
 import HistoricalMarketDataClient from "../clients/metaApi/historicalMarketData.client";
@@ -236,7 +236,7 @@ export default class MetatraderAccount {
    * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when API server is connected to the broker
    */
-  waitConnected(timeoutInSeconds: Number, intervalInMilliseconds: Number): Promise<any>;
+  waitConnected(timeoutInSeconds?: Number, intervalInMilliseconds?: Number): Promise<any>;
   
   /**
    * Connects to MetaApi. There is only one connection per account. Subsequent calls to this method will return the same connection.
@@ -244,7 +244,7 @@ export default class MetatraderAccount {
    * @param {Date} [historyStartTime] history start time. Used for tests
    * @return {StreamingMetaApiConnection} MetaApi connection
    */
-  getStreamingConnection(historyStorage: HistoryStorage, historyStartTime: Date): StreamingMetaApiConnection;
+  getStreamingConnection(historyStorage: HistoryStorage, historyStartTime?: Date): StreamingMetaApiConnection;
   
   /**
    * Connects to MetaApi via RPC connection.
@@ -292,7 +292,7 @@ export default class MetatraderAccount {
    * @param {number} [limit] maximum number of candles to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
    */
-  getHistoricalCandles(symbol: String, timeframe: String, startTime?: Date, limit?: Number);
+  getHistoricalCandles(symbol: String, timeframe: String, startTime?: Date, limit?: Number): Promise<Array<MetatraderCandle>>;
   
   /**
    * Returns historical ticks for a specific symbol from the MetaTrader account. This API is not supported by MT4

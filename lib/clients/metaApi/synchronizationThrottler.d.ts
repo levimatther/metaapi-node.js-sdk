@@ -17,18 +17,18 @@ export default class SynchronizationThrottler {
   /**
    * Initializes the synchronization throttler
    */
-  start();
+  start(): void;
   
   /**
    * Deinitializes the throttler
    */
-  stop();
+  stop(): void;
   
   /**
    * Fills a synchronization slot with synchronization id
    * @param {String} synchronizationId synchronization id
    */
-  updateSynchronizationId(synchronizationId: String);
+  updateSynchronizationId(synchronizationId: String): void;
   
   /**
    * Returns the list of currently synchronizing account ids
@@ -59,25 +59,25 @@ export default class SynchronizationThrottler {
    * @param {Number} instanceIndex account instance index
    * @param {String} host account host name
    */
-  removeIdByParameters(accountId: String, instanceIndex: Number, host: String);
+  removeIdByParameters(accountId: String, instanceIndex: Number, host: String): void;
   
   /**
    * Removes synchronization id from slots and removes ids for the same account from the queue
    * @param {String} synchronizationId synchronization id
    */
-  removeSynchronizationId(synchronizationId: String);
+  removeSynchronizationId(synchronizationId: String): void;
   
   /**
    * Clears synchronization ids on disconnect
    */
-  onDisconnect();
+  onDisconnect(): void;
   
   /**
    * Schedules to send a synchronization request for account
    * @param {String} accountId account id
    * @param {Object} request request to send
    */
-  scheduleSynchronize(accountId: String, request: Object);
+  scheduleSynchronize(accountId: String, request: Object): Promise<Boolean>;
 }
 
 /**
