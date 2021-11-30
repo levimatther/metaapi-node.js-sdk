@@ -103,7 +103,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @param {Number} limit pagination limit, default is 1000
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
-  getDealsByTimeRange(startTime: Date, endTime: Date, offset?: Number, limit?: Number);
+  getDealsByTimeRange(startTime: Date, endTime: Date, offset?: Number, limit?: Number): Promise<MetatraderDeals>;
   
   /**
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch

@@ -14,7 +14,7 @@ export default class HistoryStorage extends SynchronizationListener {
   /**
    * Initializes the storage and loads required data from a persistent storage
    */
-  initialize();
+  initialize(): Promise<any>;
   
   /**
    * Returns flag indicating whether order history synchronization have finished
@@ -31,7 +31,7 @@ export default class HistoryStorage extends SynchronizationListener {
   /**
    * Clears the storage and deletes persistent data
    */
-  clear();
+  clear(): Promise<any>;
   
   /**
    * Returns the time of the last history order record stored in the history storage
@@ -85,5 +85,5 @@ export default class HistoryStorage extends SynchronizationListener {
    * Invoked when connection to MetaTrader terminal established
    * @param {String} instanceIndex index of an account instance connected
    */
-  onConnected(instanceIndex: String);
+  onConnected(instanceIndex: String): Promise<any>;
 }

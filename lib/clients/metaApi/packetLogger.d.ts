@@ -13,7 +13,7 @@ export default class PacketLogger {
    * Processes packets and pushes them into save queue
    * @param {Object} packet packet to log
    */
-  logPacket(packet: Object);
+  logPacket(packet: Object): void;
   
   /**
    * Returns log messages within date bounds as an array of objects
@@ -34,12 +34,12 @@ export default class PacketLogger {
   /**
    * Initializes the packet logger
    */
-  start();
+  start(): void;
   
   /**
    * Deinitializes the packet logger
    */
-  stop();  
+  stop(): void;  
 }
 
 /**

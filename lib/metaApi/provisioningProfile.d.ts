@@ -67,7 +67,7 @@ export default class ProvisioningProfile {
    * @param {String|Buffer} file path to a file to upload or buffer containing file contents
    * @return {Promise} promise which resolves when the file was uploaded
    */
-  uploadFile(fileName: string, file: String|Buffer);
+  uploadFile(fileName: string, file: String|Buffer): Promise<any>;
 
   /**
    * Updates provisioning profile

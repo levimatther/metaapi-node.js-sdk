@@ -41,7 +41,7 @@ export default class LatencyListener {
 /**
  * Object containing request latency information
  */
-declare type ResponseTimestamps = {
+export declare type ResponseTimestamps = {
 
   /**
    * time when request processing have started on client side
@@ -67,7 +67,7 @@ declare type ResponseTimestamps = {
 /**
  * Timestamps object containing latency information about price streaming
  */
-declare type SymbolPriceTimestamps = {
+export declare type SymbolPriceTimestamps = {
 
   /**
    * time the event was generated on exchange side
@@ -93,7 +93,7 @@ declare type SymbolPriceTimestamps = {
 /**
  * Timestamps object containing latency information about update streaming
  */
-declare type UpdateTimestamps = {
+export declare type UpdateTimestamps = {
 
   /**
    * time the event was generated on exchange side
@@ -119,7 +119,7 @@ declare type UpdateTimestamps = {
 /**
  * Timestamps object containing latency information about a trade
  */
-declare type TradeTimestamps = {
+export declare type TradeTimestamps = {
 
   /**
    * time when request processing have started on client side

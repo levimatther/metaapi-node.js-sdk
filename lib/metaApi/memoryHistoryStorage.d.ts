@@ -14,7 +14,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Initializes the storage and loads required data from a persistent storage
    */
-  initialize();
+  initialize(): Promise<any>;
 
   /**
    * Returns all deals stored in history storage
@@ -43,7 +43,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Resets the storage. Intended for use in tests
    */
-  clear();
+  clear(): Promise<any>;
 
   /**
    * Loads history data from the file manager
@@ -54,7 +54,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Saves unsaved history items to disk storage
    */
-  updateDiskStorage();
+  updateDiskStorage(): Promise<any>;
 
   /**
    * Returns the time of the last history order record stored in the history storage
@@ -75,14 +75,14 @@ export default class MemoryHistoryStorage extends HistoryStorage {
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    */
-  onHistoryOrderAdded(instanceIndex: String, historyOrder: MetatraderOrder);
+  onHistoryOrderAdded(instanceIndex: String, historyOrder: MetatraderOrder): Promise<any>;
 
   /**
    * Invoked when a new MetaTrader history deal is added
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
    */
-  onDealAdded(instanceIndex: String, deal: MetatraderDeal);
+  onDealAdded(instanceIndex: String, deal: MetatraderDeal): Promise<any>;
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished to indicate progress of an

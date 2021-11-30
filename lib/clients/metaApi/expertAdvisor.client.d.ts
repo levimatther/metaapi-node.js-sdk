@@ -58,7 +58,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
 /**
  * Expert advisor model
  */
-declare type ExpertAdvisorDto = {
+export declare type ExpertAdvisorDto = {
 
   /**
    * expert advisor id
@@ -84,7 +84,7 @@ declare type ExpertAdvisorDto = {
 /**
  * Updated expert advisor data
  */
-declare type NewExpertAdvisorDto = {
+export declare type NewExpertAdvisorDto = {
 
   /**
    * expert advisor symbol.

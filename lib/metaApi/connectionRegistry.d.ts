@@ -29,7 +29,7 @@ export default class ConnectionRegistry {
    * Removes an account from registry
    * @param {string} accountId MetaTrader account id to remove
    */
-  remove(accountId: String);
+  remove(accountId: String): void;
   
   /**
    * Returns application type

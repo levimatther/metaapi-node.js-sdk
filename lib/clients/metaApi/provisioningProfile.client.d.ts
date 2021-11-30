@@ -70,7 +70,7 @@ export class ProvisioningProfileClient {
 /**
  * Provisioning profile model
  */
-declare type ProvisioningProfileDto = {
+export declare type ProvisioningProfileDto = {
 
   /**
    * provisioning profile unique identifier
@@ -106,7 +106,7 @@ declare type ProvisioningProfileDto = {
 /**
  * New provisioning profile model
  */
-declare type NewProvisioningProfileDto = {
+export declare type NewProvisioningProfileDto = {
 
   /**
    * provisioning profile name
@@ -132,7 +132,7 @@ declare type NewProvisioningProfileDto = {
 /**
  * Updated provisioning profile data
  */
-declare type ProvisioningProfileUpdateDto = {
+export declare type ProvisioningProfileUpdateDto = {
 
   /**
    * provisioning profile name
@@ -143,7 +143,7 @@ declare type ProvisioningProfileUpdateDto = {
 /**
  * Provisioning profile id model
  */
-declare type ProvisioningProfileIdDto = {
+export declare type ProvisioningProfileIdDto = {
 
   /**
    * provisioning profile unique identifier

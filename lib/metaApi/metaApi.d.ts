@@ -56,7 +56,7 @@ export default class MetaApi {
 /**
  * MetaApi options
  */
-declare type MetaApiOpts = {
+export declare type MetaApiOpts = {
 
   /**
    * application id
@@ -133,7 +133,7 @@ declare type MetaApiOpts = {
 /**
  * Subscriptions refresh options
  */
-declare type RefreshSubscriptionsOpts = {
+export declare type RefreshSubscriptionsOpts = {
 
   /**
    * minimum delay in seconds until subscriptions refresh request,
@@ -151,7 +151,7 @@ declare type RefreshSubscriptionsOpts = {
 /**
  * Request retry options
  */
-declare type RetryOpts = {
+export declare type RetryOpts = {
 
   /**
    * maximum amount of request retries, default value is 5

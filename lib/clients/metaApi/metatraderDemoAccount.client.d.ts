@@ -27,7 +27,7 @@ export default class MetatraderDemoAccountClient extends MetaApiClient {
 /**
  * New MetaTrader 4 demo account model
  */
-declare type NewMT4DemoAccount = {
+export declare type NewMT4DemoAccount = {
 
   /**
    * account type
@@ -93,7 +93,7 @@ declare type NewMT4DemoAccount = {
 /**
  * New MetaTrader 5 demo account model
  */
-declare type NewMT5DemoAccount = {
+export declare type NewMT5DemoAccount = {
 
   /**
    * account holder's address
@@ -159,7 +159,7 @@ declare type NewMT5DemoAccount = {
 /**
  * MetaTrader demo account model
  */
-declare type MetatraderDemoAccountDto = {
+export declare type MetatraderDemoAccountDto = {
 
   /**
    * account login

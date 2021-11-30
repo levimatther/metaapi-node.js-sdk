@@ -187,7 +187,7 @@ export default class MetaApiConnection extends SynchronizationListener {
 /**
  * Common trade options
  */
-declare type TradeOptions = {
+export declare type TradeOptions = {
 
   /**
    * optional order comment. The sum of the line lengths of the comment and the
@@ -222,7 +222,7 @@ declare type TradeOptions = {
 /**
  * Market trade options
  */
-declare type MarketTradeOptions = {
+export declare type MarketTradeOptions = {
 
   /**
    * optional allowed filling modes in the order of priority. Default is to
@@ -236,7 +236,7 @@ declare type MarketTradeOptions = {
 /**
  * Pending order trade options
  */
-declare type PendingTradeOptions = {
+export declare type PendingTradeOptions = {
 
   /**
    * optional pending order expiration settings. See Pending order expiration
@@ -248,7 +248,7 @@ declare type PendingTradeOptions = {
 /**
  * Pending order expiration settings
  */
-declare type ExpirationOptions = {
+export declare type ExpirationOptions = {
 
   /**
    * pending order expiration type. See
@@ -268,7 +268,7 @@ declare type ExpirationOptions = {
 /**
  * Stop options
  */
-declare type StopOptions = {
+export declare type StopOptions = {
 
   /**
    * stop (SL or TP) value
