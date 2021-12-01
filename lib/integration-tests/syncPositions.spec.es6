@@ -10,8 +10,9 @@ const api = new MetaAPI(token, {application: 'MetaApi', domain: 'project-stock.v
 
 describe('MT4 sync positions test', () => {
 
-  async function checkPositions(connection) {
-    return {local: connection.terminalState.positions.length, real: (await connection.getPositions()).length};
+  async function checkPositions(streamingConnection, rpcConnection) {
+    return {local: streamingConnection.terminalState.positions.length,
+      real: (await rpcConnection.getPositions()).length};
   }
 
   // eslint-disable-next-line max-statements
@@ -48,32 +49,35 @@ describe('MT4 sync positions test', () => {
       }
       await account.deploy();
       await account.waitConnected();
-      let connection = account.getRPCConnection();
-      await connection.waitSynchronized({timeoutInSeconds: 600}); 
-      const startPositions = connection.terminalState.positions.length;
+      const streamingConnection = account.getStreamingConnection();
+      const rpcConnection = account.getRPCConnection();
+      await streamingConnection.connect();
+      await streamingConnection.waitSynchronized({timeoutInSeconds: 600}); 
+      await rpcConnection.waitSynchronized();
+      const startPositions = streamingConnection.terminalState.positions.length;
       const positionIds = [];
       for (let i = 0; i < 10; i++) {
-        let result = await connection.createMarketBuyOrder('GBPUSD', 0.01, 0.9, 2.0); 
+        let result = await streamingConnection.createMarketBuyOrder('GBPUSD', 0.01, 0.9, 2.0); 
         positionIds.push(result.positionId);
         await new Promise(res => setTimeout(res, 200));
       }
       await new Promise(res => setTimeout(res, 200));
-      let positions = await checkPositions(connection);
+      let positions = await checkPositions(streamingConnection, rpcConnection);
       sinon.assert.match(positions.local, startPositions + 10);
       sinon.assert.match(positions.real, startPositions + 10);
       await new Promise(res => setTimeout(res, 5000));
       await Promise.all(positionIds.map(async id => {
-        await connection.closePosition(id);
+        await streamingConnection.closePosition(id);
       }));
       await new Promise(res => setTimeout(res, 1000));
       await Promise.all(positionIds.map(async id => {
         try {
-          await connection.getPosition(id);
+          await rpcConnection.getPosition(id);
           sinon.assert.fail();
         } catch(err) { //eslint-ignore-line
         }
       }));
-      positions = await checkPositions(connection);
+      positions = await checkPositions(streamingConnection, rpcConnection);
       sinon.assert.match(positions.local, startPositions);
       sinon.assert.match(positions.real, startPositions);
       await account.undeploy();

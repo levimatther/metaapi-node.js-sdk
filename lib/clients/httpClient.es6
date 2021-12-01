@@ -7,6 +7,7 @@ import {
 } from './errorHandler';
 import OptionsValidator from './optionsValidator';
 import TimeoutError from './timeoutError';
+import LoggerManager from '../logger';
 
 /**
  * HTTP client library based on request-promise
@@ -34,6 +35,7 @@ export default class HttpClient {
       'retryOpts.minDelayInSeconds') * 1000;
     this._maxRetryDelay = validator.validateNonZero(retryOpts.maxDelayInSeconds, 30,
       'retryOpts.maxDelayInSeconds') * 1000;
+    this._logger = LoggerManager.getLogger('HttpClient');
   }
 
   /**
@@ -47,6 +49,9 @@ export default class HttpClient {
     options.callback = (e, res) => {
       if (res && res.statusCode === 202) {
         retryAfterSeconds = res.headers['retry-after'];
+        if(isNaN(retryAfterSeconds)) {
+          retryAfterSeconds = Math.max((new Date(retryAfterSeconds).getTime() - Date.now()) / 1000, 1);
+        }
       }
     };
     let body;
@@ -57,6 +62,10 @@ export default class HttpClient {
       return this.request(options, retryCounter, endTime);
     }
     if (retryAfterSeconds) {
+      if(body && body.message) {
+        this._logger.info(`Retrying request in ${Math.floor(retryAfterSeconds)} seconds because request ` +
+          'returned message:', body.message);
+      }
       await this._handleRetry(endTime, retryAfterSeconds * 1000);
       body = await this.request(options, retryCounter, endTime);
     }
@@ -75,7 +84,7 @@ export default class HttpClient {
     if(endTime > Date.now() + retryAfter) {
       await this._wait(retryAfter);
     } else {
-      throw new TimeoutError('Timed out waiting for the end of the process of calculating metrics');
+      throw new TimeoutError('Timed out waiting for the response');
     }
   }
 

@@ -39,6 +39,11 @@ async function testMetaApiSynchronization() {
     await connection.subscribeToMarketData('EURUSD');
     console.log('EURUSD price:', terminalState.price('EURUSD'));
 
+    // access history storage
+    const historyStorage = connection.historyStorage;
+    console.log('deals:', historyStorage.deals.slice(-5));
+    console.log('history orders:', historyStorage.historyOrders.slice(-5));
+
     // trade
     console.log('Submitting pending order');
     try {

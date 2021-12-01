@@ -67,7 +67,7 @@ describe('HttpClient#request', () => {
   describe('Retry request', () => {
 
     const opts = {url: 'http://metaapi.cloud'};
-    let sandbox, stub;
+    let sandbox, stub, clock;
 
     before(() => {
       sandbox = sinon.createSandbox();
@@ -76,10 +76,15 @@ describe('HttpClient#request', () => {
     beforeEach(() => {
       stub = sandbox.stub();
       httpClient = new HttpClientMock(stub);
+      clock = sandbox.useFakeTimers({
+        shouldAdvanceTime: true,
+        now: new Date('2020-10-05T07:00:00.000Z')
+      });
     });
 
     afterEach(() => {
       sandbox.restore();
+      clock.restore();
     });
 
     /**
@@ -94,6 +99,7 @@ describe('HttpClient#request', () => {
         stub.onFirstCall().rejects(new ApiError(ApiError, 'test'))
           .onSecondCall().rejects(new ApiError(ApiError, 'test'))
           .onThirdCall().resolves('response');
+        clock.tickAsync(5000);
         const response = await httpClient.request(opts);
         response.should.match('response');
         sinon.assert.calledThrice(stub);
@@ -106,6 +112,7 @@ describe('HttpClient#request', () => {
         stub.onFirstCall().rejects(new InternalError('test'))
           .onSecondCall().rejects(new InternalError('test'))
           .onThirdCall().resolves('response');
+        clock.tickAsync(5000);
         const response = await httpClient.request(opts);
         response.should.match('response');
         sinon.assert.calledThrice(stub);
@@ -118,6 +125,7 @@ describe('HttpClient#request', () => {
         stub.rejects(new ApiError(ApiError, 'test'));
         httpClient = new HttpClientMock(stub, 60, {retries: 2});
         try {
+          clock.tickAsync(5000);
           const response = await httpClient.request(opts);
           should.not.exist(response);
         } catch (err) {
@@ -135,6 +143,7 @@ describe('HttpClient#request', () => {
           .onSecondCall().rejects(new ValidationError('test'))
           .onThirdCall().resolves('response');
         try {
+          clock.tickAsync(5000);
           const response = await httpClient.request(opts);
           should.not.exist(response);
         } catch (err) {
@@ -165,6 +174,7 @@ describe('HttpClient#request', () => {
         stub.onFirstCall().rejects(getTooManyRequestsError(2))
           .onSecondCall().rejects(getTooManyRequestsError(3))
           .onThirdCall().resolves('response');
+        clock.tickAsync(5000);
         const response = await httpClient.request(opts);
         response.should.eql('response');
         sinon.assert.calledThrice(stub);
@@ -178,6 +188,7 @@ describe('HttpClient#request', () => {
           .onSecondCall().rejects(getTooManyRequestsError(300))
           .onThirdCall().resolves('response');
         try {
+          clock.tickAsync(5000);
           const response = await httpClient.request(opts);
           should.not.exist(response);
         } catch (err) {
@@ -195,6 +206,7 @@ describe('HttpClient#request', () => {
           .onSecondCall().rejects(new ApiError(ApiError, 'test'))
           .onThirdCall().resolves('response');
         httpClient = new HttpClientMock(stub, 60, {retries: 1});
+        clock.tickAsync(5000);
         const response = await httpClient.request(opts);
         response.should.eql('response');
         sinon.assert.calledThrice(stub);
@@ -214,6 +226,21 @@ describe('HttpClient#request', () => {
         stub.callsFake((options)=> {
           options.callback(null, {headers: {'retry-after': 3}, statusCode: 202});
         }).onThirdCall().resolves('response');
+        clock.tickAsync(5000);
+        const response = await httpClient.request(opts);
+        response.should.eql('response');
+        sinon.assert.calledThrice(stub);
+      }).timeout(10000);
+
+      /**
+       * @test {HttpClient#request}
+       */
+      it('should wait for the retry-after header time before retrying if header is in http time', async () => {
+        stub.callsFake((options) => {
+          options.callback(null, {headers: {'retry-after': 'Mon, 05 Oct 2020 07:00:02 GMT'}, 
+            statusCode: 202});
+        }).onThirdCall().resolves('response');
+        clock.tickAsync(3000);
         const response = await httpClient.request(opts);
         response.should.eql('response');
         sinon.assert.calledThrice(stub);
@@ -232,7 +259,7 @@ describe('HttpClient#request', () => {
           should.not.exist('Should not exist this assertion');
         } catch (err) {
           err.name.should.eql('TimeoutError');
-          err.message.should.eql('Timed out waiting for the end of the process of calculating metrics');
+          err.message.should.eql('Timed out waiting for the response');
         }
         sinon.assert.calledOnce(stub);
       }).timeout(10000);
@@ -246,11 +273,12 @@ describe('HttpClient#request', () => {
         });
         httpClient = new HttpClientMock(stub, 60, {maxDelayInSeconds: 2, retries: 3});
         try {
+          clock.tickAsync(5000);
           await httpClient.request(opts);
           should.not.exist('Should not exist this assertion');
         } catch (err) {
           err.name.should.eql('TimeoutError');
-          err.message.should.eql('Timed out waiting for the end of the process of calculating metrics');
+          err.message.should.eql('Timed out waiting for the response');
         }
         sinon.assert.callCount(stub, 6);
       }).timeout(10000);

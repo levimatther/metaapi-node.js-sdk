@@ -71,53 +71,110 @@ Alternatively, you can retrieve account access token via web UI on https://app.m
 ## Managing MetaTrader accounts (API servers for MT accounts)
 Before you can use the API you have to add an MT account to MetaApi and start an API server for it.
 
-However, before you can create an account, you have to create a provisioning profile.
-
-### Managing provisioning profiles via web UI
-You can manage provisioning profiles here: [https://app.metaapi.cloud/provisioning-profiles](https://app.metaapi.cloud/provisioning-profiles)
-
-### Creating a provisioning profile via API
-```javascript
-// if you do not have created a provisioning profile for your broker,
-// you should do it before creating an account
-const provisioningProfile = await api.provisioningProfileApi.createProvisioningProfile({
-  name: 'My profile',
-  version: 5,
-  brokerTimezone: 'EET',
-  brokerDSTSwitchTimezone: 'EET'
-});
-// servers.dat file is required for MT5 profile and can be found inside
-// config directory of your MetaTrader terminal data folder. It contains
-// information about available broker servers
-await provisioningProfile.uploadFile('servers.dat', '/path/to/servers.dat');
-// for MT4, you should upload an .srv file instead
-await provisioningProfile.uploadFile('broker.srv', '/path/to/broker.srv');
-```
-
-### Retrieving existing provisioning profiles via API
-```javascript
-const provisioningProfiles = await api.provisioningProfileApi.getProvisioningProfiles();
-const provisioningProfile = await api.provisioningProfileApi.getProvisioningProfile('profileId');
-```
-
-### Updating a provisioning profile via API
-```javascript
-await provisioningProfile.update({name: 'New name'});
-// for MT5, you should upload a servers.dat file
-await provisioningProfile.uploadFile('servers.dat', '/path/to/servers.dat');
-// for MT4, you should upload an .srv file instead
-await provisioningProfile.uploadFile('broker.srv', '/path/to/broker.srv');
-```
-
-### Removing a provisioning profile
-```javascript
-await provisioningProfile.remove();
-```
-
 ### Managing MetaTrader accounts (API servers) via web UI
 You can manage MetaTrader accounts here: [https://app.metaapi.cloud/accounts](https://app.metaapi.cloud/accounts)
 
 ### Create a MetaTrader account (API server) via API
+
+#### Creating an account using automatic broker settings detection
+
+To create an account, supply a request with account data and the platform field indicating the MetaTrader version.
+Provisioning profile id must not be included in the request for automatic broker settings detection.
+
+```javascript
+try {
+  const account = await api.metatraderAccountApi.createAccount({
+    name: 'Trading account #1',
+    type: 'cloud',
+    login: '1234567',
+    platform: 'mt4',
+    // password can be investor password for read-only access
+    password: 'qwerty',
+    server: 'ICMarketsSC-Demo',
+    application: 'MetaApi',
+    magic: 123456,
+    quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
+    reliability: 'regular' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
+  });
+} catch (err) {
+  // process errors
+  if(err.details) {
+    // returned if the server file for the specified server name has not been found
+    // recommended to check the server name or create the account using a provisioning profile
+    if(err.details === 'E_SRV_NOT_FOUND') {
+      console.error(err);
+    // returned if the server has failed to connect to the broker using your credentials
+    // recommended to check your login and password
+    } else if (err.details === 'E_AUTH') {
+      console.log(err);
+    // returned if the server has failed to detect the broker settings
+    // recommended to try again later or create the account using a provisioning profile
+    } else if (err.details === 'E_SERVER_TIMEZONE') {
+      console.log(err);
+    }
+  }
+}
+```
+
+If the settings have not yet been detected for the broker, the server will begin the process of detection, and you will receive a response with wait time:
+
+```
+Retrying request in 60 seconds because request returned message: Automatic broker settings detection is in progress, please retry in 60 seconds
+```
+
+The client will automatically retry the request when the recommended time passes.
+
+#### Error handling
+Several types of errors are possible during the request:
+
+- Server file not found
+- Authentication error
+- Settings detection error
+
+##### Server file not found
+This error is returned if the server file for the specified server name has not been found. In case of this error it
+is recommended to check the server name. If the issue persists, it is recommended to create the account using a
+provisioning profile.
+
+```json
+{
+  "id": 3,
+  "error": "ValidationError",
+  "message": "We were unable to retrieve the server file for this broker. Please check the server name or configure the provisioning profile manually.",
+  "details": "E_SRV_NOT_FOUND"
+}
+```
+
+##### Authentication error
+This error is returned if the server has failed to connect to the broker using your credentials. In case of this
+error it is recommended to check your login and password, and try again.
+
+```json
+{
+  "id": 3,
+  "error": "ValidationError",
+  "message": "We failed to authenticate to your broker using credentials provided. Please check that your MetaTrader login, password and server name are correct.",
+  "details": "E_AUTH"
+}
+```
+
+##### Settings detection error
+This error is returned if the server has failed to detect the broker settings. In case of this error it is recommended
+to retry the request later, or create the account using a provisioning profile.
+
+```json
+{
+  "id": 3,
+  "error": "ValidationError",
+  "message": "We were not able to retrieve server settings using credentials provided. Please try again later or configure the provisioning profile manually.",
+  "details": "E_SERVER_TIMEZONE"
+}
+```
+
+#### Creating an account using a provisioning profile
+If creating the account with automatic broker settings detection has failed, you can create it using a [provisioning profile](#managing-provisioning-profiles).
+To create an account using a provisioning profile, create a provisioning profile for the MetaTrader server, and then add the provisioningProfileId field to the request:
+
 ```javascript
 const account = await api.metatraderAccountApi.createAccount({
   name: 'Trading account #1',
@@ -211,6 +268,50 @@ await expert.uploadFile('/path/to/custom-ea');
 ### Removing expert via API
 ```javascript
 await expert.remove();
+```
+
+## Managing provisioning profiles
+Provisioning profiles can be used as an alternative way to create MetaTrader accounts if the automatic broker settings detection has failed.
+
+### Managing provisioning profiles via web UI
+You can manage provisioning profiles here: [https://app.metaapi.cloud/provisioning-profiles](https://app.metaapi.cloud/provisioning-profiles)
+
+### Creating a provisioning profile via API
+```javascript
+// if you do not have created a provisioning profile for your broker,
+// you should do it before creating an account
+const provisioningProfile = await api.provisioningProfileApi.createProvisioningProfile({
+  name: 'My profile',
+  version: 5,
+  brokerTimezone: 'EET',
+  brokerDSTSwitchTimezone: 'EET'
+});
+// servers.dat file is required for MT5 profile and can be found inside
+// config directory of your MetaTrader terminal data folder. It contains
+// information about available broker servers
+await provisioningProfile.uploadFile('servers.dat', '/path/to/servers.dat');
+// for MT4, you should upload an .srv file instead
+await provisioningProfile.uploadFile('broker.srv', '/path/to/broker.srv');
+```
+
+### Retrieving existing provisioning profiles via API
+```javascript
+const provisioningProfiles = await api.provisioningProfileApi.getProvisioningProfiles();
+const provisioningProfile = await api.provisioningProfileApi.getProvisioningProfile('profileId');
+```
+
+### Updating a provisioning profile via API
+```javascript
+await provisioningProfile.update({name: 'New name'});
+// for MT5, you should upload a servers.dat file
+await provisioningProfile.uploadFile('servers.dat', '/path/to/servers.dat');
+// for MT4, you should upload an .srv file instead
+await provisioningProfile.uploadFile('broker.srv', '/path/to/broker.srv');
+```
+
+### Removing a provisioning profile
+```javascript
+await provisioningProfile.remove();
 ```
 
 ## Access MetaTrader account via RPC API
@@ -315,6 +416,9 @@ historyStorage = connection.historyStorage;
 // should be true once history synchronization have finished
 console.log(historyStorage.orderSynchronizationFinished);
 console.log(historyStorage.dealSynchronizationFinished);
+
+console.log(historyStorage.deals);
+console.log(historyStorage.historyOrders);
 ```
 
 #### Overriding local history storage
