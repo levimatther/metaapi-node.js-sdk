@@ -54,6 +54,10 @@
       log('EURUSD specification:', JSON.stringify(terminalState.specification('EURUSD')));
       log('EURUSD price:', JSON.stringify(terminalState.price('EURUSD')));
 
+      let historyStorage = connection.historyStorage;
+      log('deals:', JSON.stringify(historyStorage.deals.slice(-5)));
+      log('history orders:', JSON.stringify(historyStorage.historyOrders.slice(-5)));
+
       // trade
       log('Submitting pending order');
       try {

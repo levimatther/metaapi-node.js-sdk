@@ -1,3 +1,6 @@
+16.1.0
+  - make it possible to detect broker settings automatically (create accounts without provisioning profiles)
+
 16.0.2
   - fixed typings return types
   - fixed export declared types in typings

@@ -215,7 +215,7 @@ export declare type MetatraderAccountDto = {
   /**
    * id of the account's provisioning profile
    */
-  provisioningProfileId: String,
+  provisioningProfileId?: String,
 
   /**
    * application name to connect the account to. Currently allowed values are MetaApi and
@@ -348,9 +348,14 @@ export declare type NewMetatraderAccountDto = {
   server: String,
 
   /**
+   * Platform id (mt4 or mt5)
+   */
+  platform?: String
+
+  /**
    * id of the account's provisioning profile
    */
-  provisioningProfileId: String,
+  provisioningProfileId?: String,
 
   /**
    * application name to connect the account to. Currently allowed values are MetaApi and

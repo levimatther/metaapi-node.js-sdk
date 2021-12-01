@@ -24,7 +24,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} login MetaTrader account number
    * @property {String} server MetaTrader server which hosts the account
    * @property {Version} version MT version
-   * @property {String} provisioningProfileId id of the account's provisioning profile
+   * @property {String} [provisioningProfileId] id of the account's provisioning profile
    * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
    * @property {Number} magic MetaTrader magic to place trades using
@@ -166,7 +166,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} password MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
    * @property {String} server MetaTrader server which hosts the account
-   * @property {String} provisioningProfileId id of the account's provisioning profile
+   * @property {String} [platform] platform id (mt4 or mt5)
+   * @property {String} [provisioningProfileId] id of the account's provisioning profile
    * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
    * @property {Number} magic MetaTrader magic to place trades using

@@ -56,8 +56,10 @@ describe('MT5 double synchronization test', () => {
         account.waitConnected(),
         accountCopy.waitConnected()
       ]);
-      let connection = account.getRPCConnection();
-      let connectionCopy = accountCopy.getRPCConnection();
+      let connection = account.getStreamingConnection();
+      let connectionCopy = accountCopy.getStreamingConnection();
+      await connection.connect();
+      await connectionCopy.connect();
       await Promise.all([
         connection.waitSynchronized({timeoutInSeconds: 600}),
         connectionCopy.waitSynchronized({timeoutInSeconds: 600})

@@ -6,33 +6,11 @@ let token = process.env.TOKEN || '<put in your token here>';
 let login = process.env.LOGIN || '<put in your MT login here>';
 let password = process.env.PASSWORD || '<put in your MT password here>';
 let serverName = process.env.SERVER || '<put in your MT server name here>';
-let brokerSrvFile = process.env.PATH_TO_BROKER_SRV || '/path/to/your/broker.srv';
 
 const api = new MetaApi(token);
 
 async function testMetaApiSynchronization() {
   try {
-    const profiles = await api.provisioningProfileApi.getProvisioningProfiles();
-
-    // create test MetaTrader account profile
-    let profile = profiles.find(p => p.name === serverName);
-    if (!profile) {
-      console.log('Creating account profile');
-      profile = await api.provisioningProfileApi.createProvisioningProfile({
-        name: serverName,
-        version: 4,
-        brokerTimezone: 'EET',
-        brokerDSTSwitchTimezone: 'EET'
-      });
-      await profile.uploadFile('broker.srv', brokerSrvFile);
-    }
-    if (profile && profile.status === 'new') {
-      console.log('Uploading broker.srv');
-      await profile.uploadFile('broker.srv', brokerSrvFile);
-    } else {
-      console.log('Account profile already created');
-    }
-
     // Add test MetaTrader account
     let accounts = await api.metatraderAccountApi.getAccounts();
     let account = accounts.find(a => a.login === login && a.type.startsWith('cloud'));
@@ -44,7 +22,7 @@ async function testMetaApiSynchronization() {
         login: login,
         password: password,
         server: serverName,
-        provisioningProfileId: profile.id,
+        platform: 'mt4',
         application: 'MetaApi',
         magic: 1000
       });
@@ -79,6 +57,11 @@ async function testMetaApiSynchronization() {
     await connection.subscribeToMarketData('EURUSD');
     console.log('EURUSD price:', terminalState.price('EURUSD'));
 
+    // access history storage
+    const historyStorage = connection.historyStorage;
+    console.log('deals:', historyStorage.deals.slice(-5));
+    console.log('history orders:', historyStorage.historyOrders.slice(-5));
+
     // trade
     console.log('Submitting pending order');
     try {
@@ -96,6 +79,22 @@ async function testMetaApiSynchronization() {
     console.log('Undeploying MT4 account so that it does not consume any unwanted resources');
     await account.undeploy();
   } catch (err) {
+    // process errors
+    if(err.details) {
+      // returned if the server file for the specified server name has not been found
+      // recommended to check the server name or create the account using a provisioning profile
+      if(err.details === 'E_SRV_NOT_FOUND') {
+        console.error(err);
+      // returned if the server has failed to connect to the broker using your credentials
+      // recommended to check your login and password
+      } else if (err.details === 'E_AUTH') {
+        console.log(err);
+      // returned if the server has failed to detect the broker settings
+      // recommended to try again later or create the account using a provisioning profile
+      } else if (err.details === 'E_SERVER_TIMEZONE') {
+        console.log(err);
+      }
+    }
     console.error(err);
   }
   process.exit();

@@ -1,33 +1,57 @@
 let MetaApi = require('metaapi.cloud-sdk').default;
 
 // Note: for information on how to use this example code please read https://metaapi.cloud/docs/client/usingCodeExamples
+// It is recommended to create accounts with automatic broker settings detection instead,
+// see metaApiSynchronizationExample.js
 
 let token = process.env.TOKEN || '<put in your token here>';
 let login = process.env.LOGIN || '<put in your MT login here>';
 let password = process.env.PASSWORD || '<put in your MT password here>';
 let serverName = process.env.SERVER || '<put in your MT server name here>';
+let brokerSrvFile = process.env.PATH_TO_BROKER_SRV || '/path/to/your/broker.srv';
 
 const api = new MetaApi(token);
 
 async function testMetaApiSynchronization() {
   try {
+    const profiles = await api.provisioningProfileApi.getProvisioningProfiles();
+
+    // create test MetaTrader account profile
+    let profile = profiles.find(p => p.name === serverName);
+    if (!profile) {
+      console.log('Creating account profile');
+      profile = await api.provisioningProfileApi.createProvisioningProfile({
+        name: serverName,
+        version: 4,
+        brokerTimezone: 'EET',
+        brokerDSTSwitchTimezone: 'EET'
+      });
+      await profile.uploadFile('broker.srv', brokerSrvFile);
+    }
+    if (profile && profile.status === 'new') {
+      console.log('Uploading broker.srv');
+      await profile.uploadFile('broker.srv', brokerSrvFile);
+    } else {
+      console.log('Account profile already created');
+    }
+
     // Add test MetaTrader account
     let accounts = await api.metatraderAccountApi.getAccounts();
     let account = accounts.find(a => a.login === login && a.type.startsWith('cloud'));
     if (!account) {
-      console.log('Adding MT5 account to MetaApi');
+      console.log('Adding MT4 account to MetaApi');
       account = await api.metatraderAccountApi.createAccount({
         name: 'Test account',
         type: 'cloud',
         login: login,
         password: password,
         server: serverName,
-        platform: 'mt5',
+        provisioningProfileId: profile.id,
         application: 'MetaApi',
         magic: 1000
       });
     } else {
-      console.log('MT5 account already added to MetaApi');
+      console.log('MT4 account already added to MetaApi');
     }
 
     // wait until account is deployed and connected to broker
@@ -76,25 +100,9 @@ async function testMetaApiSynchronization() {
     }
 
     // finally, undeploy account after the test
-    console.log('Undeploying MT5 account so that it does not consume any unwanted resources');
+    console.log('Undeploying MT4 account so that it does not consume any unwanted resources');
     await account.undeploy();
   } catch (err) {
-    // process errors
-    if(err.details) {
-      // returned if the server file for the specified server name has not been found
-      // recommended to check the server name or create the account using a provisioning profile
-      if(err.details === 'E_SRV_NOT_FOUND') {
-        console.error(err);
-      // returned if the server has failed to connect to the broker using your credentials
-      // recommended to check your login and password
-      } else if (err.details === 'E_AUTH') {
-        console.log(err);
-      // returned if the server has failed to detect the broker settings
-      // recommended to try again later or create the account using a provisioning profile
-      } else if (err.details === 'E_SERVER_TIMEZONE') {
-        console.log(err);
-      }
-    }
     console.error(err);
   }
   process.exit();
