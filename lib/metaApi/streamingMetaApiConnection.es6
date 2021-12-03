@@ -210,7 +210,16 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
           subscriptions = subscriptions.filter(s => s.type === subscription.type);
         }
       }
-      this.unsubscribeFromMarketData(symbol, unsubscriptions);
+      this.unsubscribeFromMarketData(symbol, unsubscriptions)
+        .catch(err => {
+          if (err.name !== ValidationError) {
+            this._logger.error(`${this._account.id}: failed do unsubscribe from market data on subscription downgraded`,
+              err);
+          } else {
+            this._logger.trace(`${this._account.id}: failed do unsubscribe from market data on subscription downgraded`,
+              err);
+          }
+        });
     }
     if (updates && updates.length) {
       if (subscriptions) {
@@ -219,7 +228,16 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
             .forEach(s => s.intervalInMilliiseconds = subscription.intervalInMilliseconds);
         }
       }
-      this.subscribeToMarketData(symbol, updates);
+      this.subscribeToMarketData(symbol, updates)
+        .catch(err => {
+          if (err.name !== ValidationError) {
+            this._logger.error(`${this._account.id}: failed do unsubscribe from market data on subscription downgraded`,
+              err);
+          } else {
+            this._logger.trace(`${this._account.id}: failed do unsubscribe from market data on subscription downgraded`,
+              err);
+          }
+        });
     }
     if (subscriptions && !subscriptions.length) {
       delete this._subscriptions[symbol];
