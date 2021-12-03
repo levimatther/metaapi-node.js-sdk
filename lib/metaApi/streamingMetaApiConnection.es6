@@ -230,13 +230,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       }
       this.subscribeToMarketData(symbol, updates)
         .catch(err => {
-          if (err.name !== ValidationError) {
-            this._logger.error(`${this._account.id}: failed do unsubscribe from market data on subscription downgraded`,
-              err);
-          } else {
-            this._logger.trace(`${this._account.id}: failed do unsubscribe from market data on subscription downgraded`,
-              err);
-          }
+          this._logger.error(`${this._account.id}: failed do unsubscribe from market data on subscription downgraded`,
+            err);
         });
     }
     if (subscriptions && !subscriptions.length) {
