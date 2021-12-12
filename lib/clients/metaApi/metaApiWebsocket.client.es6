@@ -401,6 +401,43 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Stop loss threshold
+   * @typedef {Object} StopLossThreshold
+   * @property {Number} threshold price threshold relative to position open price, interpreted according to units
+   * field value
+   * @property {Number} stopLoss stop loss value, interpreted according to units and basePrice field values
+   */
+
+  /**
+   * Threshold trailing stop loss configuration
+   * @typedef {Object} ThresholdTrailingStopLoss
+   * @property {StopLossThreshold[]} thresholds stop loss thresholds
+   * @property {String} [units] threshold stop loss units. ABSOLUTE_PRICE means the that the value of stop loss
+   * threshold fields contain a final threshold & stop loss value. RELATIVE* means that the threshold fields value
+   * contains relative threshold & stop loss values, expressed either in price, points, account currency or balance
+   * percentage. Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, 
+   * RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * @property {String} [stopPriceBase] defined the base price to calculate SL relative to for POSITION_MODIFY and
+   * pending order requests. Default is OPEN_PRICE. One of CURRENT_PRICE, OPEN_PRICE
+   */
+
+  /**
+   * Distance trailing stop loss configuration
+   * @typedef {Object} DistanceTrailingStopLoss
+   * @property {Number} [distance] SL distance relative to current price, interpreted according to units field value
+   * @property {String} [units] distance trailing stop loss units. RELATIVE_* means that the distance field value 
+   * contains relative stop loss expressed either in price, points, account currency or balance percentage. 
+   * Default is RELATIVE_PRICE. One of RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   */
+
+  /**
+   * Distance trailing stop loss configuration
+   * @typedef {Object} TrailingStopLoss
+   * @property {DistanceTrailingStopLoss} [distance] distance trailing stop loss configuration
+   * @property {ThresholdTrailingStopLoss} [threshold] distance trailing stop loss configuration
+   */
+
+  /**
    * MetaTrader position
    * @typedef {Object} MetatraderPosition
    * @property {Number} id position id (ticket number)
@@ -415,6 +452,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} currentTickValue current tick value
    * @property {Number} [stopLoss] optional position stop loss price
    * @property {Number} [takeProfit] optional position take profit price
+   * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
    * @property {Number} volume position volume
    * @property {Number} swap position cumulative swap
    * @property {Number} profit position cumulative profit
@@ -483,6 +521,7 @@ export default class MetaApiWebsocketClient {
    * @property {Number} [currentPrice] current price, filled for pending orders only. Not filled for history orders.
    * @property {Number} [stopLoss] order stop loss price
    * @property {Number} [takeProfit] order take profit price
+   * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
    * @property {Number} volume order requested quantity
    * @property {Number} currentVolume order remaining quantity, i.e. requested quantity - filled quantity
    * @property {String} positionId order position id. Present only if the order has a position attached to it

@@ -534,6 +534,82 @@ export declare type MetatraderAccountInformation = {
 }
 
 /**
+ * Stop loss threshold
+ */
+export declare type StopLossThreshold = {
+
+  /**
+   * Price threshold relative to position open price, interpreted according to units field value
+   */
+  threshold: Number,
+
+  /**
+   * Stop loss value, interpreted according to units and basePrice field values
+   */
+  stopLoss: Number
+}
+
+/**
+ * Threshold trailing stop loss configuration
+ */
+export declare type ThresholdTrailingStopLoss = {
+
+  /**
+   * Stop loss thresholds
+   */
+  thresholds: StopLossThreshold[],
+
+  /**
+   * Threshold stop loss units. ABSOLUTE_PRICE means the that the value of stop loss threshold fields contain a
+   * final threshold & stop loss value. RELATIVE* means that the threshold fields value contains relative 
+   * threshold & stop loss values, expressed either in price, points, account currency or balance percentage.
+   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
+   * RELATIVE_BALANCE_PERCENTAGE
+   */
+  units?: String,
+
+  /**
+   * Defined the base price to calculate SL relative to for POSITION_MODIFY and pending order requests. Default
+   * is OPEN_PRICE. One of CURRENT_PRICE, OPEN_PRICE
+   */
+  stopPriceBase?: String
+}
+
+/**
+ * Distance trailing stop loss configuration
+ */
+export declare type DistanceTrailingStopLoss = {
+
+  /**
+   * SL distance relative to current price, interpreted according to units field value
+   */
+  distance?: Number,
+
+  /**
+   * Distance trailing stop loss units. RELATIVE_* means that the distance field value contains relative
+   * stop loss expressed either in price, points, account currency or balance percentage. Default is
+   * RELATIVE_PRICE. One of RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   */
+  units?: String
+}
+
+/**
+ * Distance trailing stop loss configuration
+ */
+export declare type TrailingStopLoss = {
+
+  /**
+   * Distance trailing stop loss configuration
+   */
+  distance?: DistanceTrailingStopLoss
+
+  /**
+   * Threshold trailing stop loss configuration
+   */
+  threshold?: ThresholdTrailingStopLoss
+}
+
+/**
  * MetaTrader position
  */
 export declare type MetatraderPosition = {
@@ -597,6 +673,11 @@ export declare type MetatraderPosition = {
    * optional position take profit price
    */
   takeProfit?: Number,
+
+  /**
+   * distance trailing stop loss configuration
+   */
+  trailingStopLoss?: TrailingStopLoss,
 
   /**
    * position volume
@@ -739,6 +820,11 @@ export declare type MetatraderOrder = {
    * order take profit price
    */
   takeProfit?: Number,
+
+  /**
+   * distance trailing stop loss configuration
+   */
+  trailingStopLoss?: TrailingStopLoss,
 
   /**
    * order requested quantity
