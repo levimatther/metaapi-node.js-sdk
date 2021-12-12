@@ -50,10 +50,60 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
 
   /**
+   * Market trade options
+   * @typedef {MarketTradeOptions} CreateMarketTradeOptions
+   * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
+   */
+
+  /**
    * Pending order trade options
    * @typedef {TradeOptions} PendingTradeOptions
    * @property {ExpirationOptions} [expiration] optional pending order expiration settings. See Pending order expiration
    * settings section
+   * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
+   * @property {String} [stopPriceBase] defined the base price to calculate SL/TP relative to for *_MODIFY and pending
+   * order requests. STOP_PRICE means the SL/TP is relative to previous SL/TP value. Default is OPEN_PRICE, one of
+   * CURRENT_PRICE, OPEN_PRICE
+   * @property {String} [openPriceUnits] open price units. ABSOLUTE_PRICE means the that the value of openPrice field
+   * is a final open price value. RELATIVE* means that the openPrice field value contains relative open price expressed
+   * either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE,
+   * RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   */
+
+  /**
+   * Options for creating a stop limit pending order
+   * @typedef {PendingTradeOptions} StopLimitPendingTradeOptions
+   * @property {String} [openPriceBase] defined the base price to calculate open price relative to for ORDER_MODIFY
+   * and pending order requests. Default is CURRENT_PRICE for pending orders or STOP_LIMIT_PRICE for stop limit orders.
+   * One of CURRENT_PRICE, OPEN_PRICE, STOP_LIMIT_PRICE
+   * @property {String} [stopLimitPriceUnits] stop limit price units. ABSOLUTE_PRICE means the that the value of
+   * stopLimitPrice field is a final stop limit price value. RELATIVE* means that the stopLimitPrice field value
+   * contains relative stop limit price expressed either in price, points, account currency or balance percentage.
+   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
+   * RELATIVE_BALANCE_PERCENTAGE
+   */
+
+  /**
+   * Options for modifying orders
+   * @typedef {Object} ModifyOrderOptions
+   * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
+   * @property {String} [stopPriceBase] defined the base price to calculate SL/TP relative to for *_MODIFY and pending
+   * order requests. STOP_PRICE means the SL/TP is relative to previous SL/TP value. Default is OPEN_PRICE, one of
+   * CURRENT_PRICE, OPEN_PRICE, STOP_PRICE
+   * @property {String} [openPriceUnits] open price units. ABSOLUTE_PRICE means the that the value of openPrice field
+   * is a final open price value. RELATIVE* means that the openPrice field value contains relative open price expressed
+   * either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE,
+   * RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * @property {String} [openPriceBase] defined the base price to calculate open price relative to for ORDER_MODIFY
+   * and pending order requests. Default is CURRENT_PRICE for pending orders or STOP_LIMIT_PRICE for stop limit orders.
+   * One of CURRENT_PRICE, OPEN_PRICE, STOP_LIMIT_PRICE
+   * @property {String} [stopLimitPriceUnits] stop limit price units. ABSOLUTE_PRICE means the that the value of
+   * stopLimitPrice field is a final stop limit price value. RELATIVE* means that the stopLimitPrice field value
+   * contains relative stop limit price expressed either in price, points, account currency or balance percentage.
+   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
+   * RELATIVE_BALANCE_PERCENTAGE
+   * @property {String} [stopLimitPriceBase] Defined the base price to calculate stop limit price relative to for
+   * ORDER_MODIFY requests. One of CURRENT_PRICE, STOP_LIMIT_PRICE
    */
 
   /**
@@ -83,7 +133,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {number} volume order volume
    * @param {number|StopOptions} [stopLoss] stop loss price
    * @param {number|StopOptions} [takeProfit] take profit price
-   * @param {MarketTradeOptions} options optional trade options
+   * @param {CreateMarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -98,7 +148,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {number} volume order volume
    * @param {number|StopOptions} [stopLoss] stop loss price
    * @param {number|StopOptions} [takeProfit] take profit price
-   * @param {MarketTradeOptions} options optional trade options
+   * @param {CreateMarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -179,7 +229,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {number} stopLimitPrice the limit order price for the stop limit order
    * @param {number|StopOptions} [stopLoss] stop loss price
    * @param {number|StopOptions} [takeProfit] take profit price
-   * @param {PendingTradeOptions} options optional trade options
+   * @param {StopLimitPendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -197,7 +247,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {number} stopLimitPrice the limit order price for the stop limit order
    * @param {number|StopOptions} [stopLoss] stop loss price
    * @param {number|StopOptions} [takeProfit] take profit price
-   * @param {PendingTradeOptions} options optional trade options
+   * @param {StopLimitPendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
@@ -212,12 +262,16 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {string} positionId position id to modify
    * @param {number|StopOptions} [stopLoss] stop loss price
    * @param {number|StopOptions} [takeProfit] take profit price
+   * @param {TrailingStopLoss} trailingStopLoss distance trailing stop loss configuration
+   * @param {String} [stopPriceBase] defines the base price to calculate SL relative to for POSITION_MODIFY and
+   * pending order requests. Default is OPEN_PRICE. One of CURRENT_PRICE, OPEN_PRICE, STOP_PRICE
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
-  modifyPosition(positionId, stopLoss, takeProfit) {
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_MODIFY', positionId},
-      this._generateStopOptions(stopLoss, takeProfit)), this._application);
+  modifyPosition(positionId, stopLoss, takeProfit, trailingStopLoss, stopPriceBase) {
+    return this._websocketClient.trade(this._account.id, 
+      Object.assign({actionType: 'POSITION_MODIFY', positionId, trailingStopLoss, stopPriceBase},
+        this._generateStopOptions(stopLoss, takeProfit)), this._application);
   }
 
   /**
@@ -276,12 +330,14 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {number} openPrice order stop price
    * @param {number|StopOptions} [stopLoss] stop loss price
    * @param {number|StopOptions} [takeProfit] take profit price
+   * @param {ModifyOrderOptions} [options] optional modify order options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
-  modifyOrder(orderId, openPrice, stopLoss, takeProfit) {
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_MODIFY', orderId, openPrice},
-      this._generateStopOptions(stopLoss, takeProfit)), this._application);
+  modifyOrder(orderId, openPrice, stopLoss, takeProfit, options = {}) {
+    return this._websocketClient.trade(this._account.id, 
+      Object.assign({actionType: 'ORDER_MODIFY', orderId, openPrice},
+        this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
 
   /**
