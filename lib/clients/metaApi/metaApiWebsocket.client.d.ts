@@ -562,9 +562,9 @@ export declare type ThresholdTrailingStopLoss = {
   /**
    * Threshold stop loss units. ABSOLUTE_PRICE means the that the value of stop loss threshold fields contain a
    * final threshold & stop loss value. RELATIVE* means that the threshold fields value contains relative 
-   * threshold & stop loss values, expressed either in price, points, account currency or balance percentage.
-   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
-   * RELATIVE_BALANCE_PERCENTAGE
+   * threshold & stop loss values, expressed either in price, points, pips, account currency or balance percentage.
+   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS,
+   * RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
   units?: String,
 
@@ -587,8 +587,9 @@ export declare type DistanceTrailingStopLoss = {
 
   /**
    * Distance trailing stop loss units. RELATIVE_* means that the distance field value contains relative
-   * stop loss expressed either in price, points, account currency or balance percentage. Default is
-   * RELATIVE_PRICE. One of RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * stop loss expressed either in price, points, pips, account currency or balance percentage. Default is
+   * RELATIVE_PRICE. One of RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
+   * RELATIVE_BALANCE_PERCENTAGE
    */
   units?: String
 }
@@ -1586,12 +1587,12 @@ export declare type MetatraderTrade = {
   takeProfit?: Number,
 
   /**
-   * stop loss units. ABSOLUTE_PRICE means the that the value of stopLoss field is a final stop loss value. RELATIVE_* means that the stopLoss field value contains relative stop loss expressed either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * stop loss units. ABSOLUTE_PRICE means the that the value of stopLoss field is a final stop loss value. RELATIVE_* means that the stopLoss field value contains relative stop loss expressed either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
   stopLossUnits?: String,
 
   /**
-   * take profit units. ABSOLUTE_PRICE means the that the value of takeProfit field is a final take profit value. RELATIVE_* means that the takeProfit field value contains relative take profit expressed either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * take profit units. ABSOLUTE_PRICE means the that the value of takeProfit field is a final take profit value. RELATIVE_* means that the takeProfit field value contains relative take profit expressed either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
   takeProfitUnits?: String,
 

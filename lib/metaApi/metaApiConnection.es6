@@ -66,8 +66,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    * CURRENT_PRICE, OPEN_PRICE
    * @property {String} [openPriceUnits] open price units. ABSOLUTE_PRICE means the that the value of openPrice field
    * is a final open price value. RELATIVE* means that the openPrice field value contains relative open price expressed
-   * either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE,
-   * RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
+   * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
 
   /**
@@ -78,8 +78,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    * One of CURRENT_PRICE, OPEN_PRICE, STOP_LIMIT_PRICE
    * @property {String} [stopLimitPriceUnits] stop limit price units. ABSOLUTE_PRICE means the that the value of
    * stopLimitPrice field is a final stop limit price value. RELATIVE* means that the stopLimitPrice field value
-   * contains relative stop limit price expressed either in price, points, account currency or balance percentage.
-   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
+   * contains relative stop limit price expressed either in price, points, pips, account currency or balance percentage.
+   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
    * RELATIVE_BALANCE_PERCENTAGE
    */
 
@@ -92,15 +92,15 @@ export default class MetaApiConnection extends SynchronizationListener {
    * CURRENT_PRICE, OPEN_PRICE, STOP_PRICE
    * @property {String} [openPriceUnits] open price units. ABSOLUTE_PRICE means the that the value of openPrice field
    * is a final open price value. RELATIVE* means that the openPrice field value contains relative open price expressed
-   * either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE,
-   * RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
+   * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    * @property {String} [openPriceBase] defined the base price to calculate open price relative to for ORDER_MODIFY
    * and pending order requests. Default is CURRENT_PRICE for pending orders or STOP_LIMIT_PRICE for stop limit orders.
    * One of CURRENT_PRICE, OPEN_PRICE, STOP_LIMIT_PRICE
    * @property {String} [stopLimitPriceUnits] stop limit price units. ABSOLUTE_PRICE means the that the value of
    * stopLimitPrice field is a final stop limit price value. RELATIVE* means that the stopLimitPrice field value
-   * contains relative stop limit price expressed either in price, points, account currency or balance percentage.
-   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
+   * contains relative stop limit price expressed either in price, points, pips, account currency or balance percentage.
+   * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
    * RELATIVE_BALANCE_PERCENTAGE
    * @property {String} [stopLimitPriceBase] Defined the base price to calculate stop limit price relative to for
    * ORDER_MODIFY requests. One of CURRENT_PRICE, STOP_LIMIT_PRICE
@@ -122,9 +122,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @typedef {Object} StopOptions
    * @property {number} value stop (SL or TP) value
    * @property {string} units stop units. ABSOLUTE_PRICE means the that the value of value field is a final stop value.
-   * RELATIVE_* means that the value field value contains relative stop expressed either in price, points, account
+   * RELATIVE_* means that the value field value contains relative stop expressed either in price, points, pips, account
    * currency or balance percentage. Default is ABSOLUTE_PRICE. Allowed values are ABSOLUTE_PRICE, RELATIVE_PRICE,
-   * RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
 
   /**
