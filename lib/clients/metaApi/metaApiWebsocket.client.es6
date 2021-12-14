@@ -414,9 +414,9 @@ export default class MetaApiWebsocketClient {
    * @property {StopLossThreshold[]} thresholds stop loss thresholds
    * @property {String} [units] threshold stop loss units. ABSOLUTE_PRICE means the that the value of stop loss
    * threshold fields contain a final threshold & stop loss value. RELATIVE* means that the threshold fields value
-   * contains relative threshold & stop loss values, expressed either in price, points, account currency or balance
-   * percentage. Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, 
-   * RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * contains relative threshold & stop loss values, expressed either in price, points, pips, account currency or
+   * balance percentage. Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS,
+   * RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    * @property {String} [stopPriceBase] defined the base price to calculate SL relative to for POSITION_MODIFY and
    * pending order requests. Default is OPEN_PRICE. One of CURRENT_PRICE, OPEN_PRICE
    */
@@ -426,8 +426,9 @@ export default class MetaApiWebsocketClient {
    * @typedef {Object} DistanceTrailingStopLoss
    * @property {Number} [distance] SL distance relative to current price, interpreted according to units field value
    * @property {String} [units] distance trailing stop loss units. RELATIVE_* means that the distance field value 
-   * contains relative stop loss expressed either in price, points, account currency or balance percentage. 
-   * Default is RELATIVE_PRICE. One of RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * contains relative stop loss expressed either in price, points, pips, account currency or balance percentage. 
+   * Default is RELATIVE_PRICE. One of RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
+   * RELATIVE_BALANCE_PERCENTAGE
    */
 
   /**

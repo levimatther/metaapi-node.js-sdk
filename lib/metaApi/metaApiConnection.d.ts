@@ -271,8 +271,8 @@ export declare type PendingTradeOptions = {
   /**
    * open price units. ABSOLUTE_PRICE means the that the value of openPrice field is a final open
    * price value. RELATIVE* means that the openPrice field value contains relative open price expressed
-   * either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
-   * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
+   * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
   openPriceUnits?: String
 } & TradeOptions
@@ -292,8 +292,8 @@ export declare type StopLimitPendingTradeOptions = {
   /**
    * Stop limit price units. ABSOLUTE_PRICE means the that the value of stopLimitPrice field is a
    * final stop limit price value. RELATIVE* means that the stopLimitPrice field value contains relative
-   * stop limit price expressed either in price, points, account currency or balance percentage. Default
-   * is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
+   * stop limit price expressed either in price, points, pips, account currency or balance percentage. Default
+   * is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
    * RELATIVE_BALANCE_PERCENTAGE
    */
   stopLimitPriceUnits?: String
@@ -319,8 +319,8 @@ export declare type ModifyOrderOptions = {
   /**
    * Open price units. ABSOLUTE_PRICE means the that the value of openPrice field is a final open
    * price value. RELATIVE* means that the openPrice field value contains relative open price expressed
-   * either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
-   * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
+   * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
   openPriceUnits?: String,
 
@@ -334,8 +334,8 @@ export declare type ModifyOrderOptions = {
   /**
    * Stop limit price units. ABSOLUTE_PRICE means the that the value of stopLimitPrice field is a final
    * stop limit price value. RELATIVE* means that the stopLimitPrice field value contains relative stop
-   * limit price expressed either in price, points, account currency or balance percentage. Default is
-   * ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY,
+   * limit price expressed either in price, points, pips, account currency or balance percentage. Default is
+   * ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
    * RELATIVE_BALANCE_PERCENTAGE
    */
   stopLimitPriceUnits?: String,
@@ -379,9 +379,9 @@ export declare type StopOptions = {
 
   /**
    * stop units. ABSOLUTE_PRICE means the that the value of value field is a final stop value.
-   * RELATIVE_* means that the value field value contains relative stop expressed either in price, points, account
+   * RELATIVE_* means that the value field value contains relative stop expressed either in price, points, pips, account
    * currency or balance percentage. Default is ABSOLUTE_PRICE. Allowed values are ABSOLUTE_PRICE, RELATIVE_PRICE,
-   * RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
   units: String
 }
