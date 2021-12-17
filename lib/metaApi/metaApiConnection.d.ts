@@ -1,4 +1,4 @@
-import MetaApiWebsocketClient, { MetatraderTradeResponse, TrailingStopLoss } from "../clients/metaApi/metaApiWebsocket.client";
+import MetaApiWebsocketClient, { MetatraderTradeResponse } from "../clients/metaApi/metaApiWebsocket.client";
 import SynchronizationListener from "../clients/metaApi/synchronizationListener";
 import MetatraderAccount from "./metatraderAccount";
 
@@ -11,9 +11,9 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Constructs MetaApi MetaTrader Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
    * @param {MetatraderAccount} account MetaTrader account id to connect to
-   * @param {String} [application] application to use
+   * @param {string} [application] application to use
    */
-  constructor(websocketClient: MetaApiWebsocketClient, account: MetatraderAccount, application: String);
+  constructor(websocketClient: MetaApiWebsocketClient, account: MetatraderAccount, application: string);
   
   /**
    * Creates a market buy order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -24,7 +24,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {CreateMarketTradeOptions} options optional trade options
    * @returns {Promise<MetatraderTradeResponse>} promise resolving with trade result
    */
-  createMarketBuyOrder(symbol: String, volume: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: CreateMarketTradeOptions): Promise<MetatraderTradeResponse>;
+  createMarketBuyOrder(symbol: string, volume: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: CreateMarketTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a market sell order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -35,11 +35,11 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {CreateMarketTradeOptions} options optional trade options
    * @returns {Promise<MetatraderTradeResponse>} promise resolving with trade result
    */
-  createMarketSellOrder(symbol: String, volume: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: CreateMarketTradeOptions): Promise<MetatraderTradeResponse>;
+  createMarketSellOrder(symbol: string, volume: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: CreateMarketTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a limit buy order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
-   * @param {String} symbol symbol to trade
+   * @param {string} symbol symbol to trade
    * @param {number} volume order volume
    * @param {number} openPrice order limit price
    * @param {number|StopOptions} [stopLoss] stop loss price
@@ -47,7 +47,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  createLimitBuyOrder(symbol: String, volume: Number, openPrice: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
+  createLimitBuyOrder(symbol: string, volume: number, openPrice: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a limit sell order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -59,7 +59,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  createLimitSellOrder(symbol: String, volume: Number, openPrice: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
+  createLimitSellOrder(symbol: string, volume: number, openPrice: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a stop buy order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -71,7 +71,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  createStopBuyOrder(symbol: String, volume: Number, openPrice: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
+  createStopBuyOrder(symbol: string, volume: number, openPrice: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a stop sell order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -83,7 +83,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {PendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  createStopSellOrder(symbol: String, volume: Number, openPrice: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
+  createStopSellOrder(symbol: string, volume: number, openPrice: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: PendingTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a stop limit buy order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -96,7 +96,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {StopLimitPendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  createStopLimitBuyOrder(symbol: String, volume: Number, openPrice: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: StopLimitPendingTradeOptions): Promise<MetatraderTradeResponse>;
+  createStopLimitBuyOrder(symbol: string, volume: number, openPrice: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: StopLimitPendingTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a stop limit sell order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -109,7 +109,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {StopLimitPendingTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  createStopLimitSellOrder(symbol: String, volume: Number, openPrice: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: StopLimitPendingTradeOptions): Promise<MetatraderTradeResponse>;
+  createStopLimitSellOrder(symbol: string, volume: number, openPrice: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: StopLimitPendingTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Modifies a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -118,7 +118,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {number|StopOptions} [takeProfit] take profit price
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  modifyPosition(positionId: String, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions): Promise<MetatraderTradeResponse>;
+  modifyPosition(positionId: string, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Partially closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -127,7 +127,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  closePositionPartially(positionId: String, volume: Number, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
+  closePositionPartially(positionId: string, volume: number, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Fully closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -135,7 +135,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  closePosition(positionId: String, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
+  closePosition(positionId: string, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Fully closes a position (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -144,7 +144,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  closeBy(positionId: String, oppositePositionId: String, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
+  closeBy(positionId: string, oppositePositionId: string, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Closes positions by a symbol(see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -152,7 +152,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {MarketTradeOptions} options optional trade options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  closePositionsBySymbol(symbol: String, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
+  closePositionsBySymbol(symbol: string, options: MarketTradeOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Modifies a pending order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
@@ -163,14 +163,14 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {ModifyOrderOptions} [options] optional modify order options
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  modifyOrder(orderId: String, openPrice: Number, stopLoss?: Number | StopOptions, takeProfit?: Number | StopOptions, options?: ModifyOrderOptions): Promise<MetatraderTradeResponse>;
+  modifyOrder(orderId: string, openPrice: number, stopLoss?: number | StopOptions, takeProfit?: number | StopOptions, options?: ModifyOrderOptions): Promise<MetatraderTradeResponse>;
   
   /**
    * Cancels order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {string} orderId order id (ticket number)
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
-  cancelOrder(orderId: String): Promise<MetatraderTradeResponse>;
+  cancelOrder(orderId: string): Promise<MetatraderTradeResponse>;
   
   /**
    * Reconnects to the Metatrader terminal (see https://metaapi.cloud/docs/client/websocket/api/reconnect/).
@@ -195,7 +195,7 @@ export declare type TradeOptions = {
    * clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  comment?: String,
+  comment?: string,
 
   /**
    * optional client-assigned id. The id value can be assigned when submitting a trade and
@@ -204,20 +204,20 @@ export declare type TradeOptions = {
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  clientId?: String,
+  clientId?: string,
 
   /**
    * optional magic (expert id) number. If not set default value specified in account entity
    * will be used.
    */
-  magic?: Number,
+  magic?: number,
 
   /**
    * optional slippage in points. Should be greater or equal to zero. In not set,
    * default value specified in account entity will be used. Slippage is ignored if execution mode set to
    * SYMBOL_TRADE_EXECUTION_MARKET in symbol specification. Not used for close by orders.
    */
-  slippage?: Number
+  slippage?: number
 }
 
 /**
@@ -231,7 +231,7 @@ export declare type MarketTradeOptions = {
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_filling for extra
    * explanation
    */
-  fillingModes?: Array<String>
+  fillingModes?: Array<string>
 } & TradeOptions
 
 /**
@@ -254,40 +254,39 @@ export declare type PendingTradeOptions = {
    * optional pending order expiration settings. See Pending order expiration
    * settings section
    */
-  expiration?: ExpirationOptions,
+   expiration?: ExpirationOptions,
 
-  /**
-   * distance trailing stop loss configuration
-   */
-  trailingStopLoss?: TrailingStopLoss,
-
-  /**
-   * defines the base price to calculate SL/TP relative to for *_MODIFY and pending order requests. 
-   * STOP_PRICE means the SL/TP is relative to previous SL/TP value. Default is OPEN_PRICE, one of
-   * CURRENT_PRICE, OPEN_PRICE
-   */
-  stopPriceBase?: String,
-
-  /**
-   * open price units. ABSOLUTE_PRICE means the that the value of openPrice field is a final open
-   * price value. RELATIVE* means that the openPrice field value contains relative open price expressed
-   * either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
-   * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
-   */
-  openPriceUnits?: String
+   /**
+    * distance trailing stop loss configuration
+    */
+   trailingStopLoss?: TrailingStopLoss,
+ 
+   /**
+    * defines the base price to calculate SL/TP relative to for *_MODIFY and pending order requests. 
+    * STOP_PRICE means the SL/TP is relative to previous SL/TP value. Default is OPEN_PRICE, one of
+    * CURRENT_PRICE, OPEN_PRICE
+    */
+   stopPriceBase?: string,
+ 
+   /**
+    * open price units. ABSOLUTE_PRICE means the that the value of openPrice field is a final open
+    * price value. RELATIVE* means that the openPrice field value contains relative open price expressed
+    * either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
+    * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+    */
+   openPriceUnits?: string
 } & TradeOptions
-
 /**
  * Options for creating a stop limit pending order
  */
-export declare type StopLimitPendingTradeOptions = {
+ export declare type StopLimitPendingTradeOptions = {
 
   /**
    * Defines the base price to calculate open price relative to for ORDER_MODIFY and pending order
    * requests. Default is CURRENT_PRICE for pending orders or STOP_LIMIT_PRICE for stop limit orders.
    * One of CURRENT_PRICE, OPEN_PRICE, STOP_LIMIT_PRICE
    */
-  openPriceBase?: String,
+  openPriceBase?: string,
 
   /**
    * Stop limit price units. ABSOLUTE_PRICE means the that the value of stopLimitPrice field is a
@@ -296,7 +295,7 @@ export declare type StopLimitPendingTradeOptions = {
    * is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
    * RELATIVE_BALANCE_PERCENTAGE
    */
-  stopLimitPriceUnits?: String
+  stopLimitPriceUnits?: string
 } & PendingTradeOptions
 
 /**
@@ -314,7 +313,7 @@ export declare type ModifyOrderOptions = {
    * STOP_PRICE means the SL/TP is relative to previous SL/TP value. Default is OPEN_PRICE, one of
    * CURRENT_PRICE, OPEN_PRICE, STOP_PRICE
    */
-  stopPriceBase?: String,
+  stopPriceBase?: string,
 
   /**
    * Open price units. ABSOLUTE_PRICE means the that the value of openPrice field is a final open
@@ -322,14 +321,14 @@ export declare type ModifyOrderOptions = {
    * either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. One of
    * ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
-  openPriceUnits?: String,
+  openPriceUnits?: string,
 
   /**
    * Defines the base price to calculate open price relative to for ORDER_MODIFY and pending order
    * requests. Default is CURRENT_PRICE for pending orders or STOP_LIMIT_PRICE for stop limit orders.
    * One of CURRENT_PRICE, OPEN_PRICE, STOP_LIMIT_PRICE
    */
-  openPriceBase?: String,
+  openPriceBase?: string,
 
   /**
    * Stop limit price units. ABSOLUTE_PRICE means the that the value of stopLimitPrice field is a final
@@ -338,13 +337,13 @@ export declare type ModifyOrderOptions = {
    * ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
    * RELATIVE_BALANCE_PERCENTAGE
    */
-  stopLimitPriceUnits?: String,
+  stopLimitPriceUnits?: string,
 
   /**
    * Defines the base price to calculate stop limit price relative to for ORDER_MODIFY requests. One of
    * CURRENT_PRICE, STOP_LIMIT_PRICE
    */
-  stopLimitPriceBase?: String
+  stopLimitPriceBase?: string
 }
 
 /**
@@ -358,7 +357,7 @@ export declare type ExpirationOptions = {
    * possible options. MetaTrader4 platform supports only ORDER_TIME_SPECIFIED expiration type. One of ORDER_TIME_GTC,
    * ORDER_TIME_DAY, ORDER_TIME_SPECIFIED, ORDER_TIME_SPECIFIED_DAY
    */
-  type: String,
+  type: string,
 
   /**
    * optional pending order expiration time. Ignored if expiration type is not one of
@@ -375,7 +374,7 @@ export declare type StopOptions = {
   /**
    * stop (SL or TP) value
    */
-  value: Number,
+  value: number,
 
   /**
    * stop units. ABSOLUTE_PRICE means the that the value of value field is a final stop value.
@@ -383,5 +382,5 @@ export declare type StopOptions = {
    * currency or balance percentage. Default is ABSOLUTE_PRICE. Allowed values are ABSOLUTE_PRICE, RELATIVE_PRICE,
    * RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
-  units: String
+  units: string
 }

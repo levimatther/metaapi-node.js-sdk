@@ -14,39 +14,39 @@ export default class ProvisioningProfile {
   
   /**
    * Returns profile id
-   * @return {String} profile id
+   * @return {string} profile id
    */
-  get id(): String;
+  get id(): string;
 
   /**
    * Returns profile name
-   * @return {String} profile name
+   * @return {string} profile name
    */
-  get name(): String;
+  get name(): string;
 
   /**
    * Returns profile version. Possible values are 4 and 5
-   * @return {Number} profile version
+   * @return {number} profile version
    */
-  get version(): Number;
+  get version(): number;
 
   /**
    * Returns profile status. Possible values are new and active
-   * @return {String} profile status
+   * @return {string} profile status
    */
-  get status(): String;
+  get status(): string;
 
   /**
    * Returns broker timezone name from Time Zone Database
-   * @return {String} broker timezone name
+   * @return {string} broker timezone name
    */
-  get brokerTimezone(): String;
+  get brokerTimezone(): string;
 
   /**
    * Returns broker DST timezone name from Time Zone Database
-   * @return {String} broker DST switch timezone name
+   * @return {string} broker DST switch timezone name
    */
-  get brokerDSTSwitchTimezone(): String;
+  get brokerDSTSwitchTimezone(): string;
 
   /**
    * Reloads provisioning profile from API
@@ -62,12 +62,12 @@ export default class ProvisioningProfile {
 
   /**
    * Uploads a file to provisioning profile.
-   * @param {String} fileName name of the file to upload. Allowed values are servers.dat for MT5 profile, broker.srv for
+   * @param {string} fileName name of the file to upload. Allowed values are servers.dat for MT5 profile, broker.srv for
    * MT4 profile
-   * @param {String|Buffer} file path to a file to upload or buffer containing file contents
+   * @param {string|Buffer} file path to a file to upload or buffer containing file contents
    * @return {Promise} promise which resolves when the file was uploaded
    */
-  uploadFile(fileName: string, file: String|Buffer): Promise<any>;
+  uploadFile(fileName: string, file: string|Buffer): Promise<any>;
 
   /**
    * Updates provisioning profile

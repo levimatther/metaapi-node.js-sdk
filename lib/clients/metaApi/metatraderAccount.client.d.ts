@@ -14,10 +14,10 @@ export default class MetatraderAccountClient {
   /**
    * Retrieves a MetaTrader account by id (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/). Throws
    * an error if account is not found.
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @return {Promise<MetatraderAccountDto>} promise resolving with MetaTrader account found
    */
-  getAccount(id: String): Promise<MetatraderAccountDto>;
+  getAccount(id: string): Promise<MetatraderAccountDto>;
   
   /**
    * Retrieves a MetaTrader account by token (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/).
@@ -36,60 +36,60 @@ export default class MetatraderAccountClient {
    * @param {NewMetatraderAccountDto} account MetaTrader account to create
    * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id of the MetaTrader account created
    */
-  createAccount(account: NewMetatraderAccountDto): MetatraderAccountIdDto
+  createAccount(account: NewMetatraderAccountDto): Promise<MetatraderAccountIdDto>;
   
   /**
    * Starts API server for MetaTrader account. This request will be ignored if the account has already been deployed.
    * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
-   * @param {String} id MetaTrader account id to deploy
+   * @param {string} id MetaTrader account id to deploy
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deployment
    */
-  deployAccount(id: String): Promise<any>
+  deployAccount(id: string): Promise<any>
   
   /**
    * Stops API server for a MetaTrader account. Terminal data such as downloaded market history data will be preserved.
    * (see https://metaapi.cloud/docs/provisioning/api/account/undeployAccount/)
-   * @param {String} id MetaTrader account id to undeploy
+   * @param {string} id MetaTrader account id to undeploy
    * @return {Promise} promise resolving when MetaTrader account is scheduled for undeployment
    */
-  undeployAccount(id: String): Promise<any>
+  undeployAccount(id: string): Promise<any>
   
   /**
    * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
    * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
-   * @param {String} id MetaTrader account id to redeploy
+   * @param {string} id MetaTrader account id to redeploy
    * @return {Promise} promise resolving when MetaTrader account is scheduled for redeployment
    */
-  redeployAccount(id: String): Promise<any>
+  redeployAccount(id: string): Promise<any>
   
   /**
    * Stops and deletes an API server for a specified MetaTrader account. The terminal state such as downloaded market
    * data history will be deleted as well when you delete the account. (see
    * https://metaapi.cloud/docs/provisioning/api/account/deleteAccount/).
    * Method is accessible only with API access token
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
    */
-  deleteAccount(id: String): Promise<any>
+  deleteAccount(id: string): Promise<any>
   
   /**
    * Updates existing metatrader account data (see
    * https://metaapi.cloud/docs/provisioning/api/account/updateAccount/).
    * Method is accessible only with API access token
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @param {MetatraderAccountUpdateDto} account updated MetaTrader account
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
-  updateAccount(id: String, account: MetatraderAccountUpdateDto): Promise<any>
+  updateAccount(id: string, account: MetatraderAccountUpdateDto): Promise<any>
   
   /**
    * Increases MetaTrader account reliability. The account will be temporary stopped to perform this action. (see
    * https://metaapi.cloud/docs/provisioning/api/account/increaseReliability/).
    * Method is accessible only with API access token
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account reliability is increased
    */
-  increaseReliability(id: String): Promise<any>
+  increaseReliability(id: string): Promise<any>
 }
 
 /**
@@ -100,7 +100,7 @@ export declare type Extension = {
   /**
    * extension id
    */
-  id: String,
+  id: string,
 
   /**
    * extension configuration
@@ -137,13 +137,13 @@ export declare type AccountsFilter = {
   /**
    * search offset (defaults to 0) (must be greater or equal to 0)
    */
-  offset?: Number,
+  offset?: number,
 
   /**
    * search limit (defaults to 1000) 
    * (must be greater or equal to 1 and less or equal to 1000)
    */
-  limit?: Number,
+  limit?: number,
 
   /**
    * MT version
@@ -168,12 +168,12 @@ export declare type AccountsFilter = {
   /**
    * searches over _id, name, server and login to match query
    */
-  query?: String,
+  query?: string,
 
   /**
    * provisioning profile id
    */
-  provisioningProfileId?: String
+  provisioningProfileId?: string
 }
 
 /**
@@ -184,28 +184,28 @@ export declare type MetatraderAccountDto = {
   /**
    * account unique identifier
    */
-  _id: String,
+  _id: string,
 
   /**
    * MetaTrader account human-readable name in the MetaApi app
    */
-  name: String,
+  name: string,
 
   /**
    * account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. Cloud and cloud-g2 are
    * aliases.
    */
-  type: String,
+  type: string,
 
   /**
    * MetaTrader account number
    */
-  login: String,
+  login: string,
 
   /**
    * MetaTrader server which hosts the account
    */
-  server: String,
+  server: string,
 
   /**
    * MT version
@@ -215,49 +215,49 @@ export declare type MetatraderAccountDto = {
   /**
    * id of the account's provisioning profile
    */
-  provisioningProfileId?: String,
+  provisioningProfileId?: string,
 
   /**
    * application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
    */
-  application: String,
+  application: string,
 
   /**
    * MetaTrader magic to place trades using
    */
-  magic: Number,
+  magic: number,
 
   /**
    * ccount deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED,
    * DELETING
    */
-  state: String,
+  state: string,
 
   /**
    * terminal & broker connection status, one of CONNECTED, DISCONNECTED,
    * DISCONNECTED_FROM_BROKER
    */
-  connectionStatus: String,
+  connectionStatus: string,
 
   /**
    * authorization token to be used for accessing single account data.
    * Intended to be used in browser API.
    */
-  accessToken: String,
+  accessToken: string,
 
   /**
    * flag indicating if trades should be placed as manual trades. Default is false.
    * Supported on G2 only
    */
-  manualTrades: Boolean,
+  manualTrades: boolean,
 
   /**
    * Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    */
-  quoteStreamingIntervalInSeconds: Number,
+  quoteStreamingIntervalInSeconds: number,
 
   /**
    * MetaTrader account tags
@@ -278,40 +278,40 @@ export declare type MetatraderAccountDto = {
    * used to increase the reliability of the account. Allowed values are regular and
    * high. Default is regular
    */
-  reliability?: String,
+  reliability?: string,
 
   /**
    * 3-character ISO currency code of the account base currency. Default value is USD.
    * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
    * brokers. You should not alter this setting unless you understand what you are doing.
    */
-  baseCurrency?: String,
+  baseCurrency?: string,
 
   /**
    * Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
    */
-  copyFactoryRoles?: Array<String>,
+  copyFactoryRoles?: Array<string>,
 
   /**
-   * Number of resource slots to allocate to account. Allocating extra resource slots
+   * number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
    * is billed as 2 standard resource slots.  Default is 1.
    */
-  resourceSlots: Number,
+  resourceSlots: number,
 
   /**
-   * Number of CopyFactory 2 resource slots to allocate to account.
+   * number of CopyFactory 2 resource slots to allocate to account.
    * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
    * Default is 1.
    */
-  copyFactoryResourceSlots: Number
+  copyFactoryResourceSlots: number
 }
 
 /**
@@ -322,63 +322,63 @@ export declare type NewMetatraderAccountDto = {
   /**
    * MetaTrader account human-readable name in the MetaApi app
    */
-  name: String,
+  name: string,
 
   /**
    * account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. cloud-g2 and cloud are
    * aliases. When you create MT5 cloud account the type is automatically converted to cloud-g1 because MT5 G2 support
    * is still experimental. You can still create MT5 G2 account by setting type to cloud-g2.
    */
-  type: String,
+  type: string,
 
   /**
    * MetaTrader account number
    */
-  login: String,
+  login: string,
 
   /**
    * MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
    */
-  password: String,
+  password: string,
 
   /**
    * MetaTrader server which hosts the account
    */
-  server: String,
+  server: string,
 
   /**
    * Platform id (mt4 or mt5)
    */
-  platform?: String
+  platform?: string
 
   /**
    * id of the account's provisioning profile
    */
-  provisioningProfileId?: String,
+  provisioningProfileId?: string,
 
   /**
    * application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
    */
-  application: String,
+  application: string,
 
   /**
    * MetaTrader magic to place trades using
    */
-  magic: Number,
+  magic: number,
 
   /**
    * flag indicating if trades should be placed as manual trades. Default is false
    */
-  manualTrades: Boolean,
+  manualTrades: boolean,
 
   /**
    * Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    */
-  quoteStreamingIntervalInSeconds: Number,
+  quoteStreamingIntervalInSeconds: number,
 
   /**
    * MetaTrader account tags
@@ -398,14 +398,14 @@ export declare type NewMetatraderAccountDto = {
   /**
    * used to increase the reliability of the account. Allowed values are regular and high. Default is regular
    */
-  reliability: String,
+  reliability: string,
 
   /**
    * 3-character ISO currency code of the account base currency. Default value is USD.
    * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
    * brokers. You should not alter this setting unless you understand what you are doing.
    */
-  baseCurrency: String,
+  baseCurrency: string,
 
   /**
    * Account roles for CopyFactory2 application. Allowed values are
@@ -414,12 +414,12 @@ export declare type NewMetatraderAccountDto = {
   copyFactoryRoles: Array<string>,
 
   /**
-   * Number of resource slots to allocate to account. Allocating extra resource slots
+   * number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
    */
-  resourceSlots: Number
+  resourceSlots: number
 }
 
 /**
@@ -430,7 +430,7 @@ export declare type MetatraderAccountIdDto = {
   /**
    * MetaTrader account unique identifier
    */
-  id: String
+  id: string
 }
 
 /**
@@ -441,35 +441,35 @@ export declare type MetatraderAccountUpdateDto = {
   /**
    * MetaTrader account human-readable name in the MetaApi app
    */
-  name: String,
+  name: string,
 
   /**
    * MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
    */
-  password: String,
+  password: string,
 
   /**
    * MetaTrader server which hosts the account
    */
-  server: String,
+  server: string,
 
   /**
    * flag indicating if trades should be placed as manual trades. Default is false
    */
-  manualTrades: Boolean,
+  manualTrades: boolean,
 
   /**
    * Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    */
-  quoteStreamingIntervalInSeconds: Number,
+  quoteStreamingIntervalInSeconds: number,
 
   /**
    * MetaTrader account tags
    */
-  tags?: Array<String>,
+  tags?: Array<string>,
 
   /**
    * API extensions
@@ -485,13 +485,13 @@ export declare type MetatraderAccountUpdateDto = {
    * Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
    */
-  copyFactoryRoles: Array<String>,
+  copyFactoryRoles: Array<string>,
 
   /**
-   * Number of resource slots to allocate to account. Allocating extra resource slots
+   * number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
    */
-  resourceSlots: Number
+  resourceSlots: number
 }

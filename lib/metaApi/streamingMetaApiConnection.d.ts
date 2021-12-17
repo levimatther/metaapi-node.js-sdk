@@ -36,10 +36,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
    * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {String} [application] application to remove history for
+   * @param {string} [application] application to remove history for
    * @return {Promise} promise resolving when the history is cleared
    */
-  removeHistory(application?: String): Promise<any>;
+  removeHistory(application?: string): Promise<any>;
   
   /**
    * Clears the order and transaction history of a specified application and removes application (see
@@ -51,10 +51,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Requests the terminal to start synchronization process
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/)
-   * @param {String} instanceIndex instance index
+   * @param {string} instanceIndex instance index
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(instanceIndex: String): Promise<any>;
+  synchronize(instanceIndex: string): Promise<any>;
   
   /**
    * Initializes meta api connection
@@ -71,47 +71,47 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
-   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
    * note that this feature is not fully implemented on server-side yet
-   * @param {Number} instanceIndex instance index
+   * @param {number} instanceIndex instance index
    * @param {number} [timeoutInSeconds] timeout to wait for prices in seconds, default is 30
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(symbol: String, subscriptions: Array<MarketDataSubscription>, instanceIndex: Number, timeoutInSeconds?: Number): Promise<any>;
+  subscribeToMarketData(symbol: string, subscriptions: Array<MarketDataSubscription>, instanceIndex: number, timeoutInSeconds?: number): Promise<any>;
   
   /**
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
-   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
-   * @param {Number} instanceIndex instance index
+   * @param {number} instanceIndex instance index
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(symbol: String, subscriptions: MarketDataUnsubscription, instanceIndex: Number): Promise<any>;
+  unsubscribeFromMarketData(symbol: string, subscriptions: MarketDataUnsubscription, instanceIndex: number): Promise<any>;
   
   /**
    * Invoked when subscription downgrade has occurred
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} symbol symbol to update subscriptions for
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} symbol symbol to update subscriptions for
    * @param {Array<MarketDataSubscription>} updates array of market data subscription to update
    * @param {Array<MarketDataUnsubscription>} unsubscriptions array of subscriptions to cancel
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSubscriptionDowngraded(instanceIndex: String, symbol: String, updates: Array<MarketDataSubscription>, unsubscriptions: Array<MarketDataUnsubscription>): Promise<any>;
+  onSubscriptionDowngraded(instanceIndex: string, symbol: string, updates: Array<MarketDataSubscription>, unsubscriptions: Array<MarketDataUnsubscription>): Promise<any>;
   
   /**
    * Returns list of the symbols connection is subscribed to
-   * @returns {Array<String>} list of the symbols connection is subscribed to
+   * @returns {Array<string>} list of the symbols connection is subscribed to
    */
-  get subscribedSymbols(): Array<String>;
+  get subscribedSymbols(): Array<string>;
   
   /**
    * Returns subscriptions for a symbol
-   * @param {String} symbol symbol to retrieve subscriptions for
+   * @param {string} symbol symbol to retrieve subscriptions for
    * @returns {Array<MarketDataSubscription>} list of market data subscriptions for the symbol
    */
-  subscriptions(symbol: String): Array<MarketDataSubscription>;
+  subscriptions(symbol: string): Array<MarketDataSubscription>;
   
   /**
    * Sends client uptime stats to the server.
@@ -146,35 +146,35 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   
   /**
    * Invoked when connection to MetaTrader terminal established
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {Number} replicas number of account replicas launched
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {number} replicas number of account replicas launched
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onConnected(instanceIndex: String, replicas: Number): Promise<any>;
+  onConnected(instanceIndex: string, replicas: number): Promise<any>;
   
   /**
    * Invoked when connection to MetaTrader terminal terminated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    */
-  onDisconnected(instanceIndex: String): Promise<any>;
+  onDisconnected(instanceIndex: string): Promise<any>;
   
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished to indicate progress of an
    * initial terminal state synchronization
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} synchronizationId synchronization request id
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onDealsSynchronized(instanceIndex: String, synchronizationId: String): Promise<any>;
+  onDealsSynchronized(instanceIndex: string, synchronizationId: string): Promise<any>;
   
   /**
    * Invoked when a synchronization of history orders on a MetaTrader account have finished to indicate progress of an
    * initial terminal state synchronization
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} synchronizationId synchronization request id
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onHistoryOrdersSynchronized(instanceIndex: String, synchronizationId: String): Promise<any>;
+  onHistoryOrdersSynchronized(instanceIndex: string, synchronizationId: string): Promise<any>;
   
   /**
    * Invoked when connection to MetaApi websocket API restored after a disconnect
@@ -184,30 +184,30 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   
   /**
    * Invoked when a stream for an instance index is closed
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onStreamClosed(instanceIndex: String): Promise<any>;
+  onStreamClosed(instanceIndex: string): Promise<any>;
   
   /**
    * Invoked when MetaTrader terminal state synchronization is started
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {Boolean} specificationsUpdated whether specifications are going to be updated during synchronization
-   * @param {Boolean} positionsUpdated whether positions are going to be updated during synchronization
-   * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {boolean} specificationsUpdated whether specifications are going to be updated during synchronization
+   * @param {boolean} positionsUpdated whether positions are going to be updated during synchronization
+   * @param {boolean} ordersUpdated whether orders are going to be updated during synchronization
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSynchronizationStarted(instanceIndex: String, specificationsUpdated: Boolean, positionsUpdated: Boolean, ordersUpdated: Boolean): Promise<any>;
+  onSynchronizationStarted(instanceIndex: string, specificationsUpdated: boolean, positionsUpdated: boolean, ordersUpdated: boolean): Promise<any>;
   
   /**
    * Returns flag indicating status of state synchronization with MetaTrader terminal
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} synchronizationId optional synchronization request id, last synchronization request id will be used
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} synchronizationId optional synchronization request id, last synchronization request id will be used
    * by default
-   * @return {Promise<Boolean>} promise resolving with a flag indicating status of state synchronization with MetaTrader
+   * @return {Promise<boolean>} promise resolving with a flag indicating status of state synchronization with MetaTrader
    * terminal
    */
-  isSynchronized(instanceIndex: String, synchronizationId: String): Promise<Boolean>;
+  isSynchronized(instanceIndex: string, synchronizationId: string): Promise<boolean>;
   
   /**
    * Waits until synchronization to MetaTrader terminal is completed
@@ -225,7 +225,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * Returns synchronization status
    * @return {boolean} synchronization status
    */
-  get synchronized(): Boolean;
+  get synchronized(): boolean;
   
   /**
    * Returns MetaApi account
@@ -248,27 +248,27 @@ export declare type SynchronizationOptions = {
   /**
    * application regular expression pattern, default is .*
    */
-  applicationPattern?: String,
+  applicationPattern?: string,
 
   /**
    * synchronization id, last synchronization request id will be used by
    * default
    */
-  synchronizationId?: String,
+  synchronizationId?: string,
 
   /**
    * index of an account instance to ensure synchronization on, default is to wait
    * for the first instance to synchronize
    */
-  instanceIndex?: Number,
+  instanceIndex?: number,
 
   /**
    * wait timeout in seconds, default is 5m
    */
-  timeoutInSeconds?: Number,
+  timeoutInSeconds?: number,
 
   /**
    * interval between account reloads while waiting for a change, default is 1s
    */
-  intervalInMilliseconds?: Number
+  intervalInMilliseconds?: number
 }

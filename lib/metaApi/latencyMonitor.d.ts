@@ -16,7 +16,7 @@ export default class LatencyMonitor extends LatencyListener {
    * @param {string} type request type
    * @param {ResponseTimestamps} timestamps request timestamps object containing latency information
    */
-  onResponse(accountId: String, type: String, timestamps: ResponseTimestamps): Promise<any>;
+  onResponse(accountId: string, type: string, timestamps: ResponseTimestamps): Promise<any>;
   
   /**
    * Returns request processing latencies
@@ -30,7 +30,7 @@ export default class LatencyMonitor extends LatencyListener {
    * @param {string} symbol price symbol
    * @param {SymbolPriceTimestamps} timestamps timestamps object containing latency information about price streaming
    */
-  onSymbolPrice(accountId: String, symbol: String, timestamps: SymbolPriceTimestamps): Promise<any>;
+  onSymbolPrice(accountId: string, symbol: string, timestamps: SymbolPriceTimestamps): Promise<any>;
   
   /**
    * Returns price streaming latencies
@@ -43,7 +43,7 @@ export default class LatencyMonitor extends LatencyListener {
    * @param {string} accountId account id
    * @param {UpdateTimestamps} timestamps timestamps object containing latency information about update streaming
    */
-  onUpdate(accountId: String, timestamps: UpdateTimestamps): Promise<any>;
+  onUpdate(accountId: string, timestamps: UpdateTimestamps): Promise<any>;
   
   /**
    * Returns update streaming latencies
@@ -56,7 +56,7 @@ export default class LatencyMonitor extends LatencyListener {
    * @param {string} accountId account id
    * @param {TradeTimestamps} timestamps timestamps object containing latency information about a trade
    */
-  onTrade(accountId: String, timestamps: TradeTimestamps): Promise<any>;
+  onTrade(accountId: string, timestamps: TradeTimestamps): Promise<any>;
   
   /**
    * Returns trade latencies

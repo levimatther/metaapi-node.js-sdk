@@ -20,25 +20,25 @@ export default class ConnectionHealthMonitor extends SynchronizationListener {
   
   /**
    * Invoked when a symbol price was updated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {MetatraderSymbolPrice} price updated MetaTrader symbol price
    */
-  onSymbolPriceUpdated(instanceIndex: String, price: MetatraderSymbolPrice): Promise<any>;
+  onSymbolPriceUpdated(instanceIndex: string, price: MetatraderSymbolPrice): Promise<any>;
   
   /**
    * Invoked when a server-side application health status is received from MetaApi
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {HealthStatus} status server-side application health status
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onHealthStatus(instanceIndex: String, status: HealthStatus): Promise<any>;
+  onHealthStatus(instanceIndex: string, status: HealthStatus): Promise<any>;
   
   /**
    * Invoked when connection to MetaTrader terminal terminated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onDisconnected(instanceIndex: String): Promise<any>;
+  onDisconnected(instanceIndex: string): Promise<any>;
   
   /**
    * Returns server-side application health status
@@ -67,31 +67,31 @@ export declare type ConnectionHealthStatus = {
   /**
    * flag indicating successful connection to API server
    */
-  connected: Boolean,
+  connected: boolean,
 
   /**
    * flag indicating successful connection to broker
    */
-  connectedToBroker: Boolean,
+  connectedToBroker: boolean,
 
   /**
    * flag indicating that quotes are being streamed successfully from the
    * broker
    */
-  quoteStreamingHealthy: Boolean,
+  quoteStreamingHealthy: boolean,
 
   /**
    * flag indicating a successful synchronization
    */
-  synchronized: Boolean,
+  synchronized: boolean,
 
   /**
    * flag indicating overall connection health status
    */
-  healthy: Boolean,
+  healthy: boolean,
 
   /**
    * health status message
    */
-  message: String
+  message: string
 }

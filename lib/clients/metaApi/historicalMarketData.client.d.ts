@@ -10,10 +10,10 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
   /**
    * Constructs historical market data API client instance
    * @param {HttpClient} httpClient HTTP client
-   * @param {String} token authorization token
-   * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
+   * @param {string} token authorization token
+   * @param {string} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
    */
-  constructor(httpClient: HttpClient, token: String, domain?: String);
+  constructor(httpClient: HttpClient, token: string, domain?: string);
   
   /**
    * Returns historical candles for a specific symbol and timeframe from a MetaTrader account.
@@ -28,7 +28,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * @param {number} [limit] maximum number of candles to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
    */
-  getHistoricalCandles(accountId: String, symbol: String, timeframe: String, startTime?: Date, limit?: Number): Promise<Array<MetatraderCandle>>;
+  getHistoricalCandles(accountId: string, symbol: string, timeframe: string, startTime?: Date, limit?: number): Promise<Array<MetatraderCandle>>;
   
   /**
    * Returns historical ticks for a specific symbol from a MetaTrader account. This API is not supported by MT4
@@ -43,5 +43,5 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
    */
-  getHistoricalTicks(accountId: String, symbol: String, startTime?: Date, offset?: Number, limit?: Number): Promise<Array<MetatraderTick>>;
+  getHistoricalTicks(accountId: string, symbol: string, startTime?: Date, offset?: number, limit?: number): Promise<Array<MetatraderTick>>;
 }

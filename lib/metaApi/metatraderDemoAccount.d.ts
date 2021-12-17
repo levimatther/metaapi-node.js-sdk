@@ -13,25 +13,25 @@ export default class MetatraderDemoAccount {
   
   /**
    * Returns account login
-   * @return {String} account login
+   * @return {string} account login
    */
-  get login(): String;
+  get login(): string;
   
   /**
    * Returns account password
-   * @return {String} account password
+   * @return {string} account password
    */
-  get password(): String;
+  get password(): string;
   
   /**
    * Returns account serverName
-   * @return {String} account serverName
+   * @return {string} account serverName
    */
-  get serverName(): String;
+  get serverName(): string;
   
   /**
    * Returns account investor password
-   * @return {String} account investor password
+   * @return {string} account investor password
    */
-  get investorPassword(): String
+  get investorPassword(): string
 }

@@ -17,19 +17,19 @@ export default class PacketLogger {
   
   /**
    * Returns log messages within date bounds as an array of objects
-   * @param {String} accountId account id 
+   * @param {string} accountId account id 
    * @param {Date} dateAfter date to get logs after
    * @param {Date} dateBefore date to get logs before
    * @returns {Array<Object>} log messages
    */
-  readLogs(accountId: String, dateAfter: Date, dateBefore: Date): Array<Object>;
+  readLogs(accountId: string, dateAfter: Date, dateBefore: Date): Promise<Array<Object>>;
   
   /**
    * Returns path for account log file
-   * @param {String} accountId account id
-   * @returns {String} file path
+   * @param {string} accountId account id
+   * @returns {string} file path
    */
-  getFilePath(accountId: String): String;
+  getFilePath(accountId: string): Promise<string>;
   
   /**
    * Initializes the packet logger
@@ -50,25 +50,25 @@ declare type PacketLoggerOpts = {
   /**
    * whether packet logger is enabled
    */
-  enabled?: Boolean,
+  enabled?: boolean,
 
   /**
    * maximum amount of files per account, default value is 12
    */
-  fileNumberLimit?: Number,
+  fileNumberLimit?: number,
 
   /**
    * amount of logged hours per account file, default value is 4
    */
-  logFileSizeInHours?: Number,
+  logFileSizeInHours?: number,
 
   /**
    * whether to compress specifications packets, default value is true
    */
-  compressSpecifications?: Boolean,
+  compressSpecifications?: boolean,
 
   /**
    * whether to compress specifications packets, default value is true
    */
-  compressPrices?: Boolean
+  compressPrices?: boolean
 }

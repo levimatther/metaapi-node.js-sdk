@@ -9,10 +9,10 @@ export default class SynchronizationThrottler {
   /**
    * Constructs the synchronization throttler
    * @param {MetaApiWebsocketClient} client MetaApi websocket client
-   * @param {Number} socketInstanceIndex index of socket instance that uses the throttler
+   * @param {number} socketInstanceIndex index of socket instance that uses the throttler
    * @param {SynchronizationThrottlerOpts} opts synchronization throttler options
    */
-  constructor(client: MetaApiWebsocketClient, socketInstanceIndex: Number, opts: SynchronizationThrottlerOpts);
+  constructor(client: MetaApiWebsocketClient, socketInstanceIndex: number, opts: SynchronizationThrottlerOpts);
   
   /**
    * Initializes the synchronization throttler
@@ -26,46 +26,46 @@ export default class SynchronizationThrottler {
   
   /**
    * Fills a synchronization slot with synchronization id
-   * @param {String} synchronizationId synchronization id
+   * @param {string} synchronizationId synchronization id
    */
-  updateSynchronizationId(synchronizationId: String): void;
+  updateSynchronizationId(synchronizationId: string): void;
   
   /**
    * Returns the list of currently synchronizing account ids
    */
-  get synchronizingAccounts(): String[];
+  get synchronizingAccounts(): string[];
   
   /**
    * Returns the list of currenly active synchronization ids
-   * @return {String[]} synchronization ids
+   * @return {string[]} synchronization ids
    */
-  get activeSynchronizationIds(): String[];
+  get activeSynchronizationIds(): string[];
   
   /**
    * Returns the amount of maximum allowed concurrent synchronizations
    * @return {number} maximum allowed concurrent synchronizations
    */
-  get maxConcurrentSynchronizations(): Number;
+  get maxConcurrentSynchronizations(): number;
   
   /**
    * Returns flag whether there are free slots for synchronization requests
-   * @return {Boolean} flag whether there are free slots for synchronization requests
+   * @return {boolean} flag whether there are free slots for synchronization requests
    */
-  get isSynchronizationAvailable(): Boolean;
+  get isSynchronizationAvailable(): boolean;
   
   /**
    * Removes synchronizations from queue and from the list by parameters
-   * @param {String} accountId account id
-   * @param {Number} instanceIndex account instance index
-   * @param {String} host account host name
+   * @param {string} accountId account id
+   * @param {number} instanceIndex account instance index
+   * @param {string} host account host name
    */
-  removeIdByParameters(accountId: String, instanceIndex: Number, host: String): void;
+  removeIdByParameters(accountId: string, instanceIndex: number, host: string): void;
   
   /**
    * Removes synchronization id from slots and removes ids for the same account from the queue
-   * @param {String} synchronizationId synchronization id
+   * @param {string} synchronizationId synchronization id
    */
-  removeSynchronizationId(synchronizationId: String): void;
+  removeSynchronizationId(synchronizationId: string): void;
   
   /**
    * Clears synchronization ids on disconnect
@@ -74,10 +74,10 @@ export default class SynchronizationThrottler {
   
   /**
    * Schedules to send a synchronization request for account
-   * @param {String} accountId account id
+   * @param {string} accountId account id
    * @param {Object} request request to send
    */
-  scheduleSynchronize(accountId: String, request: Object): Promise<Boolean>;
+  scheduleSynchronize(accountId: string, request: Object): Promise<boolean>;
 }
 
 /**
@@ -88,16 +88,16 @@ declare type SynchronizationThrottlerOpts = {
   /**
    * amount of maximum allowed concurrent synchronizations
    */
-  maxConcurrentSynchronizations?: Number,
+  maxConcurrentSynchronizations?: number,
 
   /**
    * allowed time for a synchronization in queue
    */
-  queueTimeoutInSeconds?: Number,
+  queueTimeoutInSeconds?: number,
 
   /**
    * time after which a synchronization slot
    * is freed to be used by another synchronization
    */
-  synchronizationTimeoutInSeconds?: Number
+  synchronizationTimeoutInSeconds?: number
 }

@@ -12,27 +12,27 @@ export default class MetaApiWebsocketClient {
   /**
    * Constructs MetaApi websocket API client instance
    * @param {HttpClient} httpClient HTTP client
-   * @param {String} token authorization token
+   * @param {string} token authorization token
    * @param {Object} opts websocket client options
    */
-  constructor(httpClient: HttpClient, token: String, opts: Object);
+  constructor(httpClient: HttpClient, token: string, opts: Object);
   
   /**
    * Restarts the account synchronization process on an out of order packet
-   * @param {String} accountId account id
-   * @param {Number} instanceIndex instance index
-   * @param {Number} expectedSequenceNumber expected s/n
-   * @param {Number} actualSequenceNumber actual s/n
+   * @param {string} accountId account id
+   * @param {number} instanceIndex instance index
+   * @param {number} expectedSequenceNumber expected s/n
+   * @param {number} actualSequenceNumber actual s/n
    * @param {Object} packet packet data
    * @param {Date} receivedAt time the packet was received at
    */
-   onOutOfOrderPacket(accountId: String, instanceIndex: Number, expectedSequenceNumber: Number, actualSequenceNumber: Number, packet: Object, receivedAt: Date): void;
+   onOutOfOrderPacket(accountId: string, instanceIndex: number, expectedSequenceNumber: number, actualSequenceNumber: number, packet: Object, receivedAt: Date): void;
   
    /**
    * Patch server URL for use in unit tests
-   * @param {String} url patched server URL
+   * @param {string} url patched server URL
    */
-  set url(url: String);
+  set url(url: string);
   
   /**
    * Returns the list of socket instance dictionaries
@@ -48,31 +48,31 @@ export default class MetaApiWebsocketClient {
   
   /**
    * Returns the list of subscribed account ids
-   * @param {String} socketInstanceIndex socket instance index
-   * @return {String[]} list of subscribed account ids
+   * @param {string} socketInstanceIndex socket instance index
+   * @return {string[]} list of subscribed account ids
    */
-  subscribedAccountIds(socketInstanceIndex: String): String[];
+  subscribedAccountIds(socketInstanceIndex: string): string[];
   
   /**
    * Returns websocket client connection status
-   * @param {Number} socketInstanceIndex socket instance index
-   * @returns {Boolean} websocket client connection status
+   * @param {number} socketInstanceIndex socket instance index
+   * @returns {boolean} websocket client connection status
    */
-  connected(socketInstanceIndex: Number): Boolean;
+  connected(socketInstanceIndex: number): boolean;
   
   /**
    * Returns list of accounts assigned to instance
-   * @param {Number} socketInstanceIndex socket instance index
-   * @returns {Array<Number>}
+   * @param {number} socketInstanceIndex socket instance index
+   * @returns {Array<number>}
    */
-  getAssignedAccounts(socketInstanceIndex: Number): Array<Number>;
+  getAssignedAccounts(socketInstanceIndex: number): Array<number>;
   
   /**
    * Locks subscription for a socket instance based on TooManyRequestsError metadata
-   * @param {Number} socketInstanceIndex socket instance index
+   * @param {number} socketInstanceIndex socket instance index
    * @param {TooManyRequestsErrorMetadata} metadata TooManyRequestsError metadata
    */
-  lockSocketInstance(socketInstanceIndex: Number, metadata: TooManyRequestsErrorMetadata): Promise<void>;
+  lockSocketInstance(socketInstanceIndex: number, metadata: TooManyRequestsErrorMetadata): Promise<void>;
   
   /**
    * Connects to MetaApi server via socket.io protocol
@@ -88,242 +88,242 @@ export default class MetaApiWebsocketClient {
   /**
    * Returns account information for a specified MetaTrader account (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readAccountInformation/).
-   * @param {String} accountId id of the MetaTrader account to return information for
+   * @param {string} accountId id of the MetaTrader account to return information for
    * @returns {Promise<MetatraderAccountInformation>} promise resolving with account information
    */
-  getAccountInformation(accountId: String): MetatraderAccountInformation;
+  getAccountInformation(accountId: string): Promise<MetatraderAccountInformation>;
   
   /**
    * Returns positions for a specified MetaTrader account (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readPositions/).
-   * @param {String} accountId id of the MetaTrader account to return information for
+   * @param {string} accountId id of the MetaTrader account to return information for
    * @returns {Promise<Array<MetatraderPosition>} promise resolving with array of open positions
    */
-  getPositions(accountId: String): Promise<Array<MetatraderPosition>>;
+  getPositions(accountId: string): Promise<Array<MetatraderPosition>>;
   
   /**
    * Returns specific position for a MetaTrader account (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readPosition/).
-   * @param {String} accountId id of the MetaTrader account to return information for
-   * @param {String} positionId position id
+   * @param {string} accountId id of the MetaTrader account to return information for
+   * @param {string} positionId position id
    * @return {Promise<MetatraderPosition>} promise resolving with MetaTrader position found
    */
-  getPosition(accountId: String, positionId: String): Promise<MetatraderPosition>;
+  getPosition(accountId: string, positionId: string): Promise<MetatraderPosition>;
   
   /**
    * Returns open orders for a specified MetaTrader account (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readOrders/).
-   * @param {String} accountId id of the MetaTrader account to return information for
+   * @param {string} accountId id of the MetaTrader account to return information for
    * @return {Promise<Array<MetatraderOrder>>} promise resolving with open MetaTrader orders
    */
-  getOrders(accountId: String): Promise<Array<MetatraderOrder>>;
+  getOrders(accountId: string): Promise<Array<MetatraderOrder>>;
   
   /**
    * Returns specific open order for a MetaTrader account (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readOrder/).
-   * @param {String} accountId id of the MetaTrader account to return information for
-   * @param {String} orderId order id (ticket number)
+   * @param {string} accountId id of the MetaTrader account to return information for
+   * @param {string} orderId order id (ticket number)
    * @return {Promise<MetatraderOrder>} promise resolving with metatrader order found
    */
-  getOrder(accountId: String, orderId: String): Promise<MetatraderOrder>;
+  getOrder(accountId: string, orderId: string): Promise<MetatraderOrder>;
   
   /**
    * Returns the history of completed orders for a specific ticket number (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readHistoryOrdersByTicket/).
-   * @param {String} accountId id of the MetaTrader account to return information for
-   * @param {String} ticket ticket number (order id)
+   * @param {string} accountId id of the MetaTrader account to return information for
+   * @param {string} ticket ticket number (order id)
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
-  getHistoryOrdersByTicket(accountId: String, ticket: String): Promise<MetatraderHistoryOrders>;
+  getHistoryOrdersByTicket(accountId: string, ticket: string): Promise<MetatraderHistoryOrders>;
   
   /**
    * Returns the history of completed orders for a specific position id (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readHistoryOrdersByPosition/)
-   * @param {String} accountId id of the MetaTrader account to return information for
-   * @param {String} positionId position id
+   * @param {string} accountId id of the MetaTrader account to return information for
+   * @param {string} positionId position id
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
-  getHistoryOrdersByPosition(accountId: String, positionId: String): Promise<MetatraderHistoryOrders>;
+  getHistoryOrdersByPosition(accountId: string, positionId: string): Promise<MetatraderHistoryOrders>;
   
   /**
    * Returns the history of completed orders for a specific time range (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readHistoryOrdersByTimeRange/)
-   * @param {String} accountId id of the MetaTrader account to return information for
+   * @param {string} accountId id of the MetaTrader account to return information for
    * @param {Date} startTime start of time range, inclusive
    * @param {Date} endTime end of time range, exclusive
-   * @param {Number} offset pagination offset, default is 0
-   * @param {Number} limit pagination limit, default is 1000
+   * @param {number} offset pagination offset, default is 0
+   * @param {number} limit pagination limit, default is 1000
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
-  getHistoryOrdersByTimeRange(accountId: String, startTime: Date, endTime: Date, offset: Number, limit: Number): Promise<MetatraderHistoryOrders>;
+  getHistoryOrdersByTimeRange(accountId: string, startTime: Date, endTime: Date, offset: number, limit: number): Promise<MetatraderHistoryOrders>;
   
   /**
    * Returns history deals with a specific ticket number (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readDealsByTicket/).
-   * @param {String} accountId id of the MetaTrader account to return information for
-   * @param {String} ticket ticket number (deal id for MT5 or order id for MT4)
+   * @param {string} accountId id of the MetaTrader account to return information for
+   * @param {string} ticket ticket number (deal id for MT5 or order id for MT4)
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
-  getDealsByTicket(accountId: String, ticket: String): Promise<MetatraderDeals>;
+  getDealsByTicket(accountId: string, ticket: string): Promise<MetatraderDeals>;
   
   /**
    * Returns history deals for a specific position id (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readDealsByPosition/).
-   * @param {String} accountId id of the MetaTrader account to return information for
-   * @param {String} positionId position id
+   * @param {string} accountId id of the MetaTrader account to return information for
+   * @param {string} positionId position id
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
-  getDealsByPosition(accountId: String, positionId: String): Promise<MetatraderDeals>;
+  getDealsByPosition(accountId: string, positionId: string): Promise<MetatraderDeals>;
   
   /**
    * Returns history deals with for a specific time range (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readDealsByTimeRange/).
-   * @param {String} accountId id of the MetaTrader account to return information for
+   * @param {string} accountId id of the MetaTrader account to return information for
    * @param {Date} startTime start of time range, inclusive
    * @param {Date} endTime end of time range, exclusive
-   * @param {Number} offset pagination offset, default is 0
-   * @param {Number} limit pagination limit, default is 1000
+   * @param {number} offset pagination offset, default is 0
+   * @param {number} limit pagination limit, default is 1000
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
-  getDealsByTimeRange(accountId: String, startTime: Date, endTime: Date, offset: Number, limit: Number): Promise<MetatraderDeals>;
+  getDealsByTimeRange(accountId: string, startTime: Date, endTime: Date, offset: number, limit: number): Promise<MetatraderDeals>;
   
   /**
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
    * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {String} accountId id of the MetaTrader account to remove history for
-   * @param {String} [application] application to remove history for
+   * @param {string} accountId id of the MetaTrader account to remove history for
+   * @param {string} [application] application to remove history for
    * @return {Promise} promise resolving when the history is cleared
    */
-  removeHistory(accountId: String, application: String): Promise<any>;
+  removeHistory(accountId: string, application: string): Promise<any>;
   
   /**
    * Clears the order and transaction history of a specified application and removes the application (see
    * https://metaapi.cloud/docs/client/websocket/api/removeApplication/).
-   * @param {String} accountId id of the MetaTrader account to remove history and application for
+   * @param {string} accountId id of the MetaTrader account to remove history and application for
    * @return {Promise} promise resolving when the history is cleared
    */
-  removeApplication(accountId: String): Promise<any>;
+  removeApplication(accountId: string): Promise<any>;
   
   /**
    * Execute a trade on a connected MetaTrader account (see https://metaapi.cloud/docs/client/websocket/api/trade/).
-   * @param {String} accountId id of the MetaTrader account to execute trade for
+   * @param {string} accountId id of the MetaTrader account to execute trade for
    * @param {MetatraderTrade} trade trade to execute (see docs for possible trade types)
-   * @param {String} [application] application to use
+   * @param {string} [application] application to use
    * @returns {Promise<MetatraderTradeResponse>} promise resolving with trade result
    */
-  trade(accountId: String, trade: MetatraderTrade, application: String): Promise<MetatraderTradeResponse>;
+  trade(accountId: string, trade: MetatraderTrade, application: string): Promise<MetatraderTradeResponse>;
   
   /**
    * Creates a task that ensures the account gets subscribed to the server
-   * @param {String} accountId account id to subscribe
-   * @param {Number} [instanceNumber] instance index number
+   * @param {string} accountId account id to subscribe
+   * @param {number} [instanceNumber] instance index number
    */
-  ensureSubscribe(accountId: String, instanceNumber: Number): void;
+  ensureSubscribe(accountId: string, instanceNumber: number): void;
   
   /**
    * Subscribes to the Metatrader terminal events (see https://metaapi.cloud/docs/client/websocket/api/subscribe/).
-   * @param {String} accountId id of the MetaTrader account to subscribe to
-   * @param {Number} [instanceNumber] instance index number
+   * @param {string} accountId id of the MetaTrader account to subscribe to
+   * @param {number} [instanceNumber] instance index number
    * @returns {Promise} promise which resolves when subscription started
    */
-  subscribe(accountId: String, instanceNumber: Number): Promise<any>;
+  subscribe(accountId: string, instanceNumber: number): Promise<any>;
   
   /**
    * Reconnects to the Metatrader terminal (see https://metaapi.cloud/docs/client/websocket/api/reconnect/).
-   * @param {String} accountId id of the MetaTrader account to reconnect
+   * @param {string} accountId id of the MetaTrader account to reconnect
    * @returns {Promise} promise which resolves when reconnection started
    */
-  reconnect(accountId: String): Promise<any>;
+  reconnect(accountId: string): Promise<any>;
   
   /**
    * Requests the terminal to start synchronization process
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
-   * @param {String} accountId id of the MetaTrader account to synchronize
-   * @param {Number} instanceIndex instance index
-   * @param {String} host name of host to synchronize with
-   * @param {String} synchronizationId synchronization request id
+   * @param {string} accountId id of the MetaTrader account to synchronize
+   * @param {number} instanceIndex instance index
+   * @param {string} host name of host to synchronize with
+   * @param {string} synchronizationId synchronization request id
    * @param {Date} startingHistoryOrderTime from what date to start synchronizing history orders from. If not specified,
    * the entire order history will be downloaded.
    * @param {Date} startingDealTime from what date to start deal synchronization from. If not specified, then all
    * history deals will be downloaded.
-   * @param {String} specificationsMd5 specifications MD5 hash
-   * @param {String} positionsMd5 positions MD5 hash
-   * @param {String} ordersMd5 orders MD5 hash
+   * @param {string} specificationsMd5 specifications MD5 hash
+   * @param {string} positionsMd5 positions MD5 hash
+   * @param {string} ordersMd5 orders MD5 hash
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(accountId: String, instanceIndex: Number, host: String, synchronizationId: String, startingHistoryOrderTime: Date, startingDealTime: Date, 
-    specificationsMd5: String, positionsMd5: String, ordersMd5: String): Promise<any>;
+  synchronize(accountId: string, instanceIndex: number, host: string, synchronizationId: string, startingHistoryOrderTime: Date, startingDealTime: Date, 
+    specificationsMd5: string, positionsMd5: string, ordersMd5: string): Promise<any>;
   
     /**
    * Waits for server-side terminal state synchronization to complete.
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/waitSynchronized/).
-   * @param {String} accountId id of the MetaTrader account to synchronize
-   * @param {Number} instanceNumber instance index number
-   * @param {String} applicationPattern MetaApi application regular expression pattern, default is .*
-   * @param {Number} timeoutInSeconds timeout in seconds, default is 300 seconds
-   * @param {String} [application] application to synchronize with
+   * @param {string} accountId id of the MetaTrader account to synchronize
+   * @param {number} instanceNumber instance index number
+   * @param {string} applicationPattern MetaApi application regular expression pattern, default is .*
+   * @param {number} timeoutInSeconds timeout in seconds, default is 300 seconds
+   * @param {string} [application] application to synchronize with
    * @returns {Promise} promise which resolves when synchronization started
    */
-  waitSynchronized(accountId: String, instanceNumber: Number, applicationPattern: String, timeoutInSeconds: Number, application: String): Promise<any>;
+  waitSynchronized(accountId: string, instanceNumber: number, applicationPattern: string, timeoutInSeconds: number, application: string): Promise<any>;
   
   /**
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
-   * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceNumber instance index number
-   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {string} accountId id of the MetaTrader account
+   * @param {number} instanceNumber instance index number
+   * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(accountId: String, instanceNumber: Number, symbol: String, subscriptions: Array<MarketDataSubscription>): Promise<any>;
+  subscribeToMarketData(accountId: string, instanceNumber: number, symbol: string, subscriptions: Array<MarketDataSubscription>): Promise<any>;
   
   /**
    * Refreshes market data subscriptions on the server to prevent them from expiring
-   * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceNumber instance index number
+   * @param {string} accountId id of the MetaTrader account
+   * @param {number} instanceNumber instance index number
    * @param {Array} subscriptions array of subscriptions to refresh
    */
-  refreshMarketDataSubscriptions(accountId: String, instanceNumber: Number, subscriptions: Array<MarketDataSubscription>): Promise<any>;
+  refreshMarketDataSubscriptions(accountId: string, instanceNumber: number, subscriptions: Array<MarketDataSubscription>): Promise<any>;
   
   /**
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
-   * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceNumber instance index
-   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {string} accountId id of the MetaTrader account
+   * @param {number} instanceNumber instance index
+   * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(accountId: String, instanceNumber: Number, symbol: String, subscriptions: Array<MarketDataUnsubscription>): Promise<any>;
+  unsubscribeFromMarketData(accountId: string, instanceNumber: number, symbol: string, subscriptions: Array<MarketDataUnsubscription>): Promise<any>;
   
   /**
    * Retrieves symbols available on an account (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbols/).
-   * @param {String} accountId id of the MetaTrader account to retrieve symbols for
-   * @returns {Promise<Array<String>>} promise which resolves when symbols are retrieved
+   * @param {string} accountId id of the MetaTrader account to retrieve symbols for
+   * @returns {Promise<Array<string>>} promise which resolves when symbols are retrieved
    */
-  getSymbols(accountId: String): Promise<Array<String>>;
+  getSymbols(accountId: string): Promise<Array<string>>;
   
   /**
    * Retrieves specification for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolSpecification/).
-   * @param {String} accountId id of the MetaTrader account to retrieve symbol specification for
-   * @param {String} symbol symbol to retrieve specification for
+   * @param {string} accountId id of the MetaTrader account to retrieve symbol specification for
+   * @param {string} symbol symbol to retrieve specification for
    * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
    */
-  getSymbolSpecification(accountId: String, symbol: String): Promise<MetatraderSymbolSpecification>;
+  getSymbolSpecification(accountId: string, symbol: string): Promise<MetatraderSymbolSpecification>;
   
   /**
    * Retrieves price for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolPrice/).
-   * @param {String} accountId id of the MetaTrader account to retrieve symbol price for
-   * @param {String} symbol symbol to retrieve price for
+   * @param {string} accountId id of the MetaTrader account to retrieve symbol price for
+   * @param {string} symbol symbol to retrieve price for
    * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
    * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
-  getSymbolPrice(accountId: String, symbol: String, keepSubscription?: Boolean): Promise<MetatraderSymbolPrice>;
+  getSymbolPrice(accountId: string, symbol: string, keepSubscription?: boolean): Promise<MetatraderSymbolPrice>;
   
   /**
    * Retrieves price for a symbol (see
@@ -338,7 +338,7 @@ export default class MetaApiWebsocketClient {
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
-  getCandle(accountId: String, symbol: String, timeframe: String, keepSubscription?: Boolean): Promise<MetatraderCandle>;
+  getCandle(accountId: string, symbol: string, timeframe: string, keepSubscription?: boolean): Promise<MetatraderCandle>;
   
   /**
    * Retrieves latest tick for a symbol. MT4 G1 accounts do not support this API (see
@@ -350,7 +350,7 @@ export default class MetaApiWebsocketClient {
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
    */
-  getTick(accountId: String, symbol: String, keepSubscription?: Boolean): Promise<MetatraderTick>;
+  getTick(accountId: string, symbol: string, keepSubscription?: boolean): Promise<MetatraderTick>;
   
   /**
    * Retrieves latest order book for a symbol. MT4 accounts do not support this API (see
@@ -362,37 +362,37 @@ export default class MetaApiWebsocketClient {
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderBook>} promise which resolves when order book is retrieved
    */
-  getBook(accountId: String, symbol: String, keepSubscription?: Boolean): Promise<MetatraderBook>
+  getBook(accountId: string, symbol: string, keepSubscription?: boolean): Promise<MetatraderBook>
   
   /**
    * Sends client uptime stats to the server.
-   * @param {String} accountId id of the MetaTrader account to save uptime
+   * @param {string} accountId id of the MetaTrader account to save uptime
    * @param {Object} uptime uptime statistics to send to the server
    * @returns {Promise} promise which resolves when uptime statistics is submitted
    */
-  saveUptime(accountId: String, uptime: Object): Promise<any>;
+  saveUptime(accountId: string, uptime: Object): Promise<any>;
   
   /**
    * Unsubscribe from account (see
    * https://metaapi.cloud/docs/client/websocket/api/synchronizing/unsubscribe).
-   * @param {String} accountId id of the MetaTrader account to unsubscribe
+   * @param {string} accountId id of the MetaTrader account to unsubscribe
    * @returns {Promise} promise which resolves when socket unsubscribed
    */
-  unsubscribe(accountId: String): Promise<void>;
+  unsubscribe(accountId: string): Promise<void>;
 
   /**
    * Adds synchronization listener for specific account
-   * @param {String} accountId account id
+   * @param {string} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add
    */
-  addSynchronizationListener(accountId: String, listener: SynchronizationListener): void;
+  addSynchronizationListener(accountId: string, listener: SynchronizationListener): void;
   
   /**
    * Removes synchronization listener for specific account
-   * @param {String} accountId account id
+   * @param {string} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
-  removeSynchronizationListener(accountId: String, listener: SynchronizationListener): void;
+  removeSynchronizationListener(accountId: string, listener: SynchronizationListener): void;
   
   /**
    * Adds latency listener
@@ -409,9 +409,9 @@ export default class MetaApiWebsocketClient {
   /**
    * Adds reconnect listener
    * @param {ReconnectListener} listener reconnect listener to add
-   * @param {String} accountId account id of listener
+   * @param {string} accountId account id of listener
    */
-  addReconnectListener(listener: ReconnectListener, accountId: String): void;
+  addReconnectListener(listener: ReconnectListener, accountId: string): void;
   
   /**
    * Removes reconnect listener
@@ -432,18 +432,18 @@ export default class MetaApiWebsocketClient {
   
   /**
    * Queues account event for processing
-   * @param {String} accountId account id
+   * @param {string} accountId account id
    * @param {Promise} event event to execute
    */
-  queueEvent(accountId: String, event: Promise<any>): void;
+  queueEvent(accountId: string, event: Promise<any>): void;
   
   /**
    * Makes a RPC request
-   * @param {String} accountId metatrader account id
+   * @param {string} accountId metatrader account id
    * @param {Object} request base request data
-   * @param {Number} [timeoutInSeconds] request timeout in seconds
+   * @param {number} [timeoutInSeconds] request timeout in seconds
    */
-  rpcRequest(accountId: String, request: Object, timeoutInSeconds: Number): Promise<any>;
+  rpcRequest(accountId: string, request: Object, timeoutInSeconds: number): Promise<any>;
 }
 
 /**
@@ -454,99 +454,99 @@ export declare type MetatraderAccountInformation = {
   /**
    * platform id (mt4 or mt5)
    */
-  platform: String,
+  platform: string,
 
   /**
    * broker name
    */
-  broker: String,
+  broker: string,
 
   /**
    * account base currency ISO code
    */
-  currency: String,
+  currency: string,
 
   /**
    * broker server name
    */
-  server: String,
+  server: string,
 
   /**
    * account balance
    */
-  balance: Number,
+  balance: number,
 
   /**
    * account liquidation value
    */
-  equity: Number,
+  equity: number,
 
   /**
    * used margin
    */
-  margin: Number,
+  margin: number,
 
   /**
    * free margin
    */
-  freeMargin: Number,
+  freeMargin: number,
 
   /**
    * account leverage coefficient
    */
-  leverage: Number,
+  leverage: number,
 
   /**
    * margin level calculated as % of equity/margin
    */
-  marginLevel: Number,
+  marginLevel: number,
 
   /**
    * flag indicating that trading is allowed
    */
-  tradeAllowed: Boolean,
+  tradeAllowed: boolean,
 
   /**
    * flag indicating that investor password was used (supported for g2 only)
    */
-  investorMode?: Boolean,
+  investorMode?: boolean,
 
   /**
    * margin calculation mode, one of ACCOUNT_MARGIN_MODE_EXCHANGE,
    * ACCOUNT_MARGIN_MODE_RETAIL_NETTING, ACCOUNT_MARGIN_MODE_RETAIL_HEDGING
    */
-  marginMode: String,
+  marginMode: string,
 
   /**
    * Account owner name
    */
-  name: String,
+  name: string,
 
   /**
    * Account login
    */
-  login: Number,
+  login: number,
 
   /**
    * Account credit in the deposit currency
    */
-  credit: Number
+  credit: number
 }
 
 /**
  * Stop loss threshold
  */
-export declare type StopLossThreshold = {
+ export declare type StopLossThreshold = {
 
   /**
    * Price threshold relative to position open price, interpreted according to units field value
    */
-  threshold: Number,
+  threshold: number,
 
   /**
    * Stop loss value, interpreted according to units and basePrice field values
    */
-  stopLoss: Number
+  stopLoss: number
 }
 
 /**
@@ -566,13 +566,13 @@ export declare type ThresholdTrailingStopLoss = {
    * Default is ABSOLUTE_PRICE. One of ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS,
    * RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
-  units?: String,
+  units?: string,
 
   /**
    * Defined the base price to calculate SL relative to for POSITION_MODIFY and pending order requests. Default
    * is OPEN_PRICE. One of CURRENT_PRICE, OPEN_PRICE
    */
-  stopPriceBase?: String
+  stopPriceBase?: string
 }
 
 /**
@@ -583,7 +583,7 @@ export declare type DistanceTrailingStopLoss = {
   /**
    * SL distance relative to current price, interpreted according to units field value
    */
-  distance?: Number,
+  distance?: number,
 
   /**
    * Distance trailing stop loss units. RELATIVE_* means that the distance field value contains relative
@@ -591,7 +591,7 @@ export declare type DistanceTrailingStopLoss = {
    * RELATIVE_PRICE. One of RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY,
    * RELATIVE_BALANCE_PERCENTAGE
    */
-  units?: String
+  units?: string
 }
 
 /**
@@ -618,22 +618,22 @@ export declare type MetatraderPosition = {
   /**
    * position id (ticket number)
    */
-  id: Number,
+  id: number,
 
   /**
    * position type (one of POSITION_TYPE_BUY, POSITION_TYPE_SELL)
    */
-  type: String,
+  type: string,
 
   /**
    * position symbol
    */
-  symbol: String,
+  symbol: string,
 
   /**
    * position magic number, identifies the EA which opened the position
    */
-  magic: Number,
+  magic: number,
 
   /**
    * time position was opened at
@@ -643,7 +643,7 @@ export declare type MetatraderPosition = {
   /**
    * time position was opened at, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
-  brokerTime: String,
+  brokerTime: string,
 
   /**
    * last position modification time
@@ -653,53 +653,48 @@ export declare type MetatraderPosition = {
   /**
    * position open price
    */
-  openPrice: Number,
+  openPrice: number,
 
   /**
    * current price
    */
-  currentPrice: Number,
+  currentPrice: number,
 
   /**
    * current tick value
    */
-  currentTickValue: Number,
+  currentTickValue: number,
 
   /**
    * optional position stop loss price
    */
-  stopLoss?: Number,
+  stopLoss?: number,
 
   /**
    * optional position take profit price
    */
-  takeProfit?: Number,
-
-  /**
-   * distance trailing stop loss configuration
-   */
-  trailingStopLoss?: TrailingStopLoss,
+  takeProfit?: number,
 
   /**
    * position volume
    */
-  volume: Number,
+  volume: number,
 
   /**
    * position cumulative swap
    */
-  swap: Number,
+  swap: number,
 
   /**
    * position cumulative profit
    */
-  profit: Number,
+  profit: number,
 
   /**
    * optional position comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  comment?: String,
+  comment?: string,
 
   /**
    * optional client-assigned id. The id value can be assigned when submitting a trade and
@@ -708,40 +703,40 @@ export declare type MetatraderPosition = {
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  clientId?: String,
+  clientId?: string,
 
   /**
    * profit of the part of the position which is not yet closed, including swap
    */
-  unrealizedProfit: Number,
+  unrealizedProfit: number,
 
   /**
    * profit of the already closed part, including commissions and swap
    */
-  realizedProfit: Number,
+  realizedProfit: number,
 
   /**
    * position commission
    */
-  commission: Number,
+  commission: number,
 
   /**
    * position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,
    * POSITION_REASON_MOBILE, POSITION_REASON_WEB, POSITION_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',
    */
-  reason: String,
+  reason: string,
 
   /**
    * current exchange rate of account currency into account base
    * currency (USD if you did not override it)
    */
-  accountCurrencyExchangeRate?: Number,
+  accountCurrencyExchangeRate?: number,
 
   /**
    * current comment value on broker side (possibly overriden by the broker)
    */
-  brokerComment?: String
+  brokerComment?: string
 }
 
 /**
@@ -752,14 +747,14 @@ export declare type MetatraderOrder = {
   /**
    * order id (ticket number)
    */
-  id: Number,
+  id: number,
 
   /**
    * order type (one of ORDER_TYPE_SELL, ORDER_TYPE_BUY, ORDER_TYPE_BUY_LIMIT,
    * ORDER_TYPE_SELL_LIMIT, ORDER_TYPE_BUY_STOP, ORDER_TYPE_SELL_STOP). See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type
    */
-  type: String,
+  type: string,
 
   /**
    * order state one of (ORDER_STATE_STARTED, ORDER_STATE_PLACED, ORDER_STATE_CANCELED,
@@ -767,12 +762,12 @@ export declare type MetatraderOrder = {
    * ORDER_STATE_REQUEST_MODIFY, ORDER_STATE_REQUEST_CANCEL). See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_state
    */
-  state: String,
+  state: string,
 
   /**
    * order magic number, identifies the EA which created the order
    */
-  magic: Number,
+  magic: number,
 
   /**
    * time order was created at
@@ -782,7 +777,7 @@ export declare type MetatraderOrder = {
   /**
    * time time order was created at, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
-  brokerTime: String,
+  brokerTime: string,
 
   /**
    * time order was executed or canceled at. Will be specified for
@@ -794,64 +789,59 @@ export declare type MetatraderOrder = {
    * time order was executed or canceled at, in broker timezone,
    * YYYY-MM-DD HH:mm:ss.SSS format. Will be specified for completed orders only
    */
-  doneBrokerTime?: String,
+  doneBrokerTime?: string,
 
   /**
    * order symbol
    */
-  symbol: String,
+  symbol: string,
 
   /**
    * order open price (market price for market orders, limit price for limit orders or stop
    * price for stop orders)
    */
-  openPrice: Number,
+  openPrice: number,
 
   /**
    * current price, filled for pending orders only. Not filled for history orders.
    */
-  currentPrice?: Number,
+  currentPrice?: number,
 
   /**
    * order stop loss price
    */
-  stopLoss?: Number,
+  stopLoss?: number,
 
   /**
    * order take profit price
    */
-  takeProfit?: Number,
-
-  /**
-   * distance trailing stop loss configuration
-   */
-  trailingStopLoss?: TrailingStopLoss,
+  takeProfit?: number,
 
   /**
    * order requested quantity
    */
-  volume: Number,
+  volume: number,
 
   /**
    * order remaining quantity, i.e. requested quantity - filled quantity
    */
-  currentVolume: Number,
+  currentVolume: number,
 
   /**
    * order position id. Present only if the order has a position attached to it
    */
-  positionId: String,
+  positionId: string,
 
   /**
    * order comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  comment?: String,
+  comment?: string,
 
   /**
    * current comment value on broker side (possibly overriden by the broker)
    */
-  brokerComment?: String,
+  brokerComment?: string,
 
   /**
    * client-assigned id. The id value can be assigned when submitting a trade and
@@ -860,33 +850,33 @@ export declare type MetatraderOrder = {
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  clientId?: String,
+  clientId?: string,
 
   /**
    * platform id (mt4 or mt5)
    */
-  platform: String,
+  platform: string,
 
   /**
    * order opening reason. One of ORDER_REASON_CLIENT, ORDER_REASON_MOBILE, ORDER_REASON_WEB,
    * ORDER_REASON_EXPERT, ORDER_REASON_SL, ORDER_REASON_TP, ORDER_REASON_SO, ORDER_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_reason.
    */
-  reason: String,
+  reason: string,
 
   /**
    * order filling mode. One of ORDER_FILLING_FOK, ORDER_FILLING_IOC,
    * ORDER_FILLING_RETURN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_filling.
    */
-  fillingMode: String,
+  fillingMode: string,
 
   /**
    * order expiration type. One of ORDER_TIME_GTC, ORDER_TIME_DAY,
    * ORDER_TIME_SPECIFIED, ORDER_TIME_SPECIFIED_DAY. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_time
    */
-  expirationType: String,
+  expirationType: string,
 
   /**
    * optional order expiration time
@@ -897,18 +887,18 @@ export declare type MetatraderOrder = {
    * current exchange rate of account currency into account base
    * currency (USD if you did not override it)
    */
-  accountCurrencyExchangeRate?: Number,
+  accountCurrencyExchangeRate?: number,
 
   /**
    * identifier of an opposite position used for closing by order
    * ORDER_TYPE_CLOSE_BY
    */
-  closeByPositionId?: String,
+  closeByPositionId?: string,
 
   /**
    * the Limit order price for the StopLimit order
    */
-  stopLimitPrice?: Number
+  stopLimitPrice?: number
 }
 
 /**
@@ -925,7 +915,7 @@ export declare type MetatraderHistoryOrders = {
    * flag indicating that history order initial synchronization is still in progress
    * and thus search results may be incomplete
    */
-  synchronizing: Boolean
+  synchronizing: boolean
 }
 
 /**
@@ -942,7 +932,7 @@ export declare type MetatraderDeals = {
    * flag indicating that deal initial synchronization is still in progress
    * and thus search results may be incomplete
    */
-  synchronizing: Boolean
+  synchronizing: boolean
 }
 
 /**
@@ -953,7 +943,7 @@ export declare type MetatraderDeal = {
   /**
    * deal id (ticket number)
    */
-  id: String,
+  id: string,
 
   /**
    * deal type (one of DEAL_TYPE_BUY, DEAL_TYPE_SELL, DEAL_TYPE_BALANCE, DEAL_TYPE_CREDIT,
@@ -962,23 +952,23 @@ export declare type MetatraderDeal = {
    * DEAL_TYPE_INTEREST, DEAL_TYPE_BUY_CANCELED, DEAL_TYPE_SELL_CANCELED, DEAL_DIVIDEND, DEAL_DIVIDEND_FRANKED,
    * DEAL_TAX). See https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_type
    */
-  type: String,
+  type: string,
 
   /**
    * deal entry type (one of DEAL_ENTRY_IN, DEAL_ENTRY_OUT, DEAL_ENTRY_INOUT,
    * DEAL_ENTRY_OUT_BY). See https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_entry
    */
-  entryType: String,
+  entryType: string,
 
   /**
    * symbol deal relates to
    */
-  symbol?: String,
+  symbol?: string,
 
   /**
    * deal magic number, identifies the EA which initiated the deal
    */
-  magic?: Number,
+  magic?: number,
 
   /**
    * time the deal was conducted at
@@ -988,53 +978,53 @@ export declare type MetatraderDeal = {
   /**
    * time time the deal was conducted at, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
-  brokerTime: String,
+  brokerTime: string,
 
   /**
    * deal volume
    */
-  volume?: Number,
+  volume?: number,
 
   /**
    * the price the deal was conducted at
    */
-  price?: Number,
+  price?: number,
 
   /**
    * deal commission
    */
-  commission?: Number,
+  commission?: number,
 
   /**
    * deal swap
    */
-  swap?: Number,
+  swap?: number,
 
   /**
    * deal profit
    */
-  profit: Number,
+  profit: number,
 
   /**
    * id of position the deal relates to
    */
-  positionId?: String,
+  positionId?: string,
 
   /**
    * id of order the deal relates to
    */
-  orderId?: String,
+  orderId?: string,
 
   /**
    * deal comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  comment?: String,
+  comment?: string,
 
   /**
    * current comment value on broker side (possibly overriden by the broker)
    */
-  brokerComment?: String,
+  brokerComment?: string,
 
   /**
    * client-assigned id. The id value can be assigned when submitting a trade and
@@ -1043,12 +1033,12 @@ export declare type MetatraderDeal = {
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
    */
-  clientId: String,
+  clientId: string,
 
   /**
    * platform id (mt4 or mt5)
    */
-  platform: String,
+  platform: string,
 
   /**
    * optional deal execution reason. One of DEAL_REASON_CLIENT, DEAL_REASON_MOBILE,
@@ -1056,13 +1046,13 @@ export declare type MetatraderDeal = {
    * DEAL_REASON_VMARGIN, DEAL_REASON_SPLIT, DEAL_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_reason.
    */
-  reason?: String,
+  reason?: string,
 
   /**
    * current exchange rate of account currency into account base
    * currency (USD if you did not override it)
    */
-  accountCurrencyExchangeRate?: Number
+  accountCurrencyExchangeRate?: number
 }
 
 /**
@@ -1076,7 +1066,7 @@ export declare type MetatraderTradeResponse = {
    * https://book.mql4.com/appendix/errors. Response codes which indicate success are 0, 10008-10010, 10025. The rest
    * codes are errors
    */
-  numericCode: Number,
+  numericCode: number,
 
   /**
    * string response code, see
@@ -1085,22 +1075,22 @@ export declare type MetatraderTradeResponse = {
    * TRADE_RETCODE_PLACED, TRADE_RETCODE_DONE, TRADE_RETCODE_DONE_PARTIAL, TRADE_RETCODE_NO_CHANGES. The rest codes are
    * errors.
    */
-  stringCode: String,
+  stringCode: string,
 
   /**
    * human-readable response message
    */
-  message: String,
+  message: string,
 
   /**
    * order id which was created/modified during the trade
    */
-  orderId: String,
+  orderId: string,
 
   /**
    * position id which was modified during the trade
    */
-  positionId: String
+  positionId: string
 }
 
 /**
@@ -1111,20 +1101,20 @@ export declare type MarketDataSubscription = {
   /**
    * subscription type, one of quotes, candles, ticks, or marketDepth
    */
-  type: String,
+  type: string,
 
   /**
    * when subscription type is candles, defines the timeframe according to which the
    * candles must be generated. Allowed values for MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h,
    * 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
    */
-  timeframe?: String,
+  timeframe?: string,
 
   /**
    * defines how frequently the terminal will stream data to client. If not
    * set, then the value configured in account will be used
    */
-  intervalInMilliseconds?: Number
+  intervalInMilliseconds?: number
 }
 
 /**
@@ -1135,7 +1125,7 @@ export declare type MarketDataUnsubscription = {
   /**
    * subscription type, one of quotes, candles, ticks, or marketDepth
    */
-  type: String
+  type: string
 }
 
 /**
@@ -1147,34 +1137,34 @@ export declare type MetatraderSymbolSpecification = {
   /**
    * symbol (e.g. a currency pair or an index)
    */
-  symbol: String,
+  symbol: string,
 
   /**
    * tick size
    */
-  tickSize: Number,
+  tickSize: number,
 
   /**
    * minimum order volume for the symbol
    */
-  minVolume: Number,
+  minVolume: number,
 
   /**
    * maximum order volume for the symbol
    */
-  maxVolume: Number,
+  maxVolume: number,
 
   /**
    * order volume step for the symbol
    */
-  volumeStep: Number,
+  volumeStep: number,
 
   /**
    * of allowed order filling modes. Can contain ORDER_FILLING_FOK, ORDER_FILLING_IOC or
    * both. See https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_filling_mode for more
    * details.
    */
-  list: Array<String>,
+  list: Array<string>,
 
   /**
    * execution mode. Possible values are SYMBOL_TRADE_EXECUTION_REQUEST,
@@ -1182,12 +1172,12 @@ export declare type MetatraderSymbolSpecification = {
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_trade_execution for more
    * details.
    */
-  deal: String,
+  deal: string,
 
   /**
    * trade contract size
    */
-  contractSize: Number,
+  contractSize: number,
 
   /**
    * quote sessions, indexed by day of week
@@ -1205,67 +1195,67 @@ export declare type MetatraderSymbolSpecification = {
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_trade_mode for more
    * details
    */
-  tradeMode?: String,
+  tradeMode?: string,
 
   /**
    * accrued interest – accumulated coupon interest, i.e. part of the coupon
    * interest calculated in proportion to the number of days since the coupon bond issuance or the last coupon interest
    * payment
    */
-  bondAccruedInterest?: Number,
+  bondAccruedInterest?: number,
 
   /**
    * face value – initial bond value set by the issuer
    */
-  bondFaceValue?: Number,
+  bondFaceValue?: number,
 
   /**
    * the strike price of an option. The price at which an option buyer can buy (in a
    * Call option) or sell (in a Put option) the underlying asset, and the option seller is obliged to sell or buy the
    * appropriate amount of the underlying asset.
    */
-  optionStrike?: Number,
+  optionStrike?: number,
 
   /**
    * option/warrant sensitivity shows by how many points the price of the
    * option's underlying asset should change so that the price of the option changes by one point
    */
-  optionPriceSensivity?: Number,
+  optionPriceSensivity?: number,
 
   /**
    * liquidity Rate is the share of the asset that can be used for the margin
    */
-  liquidityRate?: Number,
+  liquidityRate?: number,
 
   /**
    * initial margin means the amount in the margin currency required for opening a
    * position with the volume of one lot. It is used for checking a client's assets when he or she enters the market
    */
-  initialMargin: Number,
+  initialMargin: number,
 
   /**
    * the maintenance margin. If it is set, it sets the margin amount in the margin
    * currency of the symbol, charged from one lot. It is used for checking a client's assets when his/her account state
    * changes. If the maintenance margin is equal to 0, the initial margin is used
    */
-  maintenanceMargin: Number,
+  maintenanceMargin: number,
 
   /**
    * contract size or margin value per one lot of hedged positions (oppositely directed
    * positions of one symbol). Two margin calculation methods are possible for hedged positions. The calculation method
    * is defined by the broker
    */
-  hedgedMargin: Number,
+  hedgedMargin: number,
 
   /**
    * calculating hedging margin using the larger leg (Buy or Sell)
    */
-  hedgedMarginUsesLargerLeg?: Boolean,
+  hedgedMarginUsesLargerLeg?: boolean,
 
   /**
    * margin currency
    */
-  marginCurrency: String,
+  marginCurrency: string,
 
   /**
    * contract price calculation mode. One of SYMBOL_CALC_MODE_UNKNOWN,
@@ -1275,17 +1265,17 @@ export declare type MetatraderSymbolSpecification = {
    * SYMBOL_CALC_MODE_EXCH_STOCKS_MOEX, SYMBOL_CALC_MODE_EXCH_BONDS_MOEX, SYMBOL_CALC_MODE_SERV_COLLATERAL. See
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_calc_mode for more details
    */
-  priceCalculationMode: String,
+  priceCalculationMode: string,
 
   /**
    * base currency
    */
-  baseCurrency: String,
+  baseCurrency: string,
 
   /**
    * profit currency
    */
-  profitCurrency?: String,
+  profitCurrency?: string,
 
   /**
    * swap calculation model. Allowed values are SYMBOL_SWAP_MODE_DISABLED,
@@ -1294,23 +1284,23 @@ export declare type MetatraderSymbolSpecification = {
    * SYMBOL_SWAP_MODE_REOPEN_CURRENT, SYMBOL_SWAP_MODE_REOPEN_BID. See
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_swap_mode for more details
    */
-  swapMode: String,
+  swapMode: string,
 
   /**
    * long swap value
    */
-  swapLong?: Number,
+  swapLong?: number,
 
   /**
    * short swap value
    */
-  swapShort?: Number,
+  swapShort?: number,
 
   /**
    * day of week to charge 3 days swap rollover. Allowed values are SUNDAY,
    * MONDAY, TUESDAY, WEDNESDAY, THURDAY, FRIDAY, SATURDAY, NONE
    */
-  swapRollover3Days?: String,
+  swapRollover3Days?: string,
 
   /**
    * allowed order expiration modes. Allowed values are
@@ -1318,7 +1308,7 @@ export declare type MetatraderSymbolSpecification = {
    * See https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_expiration_mode for more
    * details
    */
-  allowedExpirationModes: Array<String>,
+  allowedExpirationModes: Array<string>,
 
   /**
    * allowed order types. Allowed values are SYMBOL_ORDER_MARKET,
@@ -1326,7 +1316,7 @@ export declare type MetatraderSymbolSpecification = {
    * SYMBOL_ORDER_CLOSEBY. See
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#symbol_order_mode for more details
    */
-  allowedOrderTypes: Array<String>,
+  allowedOrderTypes: Array<string>,
 
   /**
    * if the expirationMode property is set to SYMBOL_EXPIRATION_GTC (good till
@@ -1336,27 +1326,27 @@ export declare type MetatraderSymbolSpecification = {
    * https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_order_gtc_mode for more
    * details
    */
-  orderGTCMode: String,
+  orderGTCMode: string,
 
   /**
    * digits after a decimal point
    */
-  digits: Number,
+  digits: number,
 
   /**
    * point size
    */
-  point: Number,
+  point: number,
 
   /**
    * path in the symbol tree
    */
-  path?: String,
+  path?: string,
 
   /**
    * symbol description
    */
-  description: String,
+  description: string,
 
   /**
    * date of the symbol trade beginning (usually used for futures)
@@ -1378,33 +1368,33 @@ export declare type MetatraderSymbolPrice = {
   /**
    * symbol (e.g. a currency pair or an index)
    */
-  symbol: String,
+  symbol: string,
 
   /**
    * bid price
    */
-  bid: String,
+  bid: string,
 
   /**
    * ask price
    */
-  ask: Number,
+  ask: number,
 
   /**
    * tick value for a profitable position
    */
-  profitTickValue: Number,
+  profitTickValue: number,
 
   /**
    * tick value for a losing position
    */
-  lossTickValue: Number,
+  lossTickValue: number,
 
   /**
    * current exchange rate of account currency into account base
    * currency (USD if you did not override it)
    */
-  accountCurrencyExchangeRate?: Number,
+  accountCurrencyExchangeRate?: number,
 
   /**
    * quote time, in ISO format
@@ -1414,7 +1404,7 @@ export declare type MetatraderSymbolPrice = {
   /**
    * time quote time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
-  brokerTime: String
+  brokerTime: string
 }
 
 /**
@@ -1425,13 +1415,13 @@ export declare type MetatraderCandle = {
   /**
    * symbol (e.g. currency pair or an index)
    */
-  symbol: String,
+  symbol: string,
 
   /**
    * timeframe candle was generated for, e.g. 1h. One of 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m,
    * 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn
    */
-  timeframe: String,
+  timeframe: string,
 
   /**
    * candle opening time
@@ -1441,42 +1431,42 @@ export declare type MetatraderCandle = {
   /**
    * candle opening time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
-  brokerTime: String,
+  brokerTime: string,
 
   /**
    * open price
    */
-  open: Number,
+  open: number,
 
   /**
    * high price
    */
-  high: Number,
+  high: number,
 
   /**
    * low price
    */
-  low: Number,
+  low: number,
 
   /**
    * close price
    */
-  close: Number,
+  close: number,
 
   /**
    * tick volume, i.e. number of ticks inside the candle
    */
-  tickVolume: Number,
+  tickVolume: number,
 
   /**
    * spread in points
    */
-  spread: Number,
+  spread: number,
 
   /**
    * trade volume
    */
-  volume: Number
+  volume: number
 }
 
 /**
@@ -1487,7 +1477,7 @@ export declare type MetatraderTick = {
   /**
    * symbol (e.g. a currency pair or an index)
    */
-  symbol: String,
+  symbol: string,
 
   /**
    * time
@@ -1497,32 +1487,32 @@ export declare type MetatraderTick = {
   /**
    * time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
-  brokerTime: String,
+  brokerTime: string,
 
   /**
    * bid price
    */
-  bid?: Number,
+  bid?: number,
 
   /**
    * ask price
    */
-  ask?: Number,
+  ask?: number,
 
   /**
    * last deal price
    */
-  last?: Number,
+  last?: number,
 
   /**
    * volume for the current last deal price
    */
-  volume?: Number,
+  volume?: number,
 
   /**
    * is tick a result of buy or sell deal, one of buy or sell
    */
-  side: String
+  side: string
 }
 
 /**
@@ -1533,7 +1523,7 @@ export declare type MetatraderBook = {
   /**
    * symbol (e.g. a currency pair or an index)
    */
-  symbol: String,
+  symbol: string,
 
   /**
    * time
@@ -1543,7 +1533,7 @@ export declare type MetatraderBook = {
   /**
    * time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
-  brokerTime: String,
+  brokerTime: string,
 
   /**
    * list of order book entries
@@ -1559,72 +1549,72 @@ export declare type MetatraderTrade = {
   /**
    * type, enum: ORDER_TYPE_SELL, ORDER_TYPE_BUY, ORDER_TYPE_BUY_LIMIT, ORDER_TYPE_SELL_LIMIT,ORDER_TYPE_BUY_STOP, ORDER_TYPE_SELL_STOP, POSITION_MODIFY, POSITION_PARTIAL, POSITION_CLOSE_ID,POSITIONS_CLOSE_SYMBOL, ORDER_MODIFY, ORDER_CANCEL, POSITION_CLOSE_BY, ORDER_TYPE_BUY_STOP_LIMIT, ORDER_TYPE_SELL_STOP_LIMIT.
    */
-  actionType: String,
+  actionType: string,
 
   /**
    * symbol to trade
    */
-  symbol?: String,
+  symbol?: string,
 
   /**
    * order volume
    */
-  volume?: Number,
+  volume?: number,
 
   /**
    * order limit or stop price
    */
-  openPrice?: Number,
+  openPrice?: number,
 
   /**
    * stop loss price
    */
-  stopLoss?: Number,
+  stopLoss?: number,
 
   /**
    * take profit price
    */
-  takeProfit?: Number,
+  takeProfit?: number,
 
   /**
-   * stop loss units. ABSOLUTE_PRICE means the that the value of stopLoss field is a final stop loss value. RELATIVE_* means that the stopLoss field value contains relative stop loss expressed either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * stop loss units. ABSOLUTE_PRICE means the that the value of stopLoss field is a final stop loss value. RELATIVE_* means that the stopLoss field value contains relative stop loss expressed either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
-  stopLossUnits?: String,
+  stopLossUnits?: string,
 
   /**
-   * take profit units. ABSOLUTE_PRICE means the that the value of takeProfit field is a final take profit value. RELATIVE_* means that the takeProfit field value contains relative take profit expressed either in price, points, pips, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_PIPS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
+   * take profit units. ABSOLUTE_PRICE means the that the value of takeProfit field is a final take profit value. RELATIVE_* means that the takeProfit field value contains relative take profit expressed either in price, points, account currency or balance percentage. Default is ABSOLUTE_PRICE. enum: ABSOLUTE_PRICE, RELATIVE_PRICE, RELATIVE_POINTS, RELATIVE_CURRENCY, RELATIVE_BALANCE_PERCENTAGE
    */
-  takeProfitUnits?: String,
+  takeProfitUnits?: string,
 
   /**
    * order id, must be specified for order modification commands
    */
-  orderId?: String,
+  orderId?: string,
 
   /**
    * position id, must be specified for position modification commands
    */
-  positionId?: String,
+  positionId?: string,
 
   /**
    * order comment. The sum of the line lengths of the comment and the clientId must be less than or equal to 26. For more information see clientId usage
    */
-  comment?: String,
+  comment?: string,
 
   /**
    * client-assigned id. The id value can be assigned when submitting a trade and will be present on position, history orders and history deals related to the trade. You can use this field to bind your trades to objects in your application and then track trade progress. The sum of the line lengths of the comment and the clientId must be less than or equal to 26. For more information see clientId usage
    */
-  clientId?: String,
+  clientId?: string,
 
   /**
    * magic number (expert adviser id)
    */
-  magic?: Number,
+  magic?: number,
 
   /**
    * slippage in points. Should be greater or equal to zero. In not set, default value specified in account entity will be used. Slippage is ignored on position modification, order modification and order cancellation calls. Slippage is also ignored if execution mode set in symbol specification is SYMBOL_TRADE_EXECUTION_MARKET.
    */
-  slippage?: Number,
+  slippage?: number,
 
   /**
    * allowed filling modes in the order of priority. Default is to allow all filling modes and prefer ORDER_FILLING_FOK over ORDER_FILLING_IOC. See https://www.mql5.com/en/docs/constants/tradingconstants/orderproperties#enum_order_type_filling for extra explanation.
@@ -1639,12 +1629,12 @@ export declare type MetatraderTrade = {
   /**
    * identifier of an opposite position used for closing by order, required in case actionType is POSITION_CLOSE_BY
    */
-  closeByPositionId?: String,
+  closeByPositionId?: string,
 
   /**
    * optional price at which the StopLimit order will be placed. Required for stop limit orders
    */
-  stopLimitPrice: String
+  stopLimitPrice: string
 }
 
 /**
@@ -1655,12 +1645,12 @@ export declare type MetatraderSession = {
   /**
    * session start time, in hh.mm.ss.SSS format
    */
-  from: String,
+  from: string,
 
   /**
    * session end time, in hh.mm.ss.SSS format
    */
-  to: String
+  to: string
 }
 
 /**
@@ -1713,15 +1703,15 @@ export declare type MetatraderBookEntry = {
    * entry type, one of BOOK_TYPE_SELL, BOOK_TYPE_BUY, BOOK_TYPE_SELL_MARKET,
    * BOOK_TYPE_BUY_MARKET
    */
-  type: String,
+  type: string,
 
   /**
    * price
    */
-  price: Number,
+  price: number,
 
   /**
    * volume
    */
-  volume: Number
+  volume: number
 }

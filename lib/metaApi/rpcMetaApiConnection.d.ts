@@ -31,10 +31,10 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   /**
    * Returns specific position (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readPosition/).
-   * @param {String} positionId position id
+   * @param {string} positionId position id
    * @return {Promise<MetatraderPosition>} promise resolving with MetaTrader position found
    */
-  getPosition(positionId: String): Promise<MetatraderPosition>;
+  getPosition(positionId: string): Promise<MetatraderPosition>;
   
   /**
    * Returns open orders (see
@@ -46,103 +46,103 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   /**
    * Returns specific open order (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readOrder/).
-   * @param {String} orderId order id (ticket number)
+   * @param {string} orderId order id (ticket number)
    * @return {Promise<MetatraderOrder>} promise resolving with metatrader order found
    */
-  getOrder(orderId: String): Promise<MetatraderOrder>;
+  getOrder(orderId: string): Promise<MetatraderOrder>;
   
   /**
    * Returns the history of completed orders for a specific ticket number (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readHistoryOrdersByTicket/).
-   * @param {String} ticket ticket number (order id)
+   * @param {string} ticket ticket number (order id)
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
-  getHistoryOrdersByTicket(ticket: String): Promise<MetatraderHistoryOrders>;
+  getHistoryOrdersByTicket(ticket: string): Promise<MetatraderHistoryOrders>;
   
   /**
    * Returns the history of completed orders for a specific position id (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readHistoryOrdersByPosition/)
-   * @param {String} positionId position id
+   * @param {string} positionId position id
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
-  getHistoryOrdersByPosition(positionId: String): Promise<MetatraderHistoryOrders>;
+  getHistoryOrdersByPosition(positionId: string): Promise<MetatraderHistoryOrders>;
   
   /**
    * Returns the history of completed orders for a specific time range (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readHistoryOrdersByTimeRange/)
    * @param {Date} startTime start of time range, inclusive
    * @param {Date} endTime end of time range, exclusive
-   * @param {Number} offset pagination offset, default is 0
-   * @param {Number} limit pagination limit, default is 1000
+   * @param {number} offset pagination offset, default is 0
+   * @param {number} limit pagination limit, default is 1000
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
-  getHistoryOrdersByTimeRange(startTime: Date, endTime: Date, offset?: Number, limit?: Number): Promise<MetatraderHistoryOrders>;
+  getHistoryOrdersByTimeRange(startTime: Date, endTime: Date, offset?: number, limit?: number): Promise<MetatraderHistoryOrders>;
   
   /**
    * Returns history deals with a specific ticket number (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readDealsByTicket/).
-   * @param {String} ticket ticket number (deal id for MT5 or order id for MT4)
+   * @param {string} ticket ticket number (deal id for MT5 or order id for MT4)
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
-  getDealsByTicket(ticket: String): Promise<MetatraderDeals>;
+  getDealsByTicket(ticket: string): Promise<MetatraderDeals>;
   
   /**
    * Returns history deals for a specific position id (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readDealsByPosition/).
-   * @param {String} positionId position id
+   * @param {string} positionId position id
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
-  getDealsByPosition(positionId: String): Promise<MetatraderDeals>;
+  getDealsByPosition(positionId: string): Promise<MetatraderDeals>;
   
   /**
    * Returns history deals with for a specific time range (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveHistoricalData/readDealsByTimeRange/).
    * @param {Date} startTime start of time range, inclusive
    * @param {Date} endTime end of time range, exclusive
-   * @param {Number} offset pagination offset, default is 0
-   * @param {Number} limit pagination limit, default is 1000
+   * @param {number} offset pagination offset, default is 0
+   * @param {number} limit pagination limit, default is 1000
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
-  getDealsByTimeRange(startTime: Date, endTime: Date, offset?: Number, limit?: Number): Promise<MetatraderDeals>;
+  getDealsByTimeRange(startTime: Date, endTime: Date, offset?: number, limit?: number): Promise<MetatraderDeals>;
   
   /**
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
    * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {String} [application] application to remove history for
+   * @param {string} [application] application to remove history for
    * @return {Promise} promise resolving when the history is cleared
    */
-  removeHistory(application?: String): Promise<any>;
+  removeHistory(application?: string): Promise<any>;
   
   /**
    * Retrieves available symbols for an account (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbols/).
    * @returns {Promise<Array<string>>} promise which resolves when symbols are retrieved
    */
-  getSymbols(): Promise<Array<String>>;
+  getSymbols(): Promise<Array<string>>;
   
   /**
    * Retrieves specification for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolSpecification/).
-   * @param {String} symbol symbol to retrieve specification for
+   * @param {string} symbol symbol to retrieve specification for
    * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
    */
-  getSymbolSpecification(symbol: String): Promise<MetatraderSymbolSpecification>;
+  getSymbolSpecification(symbol: string): Promise<MetatraderSymbolSpecification>;
   
   /**
    * Retrieves latest price for a symbol (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbolPrice/).
-   * @param {String} symbol symbol to retrieve price for
+   * @param {string} symbol symbol to retrieve price for
    * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
    * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
-  getSymbolPrice(symbol: String, keepSubscription: Boolean): Promise<MetatraderSymbolPrice>;
+  getSymbolPrice(symbol: string, keepSubscription: boolean): Promise<MetatraderSymbolPrice>;
   
   /**
    * Retrieves latest candle for a symbol and timeframe (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readCandle/).
-   * @param {String} symbol symbol to retrieve candle for
+   * @param {string} symbol symbol to retrieve candle for
    * @param {string} timeframe defines the timeframe according to which the candle must be generated. Allowed values for
    * MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed values
    * for MT4 are 1m, 5m, 15m 30m, 1h, 4h, 1d, 1w, 1mn
@@ -151,18 +151,18 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
-  getCandle(symbol: String, timeframe: String, keepSubscription?: Boolean): Promise<MetatraderCandle>;
+  getCandle(symbol: string, timeframe: string, keepSubscription?: boolean): Promise<MetatraderCandle>;
   
   /**
    * Retrieves latest tick for a symbol. MT4 G1 accounts do not support this API (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readTick/).
-   * @param {String} symbol symbol to retrieve tick for
+   * @param {string} symbol symbol to retrieve tick for
    * @param {boolean} keepSubscription if set to true, the account will get a long-term subscription to symbol market
    * data. Long-term subscription means that on subsequent calls you will get updated value faster. If set to false or
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
    */
-  getTick(symbol: String, keepSubscription?: Boolean): Promise<MetatraderTick>;
+  getTick(symbol: string, keepSubscription?: boolean): Promise<MetatraderTick>;
   
   /**
    * Retrieves latest order book for a symbol. MT4 accounts do not support this API (see
@@ -173,12 +173,12 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * not set, the subscription will be set to expire in 12 minutes.
    * @returns {Promise<MetatraderTick>} promise which resolves when order book is retrieved
    */
-  getBook(symbol: String, keepSubscription?: Boolean): Promise<MetatraderTick>;
+  getBook(symbol: string, keepSubscription?: boolean): Promise<MetatraderTick>;
   
   /**
    * Waits until synchronization to RPC application is completed
-   * @param {Number} timeoutInSeconds synchronization timeout in seconds
+   * @param {number} timeoutInSeconds synchronization timeout in seconds
    * @return {Promise} promise which resolves when synchronization to RPC application is completed
    */
-   waitSynchronized(timeoutInSeconds?: Number): Promise<any>;
+   waitSynchronized(timeoutInSeconds?: number): Promise<any>;
 }
