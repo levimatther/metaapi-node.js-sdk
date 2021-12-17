@@ -7,21 +7,21 @@ export class ProvisioningProfileClient {
    * Retrieves provisioning profiles owned by user
    * (see https://metaapi.cloud/docs/provisioning/api/provisioningProfile/readProvisioningProfiles/)
    * Method is accessible only with API access token
-   * @param {Number} version optional version filter (allowed values are 4 and 5)
-   * @param {String} status optional status filter (allowed values are new and active)
+   * @param {number} version optional version filter (allowed values are 4 and 5)
+   * @param {string} status optional status filter (allowed values are new and active)
    * @return {Promise<Array<ProvisioningProfileDto>>} promise resolving with provisioning profiles found
    */
-   getProvisioningProfiles(version: Number, status: String): Promise<Array<ProvisioningProfileDto>>;
+   getProvisioningProfiles(version: number, status: string): Promise<Array<ProvisioningProfileDto>>;
 
    /**
    * Retrieves a provisioning profile by id (see
    * https://metaapi.cloud/docs/provisioning/api/provisioningProfile/readProvisioningProfile/). Throws an error if
    * profile is not found.
    * Method is accessible only with API access token
-   * @param {String} id provisioning profile id
+   * @param {string} id provisioning profile id
    * @return {Promise<ProvisioningProfileDto>} promise resolving with provisioning profile found
    */
-  getProvisioningProfile(id: String): Promise<ProvisioningProfileDto>
+  getProvisioningProfile(id: string): Promise<ProvisioningProfileDto>
 
   /**
    * Creates a new provisioning profile (see
@@ -38,33 +38,33 @@ export class ProvisioningProfileClient {
    * https://metaapi.cloud/docs/provisioning/api/provisioningProfile/uploadFilesToProvisioningProfile/). Uploading a
    * file by name is allowed only for Node.js.
    * Method is accessible only with API access token
-   * @param {String} provisioningProfileId provisioning profile id to upload file to
-   * @param {String} fileName name of the file to upload. Allowed values are servers.dat for MT5 profile, broker.srv for
+   * @param {string} provisioningProfileId provisioning profile id to upload file to
+   * @param {string} fileName name of the file to upload. Allowed values are servers.dat for MT5 profile, broker.srv for
    * MT4 profile
-   * @param {String|Buffer} file path to a file to upload or buffer containing file contents
+   * @param {string|Buffer} file path to a file to upload or buffer containing file contents
    * @return {Promise} promise resolving when file upload is completed
    */
-  uploadProvisioningProfileFile(provisioningProfileId: String, fileName: String, file: String|Buffer): Promise<any>;
+  uploadProvisioningProfileFile(provisioningProfileId: string, fileName: string, file: string|Buffer): Promise<any>;
 
   /**
    * Deletes a provisioning profile (see
    * https://metaapi.cloud/docs/provisioning/api/provisioningProfile/deleteProvisioningProfile/). Please note that in
    * order to delete a provisioning profile you need to delete MT accounts connected to it first.
    * Method is accessible only with API access token
-   * @param {String} id provisioning profile id
+   * @param {string} id provisioning profile id
    * @return {Promise} promise resolving when provisioning profile is deleted
    */
-  deleteProvisioningProfile(id: String): Promise<any>;
+  deleteProvisioningProfile(id: string): Promise<any>;
 
   /**
    * Updates existing provisioning profile data (see
    * https://metaapi.cloud/docs/provisioning/api/provisioningProfile/updateProvisioningProfile/).
    * Method is accessible only with API access token
-   * @param {String} id provisioning profile id
+   * @param {string} id provisioning profile id
    * @param {ProvisioningProfileUpdateDto} provisioningProfile updated provisioning profile
    * @return {Promise} promise resolving when provisioning profile is updated
    */
-  updateProvisioningProfile(id: String, provisioningProfile: ProvisioningProfileUpdateDto): Promise<any>;
+  updateProvisioningProfile(id: string, provisioningProfile: ProvisioningProfileUpdateDto): Promise<any>;
 }
 
 /**
@@ -75,32 +75,32 @@ export declare type ProvisioningProfileDto = {
   /**
    * provisioning profile unique identifier
    */
-  _id: String,
+  _id: string,
 
   /**
    * provisioning profile name
    */
-  name: String,
+  name: string,
 
   /**
    * MetaTrader version (allowed values are 4 and 5)
    */
-  version: Number,
+  version: number,
 
   /**
    * provisioning profile status (allowed values are new and active)
    */
-  status: String,
+  status: string,
 
   /**
    * broker timezone name from Time Zone Database
    */
-  brokerTimezone: String,
+  brokerTimezone: string,
 
   /**
    * broker DST switch timezone name from Time Zone Database
    */
-  brokerDSTSwitchTimezone: String
+  brokerDSTSwitchTimezone: string
 }
 
 /**
@@ -111,22 +111,22 @@ export declare type NewProvisioningProfileDto = {
   /**
    * provisioning profile name
    */
-  name: String,
+  name: string,
 
   /**
    * MetaTrader version (allowed values are 4 and 5)
    */
-  version: Number,
+  version: number,
 
   /**
    * broker timezone name from Time Zone Database
    */
-  brokerTimezone: String,
+  brokerTimezone: string,
 
   /**
    * broker DST switch timezone name from Time Zone Database
    */
-  brokerDSTSwitchTimezone: String
+  brokerDSTSwitchTimezone: string
 }
 
 /**
@@ -137,7 +137,7 @@ export declare type ProvisioningProfileUpdateDto = {
   /**
    * provisioning profile name
    */
-  name: String
+  name: string
 }
 
 /**
@@ -148,5 +148,5 @@ export declare type ProvisioningProfileIdDto = {
   /**
    * provisioning profile unique identifier
    */
-  id: String
+  id: string
 }

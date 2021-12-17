@@ -28,76 +28,76 @@ export default class MetatraderAccount {
   
   /**
    * Returns account id
-   * @return {String} account id
+   * @return {string} account id
    */
-  get id(): String;
+  get id(): string;
   
   /**
    * Returns account name
-   * @return {String} account name
+   * @return {string} account name
    */
-  get name(): String;
+  get name(): string;
   
   /**
    * Returns account type. Possible values are cloud, cloud-g1, cloud-g2 and self-hosted.
-   * @return {String} account type
+   * @return {string} account type
    */
-  get type(): String;
+  get type(): string;
   
   /**
    * Returns account login
-   * @return {String} account login
+   * @return {string} account login
    */
-  get login(): String;
+  get login(): string;
   
   /**
    * Returns MetaTrader server which hosts the account
-   * @return {String} MetaTrader server which hosts the account
+   * @return {string} MetaTrader server which hosts the account
    */
-  get server(): String;
+  get server(): string;
   
   /**
    * Returns id of the account's provisioning profile
-   * @return {String} id of the account's provisioning profile
+   * @return {string} id of the account's provisioning profile
    */
-  get provisioningProfileId(): String;
+  get provisioningProfileId(): string;
   
   /**
    * Returns application name to connect the account to. Currently allowed values are MetaApi and AgiliumTrade
-   * @return {String} application name to connect the account to
+   * @return {string} application name to connect the account to
    */
-  get application(): String;
+  get application(): string;
   
   /**
    * Returns MetaTrader magic to place trades using
-   * @return {Number} MetaTrader magic to place trades using
+   * @return {number} MetaTrader magic to place trades using
    */
-  get magic(): Number;
+  get magic(): number;
   
   /**
    * Returns account deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED, DELETING
-   * @return {String} account deployment state
+   * @return {string} account deployment state
    */
-  get state(): String;
+  get state(): string;
   
   /**
    * Returns terminal & broker connection status, one of CONNECTED, DISCONNECTED, DISCONNECTED_FROM_BROKER
-   * @return {String} terminal & broker connection status
+   * @return {string} terminal & broker connection status
    */
-  get connectionStatus(): String;
+  get connectionStatus(): string;
   
   /**
    * Returns authorization access token to be used for accessing single account data.
    * Intended to be used in browser API.
-   * @return {String} authorization token
+   * @return {string} authorization token
    */
-  get accessToken(): String;
+  get accessToken(): string;
   
   /**
    * Returns flag indicating if trades should be placed as manual trades on this account
-   * @return {Boolean} flag indicating if trades should be placed as manual trades on this account
+   * @return {boolean} flag indicating if trades should be placed as manual trades on this account
    */
-  get manualTrades(): Boolean;
+  get manualTrades(): boolean;
   
   /**
    * Returns API extensions
@@ -113,15 +113,15 @@ export default class MetatraderAccount {
   
   /**
    * Returns user-defined account tags
-   * @return {Array<String>} user-defined account tags
+   * @return {Array<string>} user-defined account tags
    */
-  get tags(): Array<String>;
+  get tags(): Array<string>;
   
   /**
    * Returns account roles for CopyFactory2 application
-   * @return {Array<String>} account roles for CopyFactory2 application
+   * @return {Array<string>} account roles for CopyFactory2 application
    */
-  get copyFactoryRoles(): Array<String>;
+  get copyFactoryRoles(): Array<string>;
   
   /**
    * Returns number of resource slots to allocate to account. Allocating extra resource slots
@@ -132,7 +132,7 @@ export default class MetatraderAccount {
    * is billed as 2 standard resource slots.  Default is 1.
    * @return {number} number of resource slots to allocate to account
    */
-  get resourceSlots(): Number;
+  get resourceSlots(): number;
   
   /**
    * Returns the number of CopyFactory 2 resource slots to allocate to account.
@@ -143,7 +143,7 @@ export default class MetatraderAccount {
    * Default is 1.
    * @return {number} number of CopyFactory 2 resource slots to allocate to account
    */
-  get copyFactoryResourceSlots(): Number;
+  get copyFactoryResourceSlots(): number;
   
   /**
    * Returns 3-character ISO currency code of the account base currency. Default value is USD. The setting is to be used
@@ -151,19 +151,19 @@ export default class MetatraderAccount {
    * this setting unless you understand what you are doing.
    * @return {number} 3-character ISO currency code of the account base currency
    */
-  get baseCurrency(): Number;
+  get baseCurrency(): number;
   
   /**
    * Returns reliability value. Possible values are regular and high
-   * @return {String} account reliability value
+   * @return {string} account reliability value
    */
-  get reliability(): String;
+  get reliability(): string;
   
   /**
    * Returns version value. Possible values are 4 and 5
-   * @return {String} account version value
+   * @return {string} account version value
    */
-  get version(): String;
+  get version(): string;
   
   /**
    * Reloads MetaTrader account from API
@@ -208,35 +208,35 @@ export default class MetatraderAccount {
   
   /**
    * Waits until API server has finished deployment and account reached the DEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
    */
-  waitDeployed(timeoutInSeconds?: Number, intervalInMilliseconds?: Number): Promise<any>;
+  waitDeployed(timeoutInSeconds?: number, intervalInMilliseconds?: number): Promise<any>;
   
   /**
    * Waits until API server has finished undeployment and account reached the UNDEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
    */
-  waitUndeployed(timeoutInSeconds?: Number, intervalInMilliseconds?: Number): Promise<any>;
+  waitUndeployed(timeoutInSeconds?: number, intervalInMilliseconds?: number): Promise<any>;
   
   /**
    * Waits until account has been deleted
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deleted
    */
-  waitRemoved(timeoutInSeconds?: Number, intervalInMilliseconds?: Number): Promise<any>;
+  waitRemoved(timeoutInSeconds?: number, intervalInMilliseconds?: number): Promise<any>;
   
   /**
    * Waits until API server has connected to the terminal and terminal has connected to the broker
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when API server is connected to the broker
    */
-  waitConnected(timeoutInSeconds?: Number, intervalInMilliseconds?: Number): Promise<any>;
+  waitConnected(timeoutInSeconds?: number, intervalInMilliseconds?: number): Promise<any>;
   
   /**
    * Connects to MetaApi. There is only one connection per account. Subsequent calls to this method will return the same connection.
@@ -267,18 +267,18 @@ export default class MetatraderAccount {
   
   /**
    * Retrieves a expert advisor of current account by id
-   * @param {String} expertId expert advisor id
+   * @param {string} expertId expert advisor id
    * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
    */
-  getExpertAdvisor(expertId: String): Promise<ExpertAdvisor>;
+  getExpertAdvisor(expertId: string): Promise<ExpertAdvisor>;
   
   /**
    * Creates an expert advisor
-   * @param {String} expertId expert advisor id
+   * @param {string} expertId expert advisor id
    * @param {NewExpertAdvisorDto} expert expert advisor data
    * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
    */
-  createExpertAdvisor(expertId: String, expert: NewExpertAdvisorDto): Promise<ExpertAdvisor>;
+  createExpertAdvisor(expertId: string, expert: NewExpertAdvisorDto): Promise<ExpertAdvisor>;
   
   /**
    * Returns historical candles for a specific symbol and timeframe from the MetaTrader account.
@@ -292,7 +292,7 @@ export default class MetatraderAccount {
    * @param {number} [limit] maximum number of candles to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
    */
-  getHistoricalCandles(symbol: String, timeframe: String, startTime?: Date, limit?: Number): Promise<Array<MetatraderCandle>>;
+  getHistoricalCandles(symbol: string, timeframe: string, startTime?: Date, limit?: number): Promise<Array<MetatraderCandle>>;
   
   /**
    * Returns historical ticks for a specific symbol from the MetaTrader account. This API is not supported by MT4
@@ -306,5 +306,5 @@ export default class MetatraderAccount {
    * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
    */
-  getHistoricalTicks(symbol: String, startTime?: Date, offset?: Number, limit?: Number): Promise<Array<MetatraderTick>>;
+  getHistoricalTicks(symbol: string, startTime?: Date, offset?: number, limit?: number): Promise<Array<MetatraderTick>>;
 }

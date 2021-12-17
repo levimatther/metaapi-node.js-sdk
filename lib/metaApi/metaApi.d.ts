@@ -18,10 +18,10 @@ export default class MetaApi {
 
   /**
    * Constructs MetaApi class instance
-   * @param {String} token authorization token
+   * @param {string} token authorization token
    * @param {MetaApiOpts} opts application options
    */
-  constructor(token: String, opts?: MetaApiOpts);
+  constructor(token: string, opts?: MetaApiOpts);
 
   /**
    * Returns provisioning profile API
@@ -61,32 +61,32 @@ export declare type MetaApiOpts = {
   /**
    * application id
    */
-  application?: String,
+  application?: string,
 
   /**
    * domain to connect to, default is agiliumtrade.agiliumtrade.ai
    */
-  domain?: String,
+  domain?: string,
 
   /**
    * region to connect to
    */
-  region?: String,
+  region?: string,
 
   /**
    * timeout for socket requests in seconds
    */
-  requestTimeout?: Number,
+  requestTimeout?: number,
 
   /**
    * timeout for connecting to server in seconds
    */
-  connectTimeout?: Number,
+  connectTimeout?: number,
 
   /**
    * packet ordering timeout in seconds
    */
-  packetOrderingTimeout?: Number,
+  packetOrderingTimeout?: number,
 
   /**
    * packet logger options
@@ -96,12 +96,12 @@ export declare type MetaApiOpts = {
   /**
    * an option to enable latency tracking
    */
-  enableLatencyMonitor?: Boolean,
+  enableLatencyMonitor?: boolean,
 
   /**
    * an option to enable latency tracking
    */
-  enableLatencyTracking?: Boolean,
+  enableLatencyTracking?: boolean,
 
   /**
    * options for synchronization throttler
@@ -116,7 +116,7 @@ export declare type MetaApiOpts = {
   /**
    * option to use a shared server
    */
-  useSharedClientApi?: Boolean,
+  useSharedClientApi?: boolean,
 
   /**
    * subscriptions refresh options
@@ -127,7 +127,7 @@ export declare type MetaApiOpts = {
    * a timeout in seconds for throttling repeat unsubscribe
    * requests when synchronization packets still arrive after unsubscription, default is 10 seconds
    */
-  unsubscribeThrottlingIntervalInSeconds?: Number
+  unsubscribeThrottlingIntervalInSeconds?: number
 }
 
 /**
@@ -139,13 +139,13 @@ export declare type RefreshSubscriptionsOpts = {
    * minimum delay in seconds until subscriptions refresh request,
    * default value is 1
    */
-  minDelayInSeconds?: Number,
+  minDelayInSeconds?: number,
 
   /**
    * maximum delay in seconds until subscriptions refresh request,
    * default value is 600
    */
-  maxDelayInSeconds?: Number
+  maxDelayInSeconds?: number
 }
 
 /**
@@ -156,15 +156,15 @@ export declare type RetryOpts = {
   /**
    * maximum amount of request retries, default value is 5
    */
-  retries?: Number,
+  retries?: number,
 
   /**
    * minimum delay in seconds until request retry, default value is 1
    */
-  minDelayInSeconds?: Number,
+  minDelayInSeconds?: number,
 
   /**
    * maximum delay in seconds until request retry, default value is 30
    */
-  maxDelayInSeconds?: Number
+  maxDelayInSeconds?: number
 }

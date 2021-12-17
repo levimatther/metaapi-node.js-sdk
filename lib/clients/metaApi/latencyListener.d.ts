@@ -10,7 +10,7 @@ export default class LatencyListener {
    * @param {ResponseTimestamps} timestamps request timestamps object containing latency information
    * @return {Promise} promise which resolves when latency information is processed
    */
-  onResponse(accountId: String, type: String, timestamps: ResponseTimestamps): Promise<any>;
+  onResponse(accountId: string, type: string, timestamps: ResponseTimestamps): Promise<any>;
   
   /**
    * Invoked with latency information when application receives symbol price update event
@@ -19,7 +19,7 @@ export default class LatencyListener {
    * @param {SymbolPriceTimestamps} timestamps timestamps object containing latency information about price streaming
    * @return {Promise} promise which resolves when latency information is processed
    */
-  onSymbolPrice(accountId: String, symbol: String, timestamps: SymbolPriceTimestamps): Promise<any>;
+  onSymbolPrice(accountId: string, symbol: string, timestamps: SymbolPriceTimestamps): Promise<any>;
   
   /**
    * Invoked with latency information when application receives update event
@@ -27,7 +27,7 @@ export default class LatencyListener {
    * @param {UpdateTimestamps} timestamps timestamps object containing latency information about update streaming
    * @return {Promise} promise which resolves when latency information is processed
    */
-  onUpdate(accountId: String, timestamps: UpdateTimestamps): Promise<any>;
+  onUpdate(accountId: string, timestamps: UpdateTimestamps): Promise<any>;
   
   /**
    * Invoked with latency information when application receives trade response
@@ -35,7 +35,7 @@ export default class LatencyListener {
    * @param {TradeTimestamps} timestamps timestamps object containing latency information about a trade
    * @return {Promise} promise which resolves when latency information is processed
    */
-  onTrade(accountId: String, timestamps: TradeTimestamps): Promise<any>;
+  onTrade(accountId: string, timestamps: TradeTimestamps): Promise<any>;
 }
 
 /**

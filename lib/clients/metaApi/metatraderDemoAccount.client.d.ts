@@ -8,20 +8,20 @@ export default class MetatraderDemoAccountClient extends MetaApiClient {
   /**
    * Creates new MetaTrader 4 demo account
    * Method is accessible only with API access token
-   * @param {String} profileId id of the provisioning profile that will be used as the basis for creating this account
+   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT4DemoAccount} account demo account to create
    * @return {Promise<MetatraderDemoAccountDto>} promise resolving with MetaTrader demo account created
    */
-  createMT4DemoAccount(profileId: String, account: NewMT4DemoAccount): Promise<MetatraderDemoAccountDto>;
+  createMT4DemoAccount(profileId: string, account: NewMT4DemoAccount): Promise<MetatraderDemoAccountDto>;
   
   /**
    * Creates new MetaTrader 5 demo account
    * Method is accessible only with API access token
-   * @param {String} profileId id of the provisioning profile that will be used as the basis for creating this account
+   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT5DemoAccount} account demo account to create
    * @return {Promise<MetatraderDemoAccountDto>} promise resolving with MetaTrader demo account created
    */
-   createMT5DemoAccount(profileId: String, account: NewMT5DemoAccount): Promise<MetatraderDemoAccountDto>;
+   createMT5DemoAccount(profileId: string, account: NewMT5DemoAccount): Promise<MetatraderDemoAccountDto>;
 }
 
 /**
@@ -32,62 +32,62 @@ export declare type NewMT4DemoAccount = {
   /**
    * account type
    */
-  accountType?: String,
+  accountType?: string,
 
   /**
    * account holder's address
    */
-  address?: String,
+  address?: string,
 
   /**
    * account balance
    */
-  balance: Number,
+  balance: number,
 
   /**
    * account holder's city
    */
-  city?: String,
+  city?: string,
 
   /**
    * account holder's country
    */
-  country?: String,
+  country?: string,
 
   /**
    * account holder's email
    */
-  email: String,
+  email: string,
 
   /**
    * account leverage
    */
-  leverage: Number,
+  leverage: number,
 
   /**
    * account holder's name
    */
-  name?: String,
+  name?: string,
 
   /**
    * account holder's phone
    */
-  phone?: String,
+  phone?: string,
 
   /**
    * server name
    */
-  serverName?: String,
+  serverName?: string,
 
   /**
    * account holder's state
    */
-  state?: String,
+  state?: string,
 
   /**
    * zip address
    */
-  zip?: String
+  zip?: string
 }
 
 /**
@@ -98,62 +98,62 @@ export declare type NewMT5DemoAccount = {
   /**
    * account holder's address
    */
-  address?: String,
+  address?: string,
 
   /**
    * account balance
    */
-  balance: Number,
+  balance: number,
 
   /**
    * account holder's city
    */
-  city?: String,
+  city?: string,
 
   /**
    * account holder's country
    */
-  country?: String;
+  country?: string;
 
   /**
    * account holder's email
    */
-  email: String,
+  email: string,
 
   /**
    * language id (default is 1)
    */
-  languageId?: Number,
+  languageId?: number,
 
   /**
    * account leverage
    */
-  leverage: Number,
+  leverage: number,
 
   /**
    * account holder's name
    */
-  name?: String,
+  name?: string,
 
   /**
    * account holder's phone
    */
-  phone?: String,
+  phone?: string,
 
   /**
    * server name
    */
-  serverName: String,
+  serverName: string,
 
   /**
    * account holder's state
    */
-  state?: String,
+  state?: string,
 
   /**
    * zip address
    */
-  zip?: String
+  zip?: string
 }
 
 /**
@@ -164,20 +164,20 @@ export declare type MetatraderDemoAccountDto = {
   /**
    * account login
    */
-  login: String,
+  login: string,
 
   /**
    * account password
    */
-  password: String,
+  password: string,
 
   /**
    * MetaTrader server name
    */
-  serverName: String,
+  serverName: string,
 
   /**
    * account investor (read-only) password
    */
-  investorPassword: String
+  investorPassword: string
 }

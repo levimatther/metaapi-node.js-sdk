@@ -1,3 +1,6 @@
+16.2.2
+  - updated typescript types
+
 16.2.1
   - added RELATIVE_PIPS trade option
 

@@ -9,7 +9,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Constructs the in-memory history store instance
    */
-  constructor(accountId: String, application?: String);
+  constructor(accountId: string, application?: string);
 
   /**
    * Initializes the storage and loads required data from a persistent storage
@@ -58,38 +58,38 @@ export default class MemoryHistoryStorage extends HistoryStorage {
 
   /**
    * Returns the time of the last history order record stored in the history storage
-   * @param {Number} [instanceNumber] index of an account instance connected
-   * @returns {Date} the time of the last history order record stored in the history storage
+   * @param {number} [instanceNumber] index of an account instance connected
+   * @returns {Promise<Date>} the time of the last history order record stored in the history storage
    */
-  lastHistoryOrderTime(instanceNumber?: Number): Date; 
+  lastHistoryOrderTime(instanceNumber?: number): Promise<Date>; 
 
   /**
    * Returns the time of the last history deal record stored in the history storage
-   * @param {Number} [instanceNumber] index of an account instance connected
-   * @returns {Date} the time of the last history deal record stored in the history storage
+   * @param {number} [instanceNumber] index of an account instance connected
+   * @returns {Promise<Date>} the time of the last history deal record stored in the history storage
    */
-  lastDealTime(instanceNumber: Number): Date;
+  lastDealTime(instanceNumber: number): Promise<Date>;
 
   /**
    * Invoked when a new MetaTrader history order is added
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    */
-  onHistoryOrderAdded(instanceIndex: String, historyOrder: MetatraderOrder): Promise<any>;
+  onHistoryOrderAdded(instanceIndex: string, historyOrder: MetatraderOrder): Promise<any>;
 
   /**
    * Invoked when a new MetaTrader history deal is added
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
    */
-  onDealAdded(instanceIndex: String, deal: MetatraderDeal): Promise<any>;
+  onDealAdded(instanceIndex: string, deal: MetatraderDeal): Promise<any>;
 
   /**
    * Invoked when a synchronization of history deals on a MetaTrader account have finished to indicate progress of an
    * initial terminal state synchronization
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} synchronizationId synchronization request id
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onDealsSynchronized(instanceIndex: String, synchronizationId: String): Promise<any>
+  onDealsSynchronized(instanceIndex: string, synchronizationId: string): Promise<any>
 }

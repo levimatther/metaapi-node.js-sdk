@@ -15,18 +15,18 @@ export default class ProvisioningProfileApi {
 
   /**
    * Retrieves provisioning profiles
-   * @param {Number} version optional version filter (allowed values are 4 and 5)
-   * @param {String} status optional status filter (allowed values are new and active)
+   * @param {number} version optional version filter (allowed values are 4 and 5)
+   * @param {string} status optional status filter (allowed values are new and active)
    * @return {Promise<Array<ProvisioningProfile>>} promise resolving with an array of provisioning profile entities
    */
-  getProvisioningProfiles(version: Number, status: String): Promise<Array<ProvisioningProfile>>;
+  getProvisioningProfiles(version: number, status: string): Promise<Array<ProvisioningProfile>>;
 
   /**
    * Retrieves a provisioning profile by id
-   * @param {String} provisioningProfileId provisioning profile id
+   * @param {string} provisioningProfileId provisioning profile id
    * @return {Promise<ProvisioningProfile>} promise resolving with provisioning profile entity
    */
-  getProvisioningProfile(provisioningProfileId: String): Promise<ProvisioningProfile>;
+  getProvisioningProfile(provisioningProfileId: string): Promise<ProvisioningProfile>;
 
   /**
    * Creates a provisioning profile

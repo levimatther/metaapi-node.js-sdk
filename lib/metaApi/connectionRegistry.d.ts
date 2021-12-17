@@ -11,10 +11,10 @@ export default class ConnectionRegistry {
   /**
    * Constructs a MetaTrader connection registry instance
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
-   * @param {String} application application id
-   * @param {String} refreshSubscriptionsOpts subscriptions refresh options
+   * @param {string} application application id
+   * @param {string} refreshSubscriptionsOpts subscriptions refresh options
    */
-  constructor(metaApiWebsocketClient: MetaApiWebsocketClient, application: String, refreshSubscriptionsOpts: String);
+  constructor(metaApiWebsocketClient: MetaApiWebsocketClient, application: string, refreshSubscriptionsOpts: string);
   
   /**
    * Creates and returns a new account connection if doesnt exist, otherwise returns old
@@ -29,11 +29,11 @@ export default class ConnectionRegistry {
    * Removes an account from registry
    * @param {string} accountId MetaTrader account id to remove
    */
-  remove(accountId: String): void;
+  remove(accountId: string): void;
   
   /**
    * Returns application type
-   * @return {String} application type
+   * @return {string} application type
    */
-  get application(): String;
+  get application(): string;
 }

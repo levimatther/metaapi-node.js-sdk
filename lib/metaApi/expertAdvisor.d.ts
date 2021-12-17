@@ -11,31 +11,31 @@ export default class ExpertAdvisor {
    * @param accountId
    * @param expertAdvisorClient
    */
-  constructor(data: ExpertAdvisorDto, accountId: String, expertAdvisorClient: ExpertAdvisorClient);
+  constructor(data: ExpertAdvisorDto, accountId: string, expertAdvisorClient: ExpertAdvisorClient);
   
   /**
    * Returns expert id
-   * @returns {String} expert id
+   * @returns {string} expert id
    */
-  get expertId(): String;
+  get expertId(): string;
   
   /**
    * Returns expert period
-   * @returns {String} expert period
+   * @returns {string} expert period
    */
-  get period(): String;
+  get period(): string;
   
   /**
    * Returns expert symbol
-   * @returns {String} expert symbol
+   * @returns {string} expert symbol
    */
-  get symbol(): String;
+  get symbol(): string;
   
   /**
    * Returns true if expert file was uploaded
-   * @returns {Boolean}
+   * @returns {boolean}
    */
-  get fileUploaded(): Boolean;
+  get fileUploaded(): boolean;
   
   /**
    * Reloads expert advisor from API
@@ -55,10 +55,10 @@ export default class ExpertAdvisor {
   /**
    * Uploads an expert advisor file. EAs which use DLLs are not supported
    * (see https://metaapi.cloud/docs/provisioning/api/expertAdvisor/uploadEAFile/)
-   * @param {String|Buffer} file expert advisor file
+   * @param {string|Buffer} file expert advisor file
    * @returns {Promise} promise resolving when file upload is completed
    */
-  uploadFile(file: String|Buffer): Promise<any>;
+  uploadFile(file: string|Buffer): Promise<any>;
   
   /**
    * Removes expert advisor

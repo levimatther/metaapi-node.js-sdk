@@ -30,10 +30,10 @@ export default class MetatraderAccountApi {
   
   /**
    * Retrieves a MetaTrader account by id
-   * @param {String} accountId MetaTrader account id
+   * @param {string} accountId MetaTrader account id
    * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
    */
-  getAccount(accountId: String): Promise<MetatraderAccount>;
+  getAccount(accountId: string): Promise<MetatraderAccount>;
   
   /**
    * Retrieves a MetaTrader account by token

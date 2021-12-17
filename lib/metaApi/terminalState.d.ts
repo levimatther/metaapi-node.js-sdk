@@ -13,16 +13,16 @@ export default class TerminalState extends SynchronizationListener {
   
   /**
    * Returns true if MetaApi have connected to MetaTrader terminal
-   * @return {Boolean} true if MetaApi have connected to MetaTrader terminal
+   * @return {boolean} true if MetaApi have connected to MetaTrader terminal
    */
-  get connected(): Boolean;
+  get connected(): boolean;
   
   /**
    * Returns true if MetaApi have connected to MetaTrader terminal and MetaTrader terminal is connected to broker
-   * @return {Boolean} true if MetaApi have connected to MetaTrader terminal and MetaTrader terminal is connected to
+   * @return {boolean} true if MetaApi have connected to MetaTrader terminal and MetaTrader terminal is connected to
    * broker
    */
-  get connectedToBroker(): Boolean;
+  get connectedToBroker(): boolean;
   
   /**
    * Returns a local copy of account information
@@ -51,26 +51,26 @@ export default class TerminalState extends SynchronizationListener {
   
   /**
    * Returns hashes of terminal state data for incremental synchronization
-   * @param {String} accountType account type
-   * @param {String} instanceIndex index of instance to get hashes of
+   * @param {string} accountType account type
+   * @param {string} instanceIndex index of instance to get hashes of
    * @returns {Object} hashes of terminal state data
    */
-  getHashes(accountType: String, instanceIndex: String): Object;
+  getHashes(accountType: string, instanceIndex: string): Object;
   
   /**
    * Returns MetaTrader symbol specification by symbol
-   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {string} symbol symbol (e.g. currency pair or an index)
    * @return {MetatraderSymbolSpecification} MetatraderSymbolSpecification found or undefined if specification for a
    * symbol is not found
    */
-  specification(symbol: String): MetatraderSymbolSpecification;
+  specification(symbol: string): MetatraderSymbolSpecification;
   
   /**
    * Returns MetaTrader symbol price by symbol
-   * @param {String} symbol symbol (e.g. currency pair or an index)
+   * @param {string} symbol symbol (e.g. currency pair or an index)
    * @return {MetatraderSymbolPrice} MetatraderSymbolPrice found or undefined if price for a symbol is not found
    */
-  price(symbol: String): MetatraderSymbolPrice;
+  price(symbol: string): MetatraderSymbolPrice;
   
   /**
    * Waits for price to be received
@@ -78,130 +78,130 @@ export default class TerminalState extends SynchronizationListener {
    * @param {number} [timeoutInSeconds] timeout in seconds, default is 30
    * @return {Promise<MetatraderSymbolPrice>} promise resolving with price or undefined if price has not been received
    */
-  waitForPrice(symbol: String, timeoutInSeconds?: Number): Promise<MetatraderSymbolPrice>;
+  waitForPrice(symbol: string, timeoutInSeconds?: number): Promise<MetatraderSymbolPrice>;
   
   /**
    * Invoked when connection to MetaTrader terminal established
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    */
-  onConnected(instanceIndex: String): Promise<any>;
+  onConnected(instanceIndex: string): Promise<any>;
   
   /**
    * Invoked when connection to MetaTrader terminal terminated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    */
-  onDisconnected(instanceIndex: String): Promise<any>;
+  onDisconnected(instanceIndex: string): Promise<any>;
   
   /**
    * Invoked when broker connection status have changed
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {Boolean} connected is MetaTrader terminal is connected to broker
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {boolean} connected is MetaTrader terminal is connected to broker
    */
-  onBrokerConnectionStatusChanged(instanceIndex: String, connected: Boolean): Promise<any>;
+  onBrokerConnectionStatusChanged(instanceIndex: string, connected: boolean): Promise<any>;
   
   /**
    * Invoked when MetaTrader terminal state synchronization is started
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {Boolean} specificationsUpdated whether specifications are going to be updated during synchronization
-   * @param {Boolean} positionsUpdated whether positions are going to be updated during synchronization
-   * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {boolean} specificationsUpdated whether specifications are going to be updated during synchronization
+   * @param {boolean} positionsUpdated whether positions are going to be updated during synchronization
+   * @param {boolean} ordersUpdated whether orders are going to be updated during synchronization
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSynchronizationStarted(instanceIndex: String, specificationsUpdated: Boolean, positionsUpdated: Boolean, ordersUpdated: Boolean): Promise<any>;
+  onSynchronizationStarted(instanceIndex: string, specificationsUpdated: boolean, positionsUpdated: boolean, ordersUpdated: boolean): Promise<any>;
   
   /**
    * Invoked when MetaTrader account information is updated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {MetatraderAccountInformation} accountInformation updated MetaTrader account information
    */
-  onAccountInformationUpdated(instanceIndex: String, accountInformation: MetatraderAccountInformation): Promise<any>;
+  onAccountInformationUpdated(instanceIndex: string, accountInformation: MetatraderAccountInformation): Promise<any>;
   
   /**
    * Invoked when the positions are replaced as a result of initial terminal state synchronization
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {Array<MetatraderPosition>} positions updated array of positions
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPositionsReplaced(instanceIndex: String, positions: Array<MetatraderPosition>): Promise<any>;
+  onPositionsReplaced(instanceIndex: string, positions: Array<MetatraderPosition>): Promise<any>;
   
   /**
    * Invoked when position synchronization fnished to indicate progress of an initial terminal state synchronization
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} synchronizationId synchronization request id
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPositionsSynchronized(instanceIndex: String, synchronizationId: String): Promise<any>;
+  onPositionsSynchronized(instanceIndex: string, synchronizationId: string): Promise<any>;
   
   /**
    * Invoked when MetaTrader position is updated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {MetatraderPosition} position updated MetaTrader position
    */
-  onPositionUpdated(instanceIndex: String, position: MetatraderPosition): Promise<any>;
+  onPositionUpdated(instanceIndex: string, position: MetatraderPosition): Promise<any>;
   
   /**
    * Invoked when MetaTrader position is removed
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} positionId removed MetaTrader position id
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} positionId removed MetaTrader position id
    */
-  onPositionRemoved(instanceIndex: String, positionId: String): Promise<any>;
+  onPositionRemoved(instanceIndex: string, positionId: string): Promise<any>;
   
   /**
    * Invoked when the orders are replaced as a result of initial terminal state synchronization
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {Array<MetatraderOrder>} orders updated array of pending orders
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPendingOrdersReplaced(instanceIndex: String, orders: Array<MetatraderOrder>): Promise<any>;
+  onPendingOrdersReplaced(instanceIndex: string, orders: Array<MetatraderOrder>): Promise<any>;
   
   /**
    * Invoked when pending order synchronization fnished to indicate progress of an initial terminal state
    * synchronization
    * @param {string} instanceIndex index of an account instance connected
-   * @param {String} synchronizationId synchronization request id
+   * @param {string} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPendingOrdersSynchronized(instanceIndex: String, synchronizationId: String): Promise<any>;
+  onPendingOrdersSynchronized(instanceIndex: string, synchronizationId: string): Promise<any>;
   
   /**
    * Invoked when MetaTrader pending order is updated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} order updated MetaTrader pending order
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPendingOrderUpdated(instanceIndex: String, order: MetatraderOrder): Promise<any>;
+  onPendingOrderUpdated(instanceIndex: string, order: MetatraderOrder): Promise<any>;
  
   /**
    * Invoked when MetaTrader pending order is completed (executed or canceled)
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} orderId completed MetaTrader pending order id
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} orderId completed MetaTrader pending order id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPendingOrderCompleted(instanceIndex: String, orderId: String): Promise<any>;
+  onPendingOrderCompleted(instanceIndex: string, orderId: string): Promise<any>;
   
   /**
    * Invoked when a symbol specification was updated
-   * @param {String} instanceIndex index of account instance connected
+   * @param {string} instanceIndex index of account instance connected
    * @param {Array<MetatraderSymbolSpecification>} specifications updated specifications
-   * @param {Array<String>} removedSymbols removed symbols
+   * @param {Array<string>} removedSymbols removed symbols
    */
-  onSymbolSpecificationsUpdated(instanceIndex: String, specifications: Array<MetatraderSymbolSpecification>, removedSymbols: Array<String>): Promise<any>;
+  onSymbolSpecificationsUpdated(instanceIndex: string, specifications: Array<MetatraderSymbolSpecification>, removedSymbols: Array<string>): Promise<any>;
   
   /**
    * Invoked when prices for several symbols were updated
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @param {Array<MetatraderSymbolPrice>} prices updated MetaTrader symbol prices
-   * @param {Number} equity account liquidation value
-   * @param {Number} margin margin used
-   * @param {Number} freeMargin free margin
-   * @param {Number} marginLevel margin level calculated as % of equity/margin
+   * @param {number} equity account liquidation value
+   * @param {number} margin margin used
+   * @param {number} freeMargin free margin
+   * @param {number} marginLevel margin level calculated as % of equity/margin
    */
-  onSymbolPricesUpdated(instanceIndex: String, prices: Array<MetatraderSymbolPrice>, equity: Number, margin: Number, freeMargin: Number, marginLevel: Number): Promise<any>;
+  onSymbolPricesUpdated(instanceIndex: string, prices: Array<MetatraderSymbolPrice>, equity: number, margin: number, freeMargin: number, marginLevel: number): Promise<any>;
   
   /**
    * Invoked when a stream for an instance index is closed
-   * @param {String} instanceIndex index of an account instance connected
+   * @param {string} instanceIndex index of an account instance connected
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onStreamClosed(instanceIndex: String): Promise<any>;  
+  onStreamClosed(instanceIndex: string): Promise<any>;  
 }
