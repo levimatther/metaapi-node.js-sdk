@@ -53,6 +53,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    * Market trade options
    * @typedef {MarketTradeOptions} CreateMarketTradeOptions
    * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
+   * @property {String} [stopPriceBase] defines the base price to calculate SL/TP relative to for pending order
+   * requests. Default is CURRENT_PRICE, one of CURRENT_PRICE
    */
 
   /**

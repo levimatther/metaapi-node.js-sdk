@@ -1,5 +1,6 @@
 16.2.2
   - updated typescript types
+  - added stopPriceBase option to create market order methods
 
 16.2.1
   - added RELATIVE_PIPS trade option
