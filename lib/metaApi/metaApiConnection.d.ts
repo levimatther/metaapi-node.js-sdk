@@ -243,6 +243,12 @@ export declare type MarketTradeOptions = {
    * distance trailing stop loss configuration
    */
    trailingStopLoss?: TrailingStopLoss,
+
+   /**
+    * defines the base price to calculate SL/TP relative to for pending order requests. Default is CURRENT_PRICE,
+    * one of CURRENT_PRICE.
+    */
+    stopPriceBase?: string,
 } & MarketTradeOptions
 
 /**

@@ -600,12 +600,14 @@ export declare type DistanceTrailingStopLoss = {
 export declare type TrailingStopLoss = {
 
   /**
-   * Distance trailing stop loss configuration
+   * Distance trailing stop loss configuration. If both distance and threshold TSL are set, then the
+   * resulting SL will be the one which is closest to the current price
    */
   distance?: DistanceTrailingStopLoss
 
   /**
-   * Threshold trailing stop loss configuration
+   * Threshold trailing stop loss configuration. If both distance and threshold TSL are set, then the
+   * resulting SL will be the one which is closest to the current price
    */
   threshold?: ThresholdTrailingStopLoss
 }

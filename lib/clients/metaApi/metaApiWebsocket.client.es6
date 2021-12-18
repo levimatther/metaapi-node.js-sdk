@@ -434,8 +434,10 @@ export default class MetaApiWebsocketClient {
   /**
    * Distance trailing stop loss configuration
    * @typedef {Object} TrailingStopLoss
-   * @property {DistanceTrailingStopLoss} [distance] distance trailing stop loss configuration
-   * @property {ThresholdTrailingStopLoss} [threshold] distance trailing stop loss configuration
+   * @property {DistanceTrailingStopLoss} [distance] distance trailing stop loss configuration. If both distance and
+   * threshold TSL are set, then the resulting SL will be the one which is closest to the current price
+   * @property {ThresholdTrailingStopLoss} [threshold] distance trailing stop loss configuration. If both distance and
+   * threshold TSL are set, then the resulting SL will be the one which is closest to the current price
    */
 
   /**
