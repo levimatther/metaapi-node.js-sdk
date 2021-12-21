@@ -571,6 +571,8 @@ export default class TerminalState extends SynchronizationListener {
           }
         } else if(Array.isArray(objFromJson)) {
           return `[${objFromJson.map(item => stringify(item)).join(',')}]`; 
+        } else if (objFromJson === null) {
+          return objFromJson;
         } else if (typeof objFromJson !== 'object' || objFromJson.getTime){
           return JSON.stringify(objFromJson);
         }
