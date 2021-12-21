@@ -353,15 +353,6 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
-   * Reconnects to the Metatrader terminal (see https://metaapi.cloud/docs/client/websocket/api/reconnect/).
-   * @returns {Promise} promise which resolves when reconnection started
-   */
-  reconnect() {
-    return this._websocketClient.reconnect(this._account.id);
-  }
-
-
-  /**
    * Returns MetaApi account
    * @return {MetatraderAccount} MetaApi account
    */

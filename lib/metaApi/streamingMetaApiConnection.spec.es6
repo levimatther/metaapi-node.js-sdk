@@ -381,15 +381,6 @@ describe('StreamingMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#reconnect}
-   */
-  it('should reconnect terminal', async () => {
-    sandbox.stub(client, 'reconnect').resolves();
-    await api.reconnect();
-    sinon.assert.calledWith(client.reconnect, 'accountId');
-  });
-
-  /**
    * @test {MetaApiConnection#subscribe}
    */
   describe('ensure subscribe', () => {

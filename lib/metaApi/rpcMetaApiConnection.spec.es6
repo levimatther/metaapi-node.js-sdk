@@ -679,15 +679,6 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#reconnect}
-   */
-  it('should reconnect terminal', async () => {
-    sandbox.stub(client, 'reconnect').resolves();
-    await api.reconnect();
-    sinon.assert.calledWith(client.reconnect, 'accountId');
-  });
-
-  /**
    * @test {MetaApiConnection#getSymbols}
    */
   it('should retrieve symbols', async () => {

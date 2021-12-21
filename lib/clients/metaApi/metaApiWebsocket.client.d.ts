@@ -229,13 +229,6 @@ export default class MetaApiWebsocketClient {
   subscribe(accountId: string, instanceNumber: number): Promise<any>;
   
   /**
-   * Reconnects to the Metatrader terminal (see https://metaapi.cloud/docs/client/websocket/api/reconnect/).
-   * @param {string} accountId id of the MetaTrader account to reconnect
-   * @returns {Promise} promise which resolves when reconnection started
-   */
-  reconnect(accountId: string): Promise<any>;
-  
-  /**
    * Requests the terminal to start synchronization process
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
    * @param {string} accountId id of the MetaTrader account to synchronize

@@ -812,15 +812,6 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
-   * Reconnects to the Metatrader terminal (see https://metaapi.cloud/docs/client/websocket/api/reconnect/).
-   * @param {String} accountId id of the MetaTrader account to reconnect
-   * @returns {Promise} promise which resolves when reconnection started
-   */
-  reconnect(accountId) {
-    return this.rpcRequest(accountId, {type: 'reconnect'});
-  }
-
-  /**
    * Requests the terminal to start synchronization process
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/synchronize/).
    * @param {String} accountId id of the MetaTrader account to synchronize

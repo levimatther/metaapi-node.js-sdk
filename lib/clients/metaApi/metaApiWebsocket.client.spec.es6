@@ -795,21 +795,6 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   /**
-   * @test {MetaApiWebsocketClient#reconnect}
-   */
-  it('should reconnect to MetaTrader terminal', async () => {
-    let requestReceived = false;
-    server.on('request', data => {
-      if (data.type === 'reconnect' && data.accountId === 'accountId' && data.application === 'application') {
-        requestReceived = true;
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
-      }
-    });
-    await client.reconnect('accountId');
-    requestReceived.should.be.true();
-  });
-
-  /**
    * @test {MetaApiWebsocketClient#getSymbols}
    */
   it('should retrieve symbols from API', async () => {

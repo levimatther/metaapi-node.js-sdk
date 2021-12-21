@@ -1,7 +1,10 @@
-16.2.2
-  - updated typescript types
+17.0.0
+  - breaking change: updated typescript types
   - added stopPriceBase option to create market order methods
   - fixed hashing of null fields
+  - breaking change: removed reconnect RPC method
+  - breaking change: upgraded to CopyFactory SDK 4.0.0
+  - breaking change: upgraded to MetaStats SDK 3.0.0
 
 16.2.1
   - added RELATIVE_PIPS trade option

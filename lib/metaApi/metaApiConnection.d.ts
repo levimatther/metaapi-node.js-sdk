@@ -173,12 +173,6 @@ export default class MetaApiConnection extends SynchronizationListener {
   cancelOrder(orderId: string): Promise<MetatraderTradeResponse>;
   
   /**
-   * Reconnects to the Metatrader terminal (see https://metaapi.cloud/docs/client/websocket/api/reconnect/).
-   * @returns {Promise} promise which resolves when reconnection started
-   */
-  reconnect(): Promise<any>
-  
-  /**
    * Returns MetaApi account
    * @return {MetatraderAccount} MetaApi account
    */
