@@ -1,3 +1,6 @@
+17.0.1
+  - fixed html example
+
 17.0.0
   - breaking change: updated typescript types
   - added stopPriceBase option to create market order methods
