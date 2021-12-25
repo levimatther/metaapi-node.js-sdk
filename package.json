@@ -45,7 +45,7 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "17.0.0",
+  "version": "17.0.1",
   "dependencies": {
     "@log4js-node/log4js-api": "~1.0.2",
     "babel-runtime": "~6.26.0",

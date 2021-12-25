@@ -23,7 +23,9 @@ export class ApiError extends Error {
      * @type {number}
      */
     this.status = status;
-    Error.captureStackTrace(this, clazz);
+    if (process.title !== 'browser') {
+      Error.captureStackTrace(this, clazz);
+    }
   }
 
   /**
