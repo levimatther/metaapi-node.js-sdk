@@ -226,7 +226,7 @@ describe('TerminalState', () => {
   });
 
   /**
-   * @test {TerminalState#onStreamClosed}
+   * @test {TerminalState#onDisconnected}
    */
   it('should remove state on closed stream', async () => {
     const date = new Date();
@@ -234,7 +234,7 @@ describe('TerminalState', () => {
     await state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: date, symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
     sinon.assert.match(state.price('EURUSD'), {time: date, symbol: 'EURUSD', bid: 1, ask: 1.1});
-    await state.onStreamClosed('1:ps-mpa-1');
+    await state.onDisconnected('1:ps-mpa-1');
   });
 
   /**
@@ -420,6 +420,80 @@ describe('TerminalState', () => {
     sinon.assert.match(hashes.specificationsMd5, specificationsHash);
     sinon.assert.match(hashes.positionsMd5, positionsHash);
     sinon.assert.match(hashes.ordersMd5, ordersHash);
+  });
+
+  /**
+   * @test {TerminalState#onSynchronizationStarted}
+   */
+  it('delete all unfinished states except for the latest on sync started', async () => {
+    await state.onAccountInformationUpdated('2:ps-mpa-3', {'balance': 1000});
+    await state.onAccountInformationUpdated('1:ps-mpa-1', {'balance': 1000});
+    await state.onAccountInformationUpdated('1:ps-mpa-2', {'balance': 1000});
+    await state.onSynchronizationStarted('1:ps-mpa-4', true, true, true);
+    should(state._stateByInstanceIndex['1:ps-mpa-1']).not.eql(undefined);
+    should(state._stateByInstanceIndex['1:ps-mpa-2']).eql(undefined);
+    should(state._stateByInstanceIndex['2:ps-mpa-3']).not.eql(undefined);
+  });
+
+  /**
+   * @test {TerminalState#onPendingOrdersSynchronized}
+   */
+  it('should delete all disconnected states on sync finished', async () => {
+    await state.onAccountInformationUpdated('2:ps-mpa-3', {'balance': 1000});
+    await state.onPendingOrdersSynchronized('2:ps-mpa-3', 'synchronizationId');
+    await state.onAccountInformationUpdated('1:ps-mpa-1', {'balance': 1000});
+    await state.onConnected('1:ps-mpa-1');
+    await state.onAccountInformationUpdated('1:ps-mpa-2', {'balance': 1000});
+    await state.onPendingOrdersSynchronized('1:ps-mpa-2', 'synchronizationId2');
+    await state.onAccountInformationUpdated('1:ps-mpa-4', {'balance': 1000});
+    await state.onPendingOrdersSynchronized('1:ps-mpa-4', 'synchronizationId2');
+    should(state._stateByInstanceIndex['1:ps-mpa-1']).not.eql(undefined);
+    should(state._stateByInstanceIndex['1:ps-mpa-2']).eql(undefined);
+    should(state._stateByInstanceIndex['2:ps-mpa-3']).not.eql(undefined);
+  });
+
+  /**
+   * @test {TerminalState#onDisconnected}
+   */
+  it('should delete state on disconnected if there is another synced state', async () => {
+    await state.onAccountInformationUpdated('1:ps-mpa-1', {'balance': 1000});
+    await state.onConnected('1:ps-mpa-1');
+    await state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId2');
+    await state.onAccountInformationUpdated('1:ps-mpa-2', {'balance': 1000});
+    await state.onConnected('1:ps-mpa-2');
+    await state.onPendingOrdersSynchronized('1:ps-mpa-2', 'synchronizationId2');
+    await state.onStreamClosed('1:ps-mpa-2');
+    should(state._stateByInstanceIndex['1:ps-mpa-1']).not.eql(undefined);
+    should(state._stateByInstanceIndex['1:ps-mpa-2']).eql(undefined);
+  });
+
+  /**
+   * @test {TerminalState#onDisconnected}
+   */
+  it('should delete partially synced state on disconnected if there is another fresher state', async () => {
+    await state.onAccountInformationUpdated('1:ps-mpa-1', {'balance': 1000});
+    await state.onConnected('1:ps-mpa-1');
+    await state.onAccountInformationUpdated('1:ps-mpa-2', {'balance': 1000});
+    await state.onConnected('1:ps-mpa-2');
+    await state.onStreamClosed('1:ps-mpa-1');
+    should(state._stateByInstanceIndex['1:ps-mpa-1']).eql(undefined);
+    should(state._stateByInstanceIndex['1:ps-mpa-2']).not.eql(undefined);
+  });
+
+  /**
+   * @test {TerminalState#onDisconnected}
+   */
+  it('should not delete partially synced state on disconnected if there is no fresher state', async () => {
+    await state.onSynchronizationStarted('1:ps-mpa-1', false, false, false);
+    await state.onAccountInformationUpdated('1:ps-mpa-1', {'balance': 1000});
+    await state.onConnected('1:ps-mpa-1');
+    await new Promise(res => setTimeout(res, 50));
+    await state.onSynchronizationStarted('1:ps-mpa-2', false, false, false);
+    await state.onAccountInformationUpdated('1:ps-mpa-2', {'balance': 1000});
+    await state.onConnected('1:ps-mpa-2');
+    await state.onDisconnected('1:ps-mpa-2');
+    should(state._stateByInstanceIndex['1:ps-mpa-1']).not.eql(undefined);
+    should(state._stateByInstanceIndex['1:ps-mpa-2']).not.eql(undefined);
   });
 
 });

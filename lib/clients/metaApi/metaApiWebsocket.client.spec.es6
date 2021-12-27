@@ -1336,9 +1336,12 @@ describe('MetaApiWebsocketClient', () => {
     it('should process disconnected synchronization event', async () => {
       let listener = {
         onConnected: () => {},
-        onDisconnected: () => {}
+        onDisconnected: () => {},
+        onStreamClosed: () => {},
       };
       sandbox.stub(listener, 'onDisconnected').resolves();
+      sandbox.stub(listener, 'onStreamClosed').resolves();
+      sandbox.stub(client._subscriptionManager, 'onDisconnected').resolves();
       client.addSynchronizationListener('accountId', listener);
       server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
         instanceIndex: 1});
@@ -1346,6 +1349,8 @@ describe('MetaApiWebsocketClient', () => {
         instanceIndex: 1});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.calledWith(listener.onDisconnected, '1:ps-mpa-1');
+      sinon.assert.calledWith(client._subscriptionManager.onDisconnected, 'accountId', 1);
+      sinon.assert.calledWith(listener.onStreamClosed, '1:ps-mpa-1');
     });
 
     it('should close the stream if host name disconnected and another stream exists', async () => {
@@ -2486,6 +2491,7 @@ describe('MetaApiWebsocketClient', () => {
         await new Promise(res => setTimeout(res, 5000));
         disconnectedCallTime = Date.now();
       },
+      onStreamClosed: () => {},
       onPendingOrdersReplaced: async () => {
         await new Promise(res => setTimeout(res, 10000));
         ordersCallTime = Date.now();
