@@ -86,7 +86,12 @@ export default class TerminalState extends SynchronizationListener {
    * @returns {Object} hashes of terminal state data
    */
   getHashes(accountType, instanceIndex) {
-    const state = this._getState(instanceIndex);
+    // get latest instance number state
+    const instanceNumber = instanceIndex.split(':')[0];
+    const instanceNumberStates = Object.keys(this._stateByInstanceIndex)
+      .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${instanceNumber}:`));
+    instanceNumberStates.sort((a,b) => b.lastSyncUpdateTime - a.lastSyncUpdateTime);
+    const state = this._getState(instanceNumberStates[0]);
 
     const sortByKey = (obj1, obj2, key) => {
       if(obj1[key] < obj2[key]) {
@@ -104,6 +109,9 @@ export default class TerminalState extends SynchronizationListener {
         delete specification.description;
       });
     }
+    specifications.forEach(specification => {
+      delete specification.pipSize;
+    });
     const specificationsHash = specifications.length ? 
       this._getHash(specifications, accountType, ['digits']) : null;
 
@@ -223,7 +231,13 @@ export default class TerminalState extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated) {
+    const unsynchronizedStates = this._getStateIndicesOfSameInstanceNumber(instanceIndex)
+      .filter(stateIndex => !this._stateByInstanceIndex[stateIndex].ordersInitialized);
+    unsynchronizedStates.sort((a,b) => b.lastSyncUpdateTime - a.lastSyncUpdateTime);
+    unsynchronizedStates.slice(1).forEach(stateIndex => delete this._stateByInstanceIndex[stateIndex]);
+
     let state = this._getState(instanceIndex);
+    state.lastSyncUpdateTime = Date.now();
     state.accountInformation = undefined;
     state.pricesBySymbol = {};
     if(positionsUpdated) {
@@ -248,6 +262,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onAccountInformationUpdated(instanceIndex, accountInformation) {
     let state = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
     state.accountInformation = accountInformation;
     this._combinedState.accountInformation = accountInformation;
   }
@@ -260,6 +275,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPositionsReplaced(instanceIndex, positions) {
     let state = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
     state.positions = positions;
   }
 
@@ -282,6 +298,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPositionUpdated(instanceIndex, position) {
     let instanceState = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
 
     const updatePosition = (state) => {
       let index = state.positions.findIndex(p => p.id === position.id);
@@ -302,6 +319,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPositionRemoved(instanceIndex, positionId) {
     let instanceState = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
 
     const removePosition = (state) => {
       let position = state.positions.find(p => p.id === positionId);
@@ -328,6 +346,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPendingOrdersReplaced(instanceIndex, orders) {
     let state = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
     state.orders = orders;
   }
 
@@ -351,6 +370,11 @@ export default class TerminalState extends SynchronizationListener {
     this._combinedState.ordersInitialized = true;
     this._combinedState.completedOrders = {};
     this._combinedState.removedPositions = {};
+    for(let stateIndex of this._getStateIndicesOfSameInstanceNumber(instanceIndex)) {
+      if (!this._stateByInstanceIndex[stateIndex].connected) {
+        delete this._stateByInstanceIndex[stateIndex];
+      }
+    }
   }
 
   /**
@@ -361,6 +385,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPendingOrderUpdated(instanceIndex, order) {
     let instanceState = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
     
     const updatePendingOrder = (state) => {
       let index = state.orders.findIndex(o => o.id === order.id);
@@ -382,6 +407,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPendingOrderCompleted(instanceIndex, orderId) {
     let instanceState = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
 
     const completeOrder = (state) => {
       let order = state.orders.find(o => o.id === orderId);
@@ -408,6 +434,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
     let instanceState = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
 
     const updateSpecifications = (state) => {
       for (let specification of specifications) {
@@ -433,6 +460,7 @@ export default class TerminalState extends SynchronizationListener {
   // eslint-disable-next-line complexity
   onSymbolPricesUpdated(instanceIndex, prices, equity, margin, freeMargin, marginLevel) {
     let instanceState = this._getState(instanceIndex);
+    this._refreshStateUpdateTime(instanceIndex);
 
     // eslint-disable-next-line complexity
     const updateSymbolPrices = (state) => {
@@ -501,7 +529,32 @@ export default class TerminalState extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onStreamClosed(instanceIndex) {
-    delete this._stateByInstanceIndex[instanceIndex];
+    if(this._stateByInstanceIndex[instanceIndex]) {
+      for(let stateIndex of this._getStateIndicesOfSameInstanceNumber(instanceIndex)) {
+        const instanceState = this._stateByInstanceIndex[stateIndex];
+        if(!this._stateByInstanceIndex[instanceIndex].ordersInitialized 
+            && this._stateByInstanceIndex[instanceIndex].lastSyncUpdateTime <= instanceState.lastSyncUpdateTime) {
+          delete this._stateByInstanceIndex[instanceIndex];
+        }
+        if(instanceState.connected && instanceState.ordersInitialized) {
+          delete this._stateByInstanceIndex[instanceIndex];
+        }
+      }
+    }
+  }
+
+  _refreshStateUpdateTime(instanceIndex){
+    const state = this._stateByInstanceIndex[instanceIndex];
+    if(state && state.ordersInitialized) {
+      state.lastSyncUpdateTime = Date.now();
+    }
+  }
+
+  _getStateIndicesOfSameInstanceNumber(instanceIndex) {
+    const instanceNumber = instanceIndex.split(':')[0];
+    return Object.keys(this._stateByInstanceIndex)
+      .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${instanceNumber}:`) && 
+      instanceIndex !== stateInstanceIndex);
   }
 
   // eslint-disable-next-line complexity
@@ -556,6 +609,7 @@ export default class TerminalState extends SynchronizationListener {
       ordersInitialized: false,
       positionsInitialized: false,
       lastUpdateTime: 0,
+      lastSyncUpdateTime: 0
     };
   }
 
