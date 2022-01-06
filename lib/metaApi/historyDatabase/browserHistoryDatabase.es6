@@ -156,4 +156,4 @@ module.exports = class BrowserHistoryDatabase extends HistoryDatabase {
     }
   }
 
-}
+};

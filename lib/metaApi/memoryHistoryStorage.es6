@@ -188,6 +188,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     this._dealsByPosition = {};
     this._historyOrdersByTicket = {};
     this._historyOrdersByPosition = {};
+    // eslint-disable-next-line complexity
     this._historyOrdersComparator = (o1, o2) => {
       let timeDiff = (o1.doneTime || new Date(0)).getTime() - (o2.doneTime || new Date(0)).getTime();
       if (timeDiff === 0) {
@@ -242,6 +243,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     delete this._flushTimeout;
   }
 
+  // eslint-disable-next-line complexity
   async _addDeal(deal, existing) {
     let key = this._getDealKey(deal);
     this._dealsByTicket[deal.id] = this._dealsByTicket[deal.id] || {};
@@ -267,6 +269,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     return (deal.time || new Date(0)).toISOString() + ':' + deal.id + ':' + deal.entryType;
   }
 
+  // eslint-disable-next-line complexity
   async _addHistoryOrder(historyOrder, existing) {
     let key = this._getHistoryOrderKey(historyOrder);
     this._historyOrdersByTicket[historyOrder.id] = this._historyOrdersByTicket[historyOrder.id] || {};

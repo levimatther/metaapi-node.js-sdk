@@ -211,8 +211,8 @@ describe('MemoryHistoryStorage', () => {
      */
     it('should flush db when synchronization ends', async () => {
       sandbox.stub(db, 'flush').resolves();
-      storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1', positionId: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'),
-        type: 'ORDER_TYPE_SELL'});
+      storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1', positionId: '1',
+        doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
       storage.onDealAdded('1:ps-mpa-1', {id: '1', positionId: '1', time: new Date('2020-01-01T00:00:00.000Z'),
         type: 'DEAL_TYPE_SELL'});
       await storage.onDealsSynchronized(1);

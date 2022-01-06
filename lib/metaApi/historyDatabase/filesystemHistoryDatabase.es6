@@ -104,4 +104,4 @@ module.exports = class FilesystemHistoryDatabase extends HistoryDatabase {
     }
   }
 
-}
+};
