@@ -1,5 +1,7 @@
 18.0.0
   - breaking change: refactored HistoryStorage & MemoryHistoryStorage classes
+  - fixed html example
+  - fixed terminal state memory leak
 
 17.0.0
   - breaking change: updated typescript types

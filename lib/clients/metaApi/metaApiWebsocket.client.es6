@@ -1585,23 +1585,22 @@ export default class MetaApiWebsocketClient {
               );
             }
             await Promise.all(onDisconnectedPromises);
-          } else {
-            const onStreamClosedPromises = [];
-            this._packetOrderer.onStreamClosed(instanceId);
-            if(socketInstance) {
-              socketInstance.synchronizationThrottler.removeIdByParameters(data.accountId, instanceNumber, data.host);
-            }
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
-              onStreamClosedPromises.push(
-                Promise.resolve(_processEvent(Promise.resolve(
-                  listener.onStreamClosed(instanceIndex)), 'onStreamClosed'))
-                  // eslint-disable-next-line no-console
-                  .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
-                    'about stream closed event', err))
-              );
-            }
-            await Promise.all(onStreamClosedPromises);
           }
+          const onStreamClosedPromises = [];
+          this._packetOrderer.onStreamClosed(instanceId);
+          if(socketInstance) {
+            socketInstance.synchronizationThrottler.removeIdByParameters(data.accountId, instanceNumber, data.host);
+          }
+          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            onStreamClosedPromises.push(
+              Promise.resolve(_processEvent(Promise.resolve(
+                listener.onStreamClosed(instanceIndex)), 'onStreamClosed'))
+              // eslint-disable-next-line no-console
+                .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                    'about stream closed event', err))
+            );
+          }
+          await Promise.all(onStreamClosedPromises);
           delete this._connectedHosts[instanceId];
         }
       };
