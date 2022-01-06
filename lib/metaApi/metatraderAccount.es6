@@ -2,7 +2,7 @@
 
 import TimeoutError from '../clients/timeoutError';
 import RpcMetaApiConnection from './rpcMetaApiConnection';
-import HistoryFileManager from './historyFileManager/index';
+import HistoryDatabase from './historyDatabase/index';
 import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
 
@@ -19,15 +19,17 @@ export default class MetatraderAccount {
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
    * @param {ExpertAdvisorClient} expertAdvisorClient expert advisor REST API client
    * @param {HistoricalMarketDataClient} historicalMarketDataClient historical market data HTTP API client
+   * @param {string} application application name
    */
   constructor(data, metatraderAccountClient, metaApiWebsocketClient, connectionRegistry, expertAdvisorClient, 
-    historicalMarketDataClient) {
+    historicalMarketDataClient, application) {
     this._data = data;
     this._metatraderAccountClient = metatraderAccountClient;
     this._metaApiWebsocketClient = metaApiWebsocketClient;
     this._connectionRegistry = connectionRegistry;
     this._expertAdvisorClient = expertAdvisorClient;
     this._historicalMarketDataClient = historicalMarketDataClient;
+    this._application = application;
   }
 
   /**
@@ -228,8 +230,8 @@ export default class MetatraderAccount {
   async remove() {
     this._connectionRegistry.remove(this.id);
     await this._metatraderAccountClient.deleteAccount(this.id);
-    const fileManager = new HistoryFileManager(this.id);
-    await fileManager.deleteStorageFromDisk();
+    const fileManager = HistoryDatabase.getInstance();
+    await fileManager.clear(this.id, this._application);
     if (this.type !== 'self-hosted') {
       try {
         await this.reload();

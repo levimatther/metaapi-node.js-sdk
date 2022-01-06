@@ -12,14 +12,18 @@ export default class HistoryStorage extends SynchronizationListener {
    */
   constructor() {
     super();
-    this._orderSynchronizationFinished = {};
-    this._dealSynchronizationFinished = {};
   }
 
   /**
    * Initializes the storage and loads required data from a persistent storage
+   * @param {string} accountId account id
+   * @param {string} application application
+   * @returns {Promise} promise resolving when history storage is initialized
    */
-  async initialize() {}
+  async initialize(accountId, application) {
+    this._accountId = accountId;
+    this._application = application;
+  }
 
   /**
    * Returns flag indicating whether order history synchronization have finished
@@ -39,15 +43,16 @@ export default class HistoryStorage extends SynchronizationListener {
 
   /**
    * Clears the storage and deletes persistent data
+   * @returns {Promise} promise resolving when history storage is cleared
    */
-  async clear(){
+  async clear() {
     throw Error('Abstract method clear has no implementation');
   }
 
   /**
    * Returns the time of the last history order record stored in the history storage
    * @param {String} [instanceIndex] index of an account instance connected
-   * @returns {Date} the time of the last history order record stored in the history storage
+   * @returns {Promise<Date>} the time of the last history order record stored in the history storage
    */
   async lastHistoryOrderTime(instanceIndex) {
     throw Error('Abstract method lastHistoryOrderTime has no implementation');
@@ -56,7 +61,7 @@ export default class HistoryStorage extends SynchronizationListener {
   /**
    * Returns the time of the last history deal record stored in the history storage
    * @param {String} [instanceIndex] index of an account instance connected
-   * @returns {Date} the time of the last history deal record stored in the history storage
+   * @returns {Promise<Date>} the time of the last history deal record stored in the history storage
    */
   async lastDealTime(instanceIndex) {
     throw Error('Abstract method lastDealTime has no implementation');
@@ -114,6 +119,78 @@ export default class HistoryStorage extends SynchronizationListener {
     const instance = this.getInstanceNumber(instanceIndex);
     this._orderSynchronizationFinished['' + instance] = false;
     this._dealSynchronizationFinished['' + instance] = false;
+  }
+
+  /**
+   * Returns all deals
+   * @returns {Array<MetatraderDeal>} all deals
+   */
+  get deals() {
+    throw Error('Abstract property deals has no implementation');
+  }
+
+  /**
+   * Returns deals by ticket id
+   * @param {string} id ticket id
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByTicket(id) {
+    throw Error('Abstract method getDealsByTicket has no implementation');
+  }
+
+  /**
+   * Returns deals by position id
+   * @param {string} positionId position id
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByPosition(positionId) {
+    throw Error('Abstract method getDealsByPosition has no implementation');
+  }
+
+  /**
+   * Returns deals by time range
+   * @param startTime start time, inclusive
+   * @param endTime end time, inclusive
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByTimeRange(startTime, endTime) {
+    throw Error('Abstract method getDealsByTimeRange has no implementation');
+  }
+
+  /**
+   * Returns all history orders
+   * @returns {Array<MetatraderOrder>} all history orders
+   */
+  get historyOrders() {
+    throw Error('Abstract property historyOrders has no implementation');
+  }
+
+  /**
+   * Returns history orders by ticket id
+   * @param {string} id ticket id
+   * @returns {Array<MetatraderOrder>} history orders found
+   */
+  getHistoryOrdersByTicket(id) {
+    throw Error('Abstract method getHistoryOrdersByTicket has no implementation');
+  }
+
+  /**
+   * Returns history orders by position id
+   * @param {string} positionId position id
+   * @returns {Array<MetatraderOrder>} history orders found
+   */
+  getHistoryOrdersByPosition(positionId) {
+    throw Error('Abstract method getHistoryOrdersByPosition has no implementation');
+  }
+
+  /**
+   * Returns history orders by time range
+   * @param startTime start time, inclusive
+   * @param endTime end time, inclusive
+   * @returns {Array<MetatraderOrder>} hisotry orders found
+   */
+  getHistoryOrdersByTimeRange(startTime, endTime) {
+    throw Error('Abstract method getHistoryOrdersByTimeRange has no implementation');
   }
 
 }

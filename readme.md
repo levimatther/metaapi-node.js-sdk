@@ -418,7 +418,13 @@ console.log(historyStorage.orderSynchronizationFinished);
 console.log(historyStorage.dealSynchronizationFinished);
 
 console.log(historyStorage.deals);
+console.log(historyStorage.dealsByTicket(1));
+console.log(historyStorage.dealsByPosition(1));
+console.log(historyStorage.dealsByTimeRange(new Date(Date.now() - 24 * 60 * 60 * 1000), new Date());
 console.log(historyStorage.historyOrders);
+console.log(historyStorage.historyOrdersByTicket(1));
+console.log(historyStorage.historyOrdersByPosition(1));
+console.log(historyStorage.historyOrdersByTimeRange(new Date(Date.now() - 24 * 60 * 60 * 1000), new Date());
 ```
 
 #### Overriding local history storage

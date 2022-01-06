@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccount from './metatraderAccount';
 import {NotFoundError} from '../clients/errorHandler';
-import HistoryFileManager from './historyFileManager/index';
+import HistoryDatabase from './historyDatabase/index';
 import ExpertAdvisor from './expertAdvisor';
 
 /**
@@ -46,7 +46,7 @@ describe('MetatraderAccountApi', () => {
   };
 
   before(() => {
-    api = new MetatraderAccountApi(client, metaApiWebsocketClient, connectionRegistry, eaClient);
+    api = new MetatraderAccountApi(client, metaApiWebsocketClient, connectionRegistry, eaClient, undefined, 'MetaApi');
     sandbox = sinon.createSandbox();
   });
 
@@ -245,11 +245,11 @@ describe('MetatraderAccountApi', () => {
         type: 'cloud'
       });
     sandbox.stub(client, 'deleteAccount').resolves();
-    sandbox.stub(HistoryFileManager.prototype, 'deleteStorageFromDisk').returns();
+    sandbox.stub(HistoryDatabase.prototype, 'clear').returns();
     let account = await api.getAccount('id');
     await account.remove();
     sinon.assert.calledWith(connectionRegistry.remove, 'id');
-    sinon.assert.calledOnce(HistoryFileManager.prototype.deleteStorageFromDisk);
+    sinon.assert.calledWith(HistoryDatabase.prototype.clear, 'id', 'MetaApi');
     account.state.should.equal('DELETING');
     sinon.assert.calledWith(client.deleteAccount, 'id');
     sinon.assert.calledWith(client.getAccount, 'id');

@@ -37,7 +37,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     this._connectionRegistry = connectionRegistry;
     this._historyStartTime = historyStartTime;
     this._terminalState = new TerminalState();
-    this._historyStorage = historyStorage || new MemoryHistoryStorage(account.id, connectionRegistry.application);
+    this._historyStorage = historyStorage || new MemoryHistoryStorage();
     this._healthMonitor = new ConnectionHealthMonitor(this);
     this._websocketClient.addSynchronizationListener(account.id, this);
     this._websocketClient.addSynchronizationListener(account.id, this._terminalState);
@@ -120,7 +120,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise which resolves when meta api connection is initialized
    */
   async initialize() {
-    await this._historyStorage.initialize();
+    await this._historyStorage.initialize(this._account.id, this._connectionRegistry.application);
   }
 
   /**

@@ -1,3 +1,6 @@
+18.0.0
+  - breaking change: refactored HistoryStorage & MemoryHistoryStorage classes
+
 17.0.0
   - breaking change: updated typescript types
   - added stopPriceBase option to create market order methods

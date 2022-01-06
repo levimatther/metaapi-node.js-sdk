@@ -104,7 +104,7 @@ export default class MetaApi {
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, token, domain);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient, this._connectionRegistry, 
-      new ExpertAdvisorClient(httpClient, token, domain), historicalMarketDataClient);
+      new ExpertAdvisorClient(httpClient, token, domain), historicalMarketDataClient, application);
     this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
       new MetatraderDemoAccountClient(demoAccountHttpClient, token, domain));
     if (opts.enableLatencyTracking || opts.enableLatencyMonitor) {

@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import StreamingMetaApiConnection from './streamingMetaApiConnection';
 import NotSynchronizedError from '../clients/metaApi/notSynchronizedError';
 import randomstring from 'randomstring';
-import HistoryFileManager from './historyFileManager/index';
 
 /**
  * @test {MetaApiConnection}
@@ -69,7 +68,6 @@ describe('StreamingMetaApiConnection', () => {
       state: 'DEPLOYED',
       reload: () => {}
     };
-    sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
     api = new StreamingMetaApiConnection(client, account, undefined, connectionRegistry, 0, {
       minDelayInSeconds: 1,
       maxDelayInSeconds: 1

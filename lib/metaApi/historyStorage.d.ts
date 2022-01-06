@@ -13,8 +13,11 @@ export default class HistoryStorage extends SynchronizationListener {
   
   /**
    * Initializes the storage and loads required data from a persistent storage
+   * @param {string} accountId account id
+   * @param {string} application application
+   * @returns {Promise} promise resolving when history storage is initialized
    */
-  initialize(): Promise<any>;
+  initialize(accountId: string, application: string): Promise<any>;
   
   /**
    * Returns flag indicating whether order history synchronization have finished
@@ -30,6 +33,7 @@ export default class HistoryStorage extends SynchronizationListener {
   
   /**
    * Clears the storage and deletes persistent data
+   * @returns {Promise} promise resolving when history storage is cleared
    */
   clear(): Promise<any>;
   
@@ -86,4 +90,61 @@ export default class HistoryStorage extends SynchronizationListener {
    * @param {string} instanceIndex index of an account instance connected
    */
   onConnected(instanceIndex: string): Promise<any>;
+
+  /**
+   * Returns all deals stored in history storage
+   * @return {Array<MetatraderDeal>} all deals stored in history storage
+   */
+  get deals(): Array<MetatraderDeal>;
+
+  /**
+   * Returns deals by ticket id
+   * @param {string} id ticket id
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByTicket(id): Array<MetatraderDeal>;
+
+  /**
+   * Returns deals by position id
+   * @param {string} positionId position id
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByPosition(positionId): Array<MetatraderDeal>;
+
+  /**
+   * Returns deals by time range
+   * @param startTime start time, inclusive
+   * @param endTime end time, inclusive
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByTimeRange(startTime, endTime): Array<MetatraderDeal>;
+
+  /**
+   * Returns all history orders stored in history storage
+   * @return {Array<MetatraderOrder>} all history orders stored in history storage
+   */
+  get historyOrders(): Array<MetatraderOrder>
+
+  /**
+   * Returns history orders by ticket id
+   * @param {string} id ticket id
+   * @returns {Array<MetatraderOrder>} history orders found
+   */
+  getHistoryOrdersByTicket(id): Array<MetatraderOrder>;
+
+  /**
+   * Returns history orders by position id
+   * @param {string} positionId position id
+   * @returns {Array<MetatraderOrder>} history orders found
+   */
+  getHistoryOrdersByPosition(positionId): Array<MetatraderOrder>;
+
+  /**
+   * Returns history orders by time range
+   * @param startTime start time, inclusive
+   * @param endTime end time, inclusive
+   * @returns {Array<MetatraderOrder>} hisotry orders found
+   */
+  getHistoryOrdersByTimeRange(startTime, endTime): Array<MetatraderOrder>;
+
 }

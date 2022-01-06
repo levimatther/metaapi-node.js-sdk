@@ -14,14 +14,16 @@ export default class MetatraderAccountApi {
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
    * @param {ExpertAdvisorClient} expertAdvisorClient expert advisor REST API client
    * @param {HistoricalMarketDataClient} historicalMarketDataClient historical market data HTTP API client
+   * @param {string} application application name
    */
   constructor(metatraderAccountClient, metaApiWebsocketClient, connectionRegistry, expertAdvisorClient, 
-    historicalMarketDataClient) {
+    historicalMarketDataClient, application) {
     this._metatraderAccountClient = metatraderAccountClient;
     this._metaApiWebsocketClient = metaApiWebsocketClient;
     this._connectionRegistry = connectionRegistry;
     this._expertAdvisorClient = expertAdvisorClient;
     this._historicalMarketDataClient = historicalMarketDataClient;
+    this._application = application;
   }
 
   /**
@@ -35,7 +37,7 @@ export default class MetatraderAccountApi {
       accounts = accounts.items;
     }
     return accounts.map(a => new MetatraderAccount(a, this._metatraderAccountClient, this._metaApiWebsocketClient, 
-      this._connectionRegistry, this._expertAdvisorClient, this._historicalMarketDataClient));
+      this._connectionRegistry, this._expertAdvisorClient, this._historicalMarketDataClient, this._application));
   }
 
   /**
@@ -46,7 +48,7 @@ export default class MetatraderAccountApi {
   async getAccount(accountId) {
     let account = await this._metatraderAccountClient.getAccount(accountId);
     return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient, 
-      this._connectionRegistry,  this._expertAdvisorClient, this._historicalMarketDataClient);
+      this._connectionRegistry,  this._expertAdvisorClient, this._historicalMarketDataClient, this._application);
   }
 
   /**
@@ -56,7 +58,7 @@ export default class MetatraderAccountApi {
   async getAccountByToken() {
     let account = await this._metatraderAccountClient.getAccountByToken();
     return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient, 
-      this._connectionRegistry, this._expertAdvisorClient, this._historicalMarketDataClient);
+      this._connectionRegistry, this._expertAdvisorClient, this._historicalMarketDataClient, this._application);
   }
 
   /**

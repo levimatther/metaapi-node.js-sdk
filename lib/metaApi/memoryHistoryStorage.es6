@@ -1,7 +1,9 @@
 'use strict';
 
 import HistoryStorage from './historyStorage';
-import HistoryFileManager from './historyFileManager/index';
+import HistoryDatabase from './historyDatabase/index';
+import {AVLTree} from 'binary-search-tree';
+import LoggerManager from '../logger';
 
 /**
  * History storage which stores MetaTrader history in RAM
@@ -11,84 +13,36 @@ export default class MemoryHistoryStorage extends HistoryStorage {
   /**
    * Constructs the in-memory history store instance
    */
-  constructor(accountId, application = 'MetaApi') {
+  constructor() {
     super();
-    this._accountId = accountId;
-    this._fileManager = new HistoryFileManager(accountId, application, this);
-    this._deals = [];
-    this._historyOrders = [];
-    this._lastDealTimeByInstanceIndex = {};
-    this._lastHistoryOrderTimeByInstanceIndex = {};
-    this._fileManager.startUpdateJob();
+    this._historyDatabase = HistoryDatabase.getInstance();
+    this._reset();
+    this._logger = LoggerManager.getLogger('MemoryHistoryStorage');
   }
 
   /**
    * Initializes the storage and loads required data from a persistent storage
+   * @param {string} accountId account id
+   * @param {string} [application] application. Default is MetaApi
    */
-  async initialize() {
-    await this.loadDataFromDisk();
-  }
-
-  /**
-   * Returns all deals stored in history storage
-   * @return {Array<MetatraderDeal>} all deals stored in history storage
-   */
-  get deals() {
-    return this._deals;
-  }
-
-  /**
-   * Returns all history orders stored in history storage
-   * @return {Array<MetatraderOrder>} all history orders stored in history storage
-   */
-  get historyOrders() {
-    return this._historyOrders;
-  }
-
-  /**
-   * Returns times of last deals by instance indices
-   * @return {Object} dictionary of last deal times by instance indices
-   */
-  get lastDealTimeByInstanceIndex() {
-    return this._lastDealTimeByInstanceIndex;
-  }
-
-  /**
-   * Returns times of last history orders by instance indices
-   * @return {Object} dictionary of last history orders times by instance indices
-   */
-  get lastHistoryOrderTimeByInstanceIndex() {
-    return this._lastHistoryOrderTimeByInstanceIndex;
+  async initialize(accountId, application = 'MetaApi') {
+    await super.initialize(accountId, application);
+    let {deals, historyOrders} = await this._historyDatabase.loadHistory(accountId, application);
+    for (let deal of deals) {
+      await this._addDeal(deal, true);
+    }
+    for (let historyOrder of historyOrders) {
+      await this._addHistoryOrder(historyOrder, true);
+    }
   }
 
   /**
    * Resets the storage. Intended for use in tests
+   * @returns {Promise} promise when the history is removed
    */
   async clear() {
-    this._deals = [];
-    this._historyOrders = [];
-    this._lastDealTimeByInstanceIndex = {};
-    this._lastHistoryOrderTimeByInstanceIndex = {};
-    await this._fileManager.deleteStorageFromDisk();
-  }
-
-  /**
-   * Loads history data from the file manager
-   * @return {Promise} promise which resolves when the history is loaded
-   */
-  async loadDataFromDisk() {
-    const history = await this._fileManager.getHistoryFromDisk();
-    this._deals = history.deals;
-    this._historyOrders = history.historyOrders;
-    this._lastDealTimeByInstanceIndex = history.lastDealTimeByInstanceIndex || {};
-    this._lastHistoryOrderTimeByInstanceIndex = history.lastHistoryOrderTimeByInstanceIndex || {};
-  }
-
-  /**
-   * Saves unsaved history items to disk storage
-   */
-  async updateDiskStorage() {
-    await this._fileManager.updateDiskStorage();
+    this._reset();
+    await this._historyDatabase.clear(this._accountId, this._application);
   }
 
   /**
@@ -97,12 +51,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
    * @returns {Date} the time of the last history order record stored in the history storage
    */
   lastHistoryOrderTime(instanceNumber) {
-    if (instanceNumber !== undefined) {
-      return new Date(this._lastHistoryOrderTimeByInstanceIndex['' + instanceNumber] || 0);
-    } else {
-      return new Date(Object.values(this._lastHistoryOrderTimeByInstanceIndex)
-        .reduce((acc, time) => time > acc ? time : acc, 0));
-    }
+    return this._maxHistoryOrderTime;
   }
 
   /**
@@ -111,12 +60,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
    * @returns {Date} the time of the last history deal record stored in the history storage
    */
   lastDealTime(instanceNumber) {
-    if (instanceNumber !== undefined) {
-      return new Date(this._lastDealTimeByInstanceIndex['' + instanceNumber] || 0);
-    } else {
-      return new Date(Object.values(this._lastDealTimeByInstanceIndex).reduce((acc, time) => time > acc ? time : acc,
-        0));
-    }
+    return this._maxDealTime;
   }
 
   /**
@@ -124,37 +68,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderOrder} historyOrder new MetaTrader history order
    */
-  // eslint-disable-next-line complexity
-  onHistoryOrderAdded(instanceIndex, historyOrder) {
-    const instance = this.getInstanceNumber(instanceIndex);
-    let insertIndex = 0;
-    let replacementIndex = -1;
-    const newHistoryOrderTime = (historyOrder.doneTime || new Date(0)).getTime();
-    if (!this._lastHistoryOrderTimeByInstanceIndex['' + instance] ||
-      this._lastHistoryOrderTimeByInstanceIndex['' + instance] < newHistoryOrderTime) {
-      this._lastHistoryOrderTimeByInstanceIndex['' + instance] = newHistoryOrderTime;
-    }
-    for(let i = this._historyOrders.length - 1; i >= 0; i--) {
-      const order = this._historyOrders[i];
-      const historyOrderTime = (order.doneTime || new Date(0)).getTime();
-      if (historyOrderTime < newHistoryOrderTime ||
-        (historyOrderTime === newHistoryOrderTime && order.id <= historyOrder.id)) {
-        if (historyOrderTime === newHistoryOrderTime && order.id === historyOrder.id && 
-          order.type === historyOrder.type) {
-          replacementIndex = i;
-        } else {
-          insertIndex = i + 1;
-        }
-        break;
-      }
-    }
-    if (replacementIndex !== -1) {
-      this._historyOrders[replacementIndex] = historyOrder;
-      this._fileManager.setStartNewOrderIndex(replacementIndex);
-    } else {
-      this._historyOrders.splice(insertIndex, 0, historyOrder);
-      this._fileManager.setStartNewOrderIndex(insertIndex);
-    }
+  async onHistoryOrderAdded(instanceIndex, historyOrder) {
+    await this._addHistoryOrder(historyOrder);
   }
 
   /**
@@ -162,36 +77,96 @@ export default class MemoryHistoryStorage extends HistoryStorage {
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderDeal} deal new MetaTrader history deal
    */
-  // eslint-disable-next-line complexity
-  onDealAdded(instanceIndex, deal) {
-    const instance = this.getInstanceNumber(instanceIndex);
-    let insertIndex = 0;
-    let replacementIndex = -1;
-    const newDealTime = (deal.time || new Date(0)).getTime();
-    if (!this._lastDealTimeByInstanceIndex['' + instance] ||
-      this._lastDealTimeByInstanceIndex['' + instance] < newDealTime) {
-      this._lastDealTimeByInstanceIndex['' + instance] = newDealTime;
-    }
-    for(let i = this._deals.length - 1; i >= 0; i--) {
-      const d = this._deals[i];
-      const dealTime = (d.time || new Date(0)).getTime();
-      if ((dealTime < newDealTime) || (dealTime === newDealTime && d.id <= deal.id) ||
-        (dealTime === newDealTime && d.id === deal.id && d.entryType <= deal.entryType)) {
-        if (dealTime === newDealTime && d.id === deal.id && d.entryType === deal.entryType) {
-          replacementIndex = i;
-        } else {
-          insertIndex = i + 1;
-        }
-        break;
-      }
-    }
-    if (replacementIndex !== -1) {
-      this._deals[replacementIndex] = deal;
-      this._fileManager.setStartNewDealIndex(replacementIndex);
-    } else {
-      this._deals.splice(insertIndex, 0, deal);
-      this._fileManager.setStartNewDealIndex(insertIndex);
-    }
+  async onDealAdded(instanceIndex, deal) {
+    await this._addDeal(deal);
+  }
+
+  /**
+   * Returns all deals
+   * @returns {Array<MetatraderDeal>} all deals
+   */
+  get deals() {
+    return this.getDealsByTimeRange(new Date(0), new Date(8640000000000000));
+  }
+
+  /**
+   * Returns deals by ticket id
+   * @param {string} id ticket id
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByTicket(id) {
+    let deals = Object.values(this._dealsByTicket[id] || {});
+    deals.sort(this._dealsComparator);
+    return deals;
+  }
+
+  /**
+   * Returns deals by position id
+   * @param {string} positionId position id
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByPosition(positionId) {
+    let deals = Object.values(this._dealsByPosition[positionId] || {});
+    deals.sort(this._dealsComparator);
+    return deals;
+  }
+
+  /**
+   * Returns deals by time range
+   * @param startTime start time, inclusive
+   * @param endTime end time, inclusive
+   * @returns {Array<MetatraderDeal>} deals found
+   */
+  getDealsByTimeRange(startTime, endTime) {
+    let deals = this._dealsByTime.betweenBounds({
+      $gte: {time: startTime, id: 0, entryType: ''},
+      $lte: {time: endTime, id: Number.MAX_VALUE, entryType: ''}
+    });
+    return deals;
+  }
+
+  /**
+   * Returns all history orders
+   * @returns {Array<MetatraderOrder>} all history orders
+   */
+  get historyOrders() {
+    return this.getHistoryOrdersByTimeRange(new Date(0), new Date(8640000000000000));
+  }
+
+  /**
+   * Returns history orders by ticket id
+   * @param {string} id ticket id
+   * @returns {Array<MetatraderOrder>} history orders found
+   */
+  getHistoryOrdersByTicket(id) {
+    let historyOrders = Object.values(this._historyOrdersByTicket[id] || {});
+    historyOrders.sort(this._historyOrdersComparator);
+    return historyOrders;
+  }
+
+  /**
+   * Returns history orders by position id
+   * @param {string} positionId position id
+   * @returns {Array<MetatraderOrder>} history orders found
+   */
+  getHistoryOrdersByPosition(positionId) {
+    let historyOrders = Object.values(this._historyOrdersByPosition[positionId] || {});
+    historyOrders.sort(this._historyOrdersComparator);
+    return historyOrders;
+  }
+
+  /**
+   * Returns history orders by time range
+   * @param startTime start time, inclusive
+   * @param endTime end time, inclusive
+   * @returns {Array<MetatraderOrder>} hisotry orders found
+   */
+  getHistoryOrdersByTimeRange(startTime, endTime) {
+    let historyOrders = this._historyOrdersByTime.betweenBounds({
+      $gte: {doneTime: startTime, id: 0, type: '', status: ''},
+      $lte: {doneTime: endTime, id: Number.MAX_VALUE, type: '', status: ''}
+    });
+    return historyOrders;
   }
 
   /**
@@ -202,9 +177,146 @@ export default class MemoryHistoryStorage extends HistoryStorage {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onDealsSynchronized(instanceIndex, synchronizationId) {
-    const instance = this.getInstanceNumber(instanceIndex);
-    this._dealSynchronizationFinished[instance] = true;
-    await this.updateDiskStorage();
+    await this._flushDatabase();
+    await super.onDealsSynchronized(instanceIndex, synchronizationId);
+  }
+
+  _reset() {
+    this._orderSynchronizationFinished = {};
+    this._dealSynchronizationFinished = {};
+    this._dealsByTicket = {};
+    this._dealsByPosition = {};
+    this._historyOrdersByTicket = {};
+    this._historyOrdersByPosition = {};
+    this._historyOrdersComparator = (o1, o2) => {
+      let timeDiff = (o1.doneTime || new Date(0)).getTime() - (o2.doneTime || new Date(0)).getTime();
+      if (timeDiff === 0) {
+        let idDiff = o1.id - o2.id;
+        if (idDiff === 0) {
+          if (o1.type > o2.type) {
+            return 1;
+          } else if (o1.type < o2.type) {
+            return -1;
+          } else {
+            if (o1.status > o2.status) {
+              return 1;
+            } else if (o1.status < o2.status) {
+              return -1;
+            } else {
+              return 0;
+            }
+          }
+        } else {
+          return idDiff;
+        }
+      } else {
+        return timeDiff;
+      }
+    };
+    this._historyOrdersByTime = new AVLTree({compareKeys: this._historyOrdersComparator});
+    this._dealsComparator = (d1, d2) => {
+      let timeDiff = (d1.time || new Date(0)).getTime() - (d2.time || new Date(0)).getTime();
+      if (timeDiff === 0) {
+        let idDiff = d1.id - d2.id;
+        if (idDiff === 0) {
+          if (d1.entryType > d2.entryType) {
+            return 1;
+          } else if (d1.entryType < d2.entryType) {
+            return -1;
+          } else {
+            return 0;
+          }
+        } else {
+          return idDiff;
+        }
+      } else {
+        return timeDiff;
+      }
+    };
+    this._dealsByTime = new AVLTree({compareKeys: this._dealsComparator});
+    this._maxHistoryOrderTime = new Date(0);
+    this._maxDealTime = new Date(0);
+    this._newHistoryOrders = [];
+    this._newDeals = [];
+    clearTimeout(this._flushTimeout);
+    delete this._flushTimeout;
+  }
+
+  async _addDeal(deal, existing) {
+    let key = this._getDealKey(deal);
+    this._dealsByTicket[deal.id] = this._dealsByTicket[deal.id] || {};
+    let newDeal = !existing && !this._dealsByTicket[deal.id][key];
+    this._dealsByTicket[deal.id][key] = deal;
+    if (deal.positionId) {
+      this._dealsByPosition[deal.positionId] = this._dealsByPosition[deal.positionId] || {};
+      this._dealsByPosition[deal.positionId][key] = deal;
+    }
+    this._dealsByTime.delete(deal);
+    this._dealsByTime.insert(deal, deal);
+    if (deal.time && (!this._maxDealTime || this._maxDealTime.getTime() < deal.time.getTime())) {
+      this._maxDealTime = deal.time;
+    }
+    if (newDeal) {
+      this._newDeals.push(deal);
+      clearTimeout(this._flushTimeout);
+      this._flushTimeout = setTimeout(this._flushDatabase.bind(this), 5000);
+    }
+  }
+
+  _getDealKey(deal) {
+    return (deal.time || new Date(0)).toISOString() + ':' + deal.id + ':' + deal.entryType;
+  }
+
+  async _addHistoryOrder(historyOrder, existing) {
+    let key = this._getHistoryOrderKey(historyOrder);
+    this._historyOrdersByTicket[historyOrder.id] = this._historyOrdersByTicket[historyOrder.id] || {};
+    let newHistoryOrder = !existing && !this._historyOrdersByTicket[historyOrder.id][key];
+    this._historyOrdersByTicket[historyOrder.id][key] = historyOrder;
+    if (historyOrder.positionId) {
+      this._historyOrdersByPosition[historyOrder.positionId] = this._historyOrdersByPosition[historyOrder.positionId] ||
+        {};
+      this._historyOrdersByPosition[historyOrder.positionId][key] = historyOrder;
+    }
+    this._historyOrdersByTime.delete(historyOrder);
+    this._historyOrdersByTime.insert(historyOrder, historyOrder);
+    if (historyOrder.doneTime && (!this._maxHistoryOrderTime ||
+        this._maxHistoryOrderTime.getTime() < historyOrder.doneTime.getTime())) {
+      this._maxHistoryOrderTime = historyOrder.doneTime;
+    }
+    if (newHistoryOrder) {
+      this._newHistoryOrders.push(historyOrder);
+      clearTimeout(this._flushTimeout);
+      this._flushTimeout = setTimeout(this._flushDatabase.bind(this), 5000);
+    }
+  }
+
+  _getHistoryOrderKey(historyOrder) {
+    return (historyOrder.doneTime || new Date(0)).toISOString() + ':' + historyOrder.id + ':' +
+      historyOrder.type + ':' + historyOrder.status;
+  }
+
+  async _flushDatabase() {
+    if (this._flushPromise) {
+      await this._flushPromise;
+    }
+    if (this._flushRunning) {
+      return;
+    }
+    this._flushRunning = true;
+    let resolve;
+    this._flushPromise = new Promise(res => resolve = res);
+    try {
+      await this._historyDatabase.flush(this._accountId, this._application, this._newHistoryOrders, this._newDeals);
+      this._newOrders = [];
+      this._newDeals = [];
+      this._logger.debug(`${this._accountId}: flushed history db`);
+    } catch (err) {
+      this._logger.warn(`${this._accountId}: error flushing history db`, err);
+      this._flushTimeout = setTimeout(this._flushDatabase.bind(this), 15000);
+    } finally {
+      resolve();
+      this._flushRunning = false;
+    }
   }
 
 }

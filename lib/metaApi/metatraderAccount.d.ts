@@ -22,9 +22,10 @@ export default class MetatraderAccount {
    * @param {ConnectionRegistry} connectionRegistry metatrader account connection registry
    * @param {ExpertAdvisorClient} expertAdvisorClient expert advisor REST API client
    * @param {HistoricalMarketDataClient} historicalMarketDataClient historical market data HTTP API client
+   * @param {string} application application name
    */
   constructor(data: MetatraderAccountDto, metatraderAccountClient: MetatraderAccountClient, metaApiWebsocketClient: MetaApiWebsocketClient, connectionRegistry: ConnectionRegistry, expertAdvisorClient: ExpertAdvisorClient, 
-    historicalMarketDataClient: HistoricalMarketDataClient);
+    historicalMarketDataClient: HistoricalMarketDataClient, application: string);
   
   /**
    * Returns account id

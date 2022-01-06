@@ -4,7 +4,6 @@ import should from 'should';
 import sinon from 'sinon';
 import RpcMetaApiConnection from './rpcMetaApiConnection';
 import NotSynchronizedError from '../clients/metaApi/notSynchronizedError';
-import HistoryFileManager from './historyFileManager/index';
 import TimeoutError from '../clients/timeoutError';
 
 /**
@@ -52,7 +51,6 @@ describe('RpcMetaApiConnection', () => {
       state: 'DEPLOYED',
       reload: () => {}
     };
-    sandbox.stub(HistoryFileManager.prototype, 'startUpdateJob').returns();
     api = new RpcMetaApiConnection(client, account);
     clock = sinon.useFakeTimers({
       shouldAdvanceTime: true
