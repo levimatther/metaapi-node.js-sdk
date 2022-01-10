@@ -38,7 +38,12 @@ module.exports = class FilesystemHistoryDatabase extends HistoryDatabase {
   async loadHistory(accountId, application) {
     let {dealsFile, historyOrdersFile} = await this._getDbLocation(accountId, application);
     let deals = await this._readDb(accountId, dealsFile);
+    deals.forEach(deal => deal.time = new Date(deal.time));
     let historyOrders = await this._readDb(accountId, historyOrdersFile);
+    historyOrders.forEach(historyOrder => {
+      historyOrder.time = new Date(historyOrder.time);
+      historyOrder.doneTime = new Date(historyOrder.doneTime);
+    });
     return {deals, historyOrders};
   }
 

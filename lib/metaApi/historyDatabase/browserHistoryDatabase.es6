@@ -39,7 +39,12 @@ module.exports = class BrowserHistoryDatabase extends HistoryDatabase {
     try {
       db = await this._getDatabase(accountId, application);
       let deals = await this._readDb(db, accountId + '-' + application + '-deals');
+      deals.forEach(deal => deal.time = new Date(deal.time));
       let historyOrders = await this._readDb(db, accountId + '-' + application + '-historyOrders');
+      historyOrders.forEach(historyOrder => {
+        historyOrder.time = new Date(historyOrder.time);
+        historyOrder.doneTime = new Date(historyOrder.doneTime);
+      });
       return {deals, historyOrders};
     } catch (err) {
       this._logger.warn(`${accountId}: failed to read history database, will reinitialize it now`, err);
