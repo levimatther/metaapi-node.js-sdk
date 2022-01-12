@@ -8,6 +8,7 @@ import TerminalState from "./terminalState";
 import ConnectionHealthMonitor from "./connectionHealthMonitor";
 import MetaApiConnection from "./metaApiConnection";
 import SynchronizationListener from "../clients/metaApi/synchronizationListener";
+import ClientApiClient from "../clients/metaApi/clientApi.client";
 
 /**
  * Exposes MetaApi MetaTrader streaming API connection to consumers
@@ -17,6 +18,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Constructs MetaApi MetaTrader streaming Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
+   * @param {ClientApiClient} clientApiClient client api client
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage. By default an instance of MemoryHistoryStorage
    * will be used.
@@ -24,8 +26,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {Date} [historyStartTime] history start sync time
    * @param {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
    */
-  constructor(websocketClient: MetaApiWebsocketClient, account: MetatraderAccount, historyStorage: HistoryStorage, connectionRegistry: ConnectionRegistry, historyStartTime?: Date,
-    refreshSubscriptionsOpts?: RefreshSubscriptionsOpts);
+  constructor(websocketClient: MetaApiWebsocketClient, clientApiClient: ClientApiClient, account: MetatraderAccount, historyStorage: HistoryStorage, connectionRegistry: ConnectionRegistry,
+    historyStartTime?: Date, refreshSubscriptionsOpts?: RefreshSubscriptionsOpts);
   
   /**
    * Opens the connection. Can only be called the first time, next calls will be ignored.

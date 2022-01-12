@@ -9,6 +9,7 @@ import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client
 import MetatraderDemoAccountApi from './metatraderDemoAccountApi';
 import MetatraderDemoAccountClient from '../clients/metaApi/metatraderDemoAccount.client';
 import HistoricalMarketDataClient from '../clients/metaApi/historicalMarketData.client';
+import ClientApiClient from '../clients/metaApi/clientApi.client';
 import ConnectionRegistry from './connectionRegistry';
 import {ValidationError} from '../clients/errorHandler';
 import OptionsValidator from '../clients/optionsValidator';
@@ -95,11 +96,12 @@ export default class MetaApi {
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
+    let clientApiClient = new ClientApiClient(httpClient, token, domain); 
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(httpClient, token, {application, domain, requestTimeout,
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, useSharedClientApi, 
       region: opts.region, unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
-    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, application,
+    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, clientApiClient, application,
       refreshSubscriptionsOpts);
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, token, domain);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),

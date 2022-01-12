@@ -40,7 +40,7 @@ export default class MetaApiWebsocketClient {
     this._domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
     this._region = opts.region;
     this._hostname = 'mt-client-api-v1';
-    this._url = `https://${this._hostname}.${this._domain}`;
+    this._url = null;
     this._requestTimeout = validator.validateNonZero(opts.requestTimeout, 60, 'requestTimeout') * 1000;
     this._connectTimeout = validator.validateNonZero(opts.connectTimeout, 60, 'connectTimeout') * 1000;
     const retryOpts = opts.retryOpts || {};
@@ -61,7 +61,7 @@ export default class MetaApiWebsocketClient {
     this._latencyListeners = [];
     this._reconnectListeners = [];
     this._connectedHosts = {};
-    this._socketInstances = [];
+    this._socketInstances = {};
     this._socketInstancesByAccounts = {};
     this._synchronizationThrottlerOpts = opts.synchronizationThrottler;
     this._subscriptionManager = new SubscriptionManager(this);
@@ -123,42 +123,48 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Returns the list of subscribed account ids
+   * @param {Number} instanceNumber instance index number
    * @param {String} socketInstanceIndex socket instance index
    * @return {string[]} list of subscribed account ids
    */
-  subscribedAccountIds(socketInstanceIndex) {
+  subscribedAccountIds(instanceNumber, socketInstanceIndex) {
     const connectedIds = [];
-    Object.keys(this._connectedHosts).forEach(instanceId => {
-      const accountId = instanceId.split(':')[0];
-      if(!connectedIds.includes(accountId) && this._socketInstancesByAccounts[accountId] !== undefined && (
-        this._socketInstancesByAccounts[accountId] === socketInstanceIndex || 
+    if(this._socketInstancesByAccounts[instanceNumber]) {
+      Object.keys(this._connectedHosts).forEach(instanceId => {
+        const accountId = instanceId.split(':')[0];
+        if(!connectedIds.includes(accountId) && 
+        this._socketInstancesByAccounts[instanceNumber][accountId] !== undefined && (
+          this._socketInstancesByAccounts[instanceNumber][accountId] === socketInstanceIndex || 
         socketInstanceIndex === undefined)) {
-        connectedIds.push(accountId);
-      }
-    });
+          connectedIds.push(accountId);
+        }
+      });
+    }
     return connectedIds;
   }
 
   /**
    * Returns websocket client connection status
-   * @param socketInstanceIndex socket instance index
+   * @param {Number} instanceNumber instance index number
+   * @param {Number} socketInstanceIndex socket instance index
    * @returns {Boolean} websocket client connection status
    */
-  connected(socketInstanceIndex) {
-    const instance = this._socketInstances.length > socketInstanceIndex ? 
-      this._socketInstances[socketInstanceIndex] : null;
+  connected(instanceNumber, socketInstanceIndex) {
+    const instance = this._socketInstances[instanceNumber].length > socketInstanceIndex ? 
+      this._socketInstances[instanceNumber][socketInstanceIndex] : null;
     return (instance && instance.socket && instance.socket.connected) || false;
   }
 
   /**
    * Returns list of accounts assigned to instance
-   * @param socketInstanceIndex socket instance index
+   * @param {Number} instanceNumber instance index number
+   * @param {String} socketInstanceIndex socket instance index
    * @returns 
    */
-  getAssignedAccounts(socketInstanceIndex) {
+  getAssignedAccounts(instanceNumber, socketInstanceIndex) {
     const accountIds = [];
-    Object.keys(this._socketInstancesByAccounts).forEach(key => {
-      if (this._socketInstancesByAccounts[key] === socketInstanceIndex) {
+    Object.keys(this._socketInstancesByAccounts[instanceNumber]).forEach(key => {
+      if (this._socketInstancesByAccounts[instanceNumber][key] === socketInstanceIndex) {
         accountIds.push(key);
       }
     });
@@ -167,24 +173,25 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Locks subscription for a socket instance based on TooManyRequestsError metadata
-   * @param socketInstanceIndex socket instance index
-   * @param metadata TooManyRequestsError metadata
+   * @param {Number} instanceNumber instance index number
+   * @param {String} socketInstanceIndex socket instance index
+   * @param {Object} metadata TooManyRequestsError metadata
    */
-  async lockSocketInstance(socketInstanceIndex, metadata) {
+  async lockSocketInstance(instanceNumber, socketInstanceIndex, metadata) {
     if (metadata.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER') {
       this._subscribeLock = {
         recommendedRetryTime: metadata.recommendedRetryTime,
-        lockedAtAccounts: this.subscribedAccountIds().length,
+        lockedAtAccounts: this.subscribedAccountIds(instanceNumber).length,
         lockedAtTime: Date.now()
       };
     } else {
-      const subscribedAccounts = this.subscribedAccountIds(socketInstanceIndex);
+      const subscribedAccounts = this.subscribedAccountIds(instanceNumber, socketInstanceIndex);
       if (subscribedAccounts.length === 0) {
-        const socketInstance = this.socketInstances[socketInstanceIndex];
+        const socketInstance = this.socketInstances[instanceNumber][socketInstanceIndex];
         socketInstance.socket.close();
-        await this._reconnect(socketInstanceIndex);
+        await this._reconnect(instanceNumber, socketInstanceIndex);
       } else {
-        const instance = this._socketInstances[socketInstanceIndex];
+        const instance = this._socketInstances[instanceNumber][socketInstanceIndex];
         instance.subscribeLock = {
           recommendedRetryTime: metadata.recommendedRetryTime,
           type: metadata.type,
@@ -196,15 +203,16 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Connects to MetaApi server via socket.io protocol
+   * @param {Number} instanceNumber instance index number
    * @returns {Promise} promise which resolves when connection is established
    */
-  async connect() {
+  async connect(instanceNumber) {
     let clientId = Math.random();
     let resolve;
     let result = new Promise((res, rej) => {
       resolve = res;
     });
-    const socketInstanceIndex = this._socketInstances.length;
+    const socketInstanceIndex = this._socketInstances[instanceNumber].length;
     const instance = {
       id: socketInstanceIndex,
       connected: false,
@@ -214,14 +222,14 @@ export default class MetaApiWebsocketClient {
       sessionId: randomstring.generate(32),
       isReconnecting: false,
       socket: null,
-      synchronizationThrottler: new SynchronizationThrottler(this, socketInstanceIndex,
+      synchronizationThrottler: new SynchronizationThrottler(this, socketInstanceIndex, instanceNumber,
         this._synchronizationThrottlerOpts),
       subscribeLock: null
     };
     instance.connected = true;
-    this._socketInstances.push(instance);
+    this._socketInstances[instanceNumber].push(instance);
     instance.synchronizationThrottler.start();
-    const serverUrl = await this._getServerUrl(socketInstanceIndex);
+    const serverUrl = await this._getServerUrl(instanceNumber, socketInstanceIndex);
     const socketInstance = socketIO(serverUrl, {
       path: '/ws',
       reconnection: true,
@@ -235,11 +243,11 @@ export default class MetaApiWebsocketClient {
       query: {
         'auth-token': this._token,
         clientId: clientId,
-        protocol: 2
+        protocol: 3
       }
     });
     instance.socket = socketInstance;
-    if (this._socketInstances.length === 1) {
+    if (this._socketInstances[instanceNumber].length === 1) {
       this._packetOrderer.start();
     } 
     socketInstance.on('connect', async () => {
@@ -250,7 +258,7 @@ export default class MetaApiWebsocketClient {
         instance.resolved = true;
         resolve();
       } else {
-        await this._fireReconnected(instance.id);
+        await this._fireReconnected(instanceNumber, instance.id);
       }
       if (!instance.connected) {
         instance.socket.close();
@@ -258,14 +266,14 @@ export default class MetaApiWebsocketClient {
     });
     socketInstance.on('reconnect', async () => {
       instance.isReconnecting = false;
-      await this._fireReconnected(instance.id);
+      await this._fireReconnected(instanceNumber, instance.id);
     });
     socketInstance.on('connect_error', async (err) => {
       // eslint-disable-next-line no-console
       this._logger.error('MetaApi websocket client connection error', err);
       instance.isReconnecting = false;
       if (!instance.resolved) {
-        await this._reconnect(instance.id);
+        await this._reconnect(instanceNumber, instance.id);
       }
     });
     socketInstance.on('connect_timeout', async (timeout) => {
@@ -273,7 +281,7 @@ export default class MetaApiWebsocketClient {
       this._logger.error('MetaApi websocket client connection timeout');
       instance.isReconnecting = false;
       if (!instance.resolved) {
-        await this._reconnect(instance.id);
+        await this._reconnect(instanceNumber, instance.id);
       }
     });
     socketInstance.on('disconnect', async (reason) => {
@@ -282,13 +290,13 @@ export default class MetaApiWebsocketClient {
       this._logger.info('MetaApi websocket client disconnected from the MetaApi ' +
         'server because of ' + reason);
       instance.isReconnecting = false;
-      await this._reconnect(instance.id);
+      await this._reconnect(instanceNumber, instance.id);
     });
     socketInstance.on('error', async (error) => {
       // eslint-disable-next-line no-console
       this._logger.error('MetaApi websocket client error', error);
       instance.isReconnecting = false;
-      await this._reconnect(instance.id);
+      await this._reconnect(instanceNumber, instance.id);
     });
     socketInstance.on('response', data => {
       if (typeof data === 'string') {
@@ -330,7 +338,8 @@ export default class MetaApiWebsocketClient {
           await this._packetLogger.logPacket(data);
         }
         if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && data.type !== 'disconnected') {
-          if (this._throttleRequest('unsubscribe', data.accountId, this._unsubscribeThrottlingInterval)) {
+          if (this._throttleRequest('unsubscribe', data.accountId, data.instanceIndex, 
+            this._unsubscribeThrottlingInterval)) {
             this.unsubscribe(data.accountId).catch(err => {
               this._logger.warn(`${data.accountId}:${data.instanceIndex || 0}: failed to unsubscribe`, err);
             });
@@ -350,20 +359,22 @@ export default class MetaApiWebsocketClient {
    * Closes connection to MetaApi server
    */
   close() {
-    this._socketInstances.forEach(async (instance) => {
-      if (instance.connected) {
-        instance.connected = false;
-        await instance.socket.close();
-        for (let requestResolve of Object.values(instance.requestResolves)) {
-          requestResolve.reject(new Error('MetaApi connection closed'));
+    Object.keys(this._socketInstances).forEach(instanceNumber => {
+      this._socketInstances[instanceNumber].forEach(async (instance) => {
+        if (instance.connected) {
+          instance.connected = false;
+          await instance.socket.close();
+          for (let requestResolve of Object.values(instance.requestResolves)) {
+            requestResolve.reject(new Error('MetaApi connection closed'));
+          }
+          instance.requestResolves = {};
         }
-        instance.requestResolves = {};
-      }
+      });
+      this._socketInstancesByAccounts[instanceNumber] = {};
+      this._socketInstances[instanceNumber] = [];
     });
     this._synchronizationListeners = {};
     this._latencyListeners = [];
-    this._socketInstancesByAccounts = {};
-    this._socketInstances = [];
     this._packetOrderer.stop();
   }
 
@@ -829,7 +840,8 @@ export default class MetaApiWebsocketClient {
    */
   synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime, 
     specificationsMd5, positionsMd5, ordersMd5) {
-    const syncThrottler = this._socketInstances[this._socketInstancesByAccounts[accountId]].synchronizationThrottler;
+    const syncThrottler = this._getSocketInstanceByAccount(accountId, instanceIndex)
+      .synchronizationThrottler;
     return syncThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, 
       type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host,
       specificationsMd5, positionsMd5, ordersMd5});
@@ -1013,8 +1025,10 @@ export default class MetaApiWebsocketClient {
    */
   async unsubscribe(accountId) {
     try {
-      await this._subscriptionManager.unsubscribe(accountId);
-      delete this._socketInstancesByAccounts[accountId];
+      await Promise.all(Object.keys(this._socketInstances).map(async instanceNumber => {
+        await this._subscriptionManager.unsubscribe(accountId, instanceNumber);
+        delete this._socketInstancesByAccounts[instanceNumber][accountId];
+      }));
     } catch (err) {
       if (!(['TimeoutError', 'NotFoundError'].includes(err.name))) {
         throw err;
@@ -1140,17 +1154,17 @@ export default class MetaApiWebsocketClient {
     }
   }
 
-  async _reconnect(socketInstanceIndex) {
-    const instance = this.socketInstances[socketInstanceIndex];
+  async _reconnect(instanceNumber, socketInstanceIndex) {
+    const instance = this.socketInstances[instanceNumber][socketInstanceIndex];
     if (instance) {
       while (!instance.socket.connected && !instance.isReconnecting && instance.connected) {
-        await this._tryReconnect(socketInstanceIndex);
+        await this._tryReconnect(instanceNumber, socketInstanceIndex);
       }
     }
   }
 
-  _tryReconnect(socketInstanceIndex) {
-    const instance = this.socketInstances[socketInstanceIndex];
+  _tryReconnect(instanceNumber, socketInstanceIndex) {
+    const instance = this.socketInstances[instanceNumber][socketInstanceIndex];
     return new Promise((resolve) => setTimeout(async () => {
       if (!instance.socket.connected && !instance.isReconnecting && instance.connected) {
         try {
@@ -1160,7 +1174,7 @@ export default class MetaApiWebsocketClient {
           instance.socket.io.opts.extraHeaders['Client-Id'] = clientId;
           instance.socket.io.opts.query.clientId = clientId;
           instance.isReconnecting = true;
-          instance.socket.io.uri = await this._getServerUrl(socketInstanceIndex);
+          instance.socket.io.uri = await this._getServerUrl(instanceNumber, socketInstanceIndex);
           instance.socket.connect();
         } catch (error) {
           instance.isReconnecting = false;
@@ -1179,27 +1193,37 @@ export default class MetaApiWebsocketClient {
   //eslint-disable-next-line complexity, max-statements
   async rpcRequest(accountId, request, timeoutInSeconds) {
     let socketInstanceIndex = null;
-    if (this._socketInstancesByAccounts[accountId] !== undefined) {
-      socketInstanceIndex = this._socketInstancesByAccounts[accountId];
+    let instanceNumber = 0;
+    if(request.instanceIndex) {
+      instanceNumber = request.instanceIndex;
+    }
+    if(!this._socketInstancesByAccounts[instanceNumber]) {
+      this._socketInstancesByAccounts[instanceNumber] = {};
+    }
+    if(!this._socketInstances[instanceNumber]) {
+      this._socketInstances[instanceNumber] = [];
+    }
+    if (this._socketInstancesByAccounts[instanceNumber][accountId] !== undefined) {
+      socketInstanceIndex = this._socketInstancesByAccounts[instanceNumber][accountId];
     } else {
       while (this._subscribeLock && ((new Date(this._subscribeLock.recommendedRetryTime).getTime() > Date.now() && 
-        this.subscribedAccountIds().length < this._subscribeLock.lockedAtAccounts) || 
+        this.subscribedAccountIds(instanceNumber).length < this._subscribeLock.lockedAtAccounts) || 
         (new Date(this._subscribeLock.lockedAtTime).getTime() + this._subscribeCooldownInSeconds * 1000 > 
-        Date.now() && this.subscribedAccountIds().length >= this._subscribeLock.lockedAtAccounts))) {
+        Date.now() && this.subscribedAccountIds(instanceNumber).length >= this._subscribeLock.lockedAtAccounts))) {
         await new Promise(res => setTimeout(res, 1000));
       }
-      for (let index = 0; index < this._socketInstances.length; index++) {
-        const accountCounter = this.getAssignedAccounts(index).length;
-        const instance = this.socketInstances[index];
+      for (let index = 0; index < this._socketInstances[instanceNumber].length; index++) {
+        const accountCounter = this.getAssignedAccounts(instanceNumber, index).length;
+        const instance = this.socketInstances[instanceNumber][index];
         if (instance.subscribeLock) {
           if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER' && 
           (new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() || 
-          this.subscribedAccountIds(index).length >= instance.subscribeLock.lockedAtAccounts)) {
+          this.subscribedAccountIds(instanceNumber, index).length >= instance.subscribeLock.lockedAtAccounts)) {
             continue;
           }
           if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER' && 
           new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() &&
-          this.subscribedAccountIds(index).length >= instance.subscribeLock.lockedAtAccounts) {
+          this.subscribedAccountIds(instanceNumber, index).length >= instance.subscribeLock.lockedAtAccounts) {
             continue;
           }
         }
@@ -1209,27 +1233,27 @@ export default class MetaApiWebsocketClient {
         }
       }
       if(socketInstanceIndex === null) {
-        socketInstanceIndex = this._socketInstances.length;
-        await this.connect();
+        socketInstanceIndex = this._socketInstances[instanceNumber].length;
+        await this.connect(instanceNumber);
       }
-      this._socketInstancesByAccounts[accountId] = socketInstanceIndex;
+      this._socketInstancesByAccounts[instanceNumber][accountId] = socketInstanceIndex;
     }
-    const instance = this._socketInstances[socketInstanceIndex];
+    const instance = this._socketInstances[instanceNumber][socketInstanceIndex];
     if (!instance.connected) {
-      await this.connect();
-    } else if(!this.connected(socketInstanceIndex)) {
+      await this.connect(instanceNumber);
+    } else if(!this.connected(instanceNumber, socketInstanceIndex)) {
       await instance.connectResult;
     }
     if(request.type === 'subscribe') {
       request.sessionId = instance.sessionId;
     }
     if(['trade', 'subscribe'].includes(request.type)) {
-      return this._makeRequest(accountId, request, timeoutInSeconds);
+      return this._makeRequest(accountId, instanceNumber, request, timeoutInSeconds);
     }
     let retryCounter = 0;
     while (true) { //eslint-disable-line no-constant-condition
       try {
-        return await this._makeRequest(accountId, request, timeoutInSeconds);
+        return await this._makeRequest(accountId, instanceNumber, request, timeoutInSeconds);
       } catch(err) {
         if(err.name === 'TooManyRequestsError') {
           let calcRetryCounter = retryCounter;
@@ -1257,15 +1281,15 @@ export default class MetaApiWebsocketClient {
         } else {
           throw err;
         }
-        if(this._socketInstancesByAccounts[accountId] === undefined) {
+        if(this._socketInstancesByAccounts[instanceNumber][accountId] === undefined) {
           throw err;
         }
       }
     }
   }
 
-  _makeRequest(accountId, request, timeoutInSeconds) {
-    const socketInstance = this._socketInstances[this._socketInstancesByAccounts[accountId]];
+  _makeRequest(accountId, instanceNumber, request, timeoutInSeconds) {
+    const socketInstance = this._getSocketInstanceByAccount(accountId, instanceNumber);
     let requestId = request.requestId || randomstring.generate(32);
     request.timestamps = {clientProcessingStarted: new Date()};
     let result = Promise.race([
@@ -1514,11 +1538,11 @@ export default class MetaApiWebsocketClient {
   // eslint-disable-next-line complexity,max-statements
   async _processSynchronizationPacket(data) {
     try {
-      const socketInstance = this._socketInstances[this._socketInstancesByAccounts[data.accountId]];
+      const instanceNumber = data.instanceIndex || 0;
+      const socketInstance = this._getSocketInstanceByAccount(data.accountId, instanceNumber);
       if (data.synchronizationId && socketInstance) {
         socketInstance.synchronizationThrottler.updateSynchronizationId(data.synchronizationId);
       }
-      const instanceNumber = data.instanceIndex || 0;
       let instanceId = data.accountId + ':' + instanceNumber + ':' + (data.host || 0);
       let instanceIndex = instanceNumber + ':' + (data.host || 0);
 
@@ -2079,22 +2103,22 @@ export default class MetaApiWebsocketClient {
     }
   }
 
-  async _fireReconnected(socketInstanceIndex) {
+  async _fireReconnected(instanceNumber, socketInstanceIndex) {
     try {
       const reconnectListeners = [];
       for (let listener of this._reconnectListeners) {
-        if (this._socketInstancesByAccounts[listener.accountId] === socketInstanceIndex) {
+        if (this._socketInstancesByAccounts[instanceNumber][listener.accountId] === socketInstanceIndex) {
           reconnectListeners.push(listener);
         }
       }
       Object.keys(this._synchronizationFlags).forEach(synchronizationId => {
-        if (this._socketInstancesByAccounts[this._synchronizationFlags[synchronizationId].accountId]
+        if (this._socketInstancesByAccounts[instanceNumber][this._synchronizationFlags[synchronizationId].accountId]
             === socketInstanceIndex) {
           delete this._synchronizationFlags[synchronizationId];
         }
       });
       const reconnectAccountIds = reconnectListeners.map(listener => listener.accountId);
-      this._subscriptionManager.onReconnected(socketInstanceIndex, reconnectAccountIds);
+      this._subscriptionManager.onReconnected(instanceNumber, socketInstanceIndex, reconnectAccountIds);
       this._packetOrderer.onReconnected(reconnectAccountIds);
 
       for (let listener of reconnectListeners) {
@@ -2106,21 +2130,40 @@ export default class MetaApiWebsocketClient {
     }
   }
 
+  _getSocketInstanceByAccount(accountId, instanceNumber) {
+    return this._socketInstances[instanceNumber][this._socketInstancesByAccounts[instanceNumber][accountId]];
+  }
+
   // eslint-disable-next-line complexity
-  async _getServerUrl(socketInstanceIndex) {
-    while(this.socketInstances[socketInstanceIndex].connected) {
+  async _getServerUrl(instanceNumber, socketInstanceIndex) {
+    if(this._url) {
+      return this._url;
+    }
+
+    while(this.socketInstances[instanceNumber][socketInstanceIndex].connected) {
       try {
         let isDefaultRegion = !this._region;
+        const regions = await this._httpClient.request({
+          url: `https://mt-provisioning-api-v1.${this._domain}/users/current/regions`,
+          method: 'GET',
+          headers: {
+            'auth-token': this._token
+          },
+          json: true,
+        });
+        const urlSettings = await this._httpClient.request({
+          url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
+          method: 'GET',
+          headers: {
+            'auth-token': this._token
+          },
+          json: true,
+        });
+
+        const getUrl = (hostname, region) => 
+          `https://${hostname}.${region}-${String.fromCharCode(97 + instanceNumber)}.${urlSettings.domain}`;
+
         if(this._region) {
-          const opts = {
-            url: `https://mt-provisioning-api-v1.${this._domain}/users/current/regions`,
-            method: 'GET',
-            headers: {
-              'auth-token': this._token
-            },
-            json: true,
-          };
-          const regions = await this._httpClient.request(opts);
           if(!regions.includes(this._region)) {
             const errorMessage = `The region "${this._region}" you are trying to connect to does not exist ` +
           'or is not available to you. Please specify a correct region name in the ' +
@@ -2135,28 +2178,18 @@ export default class MetaApiWebsocketClient {
         let url;
         if(this._useSharedClientApi) {
           if(isDefaultRegion) {
-            url = this._url;
+            url = getUrl(this._hostname, regions[0]);
           } else {
-            url = `https://${this._hostname}.${this._region}.${this._domain}`;
+            url = getUrl(this._hostname, this._region);
           }
         } else {
-          const opts = {
-            url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
-            method: 'GET',
-            headers: {
-              'auth-token': this._token
-            },
-            json: true,
-          };
-          const response = await this._httpClient.request(opts);
           if(isDefaultRegion) {
-            url = response.url;
+            url = getUrl(urlSettings.hostname, regions[0]);
           } else {
-            url = `https://${response.hostname}.${this._region}.${response.domain}`;
+            url = getUrl(urlSettings.hostname, this._region);
           }
         }
-        const isSharedClientApi = [this._url, `https://${this._hostname}.${this._region}.${this._domain}`]
-          .includes(url);
+        const isSharedClientApi = url === getUrl(this._hostname, regions[0]);
         let logMessage = 'Connecting MetaApi websocket client to the MetaApi server ' +
       `via ${url} ${isSharedClientApi ? 'shared' : 'dedicated'} server.`;
         if(this._firstConnect && !isSharedClientApi) {
@@ -2173,11 +2206,12 @@ export default class MetaApiWebsocketClient {
     }
   }
 
-  _throttleRequest(type, accountId, timeInMs) {
-    this._lastRequestsTime[type] = this._lastRequestsTime[type] || {};
-    let lastTime = this._lastRequestsTime[type][accountId];
+  _throttleRequest(type, accountId, instanceNumber, timeInMs) {
+    this._lastRequestsTime[instanceNumber] = this._lastRequestsTime[instanceNumber] || {};
+    this._lastRequestsTime[instanceNumber][type] = this._lastRequestsTime[instanceNumber][type] || {};
+    let lastTime = this._lastRequestsTime[instanceNumber][type][accountId];
     if (!lastTime || (lastTime < Date.now() - timeInMs)) {
-      this._lastRequestsTime[type][accountId] = Date.now();
+      this._lastRequestsTime[instanceNumber][type][accountId] = Date.now();
       return !!lastTime;
     }
     return false;

@@ -23,9 +23,10 @@ export default class SynchronizationThrottler {
    * Constructs the synchronization throttler
    * @param {MetaApiWebsocketClient} client MetaApi websocket client
    * @param {Number} socketInstanceIndex index of socket instance that uses the throttler
+   * @param {Number} instanceNumber instance index number
    * @param {SynchronizationThrottlerOpts} opts synchronization throttler options
    */
-  constructor(client, socketInstanceIndex, opts) {
+  constructor(client, socketInstanceIndex, instanceNumber, opts) {
     const validator = new OptionsValidator();
     opts = opts || {};
     this._maxConcurrentSynchronizations = validator.validateNonZero(opts.maxConcurrentSynchronizations, 15,
@@ -41,6 +42,7 @@ export default class SynchronizationThrottler {
     this._synchronizationQueue = [];
     this._removeOldSyncIdsInterval = null;
     this._processQueueInterval = null;
+    this._instanceNumber = instanceNumber;
     this._logger = LoggerManager.getLogger('SynchronizationThrottler');
   }
 
@@ -116,7 +118,7 @@ export default class SynchronizationThrottler {
    */
   get maxConcurrentSynchronizations() {
     const calculatedMax = Math.max(Math.ceil(
-      this._client.subscribedAccountIds(this._socketInstanceIndex).length / 10), 1);
+      this._client.subscribedAccountIds(this._instanceNumber, this._socketInstanceIndex).length / 10), 1);
     return Math.min(calculatedMax, this._maxConcurrentSynchronizations);
   }
 
@@ -125,7 +127,7 @@ export default class SynchronizationThrottler {
    * @return {Boolean} flag whether there are free slots for synchronization requests
    */
   get isSynchronizationAvailable() {
-    if (this._client.socketInstances.reduce((acc, socketInstance) => 
+    if (this._client.socketInstances[this._instanceNumber].reduce((acc, socketInstance) => 
       acc + socketInstance.synchronizationThrottler.synchronizingAccounts.length, 0) >=
       this._maxConcurrentSynchronizations) {
       return false;

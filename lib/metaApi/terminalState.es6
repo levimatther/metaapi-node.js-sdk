@@ -10,9 +10,11 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Constructs the instance of terminal state class
+   * @param {ClientApiClient} clientApiClient client api client
    */
-  constructor() {
+  constructor(clientApiClient) {
     super();
+    this._clientApiClient = clientApiClient;
     this._stateByInstanceIndex = {};
     this._waitForPriceResolves = {};
     this._combinedState = {
@@ -83,9 +85,10 @@ export default class TerminalState extends SynchronizationListener {
    * Returns hashes of terminal state data for incremental synchronization
    * @param {String} accountType account type
    * @param {String} instanceIndex index of instance to get hashes of
-   * @returns {Object} hashes of terminal state data
+   * @returns {Promise<Object>} promise resolving with hashes of terminal state data
    */
-  getHashes(accountType, instanceIndex) {
+  async getHashes(accountType, instanceIndex) {
+    const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists();
     // get latest instance number state
     const instanceNumber = instanceIndex.split(':')[0];
     const instanceNumberStates = Object.keys(this._stateByInstanceIndex)
@@ -104,49 +107,43 @@ export default class TerminalState extends SynchronizationListener {
     };
     const specifications = JSON.parse(JSON.stringify(Object.values(state.specificationsBySymbol)));
     specifications.sort((a,b) => sortByKey(a, b, 'symbol'));
-    if(accountType === 'cloud-g1') {
-      specifications.forEach(specification => {
-        delete specification.description;
-      });
-    }
     specifications.forEach(specification => {
-      delete specification.pipSize;
+      if(accountType === 'cloud-g1') {
+        hashFields.g1.specification.forEach(field => delete specification[field]);
+      } else if(accountType === 'cloud-g2') {
+        hashFields.g2.specification.forEach(field => delete specification[field]);
+      }
     });
     const specificationsHash = specifications.length ? 
       this._getHash(specifications, accountType, ['digits']) : null;
 
     const positions = JSON.parse(JSON.stringify(state.positions));
-    positions.sort((a,b) => sortByKey(a, b, 'id'));
+    if(accountType === 'cloud-g1') {
+      positions.sort((a,b) => Number(a.id) - Number(b.id));
+    } else {
+      positions.sort((a,b) => sortByKey(a, b, 'id'));
+    }
     positions.forEach(position => {
-      delete position.profit;
-      delete position.unrealizedProfit;
-      delete position.realizedProfit;
-      delete position.currentPrice;
-      delete position.currentTickValue;
-      delete position.updateSequenceNumber;
-      delete position.accountCurrencyExchangeRate;
-      delete position.comment;
-      delete position.brokerComment;
-      delete position.clientId;
       if(accountType === 'cloud-g1') {
-        delete position.time;
-        delete position.updateTime;
+        hashFields.g1.position.forEach(field => delete position[field]);
+      } else if(accountType === 'cloud-g2') {
+        hashFields.g2.position.forEach(field => delete position[field]);
       }
     });
     const positionsHash = state.positionsInitialized ? 
       this._getHash(positions, accountType, ['magic']) : null;
 
     const orders = JSON.parse(JSON.stringify(state.orders));
-    orders.sort((a,b) => sortByKey(a, b, 'id'));
+    if(accountType === 'cloud-g1') {
+      orders.sort((a,b) => Number(a.id) - Number(b.id));
+    } else {
+      orders.sort((a,b) => sortByKey(a, b, 'id'));
+    }
     orders.forEach(order => {
-      delete order.currentPrice;
-      delete order.updateSequenceNumber;
-      delete order.accountCurrencyExchangeRate;
-      delete order.comment;
-      delete order.brokerComment;
-      delete order.clientId;
       if(accountType === 'cloud-g1') {
-        delete order.time;
+        hashFields.g1.order.forEach(field => delete order[field]);
+      } else if(accountType === 'cloud-g2') {
+        hashFields.g2.order.forEach(field => delete order[field]);
       }
     });
     const ordersHash = state.ordersInitialized ? 
@@ -640,7 +637,29 @@ export default class TerminalState extends SynchronizationListener {
     
       jsonItem = stringify(obj);
     } else if(accountType === 'cloud-g2') {
-      jsonItem = JSON.stringify(obj);
+      const stringify = (objFromJson, key) => {
+        if(typeof objFromJson === 'number') {
+          if(integerKeys.includes(key)) {
+            return objFromJson;
+          } else {
+            return parseFloat(objFromJson.toFixed(8));
+          }
+        } else if(Array.isArray(objFromJson)) {
+          return `[${objFromJson.map(item => stringify(item)).join(',')}]`; 
+        } else if (objFromJson === null) {
+          return objFromJson;
+        } else if (typeof objFromJson !== 'object' || objFromJson.getTime){
+          return JSON.stringify(objFromJson);
+        }
+    
+        let props = Object
+          .keys(objFromJson)
+          .map(keyItem => `"${keyItem}":${stringify(objFromJson[keyItem], keyItem)}`)
+          .join(',');
+        return `{${props}}`;
+      };
+
+      jsonItem = stringify(obj);
     }
     return crypto.MD5(jsonItem).toString();
   }

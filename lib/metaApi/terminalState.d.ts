@@ -1,4 +1,5 @@
 import { MetatraderAccountInformation, MetatraderOrder, MetatraderPosition, MetatraderSymbolPrice, MetatraderSymbolSpecification } from "../clients/metaApi/metaApiWebsocket.client";
+import ClientApiClient from "../clients/metaApi/clientApi.client";
 import SynchronizationListener from "../clients/metaApi/synchronizationListener";
 
 /**
@@ -8,8 +9,9 @@ export default class TerminalState extends SynchronizationListener {
   
   /**
    * Constructs the instance of terminal state class
+   * @param {ClientApiClient} clientApiClient client API client
    */
-  constructor();
+  constructor(clientApiClient: ClientApiClient);
   
   /**
    * Returns true if MetaApi have connected to MetaTrader terminal
@@ -53,9 +55,9 @@ export default class TerminalState extends SynchronizationListener {
    * Returns hashes of terminal state data for incremental synchronization
    * @param {string} accountType account type
    * @param {string} instanceIndex index of instance to get hashes of
-   * @returns {Object} hashes of terminal state data
+   * @returns {Promise<Object>} promise resolving with hashes of terminal state data
    */
-  getHashes(accountType: string, instanceIndex: string): Object;
+  getHashes(accountType: string, instanceIndex: string): Promise<Object>;
   
   /**
    * Returns MetaTrader symbol specification by symbol

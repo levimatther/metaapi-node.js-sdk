@@ -2,6 +2,8 @@
   - breaking change: refactored HistoryStorage & MemoryHistoryStorage classes
   - fixed html example
   - fixed terminal state memory leak
+  - split account instance connections into multiple availability zones for redundancy and failover
+  - fixed terminal state hash calculation
 
 17.0.0
   - breaking change: updated typescript types

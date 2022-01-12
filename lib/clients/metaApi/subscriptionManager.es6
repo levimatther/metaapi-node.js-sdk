@@ -61,7 +61,7 @@ export default class SubscriptionManager {
   /**
    * Subscribes to the Metatrader terminal events
    * @param {String} accountId id of the MetaTrader account to subscribe to
-   * @param {Number} [instanceNumber] instance index number
+   * @param {Number} instanceNumber instance index number
    * @returns {Promise} promise which resolves when subscription started
    */
   subscribe(accountId, instanceNumber) {
@@ -100,14 +100,14 @@ export default class SubscriptionManager {
             await this.subscribe(accountId, instanceNumber);
           } catch (err) {
             if(err.name === 'TooManyRequestsError') {
-              const socketInstanceIndex = client.socketInstancesByAccounts[accountId];
+              const socketInstanceIndex = client.socketInstancesByAccounts[instanceNumber][accountId];
               if (err.metadata.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER') {
                 this._logger.error(`${instanceId}: Failed to subscribe`, err);
               }
               if (['LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER', 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER', 
                 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER'].includes(err.metadata.type)) {
-                delete client.socketInstancesByAccounts[accountId];
-                client.lockSocketInstance(socketInstanceIndex, err.metadata);
+                delete client.socketInstancesByAccounts[instanceNumber][accountId];
+                client.lockSocketInstance(instanceNumber, socketInstanceIndex, err.metadata);
               } else {
                 const retryTime = new Date(err.metadata.recommendedRetryTime).getTime();
                 if (Date.now() + subscribeRetryIntervalInSeconds * 1000 < retryTime) {
@@ -147,12 +147,13 @@ export default class SubscriptionManager {
   /**
    * Unsubscribe from account
    * @param {String} accountId id of the MetaTrader account to unsubscribe
+   * @param {Number} instanceNumber instance index number
    * @returns {Promise} promise which resolves when socket unsubscribed
    */
-  async unsubscribe(accountId) {
+  async unsubscribe(accountId, instanceNumber) {
     this.cancelAccount(accountId);
     delete this._subscriptionState[accountId];
-    return this._websocketClient.rpcRequest(accountId, {type: 'unsubscribe'});
+    return this._websocketClient.rpcRequest(accountId, {type: 'unsubscribe', instanceIndex: instanceNumber});
   }
 
   /**
@@ -189,8 +190,9 @@ export default class SubscriptionManager {
    * @param {Number} instanceNumber instance index number
    */
   onTimeout(accountId, instanceNumber) {
-    if(this._websocketClient.socketInstancesByAccounts[accountId] !== undefined && 
-      this._websocketClient.connected(this._websocketClient.socketInstancesByAccounts[accountId])) {
+    if(this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId] !== undefined && 
+      this._websocketClient.connected(instanceNumber, 
+        this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId])) {
       this.scheduleSubscribe(accountId, instanceNumber, true);
     }
   }
@@ -202,19 +204,20 @@ export default class SubscriptionManager {
    */
   async onDisconnected(accountId, instanceNumber) {
     await new Promise(res => setTimeout(res, Math.max(Math.random() * 5, 1) * 1000));
-    if(this._websocketClient.socketInstancesByAccounts[accountId] !== undefined) {
+    if(this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId] !== undefined) {
       this.scheduleSubscribe(accountId, instanceNumber, true);
     }
   }
 
   /**
    * Invoked when connection to MetaApi websocket API restored after a disconnect.
+   * @param {Number} instanceNumber instance index number
    * @param {Number} socketInstanceIndex socket instance index
    * @param {String[]} reconnectAccountIds account ids to reconnect
    */
-  onReconnected(socketInstanceIndex, reconnectAccountIds) {
+  onReconnected(instanceNumber, socketInstanceIndex, reconnectAccountIds) {
     try {
-      const socketInstancesByAccounts = this._websocketClient.socketInstancesByAccounts;
+      const socketInstancesByAccounts = this._websocketClient.socketInstancesByAccounts[instanceNumber];
       for(let instanceId of Object.keys(this._subscriptions)){
         const accountId = instanceId.split(':')[0];
         if (socketInstancesByAccounts[accountId] === socketInstanceIndex) {
@@ -225,12 +228,12 @@ export default class SubscriptionManager {
         try {
           if(!this._awaitingResubscribe[accountId]) {
             this._awaitingResubscribe[accountId] = true;
-            while(this.isAccountSubscribing(accountId)) {
+            while(this.isAccountSubscribing(accountId, instanceNumber)) {
               await new Promise(res => setTimeout(res, 1000));
             }
             delete this._awaitingResubscribe[accountId];
             await new Promise(res => setTimeout(res, Math.random() * 5000));
-            this.scheduleSubscribe(accountId);
+            this.scheduleSubscribe(accountId, instanceNumber);
           }
         } catch (err) {
           this._logger.error(`${accountId}: Account resubscribe task failed`, err);
