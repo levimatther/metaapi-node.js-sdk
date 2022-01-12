@@ -18,6 +18,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Constructs MetaApi MetaTrader streaming Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
+   * @param {ClientApiClient} clientApiClient client api client
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage. By default an instance of MemoryHistoryStorage
    * will be used.
@@ -25,7 +26,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {Date} [historyStartTime] history start sync time
    * @param {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
    */
-  constructor(websocketClient, account, historyStorage, connectionRegistry, historyStartTime,
+  constructor(websocketClient, clientApiClient, account, historyStorage, connectionRegistry, historyStartTime,
     refreshSubscriptionsOpts) {
     super(websocketClient, account);
     refreshSubscriptionsOpts = refreshSubscriptionsOpts || {};
@@ -36,7 +37,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       'refreshSubscriptionsOpts.maxDelayInSeconds');
     this._connectionRegistry = connectionRegistry;
     this._historyStartTime = historyStartTime;
-    this._terminalState = new TerminalState();
+    this._terminalState = new TerminalState(clientApiClient);
     this._historyStorage = historyStorage || new MemoryHistoryStorage();
     this._healthMonitor = new ConnectionHealthMonitor(this);
     this._websocketClient.addSynchronizationListener(account.id, this);
@@ -110,7 +111,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     ));
     let synchronizationId = randomstring.generate(32);
     this._getState(instanceIndex).lastSynchronizationId = synchronizationId;
-    const hashes = this.terminalState.getHashes(this._account.type, instanceIndex);
+    const hashes = await this.terminalState.getHashes(this._account.type, instanceIndex);
     return this._websocketClient.synchronize(this._account.id, instance, host, synchronizationId,
       startingHistoryOrderTime, startingDealTime, hashes.specificationsMd5, hashes.positionsMd5, hashes.ordersMd5);
   }
@@ -129,7 +130,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   async subscribe() {
     if(!this._closed) {
-      this._websocketClient.ensureSubscribe(this._account.id);
+      this._websocketClient.ensureSubscribe(this._account.id, 0);
+      if(this._account.reliability === 'high') {
+        this._websocketClient.ensureSubscribe(this._account.id, 1);
+      }
     }
   }
 

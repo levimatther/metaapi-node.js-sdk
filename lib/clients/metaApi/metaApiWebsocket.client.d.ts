@@ -48,37 +48,42 @@ export default class MetaApiWebsocketClient {
   
   /**
    * Returns the list of subscribed account ids
+   * @param {number} instanceNumber instance index number
    * @param {string} socketInstanceIndex socket instance index
    * @return {string[]} list of subscribed account ids
    */
-  subscribedAccountIds(socketInstanceIndex: string): string[];
+  subscribedAccountIds(instanceNumber: number, socketInstanceIndex: string): string[];
   
   /**
    * Returns websocket client connection status
+   * @param {number} instanceNumber instance index number
    * @param {number} socketInstanceIndex socket instance index
    * @returns {boolean} websocket client connection status
    */
-  connected(socketInstanceIndex: number): boolean;
+  connected(instanceNumber: number, socketInstanceIndex: number): boolean;
   
   /**
    * Returns list of accounts assigned to instance
+   * @param {number} instanceNumber instance index number
    * @param {number} socketInstanceIndex socket instance index
    * @returns {Array<number>}
    */
-  getAssignedAccounts(socketInstanceIndex: number): Array<number>;
+  getAssignedAccounts(instanceNumber: number, socketInstanceIndex: number): Array<number>;
   
   /**
    * Locks subscription for a socket instance based on TooManyRequestsError metadata
+   * @param {number} instanceNumber instance index number
    * @param {number} socketInstanceIndex socket instance index
    * @param {TooManyRequestsErrorMetadata} metadata TooManyRequestsError metadata
    */
-  lockSocketInstance(socketInstanceIndex: number, metadata: TooManyRequestsErrorMetadata): Promise<void>;
+  lockSocketInstance(instanceNumber: number, socketInstanceIndex: number, metadata: TooManyRequestsErrorMetadata): Promise<void>;
   
   /**
    * Connects to MetaApi server via socket.io protocol
+   * @param {number} instanceNumber instance index number
    * @returns {Promise} promise which resolves when connection is established
    */
-  connect(): Promise<any>
+  connect(instanceNumber: number): Promise<any>
   
   /**
    * Closes connection to MetaApi server

@@ -52,6 +52,33 @@ describe('StreamingMetaApiConnection', () => {
     refreshMarketDataSubscriptions: () => {}
   };
 
+  let clientApiClient = {
+    getHashingIgnoredFieldLists: () => ({
+      g1: {
+        specification: [
+          'description',
+        ],
+        position: [
+          'time',
+        ],
+        order: [
+          'time',
+        ]
+      },
+      g2: {
+        specification: [
+          'pipSize'
+        ],
+        position: [
+          'comment',
+        ],
+        order: [
+          'comment',
+        ]
+      }
+    })
+  };
+
   let connectionRegistry = {
     connect: () => {},
     remove: () => {},
@@ -68,7 +95,7 @@ describe('StreamingMetaApiConnection', () => {
       state: 'DEPLOYED',
       reload: () => {}
     };
-    api = new StreamingMetaApiConnection(client, account, undefined, connectionRegistry, 0, {
+    api = new StreamingMetaApiConnection(client, clientApiClient, account, undefined, connectionRegistry, 0, {
       minDelayInSeconds: 1,
       maxDelayInSeconds: 1
     });
@@ -410,7 +437,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should synchronize state with terminal', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize('1:ps-mpa-1');
@@ -424,7 +451,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should synchronize state with terminal from specified time', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry,
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry,
       new Date('2020-10-07T00:00:00.000Z'));
     api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
@@ -524,7 +551,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should initialize listeners, terminal state and history storage for accounts with user synch mode', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     should.exist(api.terminalState);
     should.exist(api.historyStorage);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api);
@@ -537,7 +564,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should add synchronization listeners', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     let listener = {};
     api.addSynchronizationListener(listener);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', listener);
@@ -548,7 +575,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should remove synchronization listeners', async () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     let listener = {};
     api.removeSynchronizationListener(listener);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', listener);
@@ -560,7 +587,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should sychronize on connection', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected('1:ps-mpa-1', 1);
@@ -577,7 +604,7 @@ describe('StreamingMetaApiConnection', () => {
     stub.onFirstCall().throws(new Error('test error'));
     stub.onSecondCall().resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected('1:ps-mpa-1', 1);
@@ -591,7 +618,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should not synchronize if connection is closed', async () => {
     let synchronizeStub = sandbox.stub(client, 'synchronize');
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.close();
@@ -607,7 +634,7 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
     sandbox.stub(client, 'unsubscribe').resolves();
     sandbox.stub(connectionRegistry, 'remove').returns();
-    api = new StreamingMetaApiConnection(client, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
     await api.close();
     sinon.assert.calledWith(client.unsubscribe, 'accountId');
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);

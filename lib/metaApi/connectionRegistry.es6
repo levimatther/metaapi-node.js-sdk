@@ -8,12 +8,14 @@ export default class ConnectionRegistry {
   /**
    * Constructs a MetaTrader connection registry instance
    * @param {MetaApiWebsocketClient} metaApiWebsocketClient MetaApi websocket client
+   * @param {ClientApiClient} clientApiClient client API client
    * @param {String} application application id
    * @param {String} refreshSubscriptionsOpts subscriptions refresh options
    */
-  constructor(metaApiWebsocketClient, application = 'MetaApi', refreshSubscriptionsOpts) {
+  constructor(metaApiWebsocketClient, clientApiClient, application = 'MetaApi', refreshSubscriptionsOpts) {
     refreshSubscriptionsOpts = refreshSubscriptionsOpts || {};
     this._metaApiWebsocketClient = metaApiWebsocketClient;
+    this._clientApiClient = clientApiClient;
     this._application = application;
     this._refreshSubscriptionsOpts = refreshSubscriptionsOpts;
     this._connections = {};
@@ -31,8 +33,8 @@ export default class ConnectionRegistry {
     if (this._connections[account.id]) {
       return this._connections[account.id];
     }
-    this._connections[account.id] = new StreamingMetaApiConnection(this._metaApiWebsocketClient, account,
-      historyStorage, this, historyStartTime, this._refreshSubscriptionsOpts);
+    this._connections[account.id] = new StreamingMetaApiConnection(this._metaApiWebsocketClient, 
+      this._clientApiClient, account, historyStorage, this, historyStartTime, this._refreshSubscriptionsOpts);
     return this._connections[account.id];
   }
 

@@ -14,7 +14,74 @@ describe('TerminalState', () => {
   const md5 = (arg) => crypto.MD5(arg).toString();
 
   beforeEach(() => {
-    state = new TerminalState();
+    const clientApiClient = {
+      getHashingIgnoredFieldLists: () => ({
+        g1: {
+          specification: [
+            'description',
+            'expirationTime',
+            'expirationBrokerTime',
+            'startTime',
+            'startBrokerTime',
+            'pipSize'
+          ],
+          position: [
+            'time',
+            'updateTime',
+            'comment',
+            'brokerComment',
+            'originalComment',
+            'clientId',
+            'profit',
+            'realizedProfit',
+            'unrealizedProfit',
+            'currentPrice',
+            'currentTickValue',
+            'accountCurrencyExchangeRate',
+            'updateSequenceNumber'
+          ],
+          order: [
+            'time',
+            'expirationTime',
+            'comment',
+            'brokerComment',
+            'originalComment',
+            'clientId',
+            'currentPrice',
+            'accountCurrencyExchangeRate',
+            'updateSequenceNumber'
+          ]
+        },
+        g2: {
+          specification: [
+            'pipSize'
+          ],
+          position: [
+            'comment',
+            'brokerComment',
+            'originalComment',
+            'clientId',
+            'profit',
+            'realizedProfit',
+            'unrealizedProfit',
+            'currentPrice',
+            'currentTickValue',
+            'accountCurrencyExchangeRate',
+            'updateSequenceNumber'
+          ],
+          order: [
+            'comment',
+            'brokerComment',
+            'originalComment',
+            'clientId',
+            'currentPrice',
+            'accountCurrencyExchangeRate',
+            'updateSequenceNumber'
+          ]
+        }
+      })
+    };
+    state = new TerminalState(clientApiClient);
   });
 
   /**
@@ -297,7 +364,7 @@ describe('TerminalState', () => {
     const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","openPrice":1.03000000,' +
       '"volume":0.01000000,"currentVolume":0.01000000}]');
-    let hashes = state.getHashes('cloud-g1', '1:ps-mpa-1');
+    let hashes = await state.getHashes('cloud-g1', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, null);
     sinon.assert.match(hashes.positionsMd5, null);
     sinon.assert.match(hashes.ordersMd5, null);
@@ -347,7 +414,7 @@ describe('TerminalState', () => {
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
     state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-    hashes = state.getHashes('cloud-g1', '1:ps-mpa-1');
+    hashes = await state.getHashes('cloud-g1', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, specificationsHash);
     sinon.assert.match(hashes.positionsMd5, positionsHash);
     sinon.assert.match(hashes.ordersMd5, ordersHash);
@@ -366,7 +433,7 @@ describe('TerminalState', () => {
     const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","time":"2020-04-20T08:38:58.270Z","openPrice":1.03,' +
       '"volume":0.01,"currentVolume":0.01}]');
-    let hashes = state.getHashes('cloud-g2', '1:ps-mpa-1');
+    let hashes = await state.getHashes('cloud-g2', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, null);
     sinon.assert.match(hashes.positionsMd5, null);
     sinon.assert.match(hashes.ordersMd5, null);
@@ -416,7 +483,7 @@ describe('TerminalState', () => {
       clientId: 'TE_GBPUSD_7hyINWqAlE',
     }]);
     state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-    hashes = state.getHashes('cloud-g2', '1:ps-mpa-1');
+    hashes = await state.getHashes('cloud-g2', '1:ps-mpa-1');
     sinon.assert.match(hashes.specificationsMd5, specificationsHash);
     sinon.assert.match(hashes.positionsMd5, positionsHash);
     sinon.assert.match(hashes.ordersMd5, ordersHash);
