@@ -851,7 +851,7 @@ export default class MetaApiWebsocketClient {
    * Waits for server-side terminal state synchronization to complete.
    * (see https://metaapi.cloud/docs/client/websocket/synchronizing/waitSynchronized/).
    * @param {String} accountId id of the MetaTrader account to synchronize
-   * @param {Number} instanceNumber instance index number
+   * @param {Number} [instanceNumber] instance index number
    * @param {String} applicationPattern MetaApi application regular expression pattern, default is .*
    * @param {Number} timeoutInSeconds timeout in seconds, default is 300 seconds
    * @param {String} [application] application to synchronize with
