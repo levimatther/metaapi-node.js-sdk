@@ -226,7 +226,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
     // eslint-disable-next-line
     while(true) {
       try {
-        await this._websocketClient.waitSynchronized(this._account.id, 0, 'RPC', 5, 'RPC');
+        await this._websocketClient.waitSynchronized(this._account.id, undefined, 'RPC', 5, 'RPC');
         break;
       } catch (err) {
         if(Date.now() > startTime + timeoutInSeconds * 1000) {
