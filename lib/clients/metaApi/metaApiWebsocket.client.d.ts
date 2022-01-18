@@ -45,45 +45,56 @@ export default class MetaApiWebsocketClient {
    * @return {Object} dictionary of socket instances by account ids
    */
   get socketInstancesByAccounts(): Object;
+
+  /**
+   * Returns the dictionary of region names by account ids
+   * @return {Object} dictionary of region names by account ids
+   */
+  get regionsByAccounts(): Object;
   
   /**
    * Returns the list of subscribed account ids
    * @param {number} instanceNumber instance index number
    * @param {string} socketInstanceIndex socket instance index
+   * @param {string} region server region
    * @return {string[]} list of subscribed account ids
    */
-  subscribedAccountIds(instanceNumber: number, socketInstanceIndex: string): string[];
+  subscribedAccountIds(instanceNumber: number, socketInstanceIndex: string, region: string): string[];
   
   /**
    * Returns websocket client connection status
    * @param {number} instanceNumber instance index number
    * @param {number} socketInstanceIndex socket instance index
+   * @param {string} region server region
    * @returns {boolean} websocket client connection status
    */
-  connected(instanceNumber: number, socketInstanceIndex: number): boolean;
+  connected(instanceNumber: number, socketInstanceIndex: number, region: string): boolean;
   
   /**
    * Returns list of accounts assigned to instance
    * @param {number} instanceNumber instance index number
    * @param {number} socketInstanceIndex socket instance index
+   * @param {string} region server region
    * @returns {Array<number>}
    */
-  getAssignedAccounts(instanceNumber: number, socketInstanceIndex: number): Array<number>;
+  getAssignedAccounts(instanceNumber: number, socketInstanceIndex: number, region: string): Array<number>;
   
   /**
    * Locks subscription for a socket instance based on TooManyRequestsError metadata
    * @param {number} instanceNumber instance index number
    * @param {number} socketInstanceIndex socket instance index
+   * @param {string} region server region
    * @param {TooManyRequestsErrorMetadata} metadata TooManyRequestsError metadata
    */
-  lockSocketInstance(instanceNumber: number, socketInstanceIndex: number, metadata: TooManyRequestsErrorMetadata): Promise<void>;
+  lockSocketInstance(instanceNumber: number, socketInstanceIndex: number, region: string, metadata: TooManyRequestsErrorMetadata): Promise<void>;
   
   /**
    * Connects to MetaApi server via socket.io protocol
    * @param {number} instanceNumber instance index number
+   * @param {string} region server region
    * @returns {Promise} promise which resolves when connection is established
    */
-  connect(instanceNumber: number): Promise<any>
+  connect(instanceNumber: number, region: string): Promise<any>
   
   /**
    * Closes connection to MetaApi server

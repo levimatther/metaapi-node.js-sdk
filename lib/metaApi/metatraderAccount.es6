@@ -130,14 +130,6 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns API extensions
-   * @return {Array<Extension>} API extensions
-   */
-  get extensions() {
-    return this._data.extensions;
-  }
-
-  /**
    * Returns extra information which can be stored together with your account
    * @return {Object} extra information which can be stored together with your account
    */
@@ -211,6 +203,14 @@ export default class MetatraderAccount {
    */
   get version() {
     return this._data.version;
+  }
+
+  /**
+   * Returns account region
+   * @return {String} account region value
+   */
+  get region() {
+    return this._data.region;
   }
 
   /**
@@ -439,7 +439,8 @@ export default class MetatraderAccount {
    * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
    */
   getHistoricalCandles(symbol, timeframe, startTime, limit) {
-    return this._historicalMarketDataClient.getHistoricalCandles(this.id, symbol, timeframe, startTime, limit);
+    return this._historicalMarketDataClient.getHistoricalCandles(this.id, this.region, symbol,
+      timeframe, startTime, limit);
   }
   
   /**
@@ -455,7 +456,7 @@ export default class MetatraderAccount {
    * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
    */
   getHistoricalTicks(symbol, startTime, offset, limit) {
-    return this._historicalMarketDataClient.getHistoricalTicks(this.id, symbol, startTime, offset, limit);
+    return this._historicalMarketDataClient.getHistoricalTicks(this.id, this.region, symbol, startTime, offset, limit);
   }
 
   _checkExpertAdvisorAllowed() {

@@ -4,7 +4,7 @@ import HttpClient from '../httpClient';
 import sinon from 'sinon';
 import HistoricalMarketDataClient from './historicalMarketData.client';
 
-const marketDataClientApiUrl = 'https://mt-market-data-client-api-v1.agiliumtrade.agiliumtrade.ai';
+const marketDataClientApiUrl = 'https://mt-market-data-client-api-v1.vint-hill.agiliumlabs.cloud';
 
 /**
  * @test {HistoricalMarketDataClient}
@@ -16,6 +16,7 @@ describe('HistoricalMarketDataClient', () => {
   let httpClient = new HttpClient();
   let sandbox;
   let requestStub;
+  let marketDataStub;
 
   before(() => {
     sandbox = sinon.createSandbox();
@@ -24,6 +25,23 @@ describe('HistoricalMarketDataClient', () => {
   beforeEach(() => {
     client = new HistoricalMarketDataClient(httpClient, token);
     requestStub = sandbox.stub(httpClient, 'request');
+    requestStub.withArgs({
+      url: 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/regions',
+      method: 'GET',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    }).resolves(['vint-hill', 'us-west'])
+      .withArgs({
+        url: 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/servers/mt-client-api',
+        method: 'GET',
+        headers: {
+          'auth-token': token
+        },
+        json: true,
+      }).resolves({domain: 'agiliumlabs.cloud'});
+    marketDataStub = requestStub;
   });
 
   afterEach(() => {
@@ -47,11 +65,11 @@ describe('HistoricalMarketDataClient', () => {
       spread: 17,
       volume: 345
     }];
-    requestStub.resolves(expected);
-    let candles = await client.getHistoricalCandles('accountId', 'AUDNZD', '15m', new Date('2020-04-07T03:45:00.000Z'),
-      1);
+    marketDataStub.resolves(expected);
+    let candles = await client.getHistoricalCandles('accountId', 'vint-hill', 'AUDNZD', '15m',
+      new Date('2020-04-07T03:45:00.000Z'), 1);
     candles.should.equal(expected);
-    sinon.assert.calledOnceWithExactly(httpClient.request, {
+    sinon.assert.calledWith(httpClient.request, {
       url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/AUDNZD/` +
         'timeframes/15m/candles',
       method: 'GET',
@@ -83,11 +101,11 @@ describe('HistoricalMarketDataClient', () => {
       spread: 17,
       volume: 345
     }];
-    requestStub.resolves(expected);
-    let candles = await client.getHistoricalCandles('accountId', 'GBPJPY#', '15m', new Date('2020-04-07T03:45:00.000Z'),
-      1);
+    marketDataStub.resolves(expected);
+    let candles = await client.getHistoricalCandles('accountId', 'vint-hill', 'GBPJPY#', '15m',
+      new Date('2020-04-07T03:45:00.000Z'), 1);
     candles.should.equal(expected);
-    sinon.assert.calledOnceWithExactly(httpClient.request, {
+    sinon.assert.calledWith(httpClient.request, {
       url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/GBPJPY%23/` +
           'timeframes/15m/candles',
       method: 'GET',
@@ -117,9 +135,10 @@ describe('HistoricalMarketDataClient', () => {
       side: 'buy'
     }];
     requestStub.resolves(expected);
-    let ticks = await client.getHistoricalTicks('accountId', 'AUDNZD', new Date('2020-04-07T03:45:00.000Z'), 0, 1);
+    let ticks = await client.getHistoricalTicks('accountId', 'vint-hill', 'AUDNZD', 
+      new Date('2020-04-07T03:45:00.000Z'), 0, 1);
     ticks.should.equal(expected);
-    sinon.assert.calledOnceWithExactly(httpClient.request, {
+    sinon.assert.calledWith(httpClient.request, {
       url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/AUDNZD/ticks`,
       method: 'GET',
       qs: {
@@ -149,9 +168,10 @@ describe('HistoricalMarketDataClient', () => {
       side: 'buy'
     }];
     requestStub.resolves(expected);
-    let ticks = await client.getHistoricalTicks('accountId', 'GBPJPY#', new Date('2020-04-07T03:45:00.000Z'), 0, 1);
+    let ticks = await client.getHistoricalTicks('accountId', 'vint-hill', 'GBPJPY#',
+      new Date('2020-04-07T03:45:00.000Z'), 0, 1);
     ticks.should.equal(expected);
-    sinon.assert.calledOnceWithExactly(httpClient.request, {
+    sinon.assert.calledWith(httpClient.request, {
       url: `${marketDataClientApiUrl}/users/current/accounts/accountId/historical-market-data/symbols/GBPJPY%23/ticks`,
       method: 'GET',
       qs: {
@@ -165,5 +185,38 @@ describe('HistoricalMarketDataClient', () => {
       json: true
     });
   });
+
+  /**
+   * @test {HistoricalMarketDataClient#getHistoricalCandles}
+   */
+  it('should use cached url on repeated request', async () => {
+    const clock = sandbox.useFakeTimers({shouldAdvanceTime: true});
+    let expected = [{
+      symbol: 'AUDNZD',
+      timeframe: '15m',
+      time: new Date('2020-04-07T03:45:00.000Z'),
+      brokerTime: '2020-04-07 06:45:00.000',
+      open: 1.03297,
+      high: 1.06309,
+      low: 1.02705,
+      close: 1.043,
+      tickVolume: 1435,
+      spread: 17,
+      volume: 345
+    }];
+    marketDataStub.resolves(expected);
+    await client.getHistoricalCandles('accountId', 'vint-hill', 'AUDNZD', '15m', 
+      new Date('2020-04-07T03:45:00.000Z'), 1);
+    let candles = await client.getHistoricalCandles('accountId', 'vint-hill', 'AUDNZD', '15m', 
+      new Date('2020-04-07T03:45:00.000Z'), 1);
+    candles.should.equal(expected);
+    sinon.assert.callCount(requestStub, 3);
+    await clock.tickAsync(610000);
+    await client.getHistoricalCandles('accountId', 'vint-hill', 'AUDNZD', '15m', 
+      new Date('2020-04-07T03:45:00.000Z'), 1);
+    sinon.assert.callCount(requestStub, 5);
+    clock.restore();
+  });
+  
 
 });

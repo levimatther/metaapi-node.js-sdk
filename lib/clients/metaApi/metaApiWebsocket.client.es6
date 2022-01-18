@@ -38,7 +38,6 @@ export default class MetaApiWebsocketClient {
     this._httpClient = httpClient;
     this._application = opts.application || 'MetaApi';
     this._domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
-    this._region = opts.region;
     this._hostname = 'mt-client-api-v1';
     this._url = null;
     this._requestTimeout = validator.validateNonZero(opts.requestTimeout, 60, 'requestTimeout') * 1000;
@@ -63,6 +62,7 @@ export default class MetaApiWebsocketClient {
     this._connectedHosts = {};
     this._socketInstances = {};
     this._socketInstancesByAccounts = {};
+    this._regionsByAccounts = {};
     this._synchronizationThrottlerOpts = opts.synchronizationThrottler;
     this._subscriptionManager = new SubscriptionManager(this);
     this._statusTimers = {};
@@ -122,12 +122,21 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Returns the dictionary of region names by account ids
+   * @return {Object} dictionary of region names by account ids
+   */
+  get regionsByAccounts() {
+    return this._regionsByAccounts;
+  }
+
+  /**
    * Returns the list of subscribed account ids
    * @param {Number} instanceNumber instance index number
    * @param {String} socketInstanceIndex socket instance index
+   * @param {String} region server region
    * @return {string[]} list of subscribed account ids
    */
-  subscribedAccountIds(instanceNumber, socketInstanceIndex) {
+  subscribedAccountIds(instanceNumber, socketInstanceIndex, region) {
     const connectedIds = [];
     if(this._socketInstancesByAccounts[instanceNumber]) {
       Object.keys(this._connectedHosts).forEach(instanceId => {
@@ -135,7 +144,7 @@ export default class MetaApiWebsocketClient {
         if(!connectedIds.includes(accountId) && 
         this._socketInstancesByAccounts[instanceNumber][accountId] !== undefined && (
           this._socketInstancesByAccounts[instanceNumber][accountId] === socketInstanceIndex || 
-        socketInstanceIndex === undefined)) {
+        socketInstanceIndex === undefined) && this._regionsByAccounts[accountId] === region) {
           connectedIds.push(accountId);
         }
       });
@@ -147,11 +156,12 @@ export default class MetaApiWebsocketClient {
    * Returns websocket client connection status
    * @param {Number} instanceNumber instance index number
    * @param {Number} socketInstanceIndex socket instance index
+   * @param {String} region server region
    * @returns {Boolean} websocket client connection status
    */
-  connected(instanceNumber, socketInstanceIndex) {
-    const instance = this._socketInstances[instanceNumber].length > socketInstanceIndex ? 
-      this._socketInstances[instanceNumber][socketInstanceIndex] : null;
+  connected(instanceNumber, socketInstanceIndex, region) {
+    const instance = this._socketInstances[region][instanceNumber].length > socketInstanceIndex ? 
+      this._socketInstances[region][instanceNumber][socketInstanceIndex] : null;
     return (instance && instance.socket && instance.socket.connected) || false;
   }
 
@@ -159,12 +169,14 @@ export default class MetaApiWebsocketClient {
    * Returns list of accounts assigned to instance
    * @param {Number} instanceNumber instance index number
    * @param {String} socketInstanceIndex socket instance index
+   * @param {String} region server region
    * @returns 
    */
-  getAssignedAccounts(instanceNumber, socketInstanceIndex) {
+  getAssignedAccounts(instanceNumber, socketInstanceIndex, region) {
     const accountIds = [];
     Object.keys(this._socketInstancesByAccounts[instanceNumber]).forEach(key => {
-      if (this._socketInstancesByAccounts[instanceNumber][key] === socketInstanceIndex) {
+      if (this._regionsByAccounts[key] === region &&
+        this._socketInstancesByAccounts[instanceNumber][key] === socketInstanceIndex) {
         accountIds.push(key);
       }
     });
@@ -175,23 +187,24 @@ export default class MetaApiWebsocketClient {
    * Locks subscription for a socket instance based on TooManyRequestsError metadata
    * @param {Number} instanceNumber instance index number
    * @param {String} socketInstanceIndex socket instance index
+   * @param {String} region server region
    * @param {Object} metadata TooManyRequestsError metadata
    */
-  async lockSocketInstance(instanceNumber, socketInstanceIndex, metadata) {
+  async lockSocketInstance(instanceNumber, socketInstanceIndex, region, metadata) {
     if (metadata.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER') {
       this._subscribeLock = {
         recommendedRetryTime: metadata.recommendedRetryTime,
-        lockedAtAccounts: this.subscribedAccountIds(instanceNumber).length,
+        lockedAtAccounts: this.subscribedAccountIds(instanceNumber, undefined, region).length,
         lockedAtTime: Date.now()
       };
     } else {
-      const subscribedAccounts = this.subscribedAccountIds(instanceNumber, socketInstanceIndex);
+      const subscribedAccounts = this.subscribedAccountIds(instanceNumber, socketInstanceIndex, region);
       if (subscribedAccounts.length === 0) {
-        const socketInstance = this.socketInstances[instanceNumber][socketInstanceIndex];
+        const socketInstance = this.socketInstances[region][instanceNumber][socketInstanceIndex];
         socketInstance.socket.close();
-        await this._reconnect(instanceNumber, socketInstanceIndex);
+        await this._reconnect(instanceNumber, socketInstanceIndex, region);
       } else {
-        const instance = this._socketInstances[instanceNumber][socketInstanceIndex];
+        const instance = this.socketInstances[region][instanceNumber][socketInstanceIndex];
         instance.subscribeLock = {
           recommendedRetryTime: metadata.recommendedRetryTime,
           type: metadata.type,
@@ -204,15 +217,16 @@ export default class MetaApiWebsocketClient {
   /**
    * Connects to MetaApi server via socket.io protocol
    * @param {Number} instanceNumber instance index number
+   * @param {String} region server region
    * @returns {Promise} promise which resolves when connection is established
    */
-  async connect(instanceNumber) {
+  async connect(instanceNumber, region) {
     let clientId = Math.random();
     let resolve;
     let result = new Promise((res, rej) => {
       resolve = res;
     });
-    const socketInstanceIndex = this._socketInstances[instanceNumber].length;
+    const socketInstanceIndex = this._socketInstances[region][instanceNumber].length;
     const instance = {
       id: socketInstanceIndex,
       connected: false,
@@ -222,14 +236,14 @@ export default class MetaApiWebsocketClient {
       sessionId: randomstring.generate(32),
       isReconnecting: false,
       socket: null,
-      synchronizationThrottler: new SynchronizationThrottler(this, socketInstanceIndex, instanceNumber,
+      synchronizationThrottler: new SynchronizationThrottler(this, socketInstanceIndex, instanceNumber, region,
         this._synchronizationThrottlerOpts),
       subscribeLock: null
     };
     instance.connected = true;
-    this._socketInstances[instanceNumber].push(instance);
+    this._socketInstances[region][instanceNumber].push(instance);
     instance.synchronizationThrottler.start();
-    const serverUrl = await this._getServerUrl(instanceNumber, socketInstanceIndex);
+    const serverUrl = await this._getServerUrl(instanceNumber, socketInstanceIndex, region);
     const socketInstance = socketIO(serverUrl, {
       path: '/ws',
       reconnection: true,
@@ -247,7 +261,7 @@ export default class MetaApiWebsocketClient {
       }
     });
     instance.socket = socketInstance;
-    if (this._socketInstances[instanceNumber].length === 1) {
+    if (this._socketInstances[region][instanceNumber].length === 1) {
       this._packetOrderer.start();
     } 
     socketInstance.on('connect', async () => {
@@ -258,7 +272,7 @@ export default class MetaApiWebsocketClient {
         instance.resolved = true;
         resolve();
       } else {
-        await this._fireReconnected(instanceNumber, instance.id);
+        await this._fireReconnected(instanceNumber, instance.id, region);
       }
       if (!instance.connected) {
         instance.socket.close();
@@ -266,14 +280,14 @@ export default class MetaApiWebsocketClient {
     });
     socketInstance.on('reconnect', async () => {
       instance.isReconnecting = false;
-      await this._fireReconnected(instanceNumber, instance.id);
+      await this._fireReconnected(instanceNumber, instance.id, region);
     });
     socketInstance.on('connect_error', async (err) => {
       // eslint-disable-next-line no-console
       this._logger.error('MetaApi websocket client connection error', err);
       instance.isReconnecting = false;
       if (!instance.resolved) {
-        await this._reconnect(instanceNumber, instance.id);
+        await this._reconnect(instanceNumber, instance.id, region);
       }
     });
     socketInstance.on('connect_timeout', async (timeout) => {
@@ -281,7 +295,7 @@ export default class MetaApiWebsocketClient {
       this._logger.error('MetaApi websocket client connection timeout');
       instance.isReconnecting = false;
       if (!instance.resolved) {
-        await this._reconnect(instanceNumber, instance.id);
+        await this._reconnect(instanceNumber, instance.id, region);
       }
     });
     socketInstance.on('disconnect', async (reason) => {
@@ -290,13 +304,13 @@ export default class MetaApiWebsocketClient {
       this._logger.info('MetaApi websocket client disconnected from the MetaApi ' +
         'server because of ' + reason);
       instance.isReconnecting = false;
-      await this._reconnect(instanceNumber, instance.id);
+      await this._reconnect(instanceNumber, instance.id, region);
     });
     socketInstance.on('error', async (error) => {
       // eslint-disable-next-line no-console
       this._logger.error('MetaApi websocket client error', error);
       instance.isReconnecting = false;
-      await this._reconnect(instanceNumber, instance.id);
+      await this._reconnect(instanceNumber, instance.id, region);
     });
     socketInstance.on('response', data => {
       if (typeof data === 'string') {
@@ -340,6 +354,7 @@ export default class MetaApiWebsocketClient {
         if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && data.type !== 'disconnected') {
           if (this._throttleRequest('unsubscribe', data.accountId, data.instanceIndex, 
             this._unsubscribeThrottlingInterval)) {
+            this._regionsByAccounts[data.accountId] = region;
             this.unsubscribe(data.accountId).catch(err => {
               this._logger.warn(`${data.accountId}:${data.instanceIndex || 0}: failed to unsubscribe`, err);
             });
@@ -359,19 +374,21 @@ export default class MetaApiWebsocketClient {
    * Closes connection to MetaApi server
    */
   close() {
-    Object.keys(this._socketInstances).forEach(instanceNumber => {
-      this._socketInstances[instanceNumber].forEach(async (instance) => {
-        if (instance.connected) {
-          instance.connected = false;
-          await instance.socket.close();
-          for (let requestResolve of Object.values(instance.requestResolves)) {
-            requestResolve.reject(new Error('MetaApi connection closed'));
+    Object.keys(this._socketInstances).forEach(region => {
+      Object.keys(this._socketInstances[region]).forEach(instanceNumber => {
+        this._socketInstances[region][instanceNumber].forEach(async (instance) => {
+          if (instance.connected) {
+            instance.connected = false;
+            await instance.socket.close();
+            for (let requestResolve of Object.values(instance.requestResolves)) {
+              requestResolve.reject(new Error('MetaApi connection closed'));
+            }
+            instance.requestResolves = {};
           }
-          instance.requestResolves = {};
-        }
+        });
+        this._socketInstancesByAccounts[instanceNumber] = {};
+        this._socketInstances[region][instanceNumber] = [];
       });
-      this._socketInstancesByAccounts[instanceNumber] = {};
-      this._socketInstances[instanceNumber] = [];
     });
     this._synchronizationListeners = {};
     this._latencyListeners = [];
@@ -1025,7 +1042,8 @@ export default class MetaApiWebsocketClient {
    */
   async unsubscribe(accountId) {
     try {
-      await Promise.all(Object.keys(this._socketInstances).map(async instanceNumber => {
+      const region = this._regionsByAccounts[accountId];
+      await Promise.all(Object.keys(this._socketInstances[region]).map(async instanceNumber => {
         await this._subscriptionManager.unsubscribe(accountId, instanceNumber);
         delete this._socketInstancesByAccounts[instanceNumber][accountId];
       }));
@@ -1154,17 +1172,17 @@ export default class MetaApiWebsocketClient {
     }
   }
 
-  async _reconnect(instanceNumber, socketInstanceIndex) {
-    const instance = this.socketInstances[instanceNumber][socketInstanceIndex];
+  async _reconnect(instanceNumber, socketInstanceIndex, region) {
+    const instance = this.socketInstances[region][instanceNumber][socketInstanceIndex];
     if (instance) {
       while (!instance.socket.connected && !instance.isReconnecting && instance.connected) {
-        await this._tryReconnect(instanceNumber, socketInstanceIndex);
+        await this._tryReconnect(instanceNumber, socketInstanceIndex, region);
       }
     }
   }
 
-  _tryReconnect(instanceNumber, socketInstanceIndex) {
-    const instance = this.socketInstances[instanceNumber][socketInstanceIndex];
+  _tryReconnect(instanceNumber, socketInstanceIndex, region) {
+    const instance = this.socketInstances[region][instanceNumber][socketInstanceIndex];
     return new Promise((resolve) => setTimeout(async () => {
       if (!instance.socket.connected && !instance.isReconnecting && instance.connected) {
         try {
@@ -1174,7 +1192,7 @@ export default class MetaApiWebsocketClient {
           instance.socket.io.opts.extraHeaders['Client-Id'] = clientId;
           instance.socket.io.opts.query.clientId = clientId;
           instance.isReconnecting = true;
-          instance.socket.io.uri = await this._getServerUrl(instanceNumber, socketInstanceIndex);
+          instance.socket.io.uri = await this._getServerUrl(instanceNumber, socketInstanceIndex, region);
           instance.socket.connect();
         } catch (error) {
           instance.isReconnecting = false;
@@ -1194,36 +1212,41 @@ export default class MetaApiWebsocketClient {
   async rpcRequest(accountId, request, timeoutInSeconds) {
     let socketInstanceIndex = null;
     let instanceNumber = 0;
+    const region = this._regionsByAccounts[accountId];
     if(request.instanceIndex) {
       instanceNumber = request.instanceIndex;
     }
     if(!this._socketInstancesByAccounts[instanceNumber]) {
       this._socketInstancesByAccounts[instanceNumber] = {};
     }
-    if(!this._socketInstances[instanceNumber]) {
-      this._socketInstances[instanceNumber] = [];
+    if(!this._socketInstances[region]) {
+      this._socketInstances[region] = {};
+    }
+    if(!this._socketInstances[region][instanceNumber]) {
+      this._socketInstances[region][instanceNumber] = [];
     }
     if (this._socketInstancesByAccounts[instanceNumber][accountId] !== undefined) {
       socketInstanceIndex = this._socketInstancesByAccounts[instanceNumber][accountId];
     } else {
       while (this._subscribeLock && ((new Date(this._subscribeLock.recommendedRetryTime).getTime() > Date.now() && 
-        this.subscribedAccountIds(instanceNumber).length < this._subscribeLock.lockedAtAccounts) || 
+        this.subscribedAccountIds(instanceNumber, undefined, region).length < this._subscribeLock.lockedAtAccounts) || 
         (new Date(this._subscribeLock.lockedAtTime).getTime() + this._subscribeCooldownInSeconds * 1000 > 
-        Date.now() && this.subscribedAccountIds(instanceNumber).length >= this._subscribeLock.lockedAtAccounts))) {
+        Date.now() && this.subscribedAccountIds(instanceNumber, undefined, region).length >= 
+        this._subscribeLock.lockedAtAccounts))) {
         await new Promise(res => setTimeout(res, 1000));
       }
-      for (let index = 0; index < this._socketInstances[instanceNumber].length; index++) {
-        const accountCounter = this.getAssignedAccounts(instanceNumber, index).length;
-        const instance = this.socketInstances[instanceNumber][index];
+      for (let index = 0; index < this._socketInstances[region][instanceNumber].length; index++) {
+        const accountCounter = this.getAssignedAccounts(instanceNumber, index, region).length;
+        const instance = this.socketInstances[region][instanceNumber][index];
         if (instance.subscribeLock) {
           if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER' && 
           (new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() || 
-          this.subscribedAccountIds(instanceNumber, index).length >= instance.subscribeLock.lockedAtAccounts)) {
+          this.subscribedAccountIds(instanceNumber, index, region).length >= instance.subscribeLock.lockedAtAccounts)) {
             continue;
           }
           if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER' && 
           new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() &&
-          this.subscribedAccountIds(instanceNumber, index).length >= instance.subscribeLock.lockedAtAccounts) {
+          this.subscribedAccountIds(instanceNumber, index, region).length >= instance.subscribeLock.lockedAtAccounts) {
             continue;
           }
         }
@@ -1233,15 +1256,15 @@ export default class MetaApiWebsocketClient {
         }
       }
       if(socketInstanceIndex === null) {
-        socketInstanceIndex = this._socketInstances[instanceNumber].length;
-        await this.connect(instanceNumber);
+        socketInstanceIndex = this._socketInstances[region][instanceNumber].length;
+        await this.connect(instanceNumber, region);
       }
       this._socketInstancesByAccounts[instanceNumber][accountId] = socketInstanceIndex;
     }
-    const instance = this._socketInstances[instanceNumber][socketInstanceIndex];
+    const instance = this._socketInstances[region][instanceNumber][socketInstanceIndex];
     if (!instance.connected) {
-      await this.connect(instanceNumber);
-    } else if(!this.connected(instanceNumber, socketInstanceIndex)) {
+      await this.connect(instanceNumber, region);
+    } else if(!this.connected(instanceNumber, socketInstanceIndex, region)) {
       await instance.connectResult;
     }
     if(request.type === 'subscribe') {
@@ -2103,17 +2126,18 @@ export default class MetaApiWebsocketClient {
     }
   }
 
-  async _fireReconnected(instanceNumber, socketInstanceIndex) {
+  async _fireReconnected(instanceNumber, socketInstanceIndex, region) {
     try {
       const reconnectListeners = [];
       for (let listener of this._reconnectListeners) {
-        if (this._socketInstancesByAccounts[instanceNumber][listener.accountId] === socketInstanceIndex) {
+        if (this._socketInstancesByAccounts[instanceNumber][listener.accountId] === socketInstanceIndex && 
+          this._regionsByAccounts[listener.accountId] === region) {
           reconnectListeners.push(listener);
         }
       }
       Object.keys(this._synchronizationFlags).forEach(synchronizationId => {
-        if (this._socketInstancesByAccounts[instanceNumber][this._synchronizationFlags[synchronizationId].accountId]
-            === socketInstanceIndex) {
+        if (this._socketInstancesByAccounts[region][instanceNumber][
+          this._synchronizationFlags[synchronizationId].accountId] === socketInstanceIndex) {
           delete this._synchronizationFlags[synchronizationId];
         }
       });
@@ -2131,26 +2155,18 @@ export default class MetaApiWebsocketClient {
   }
 
   _getSocketInstanceByAccount(accountId, instanceNumber) {
-    return this._socketInstances[instanceNumber][this._socketInstancesByAccounts[instanceNumber][accountId]];
+    const region = this._regionsByAccounts[accountId];
+    return this._socketInstances[region][instanceNumber][this._socketInstancesByAccounts[instanceNumber][accountId]];
   }
 
   // eslint-disable-next-line complexity
-  async _getServerUrl(instanceNumber, socketInstanceIndex) {
+  async _getServerUrl(instanceNumber, socketInstanceIndex, region) {
     if(this._url) {
       return this._url;
     }
 
-    while(this.socketInstances[instanceNumber][socketInstanceIndex].connected) {
+    while(this.socketInstances[region][instanceNumber][socketInstanceIndex].connected) {
       try {
-        let isDefaultRegion = !this._region;
-        const regions = await this._httpClient.request({
-          url: `https://mt-provisioning-api-v1.${this._domain}/users/current/regions`,
-          method: 'GET',
-          headers: {
-            'auth-token': this._token
-          },
-          json: true,
-        });
         const urlSettings = await this._httpClient.request({
           url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
           method: 'GET',
@@ -2160,36 +2176,16 @@ export default class MetaApiWebsocketClient {
           json: true,
         });
 
-        const getUrl = (hostname, region) => 
+        const getUrl = (hostname) => 
           `https://${hostname}.${region}-${String.fromCharCode(97 + instanceNumber)}.${urlSettings.domain}`;
-
-        if(this._region) {
-          if(!regions.includes(this._region)) {
-            const errorMessage = `The region "${this._region}" you are trying to connect to does not exist ` +
-          'or is not available to you. Please specify a correct region name in the ' +
-          'region MetaApi constructor option.';
-            throw new NotFoundError(errorMessage);
-          }
-          if(this._region === regions[0]) {
-            isDefaultRegion = true;
-          }
-        }
 
         let url;
         if(this._useSharedClientApi) {
-          if(isDefaultRegion) {
-            url = getUrl(this._hostname, regions[0]);
-          } else {
-            url = getUrl(this._hostname, this._region);
-          }
+          url = getUrl(this._hostname);
         } else {
-          if(isDefaultRegion) {
-            url = getUrl(urlSettings.hostname, regions[0]);
-          } else {
-            url = getUrl(urlSettings.hostname, this._region);
-          }
+          url = getUrl(urlSettings.hostname);
         }
-        const isSharedClientApi = url === getUrl(this._hostname, regions[0]);
+        const isSharedClientApi = url === getUrl(this._hostname);
         let logMessage = 'Connecting MetaApi websocket client to the MetaApi server ' +
       `via ${url} ${isSharedClientApi ? 'shared' : 'dedicated'} server.`;
         if(this._firstConnect && !isSharedClientApi) {

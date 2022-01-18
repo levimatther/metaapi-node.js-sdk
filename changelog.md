@@ -4,7 +4,8 @@
   - fixed terminal state memory leak
   - split account instance connections into multiple availability zones for redundancy and failover
   - fixed terminal state hash calculation
-  - fixed timeout errors of waitSynchronized for RPC connections and accounts with high reliability 
+  - fixed timeout errors of waitSynchronized for RPC connections and accounts with high reliability
+  - implemented region support for historical market data requests and socket connections
 
 17.0.0
   - breaking change: updated typescript types

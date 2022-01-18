@@ -15,8 +15,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    */
 
   /**
-   * MetaTrader account model
-   * @typedef {Object} MetatraderAccountDto
+   * Metatrader account replica model
+   * @typedef {Object} MetatraderAccountReplica
    * @property {String} _id account unique identifier
    * @property {String} name MetaTrader account human-readable name in the MetaApi app
    * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. Cloud and cloud-g2 are
@@ -25,8 +25,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} server MetaTrader server which hosts the account
    * @property {Version} version MT version
    * @property {String} [provisioningProfileId] id of the account's provisioning profile
-   * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
-   * AgiliumTrade
+   * @property {String} application application name to connect the account to. Currently allowed values are MetaApi
+   * and AgiliumTrade
    * @property {Number} magic MetaTrader magic to place trades using
    * @property {String} state account deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED,
    * DELETING
@@ -34,13 +34,12 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * DISCONNECTED_FROM_BROKER
    * @property {String} accessToken authorization token to be used for accessing single account data.
    * Intended to be used in browser API.
-   * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false.
+   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false.
    * Supported on G2 only
    * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Array<Extension>} [extensions] API extensions
    * @property {Object} [metadata] extra information which can be stored together with your account
    * @property {String} [reliability] used to increase the reliability of the account. Allowed values are regular and
    * high. Default is regular
@@ -61,6 +60,66 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
    * Default is 1.
+   * @property {String} [symbol] any symbol provided by broker (required for G1 only) 
+   * @property {String} region region id to deploy account at. One of returned by the /users/current/regions endpoint
+   * @property {Number} [slippage] default trade slippage in points. Should be greater or equal to zero. If not
+   * specified, system internal setting will be used which we believe is reasonable for most cases
+   */
+
+  /**
+   * MetaTrader account model
+   * @typedef {Object} MetatraderAccountDto
+   * @property {String} _id account unique identifier
+   * @property {String} userId user id
+   * @property {String} name MetaTrader account human-readable name in the MetaApi app
+   * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. Cloud and cloud-g2 are
+   * aliases.
+   * @property {String} login MetaTrader account number
+   * @property {String} server MetaTrader server which hosts the account
+   * @property {Version} version MT version
+   * @property {String} [provisioningProfileId] id of the account's provisioning profile
+   * @property {String} application application name to connect the account to. Currently allowed values are MetaApi
+   * and AgiliumTrade
+   * @property {Number} magic MetaTrader magic to place trades using
+   * @property {String} state account deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED,
+   * DELETING
+   * @property {String} connectionStatus terminal & broker connection status, one of CONNECTED, DISCONNECTED,
+   * DISCONNECTED_FROM_BROKER
+   * @property {String} accessToken authorization token to be used for accessing single account data.
+   * Intended to be used in browser API.
+   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false.
+   * Supported on G2 only
+   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
+   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
+   * only for G2
+   * @property {Array<string>} [tags] MetaTrader account tags
+   * @property {Object} [metadata] extra information which can be stored together with your account
+   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and
+   * high. Default is regular
+   * @property {String} [baseCurrency] 3-character ISO currency code of the account base currency. Default value is USD.
+   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
+   * brokers. You should not alter this setting unless you understand what you are doing.
+   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
+   * `PROVIDER` and `SUBSCRIBER`
+   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * results in better account performance under load which is useful for some applications. E.g. if you have many
+   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
+   * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
+   * is billed as 2 standard resource slots.  Default is 1.
+   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
+   * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
+   * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
+   * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
+   * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
+   * Default is 1.
+   * @property {String} [symbol] any symbol provided by broker (required for G1 only) 
+   * @property {String} region region id to deploy account at. One of returned by the /users/current/regions endpoint
+   * @property {Number} [slippage] default trade slippage in points. Should be greater or equal to zero. If not
+   * specified, system internal setting will be used which we believe is reasonable for most cases
+   * @property {Boolean} [primaryReplica] flag indicating that account is primary
+   * @property {Boolean} [enableEquityTracking] flag indicating that equity tracking API should be enabled on account
+   * @property {Array<MetatraderAccountReplica>} [accountReplicas] MetaTrader account replicas
    */
 
   /**
@@ -159,7 +218,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * New MetaTrader account model
    * @typedef {Object} NewMetatraderAccountDto
    * @property {String} name MetaTrader account human-readable name in the MetaApi app
-   * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. cloud-g2 and cloud are
+   * @property {String} [type] account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. cloud-g2 and cloud are
    * aliases. When you create MT5 cloud account the type is automatically converted to cloud-g1 because MT5 G2 support
    * is still experimental. You can still create MT5 G2 account by setting type to cloud-g2.
    * @property {String} login MetaTrader account number
@@ -170,24 +229,36 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} [provisioningProfileId] id of the account's provisioning profile
    * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
    * AgiliumTrade
-   * @property {Number} magic MetaTrader magic to place trades using
-   * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false
-   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
+   * @property {Number} magic MetaTrader magic to place trades using. When manualTrades field is set to true,
+   * magic value must be 0
+   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false
+   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Array<Extension>} extensions API extensions
-   * @property {Object} metadata extra information which can be stored together with your account
-   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and high. Default is regular
-   * @property {String} baseCurrency 3-character ISO currency code of the account base currency. Default value is USD.
+   * @property {Object} [metadata] extra information which can be stored together with your account
+   * @property {String} [reliability] used to increase the reliability of the account. Allowed values are regular and high.
+   * Default is regular
+   * @property {String} [baseCurrency] 3-character ISO currency code of the account base currency. Default value is USD.
    * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
    * brokers. You should not alter this setting unless you understand what you are doing.
-   * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
+   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
+   * @property {String} [symbol] any MetaTrader symbol your broker provides historical market data for. This value
+   * should be specified for G1 accounts only and only in case your MT account fails to connect to broker
+   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
+   * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
+   * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
+   * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
+   * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
+   * Default is 1.
+   * @property {String} [region] region id to deploy account at. One of returned by the /users/current/regions endpoint
+   * @property {Number} [slippage] default trade slippage in points. Should be greater or equal to zero. If not
+   * specified, system internal setting will be used which we believe is reasonable for most cases
    */
 
   /**
