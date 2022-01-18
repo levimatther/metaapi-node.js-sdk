@@ -48,7 +48,7 @@ describe('MetaApiWebsocketClient', () => {
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true,
       retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
     client.url = 'http://localhost:6784';
-    client._socketInstances = {0: []};
+    client._socketInstances = {'vint-hill': {0: []}};
     io = new Server(6784, {path: '/ws', pingTimeout: 1000000});
     io.on('connect', socket => {
       server = socket;
@@ -57,9 +57,11 @@ describe('MetaApiWebsocketClient', () => {
         socket.close();
       }
     });
+    client.regionsByAccounts.accountId = 'vint-hill';
     client._socketInstancesByAccounts = {0: {accountId: 0}};
-    await client.connect(0);
-    sandbox.stub(client._socketInstances[0][0].synchronizationThrottler, 'activeSynchronizationIds').get(() => []);
+    await client.connect(0, 'vint-hill');
+    sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler, 
+      'activeSynchronizationIds').get(() => []);
   });
 
   afterEach(async () => {
@@ -87,7 +89,7 @@ describe('MetaApiWebsocketClient', () => {
       clientId = socket.request._query.clientId;
       socket.disconnect();
     });
-    await client.connect(0);
+    await client.connect(0, 'vint-hill');
     await new Promise(res => setTimeout(res, 50));
     await clock.tickAsync(1500);
     await new Promise(res => setTimeout(res, 50));
@@ -149,81 +151,34 @@ describe('MetaApiWebsocketClient', () => {
   /**
    * @test {MetaApiWebsocketClient#_getServerUrl}
    */
-  it('should retry if region not found', async () => {
-    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
-    let resolve;
-    let promise = new Promise(res => resolve = res);
+  it('should connect to shared server', async () => {
     client.close();
-    io.close(() => resolve());
-    await promise;
-    let retryCounter = 0;
     sandbox.stub(httpClient, 'request').callsFake(arg => {
       if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
-        'users/current/regions') {
-        retryCounter++;
-        if(retryCounter < 3) {
-          return ['canada', 'us-west'];
-        } else {
-          return ['canada', 'us-west', 'germany'];
-        }
-      } else if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
       'users/current/servers/mt-client-api') {
         return {
           domain: 'v3.agiliumlabs.cloud'
         };
       }
     });
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'germany',
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application',
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
-    client._socketInstances = {0: [{
+    client._socketInstances = {'vint-hill': {0: [{
       connected: true,
       requestResolves: [],
       socket: {close: () => {}}
-    }]};
-    clock.tickAsync(5000);
-    const url = await client._getServerUrl(0, 0);
-    should(url).eql('https://mt-client-api-v1.germany-a.v3.agiliumlabs.cloud');
-    io.close();
-    clock.restore();
+    }]}};
+    const url = await client._getServerUrl(0, 0, 'vint-hill');
+    should(url).eql('https://mt-client-api-v1.vint-hill-a.v3.agiliumlabs.cloud');
   });
 
   /**
    * @test {MetaApiWebsocketClient#_getServerUrl}
    */
-  it('should connect to shared selected region', async () => {
+  it('should connect to dedicated server', async () => {
     client.close();
     sandbox.stub(httpClient, 'request').callsFake(arg => {
-      if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
-        'users/current/regions') {
-        return ['canada', 'us-west'];
-      } else if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
-      'users/current/servers/mt-client-api') {
-        return {
-          domain: 'v3.agiliumlabs.cloud'
-        };
-      }
-    });
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'us-west',
-      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
-    client._socketInstances = {0: [{
-      connected: true,
-      requestResolves: [],
-      socket: {close: () => {}}
-    }]};
-    const url = await client._getServerUrl(0, 0);
-    should(url).eql('https://mt-client-api-v1.us-west-a.v3.agiliumlabs.cloud');
-  });
-
-  /**
-   * @test {MetaApiWebsocketClient#_getServerUrl}
-   */
-  it('should connect to dedicated selected region', async () => {
-    client.close();
-    sandbox.stub(httpClient, 'request').callsFake(arg => {
-      if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
-        'users/current/regions') {
-        return ['canada', 'us-west'];
-      } else if (arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
+      if (arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
       'users/current/servers/mt-client-api') {
         return {
           url: 'http://localhost:8081',
@@ -232,15 +187,15 @@ describe('MetaApiWebsocketClient', () => {
         };
       }
     });
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', region: 'us-west',
+    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
-    client._socketInstances = {0: [{
+    client._socketInstances = {'vint-hill': {0: [{
       connected: true,
       requestResolves: [],
       socket: {close: () => {}}
-    }]};
-    const url = await client._getServerUrl(0, 0);
-    should(url).eql('https://mt-client-api-v1.us-west-a.project-stock.agiliumlabs.cloud');
+    }]}};
+    const url = await client._getServerUrl(0, 0, 'vint-hill');
+    should(url).eql('https://mt-client-api-v1.vint-hill-a.project-stock.agiliumlabs.cloud');
   });
 
   /**
@@ -690,9 +645,10 @@ describe('MetaApiWebsocketClient', () => {
    * @test {MetaApiWebsocketClient#subscribe}
    */
   it('should create new instance when account limit is reached', async () => {
-    sinon.assert.match(client.socketInstances[0].length, 1);
+    sinon.assert.match(client.socketInstances['vint-hill'][0].length, 1);
     for (let i = 0; i < 100; i++) {
       client._socketInstancesByAccounts[0]['accountId' + i] = 0;
+      client.regionsByAccounts['accountId' + i] = 'vint-hill';
     }
 
     io.removeAllListeners('connect');
@@ -704,9 +660,10 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
     });
+    client.regionsByAccounts.accountId101 = 'vint-hill';
     await client.subscribe('accountId101', 0);
     await new Promise(res => setTimeout(res, 50));
-    sinon.assert.match(client.socketInstances[0].length, 2);
+    sinon.assert.match(client.socketInstances['vint-hill'][0].length, 2);
   });
 
   /**
@@ -1337,7 +1294,7 @@ describe('MetaApiWebsocketClient', () => {
       };
       sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
-      sandbox.stub(client._socketInstances[0][0].synchronizationThrottler, 
+      sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler, 
         'activeSynchronizationIds').get(() => ['synchronizationId']);
       server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
         accountInformation: {}, instanceIndex: 0});
@@ -1375,7 +1332,7 @@ describe('MetaApiWebsocketClient', () => {
     });
 
     it('should process synchronization started event', async () => {
-      client._socketInstances[0][0].synchronizationThrottler = synchronizationThrottler;
+      client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
@@ -1397,7 +1354,7 @@ describe('MetaApiWebsocketClient', () => {
     });
 
     it('should process synchronization started event with no updates', async () => {
-      client._socketInstances[0][0].synchronizationThrottler = synchronizationThrottler;
+      client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
@@ -1434,7 +1391,7 @@ describe('MetaApiWebsocketClient', () => {
         currentVolume: 0.01,
         comment: 'COMMENT2'
       }];
-      client._socketInstances[0][0].synchronizationThrottler = synchronizationThrottler;
+      client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
@@ -1482,7 +1439,7 @@ describe('MetaApiWebsocketClient', () => {
         realizedProfit: -6.536993168992922e-13
       }];
 
-      client._socketInstances[0][0].synchronizationThrottler = synchronizationThrottler;
+      client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
@@ -1543,7 +1500,7 @@ describe('MetaApiWebsocketClient', () => {
         unrealizedProfit: -85.25999999999901,
         realizedProfit: -6.536993168992922e-13
       }];
-      client._socketInstances[0][0].synchronizationThrottler = synchronizationThrottler;
+      client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
       let listener = {
         onPositionsReplaced: () => {},
         onPositionsSynchronized: () => {},
@@ -1577,7 +1534,7 @@ describe('MetaApiWebsocketClient', () => {
         onPendingOrdersReplaced: () => {},
         onPendingOrdersSynchronized: () => {},
       };
-      client._socketInstances[0][0].synchronizationThrottler = synchronizationThrottler;
+      client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
       sandbox.stub(listener, 'onPendingOrdersReplaced').resolves();
       sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -2513,7 +2470,8 @@ describe('MetaApiWebsocketClient', () => {
     sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
     sandbox.stub(client._packetOrderer, 'restoreOrder').callsFake(arg => [arg]);
 
-    sandbox.stub(client._socketInstances[0][0].synchronizationThrottler, 'activeSynchronizationIds').get(() => ['ABC']);
+    sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler,
+      'activeSynchronizationIds').get(() => ['ABC']);
     server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
       sequenceNumber: 1, sequenceTimestamp: 1603124267178, synchronizationId: 'ABC'});
     server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders: [],
@@ -2522,7 +2480,8 @@ describe('MetaApiWebsocketClient', () => {
     sinon.assert.calledOnce(listener.onSynchronizationStarted);
     sinon.assert.calledOnce(listener.onPendingOrdersReplaced);
 
-    sandbox.stub(client._socketInstances[0][0].synchronizationThrottler, 'activeSynchronizationIds').get(() => ['DEF']);
+    sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler,
+      'activeSynchronizationIds').get(() => ['DEF']);
     server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
       sequenceNumber: 3, sequenceTimestamp: 1603124267190, synchronizationId: 'DEF'});
     server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders: [],

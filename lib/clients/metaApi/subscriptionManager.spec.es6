@@ -20,12 +20,13 @@ describe('SubscriptionManager', () => {
   });
 
   beforeEach(async () => {  
-    const socketInstances = {0: [{socket: {connected: true}}, {socket: {connected: false}}]};
+    const socketInstances = {'vint-hill': {0: [{socket: {connected: true}}, {socket: {connected: false}}]}};
     client = {
       connect: () => {},
       connected: (instanceNumber, socketInstanceIndex) => 
-        socketInstances[instanceNumber][socketInstanceIndex].socket.connected,
+        socketInstances['vint-hill'][instanceNumber][socketInstanceIndex].socket.connected,
       socketInstances: socketInstances,
+      regionsByAccounts: {accountId: 'vint-hill'},
       socketInstancesByAccounts: {0: {accountId: 0}},
       rpcRequest: () => {}
     };
@@ -155,7 +156,7 @@ describe('SubscriptionManager', () => {
    */
   it('should resubscribe on timeout', async () => {
     sandbox.stub(client, 'rpcRequest').resolves();
-    client.socketInstances[0][0].socket.connected = true;
+    client.socketInstances['vint-hill'][0][0].socket.connected = true;
     client.socketInstancesByAccounts[0].accountId2 = 1;
     setTimeout(() => {
       manager.cancelSubscribe('accountId:0');
@@ -173,7 +174,7 @@ describe('SubscriptionManager', () => {
    */
   it('should not retry subscribe to terminal if connection is closed', async () => {
     sandbox.stub(client, 'rpcRequest').resolves();
-    client.socketInstances[0][0].socket.connected = false;
+    client.socketInstances['vint-hill'][0][0].socket.connected = false;
     setTimeout(() => {
       manager.cancelSubscribe('accountId:0');
     }, 100);

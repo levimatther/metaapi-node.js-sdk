@@ -192,6 +192,7 @@ sequentialProcessing.forEach(param => {
         _id:  accountId,
         login: '50194988',
         name: 'mt5a',
+        region: 'vint-hill',
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,

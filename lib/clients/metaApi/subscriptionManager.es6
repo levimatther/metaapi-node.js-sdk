@@ -107,7 +107,8 @@ export default class SubscriptionManager {
               if (['LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER', 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER', 
                 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER'].includes(err.metadata.type)) {
                 delete client.socketInstancesByAccounts[instanceNumber][accountId];
-                client.lockSocketInstance(instanceNumber, socketInstanceIndex, err.metadata);
+                client.lockSocketInstance(instanceNumber, socketInstanceIndex, 
+                  this._websocketClient.regionsByAccounts[accountId], err.metadata);
               } else {
                 const retryTime = new Date(err.metadata.recommendedRetryTime).getTime();
                 if (Date.now() + subscribeRetryIntervalInSeconds * 1000 < retryTime) {
@@ -190,9 +191,10 @@ export default class SubscriptionManager {
    * @param {Number} instanceNumber instance index number
    */
   onTimeout(accountId, instanceNumber) {
+    const region = this._websocketClient.regionsByAccounts[accountId];
     if(this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId] !== undefined && 
       this._websocketClient.connected(instanceNumber, 
-        this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId])) {
+        this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId], region)) {
       this.scheduleSubscribe(accountId, instanceNumber, true);
     }
   }

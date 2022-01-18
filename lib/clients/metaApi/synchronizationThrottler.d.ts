@@ -10,10 +10,11 @@ export default class SynchronizationThrottler {
    * Constructs the synchronization throttler
    * @param {MetaApiWebsocketClient} client MetaApi websocket client
    * @param {number} socketInstanceIndex index of socket instance that uses the throttler
-   * @param {Number} instanceNumber instance index number
+   * @param {number} instanceNumber instance index number
+   * @param {string} region server region
    * @param {SynchronizationThrottlerOpts} opts synchronization throttler options
    */
-  constructor(client: MetaApiWebsocketClient, socketInstanceIndex: number, instanceNumber: number, opts: SynchronizationThrottlerOpts);
+  constructor(client: MetaApiWebsocketClient, socketInstanceIndex: number, instanceNumber: number, region: string, opts: SynchronizationThrottlerOpts);
   
   /**
    * Initializes the synchronization throttler

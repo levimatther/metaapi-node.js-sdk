@@ -1,6 +1,7 @@
 'use strict';
 
 import MetaApiClient from '../metaApi.client';
+import {NotFoundError} from '../errorHandler';
 
 /**
  * metaapi.cloud historical market data API client
@@ -15,13 +16,14 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    */
   constructor(httpClient, token, domain = 'agiliumtrade.agiliumtrade.ai') {
     super(httpClient, token, domain);
-    this._host = `https://mt-market-data-client-api-v1.${domain}`;
+    this._domain = domain;
   }
 
   /**
    * Returns historical candles for a specific symbol and timeframe from a MetaTrader account.
    * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalCandles/
    * @param {string} accountId MetaTrader account id
+   * @param {string} region account region
    * @param {string} symbol symbol to retrieve candles for (e.g. a currency pair or an index)
    * @param {string} timeframe defines the timeframe according to which the candles must be generated. Allowed values
    * for MT5 are 1m, 2m, 3m, 4m, 5m, 6m, 10m, 12m, 15m, 20m, 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d, 1w, 1mn. Allowed
@@ -31,10 +33,11 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * @param {number} [limit] maximum number of candles to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderCandle>>} promise resolving with historical candles downloaded
    */
-  async getHistoricalCandles(accountId, symbol, timeframe, startTime, limit) {
+  async getHistoricalCandles(accountId, region, symbol, timeframe, startTime, limit) {
     symbol = encodeURIComponent(symbol);
+    const host = await this._getHost(region);
     const opts = {
-      url: `${this._host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/` +
+      url: `${host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/` +
         `timeframes/${timeframe}/candles`,
       method: 'GET',
       qs: {
@@ -57,6 +60,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * accounts.
    * See https://metaapi.cloud/docs/client/restApi/api/retrieveMarketData/readHistoricalTicks/
    * @param {string} accountId MetaTrader account id
+   * @param {string} region account region
    * @param {string} symbol symbol to retrieve ticks for (e.g. a currency pair or an index)
    * @param {Date} [startTime] time to start loading ticks from. Note that candles are loaded in forward direction, so
    * this should be the earliest time. Leave empty to request latest candles.
@@ -65,10 +69,11 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    * @param {number} [limit] maximum number of ticks to retrieve. Must be less or equal to 1000
    * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
    */
-  async getHistoricalTicks(accountId, symbol, startTime, offset, limit) {
+  async getHistoricalTicks(accountId, region, symbol, startTime, offset, limit) {
     symbol = encodeURIComponent(symbol);
+    const host = await this._getHost(region);
     const opts = {
-      url: `${this._host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/ticks`,
+      url: `${host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/ticks`,
       method: 'GET',
       qs: {
         startTime,
@@ -84,6 +89,30 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
     ticks = ticks || [];
     ticks.forEach(t => t.time = new Date(t.time));
     return ticks;
+  }
+
+  async _getHost(region) {
+    if(this._urlCache && this._urlCache.lastUpdated > Date.now() - 1000 * 60 * 10) {
+      return this._urlCache.url;
+    }
+
+    const urlSettings = await this._httpClient.request({
+      url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
+      method: 'GET',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true,
+    });
+
+    const url = `https://mt-market-data-client-api-v1.${region}.${urlSettings.domain}`;
+
+    this._urlCache = {
+      url,
+      lastUpdated: Date.now()
+    };
+
+    return url;
   }
 
 }

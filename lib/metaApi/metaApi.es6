@@ -39,7 +39,6 @@ import LoggerManager from '../logger';
  * @typedef {Object} MetaApiOpts
  * @property {String} [application] application id
  * @property {String} [domain] domain to connect to, default is agiliumtrade.agiliumtrade.ai
- * @property {String} [region] region to connect to
  * @property {Number} [requestTimeout] timeout for socket requests in seconds
  * @property {Number} [connectTimeout] timeout for connecting to server in seconds
  * @property {Number} [packetOrderingTimeout] packet ordering timeout in seconds
@@ -99,7 +98,7 @@ export default class MetaApi {
     let clientApiClient = new ClientApiClient(httpClient, token, domain); 
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(httpClient, token, {application, domain, requestTimeout,
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, useSharedClientApi, 
-      region: opts.region, unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
+      unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, token, domain));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, clientApiClient, application,
       refreshSubscriptionsOpts);

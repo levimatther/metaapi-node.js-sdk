@@ -101,12 +101,6 @@ export default class MetatraderAccount {
   get manualTrades(): boolean;
   
   /**
-   * Returns API extensions
-   * @return {Array<Extension>} API extensions
-   */
-  get extensions(): Array<Extension>;
-  
-  /**
    * Returns extra information which can be stored together with your account
    * @return {Object} extra information which can be stored together with your account
    */
@@ -165,6 +159,12 @@ export default class MetatraderAccount {
    * @return {string} account version value
    */
   get version(): string;
+
+  /**
+   * Returns account region
+   * @return {string} account region value
+   */
+  get region(): string;
   
   /**
    * Reloads MetaTrader account from API

@@ -49,7 +49,8 @@ describe('StreamingMetaApiConnection', () => {
     saveUptime: () => {},
     waitSynchronized: () => {},
     unsubscribe: () => {},
-    refreshMarketDataSubscriptions: () => {}
+    refreshMarketDataSubscriptions: () => {},
+    regionsByAccounts: {}
   };
 
   let clientApiClient = {
@@ -93,6 +94,7 @@ describe('StreamingMetaApiConnection', () => {
     account = {
       id: 'accountId', 
       state: 'DEPLOYED',
+      region: 'vint-hill',
       reload: () => {}
     };
     api = new StreamingMetaApiConnection(client, clientApiClient, account, undefined, connectionRegistry, 0, {

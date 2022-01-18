@@ -24,9 +24,10 @@ export default class SynchronizationThrottler {
    * @param {MetaApiWebsocketClient} client MetaApi websocket client
    * @param {Number} socketInstanceIndex index of socket instance that uses the throttler
    * @param {Number} instanceNumber instance index number
+   * @param {String} region server region
    * @param {SynchronizationThrottlerOpts} opts synchronization throttler options
    */
-  constructor(client, socketInstanceIndex, instanceNumber, opts) {
+  constructor(client, socketInstanceIndex, instanceNumber, region, opts) {
     const validator = new OptionsValidator();
     opts = opts || {};
     this._maxConcurrentSynchronizations = validator.validateNonZero(opts.maxConcurrentSynchronizations, 15,
@@ -36,6 +37,7 @@ export default class SynchronizationThrottler {
     this._synchronizationTimeoutInSeconds = validator.validateNonZero(opts.synchronizationTimeoutInSeconds, 10,
       'synchronizationThrottler.synchronizationTimeoutInSeconds');
     this._client = client;
+    this._region = region;
     this._socketInstanceIndex = socketInstanceIndex;
     this._synchronizationIds = {};
     this._accountsBySynchronizationIds = {};
@@ -118,7 +120,7 @@ export default class SynchronizationThrottler {
    */
   get maxConcurrentSynchronizations() {
     const calculatedMax = Math.max(Math.ceil(
-      this._client.subscribedAccountIds(this._instanceNumber, this._socketInstanceIndex).length / 10), 1);
+      this._client.subscribedAccountIds(this._instanceNumber, this._socketInstanceIndex, this._region).length / 10), 1);
     return Math.min(calculatedMax, this._maxConcurrentSynchronizations);
   }
 
@@ -127,7 +129,7 @@ export default class SynchronizationThrottler {
    * @return {Boolean} flag whether there are free slots for synchronization requests
    */
   get isSynchronizationAvailable() {
-    if (this._client.socketInstances[this._instanceNumber].reduce((acc, socketInstance) => 
+    if (this._client.socketInstances[this._region][this._instanceNumber].reduce((acc, socketInstance) => 
       acc + socketInstance.synchronizationThrottler.synchronizingAccounts.length, 0) >=
       this._maxConcurrentSynchronizations) {
       return false;
