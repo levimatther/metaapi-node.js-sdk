@@ -464,6 +464,10 @@ export default class TerminalState extends SynchronizationListener {
       state.lastUpdateTime = Math.max(prices.map(p => p.time.getTime()));
       let pricesInitialized = false;
       for (let price of prices || []) {
+        let currentPrice = state.pricesBySymbol[price.symbol];
+        if (currentPrice && currentPrice.time.getTime() > price.time.getTime()) {
+          continue;
+        }
         state.pricesBySymbol[price.symbol] = price;
         let positions = state.positions.filter(p => p.symbol === price.symbol);
         let otherPositions = state.positions.filter(p => p.symbol !== price.symbol);

@@ -6,6 +6,7 @@
   - fixed terminal state hash calculation
   - fixed timeout errors of waitSynchronized for RPC connections and accounts with high reliability
   - implemented region support for historical market data requests and socket connections
+  - improved price and equity tracking
 
 17.0.0
   - breaking change: updated typescript types
