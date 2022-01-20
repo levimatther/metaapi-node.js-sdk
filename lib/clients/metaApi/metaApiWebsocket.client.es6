@@ -708,6 +708,10 @@ export default class MetaApiWebsocketClient {
    * https://www.mql5.com/en/docs/constants/tradingconstants/dealproperties#enum_deal_reason.
    * @property {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into account base
    * currency (USD if you did not override it)
+   * @property {number} [stopLoss] deal stop loss. For MT5 opening deal this is the SL of the order opening the 
+   * position. For MT4 deals or MT5 closing deal this is the last known position SL.
+   * @property {number} [takeProfit] deal take profit. For MT5 opening deal this is the TP of the order opening the 
+   * position. For MT4 deals or MT5 closing deal this is the last known position TP.
    */
 
   /**

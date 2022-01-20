@@ -1063,7 +1063,19 @@ export declare type MetatraderDeal = {
    * current exchange rate of account currency into account base
    * currency (USD if you did not override it)
    */
-  accountCurrencyExchangeRate?: number
+  accountCurrencyExchangeRate?: number,
+
+  /**
+   * deal stop loss. For MT5 opening deal this is the SL of the order opening the
+   * position. For MT4 deals or MT5 closing deal this is the last known position SL.
+   */
+  stopLoss?: number,
+
+  /**
+   * deal take profit. For MT5 opening deal this is the TP of the order opening the
+   * position. For MT4 deals or MT5 closing deal this is the last known position TP.
+   */
+  takeProfit?: number
 }
 
 /**
