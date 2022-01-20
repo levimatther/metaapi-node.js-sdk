@@ -463,10 +463,13 @@ export default class TerminalState extends SynchronizationListener {
     const updateSymbolPrices = (state) => {
       state.lastUpdateTime = Math.max(prices.map(p => p.time.getTime()));
       let pricesInitialized = false;
+      let priceUpdated = false;
       for (let price of prices || []) {
         let currentPrice = state.pricesBySymbol[price.symbol];
         if (currentPrice && currentPrice.time.getTime() > price.time.getTime()) {
           continue;
+        } else {
+          priceUpdated = true;
         }
         state.pricesBySymbol[price.symbol] = price;
         let positions = state.positions.filter(p => p.symbol === price.symbol);
@@ -498,7 +501,7 @@ export default class TerminalState extends SynchronizationListener {
           delete this._waitForPriceResolves[price.symbol];
         }
       }
-      if (state.accountInformation) {
+      if (priceUpdated && state.accountInformation) {
         if (state.positionsInitialized && pricesInitialized) {
           if (state.accountInformation.platform === 'mt5') {
             state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
