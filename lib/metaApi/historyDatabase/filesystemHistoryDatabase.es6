@@ -38,8 +38,16 @@ module.exports = class FilesystemHistoryDatabase extends HistoryDatabase {
   async loadHistory(accountId, application) {
     let {dealsFile, historyOrdersFile} = await this._getDbLocation(accountId, application);
     let deals = await this._readDb(accountId, dealsFile);
+    if(deals.length && Array.isArray(deals[0])) {
+      this.clear(accountId, application);
+      deals = [];
+    }
     deals.forEach(deal => deal.time = new Date(deal.time));
     let historyOrders = await this._readDb(accountId, historyOrdersFile);
+    if(historyOrders.length && Array.isArray(historyOrders[0])) {
+      this.clear(accountId, application);
+      historyOrders = [];
+    }
     historyOrders.forEach(historyOrder => {
       historyOrder.time = new Date(historyOrder.time);
       historyOrder.doneTime = new Date(historyOrder.doneTime);
@@ -55,8 +63,12 @@ module.exports = class FilesystemHistoryDatabase extends HistoryDatabase {
    */
   async clear(accountId, application) {
     let {dealsFile, historyOrdersFile} = await this._getDbLocation(accountId, application);
-    await fs.promises.unlink(dealsFile);
-    await fs.promises.unlink(historyOrdersFile);
+    if(fs.existsSync(dealsFile)) {
+      await fs.promises.unlink(dealsFile);
+    }
+    if(fs.existsSync(historyOrdersFile)) {
+      await fs.promises.unlink(historyOrdersFile);
+    }
   }
 
   /**
@@ -97,7 +109,7 @@ module.exports = class FilesystemHistoryDatabase extends HistoryDatabase {
       }
       return result;
     } catch (err) {
-      this._logger.warn(`${accountId}: failed to read hisotyr db, will remove ${file} now`, err);
+      this._logger.warn(`${accountId}: failed to read history db, will remove ${file} now`, err);
       await fs.promises.unlink(file);
       return [];
     }

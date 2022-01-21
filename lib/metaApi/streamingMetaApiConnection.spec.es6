@@ -50,7 +50,9 @@ describe('StreamingMetaApiConnection', () => {
     waitSynchronized: () => {},
     unsubscribe: () => {},
     refreshMarketDataSubscriptions: () => {},
-    regionsByAccounts: {}
+    regionsByAccounts: {},
+    addAccountRegion: () => {},
+    removeAccountRegion: () => {}
   };
 
   let clientApiClient = {

@@ -256,7 +256,8 @@ describe('TerminalState', () => {
    */
   it('should update margin fields on price update', () => {
     state.onAccountInformationUpdated('1:ps-mpa-1', {equity: 1000, balance: 800});
-    state.onSymbolPricesUpdated('1:ps-mpa-1', [], 100, 200, 400, 40000);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}], 
+      100, 200, 400, 40000);
     state.accountInformation.equity.should.equal(100);
     state.accountInformation.margin.should.equal(200);
     state.accountInformation.freeMargin.should.equal(400);

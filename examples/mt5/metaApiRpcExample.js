@@ -42,6 +42,7 @@ async function testMetaApiSynchronization() {
 
     // connect to MetaApi API
     let connection = account.getRPCConnection();
+    await connection.connect();
 
     // wait until terminal state synchronized to the local state
     console.log('Waiting for SDK to synchronize to terminal state (may take some time depending on your history size)');
@@ -76,6 +77,7 @@ async function testMetaApiSynchronization() {
 
     // finally, undeploy account after the test
     console.log('Undeploying MT5 account so that it does not consume any unwanted resources');
+    await connection.close();
     await account.undeploy();
   } catch (err) {
     // process errors

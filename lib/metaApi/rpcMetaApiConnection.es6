@@ -18,6 +18,27 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   }
 
   /**
+   * Opens the connection. Can only be called the first time, next calls will be ignored.
+   * @return {Promise} promise resolving when the connection is opened
+   */
+  async connect() {
+    if (!this._opened) {
+      this._opened = true;
+      this._websocketClient.addAccountRegion(this.account.id, this.account.region);
+    }
+  }
+
+  /**
+   * Closes the connection. The instance of the class should no longer be used after this method is invoked.
+   */
+  async close() {
+    if (!this._closed) {
+      this._websocketClient.removeAccountRegion(this.account.id);
+      this._closed = true;
+    }
+  }
+
+  /**
    * Returns account information (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readAccountInformation/).
    * @returns {Promise<MetatraderAccountInformation>} promise resolving with account information

@@ -122,14 +122,6 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
-   * Returns the dictionary of region names by account ids
-   * @return {Object} dictionary of region names by account ids
-   */
-  get regionsByAccounts() {
-    return this._regionsByAccounts;
-  }
-
-  /**
    * Returns the list of subscribed account ids
    * @param {Number} instanceNumber instance index number
    * @param {String} socketInstanceIndex socket instance index
@@ -141,10 +133,11 @@ export default class MetaApiWebsocketClient {
     if(this._socketInstancesByAccounts[instanceNumber]) {
       Object.keys(this._connectedHosts).forEach(instanceId => {
         const accountId = instanceId.split(':')[0];
+        const accountRegion = this.getAccountRegion(accountId);
         if(!connectedIds.includes(accountId) && 
         this._socketInstancesByAccounts[instanceNumber][accountId] !== undefined && (
           this._socketInstancesByAccounts[instanceNumber][accountId] === socketInstanceIndex || 
-        socketInstanceIndex === undefined) && this._regionsByAccounts[accountId] === region) {
+        socketInstanceIndex === undefined) && accountRegion === region) {
           connectedIds.push(accountId);
         }
       });
@@ -160,7 +153,8 @@ export default class MetaApiWebsocketClient {
    * @returns {Boolean} websocket client connection status
    */
   connected(instanceNumber, socketInstanceIndex, region) {
-    const instance = this._socketInstances[region][instanceNumber].length > socketInstanceIndex ? 
+    const instance = this._socketInstances[region] && 
+      this._socketInstances[region][instanceNumber].length > socketInstanceIndex ? 
       this._socketInstances[region][instanceNumber][socketInstanceIndex] : null;
     return (instance && instance.socket && instance.socket.connected) || false;
   }
@@ -175,12 +169,52 @@ export default class MetaApiWebsocketClient {
   getAssignedAccounts(instanceNumber, socketInstanceIndex, region) {
     const accountIds = [];
     Object.keys(this._socketInstancesByAccounts[instanceNumber]).forEach(key => {
-      if (this._regionsByAccounts[key] === region &&
+      const accountRegion = this.getAccountRegion(key);
+      if (accountRegion === region &&
         this._socketInstancesByAccounts[instanceNumber][key] === socketInstanceIndex) {
         accountIds.push(key);
       }
     });
     return accountIds;
+  }
+
+  /**
+   * Returns account region by id
+   * @param {String} accountId account id
+   * @returns {String} account region
+   */
+  getAccountRegion(accountId) {
+    return this._regionsByAccounts[accountId] && this._regionsByAccounts[accountId].region;
+  }
+
+  /**
+   * Adds account region info
+   * @param {String} accountId account id
+   * @param {String} region account region
+   */
+  addAccountRegion(accountId, region) {
+    if(!this._regionsByAccounts[accountId]) {
+      this._regionsByAccounts[accountId] = {
+        region,
+        connections: 1
+      };
+    } else {
+      this._regionsByAccounts[accountId].connections++;
+    }
+  }
+
+  /**
+   * Removes account region info
+   * @param {String} accountId account id
+   */
+  removeAccountRegion(accountId) {
+    if(this._regionsByAccounts[accountId]) {
+      if(this._regionsByAccounts[accountId].connections === 1) {
+        delete this._regionsByAccounts[accountId];
+      } else {
+        this._regionsByAccounts[accountId].connections--; 
+      }
+    }
   }
 
   /**
@@ -339,6 +373,7 @@ export default class MetaApiWebsocketClient {
       delete instance.requestResolves[data.requestId];
       requestResolve.reject(this._convertError(data));
     });
+    // eslint-disable-next-line complexity
     socketInstance.on('synchronization', async data => {
       if (typeof data === 'string') {
         data = JSON.parse(data);
@@ -354,7 +389,9 @@ export default class MetaApiWebsocketClient {
         if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && data.type !== 'disconnected') {
           if (this._throttleRequest('unsubscribe', data.accountId, data.instanceIndex, 
             this._unsubscribeThrottlingInterval)) {
-            this._regionsByAccounts[data.accountId] = region;
+            if(!this._regionsByAccounts[data.accountId]) {
+              this._regionsByAccounts[data.accountId] = {region, connections: 1};
+            }
             this.unsubscribe(data.accountId).catch(err => {
               this._logger.warn(`${data.accountId}:${data.instanceIndex || 0}: failed to unsubscribe`, err);
             });
@@ -1046,7 +1083,7 @@ export default class MetaApiWebsocketClient {
    */
   async unsubscribe(accountId) {
     try {
-      const region = this._regionsByAccounts[accountId];
+      const region = this.getAccountRegion(accountId);
       await Promise.all(Object.keys(this._socketInstances[region]).map(async instanceNumber => {
         await this._subscriptionManager.unsubscribe(accountId, instanceNumber);
         delete this._socketInstancesByAccounts[instanceNumber][accountId];
@@ -1216,7 +1253,7 @@ export default class MetaApiWebsocketClient {
   async rpcRequest(accountId, request, timeoutInSeconds) {
     let socketInstanceIndex = null;
     let instanceNumber = 0;
-    const region = this._regionsByAccounts[accountId];
+    const region = this.getAccountRegion(accountId);
     if(request.instanceIndex) {
       instanceNumber = request.instanceIndex;
     }
@@ -2135,7 +2172,7 @@ export default class MetaApiWebsocketClient {
       const reconnectListeners = [];
       for (let listener of this._reconnectListeners) {
         if (this._socketInstancesByAccounts[instanceNumber][listener.accountId] === socketInstanceIndex && 
-          this._regionsByAccounts[listener.accountId] === region) {
+          this.getAccountRegion(listener.accountId) === region) {
           reconnectListeners.push(listener);
         }
       }
@@ -2159,7 +2196,7 @@ export default class MetaApiWebsocketClient {
   }
 
   _getSocketInstanceByAccount(accountId, instanceNumber) {
-    const region = this._regionsByAccounts[accountId];
+    const region = this.getAccountRegion(accountId);
     return this._socketInstances[region][instanceNumber][this._socketInstancesByAccounts[instanceNumber][accountId]];
   }
 
