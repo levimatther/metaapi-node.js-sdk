@@ -39,6 +39,7 @@ describe('RpcMetaApiConnection', () => {
     getTick: () => {},
     getBook: () => {},
     waitSynchronized: () => {},
+    addAccountRegion: () => {}
   };
 
   before(() => {

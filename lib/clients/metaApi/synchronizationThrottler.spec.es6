@@ -209,8 +209,8 @@ describe('SynchronizationThrottler', () => {
   it('should remove expired synchronizations from queue', async () => {
     await throttler.scheduleSynchronize('accountId1', {requestId: 'test1'});
     await throttler.scheduleSynchronize('accountId2', {requestId: 'test2'});
-    throttler.scheduleSynchronize('accountId3', {requestId: 'test3'});
-    throttler.scheduleSynchronize('accountId4', {requestId: 'test4'});
+    throttler.scheduleSynchronize('accountId3', {requestId: 'test3'}).catch(() => {});
+    throttler.scheduleSynchronize('accountId4', {requestId: 'test4'}).catch(() => {});
     for (let i = 0; i < 20; i++) {
       await clock.tickAsync(8000);
       throttler.updateSynchronizationId('test1');

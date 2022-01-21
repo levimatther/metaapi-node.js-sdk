@@ -101,6 +101,7 @@ async function testMetaApiSynchronization() {
 
     // finally, undeploy account after the test
     console.log('Undeploying MT4 account so that it does not consume any unwanted resources');
+    await connection.close();
     await account.undeploy();
   } catch (err) {
     console.error(err);

@@ -78,7 +78,27 @@ export default class MetaApiWebsocketClient {
    * @returns {Array<number>}
    */
   getAssignedAccounts(instanceNumber: number, socketInstanceIndex: number, region: string): Array<number>;
-  
+
+  /**
+   * Returns account region by id
+   * @param {string} accountId account id
+   * @returns {string} account region
+   */
+  getAccountRegion(accountId: string): string;
+
+  /**
+   * Adds account region info
+   * @param {string} accountId account id
+   * @param {string} region account region
+   */
+  addAccountRegion(accountId: string, region: string): void;
+
+  /**
+   * Removes account region info
+   * @param {string} accountId account id
+   */
+  removeAccountRegion(accountId: string): void;
+
   /**
    * Locks subscription for a socket instance based on TooManyRequestsError metadata
    * @param {number} instanceNumber instance index number

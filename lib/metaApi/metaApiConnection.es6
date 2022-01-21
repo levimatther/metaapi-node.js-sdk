@@ -23,6 +23,17 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Opens the connection. Can only be called the first time, next calls will be ignored.
+   * @return {Promise} promise resolving when the connection is opened
+   */
+  async connect() {}
+
+  /**
+   * Closes the connection. The instance of the class should no longer be used after this method is invoked.
+   */
+  async close() {}
+  
+  /**
    * Common trade options
    * @typedef {Object} TradeOptions
    * @property {String} [comment] optional order comment. The sum of the line lengths of the comment and the

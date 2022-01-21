@@ -26,7 +26,7 @@ describe('SubscriptionManager', () => {
       connected: (instanceNumber, socketInstanceIndex) => 
         socketInstances['vint-hill'][instanceNumber][socketInstanceIndex].socket.connected,
       socketInstances: socketInstances,
-      regionsByAccounts: {accountId: 'vint-hill'},
+      getAccountRegion: () => 'vint-hill',
       socketInstancesByAccounts: {0: {accountId: 0}},
       rpcRequest: () => {}
     };

@@ -57,7 +57,7 @@ describe('MetaApiWebsocketClient', () => {
         socket.close();
       }
     });
-    client.regionsByAccounts.accountId = 'vint-hill';
+    client._regionsByAccounts.accountId = {region: 'vint-hill', connections: 1};
     client._socketInstancesByAccounts = {0: {accountId: 0}};
     await client.connect(0, 'vint-hill');
     sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler, 
@@ -196,6 +196,20 @@ describe('MetaApiWebsocketClient', () => {
     }]}};
     const url = await client._getServerUrl(0, 0, 'vint-hill');
     should(url).eql('https://mt-client-api-v1.vint-hill-a.project-stock.agiliumlabs.cloud');
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#addAccountRegion}
+   */
+  it('should add account region', () => {
+    client.addAccountRegion('accountId2', 'vint-hill');
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    client.addAccountRegion('accountId2', 'vint-hill');
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    client.removeAccountRegion('accountId2');
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    client.removeAccountRegion('accountId2');
+    sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
   });
 
   /**
@@ -648,7 +662,7 @@ describe('MetaApiWebsocketClient', () => {
     sinon.assert.match(client.socketInstances['vint-hill'][0].length, 1);
     for (let i = 0; i < 100; i++) {
       client._socketInstancesByAccounts[0]['accountId' + i] = 0;
-      client.regionsByAccounts['accountId' + i] = 'vint-hill';
+      client._regionsByAccounts['accountId' + i] = {region: 'vint-hill', connections: 1};
     }
 
     io.removeAllListeners('connect');
@@ -660,7 +674,7 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
     });
-    client.regionsByAccounts.accountId101 = 'vint-hill';
+    client._regionsByAccounts.accountId101 = {region: 'vint-hill', connections: 1};
     await client.subscribe('accountId101', 0);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(client.socketInstances['vint-hill'][0].length, 2);
@@ -1133,7 +1147,8 @@ describe('MetaApiWebsocketClient', () => {
       let listener = {
         onConnected: () => {},
         onDisconnected: () => {},
-        onBrokerConnectionStatusChanged: () => {}
+        onBrokerConnectionStatusChanged: () => {},
+        onStreamClosed: () => {},
       };
       sandbox.stub(listener, 'onDisconnected').resolves();
       client.addSynchronizationListener('accountId', listener);

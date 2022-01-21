@@ -60,6 +60,7 @@ async function testMetaApiSynchronization() {
     if(!deployedStates.includes(initialState)) {
       // undeploy account if it was undeployed
       console.log('Undeploying account');
+      await connection.close();
       await account.undeploy();
     }
 

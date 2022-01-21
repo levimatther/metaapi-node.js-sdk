@@ -45,7 +45,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     this._websocketClient.addSynchronizationListener(account.id, this._historyStorage);
     this._websocketClient.addSynchronizationListener(account.id, this._healthMonitor);
     this._websocketClient.addReconnectListener(this, account.id);
-    this._websocketClient.regionsByAccounts[account.id] = account.region;
     this._subscriptions = {};
     this._stateByInstanceIndex = {};
     this._refreshMarketDataSubscriptionSessions = {};
@@ -123,6 +122,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   async initialize() {
     await this._historyStorage.initialize(this._account.id, this._connectionRegistry.application);
+    this._websocketClient.addAccountRegion(this._account.id, this._account.region);
   }
 
   /**
@@ -501,7 +501,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       this._refreshMarketDataSubscriptionSessions = {};
       Object.values(this._refreshMarketDataSubscriptionTimeouts).forEach(timeout => clearTimeout(timeout));
       this._refreshMarketDataSubscriptionTimeouts = {};
-      delete this._websocketClient.regionsByAccounts[this.account.id];
+      this._websocketClient.removeAccountRegion(this.account.id);
       this._closed = true;
     }
   }

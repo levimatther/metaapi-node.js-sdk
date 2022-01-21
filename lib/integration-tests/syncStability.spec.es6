@@ -136,7 +136,7 @@ class FakeServer {
         await this.respond(socket, data);
         await new Promise(res => setTimeout(res, 50)); 
         await this.syncAccount(socket, data);
-      } else if (data.type === 'waitSynchronized') {
+      } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
         await this.respond(socket, data);
       } else if (data.type === 'getAccountInformation') {
         await this.respondAccountInformation(socket, data);
@@ -183,7 +183,7 @@ sequentialProcessing.forEach(param => {
     });
 
     beforeEach(async () => {
-      clock = sinon.useFakeTimers({shouldAdvanceTime: true});
+      clock = sinon.useFakeTimers({shouldAdvanceTime: true, now: new Date('2020-04-02T00:00:00.000Z').getTime()});
       api = new MetaApi('token', {application: 'application', domain: 'project-stock.agiliumlabs.cloud',
         useSharedClientApi: true, requestTimeout: 3, retryOpts: {
           retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5, subscribeCooldownInSeconds: 6}, 
@@ -322,7 +322,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -491,7 +491,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -556,7 +556,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -624,7 +624,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -681,7 +681,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -722,7 +722,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -785,7 +785,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -872,7 +872,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -919,7 +919,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -964,7 +964,7 @@ sequentialProcessing.forEach(param => {
             synchronizeCounter++;
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data, 'ps-mpa-1');
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -1016,7 +1016,7 @@ sequentialProcessing.forEach(param => {
           } else if (data.type === 'synchronize') {
             await fakeServer.respond(socket, data);
             await fakeServer.syncAccount(socket, data);
-          } else if (data.type === 'waitSynchronized') {
+          } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
             await fakeServer.respond(socket, data);
           } else if (data.type === 'getAccountInformation') {
             await fakeServer.respondAccountInformation(socket, data);
@@ -1098,7 +1098,7 @@ sequentialProcessing.forEach(param => {
         } else if (data.type === 'synchronize') {
           await fakeServer.respond(server, data);
           await fakeServer.syncAccount(server, data);
-        } else if (data.type === 'waitSynchronized') {
+        } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
           await fakeServer.respond(server, data);
         } else if (data.type === 'getAccountInformation') {
           await fakeServer.respondAccountInformation(server, data);
@@ -1116,5 +1116,36 @@ sequentialProcessing.forEach(param => {
       && connection.terminalState.connectedToBroker).should.equal(true);
       sinon.assert.match(subscribeCounter, 1);
     }).timeout(10000);
+
+    it('should not update price from old price packets', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = account.getStreamingConnection();
+      await connection.connect();
+      clock.tickAsync(5000); 
+      await connection.waitSynchronized({timeoutInSeconds: 10});
+      const prices = {
+        prices: [{
+          time: new Date(Date.now() - 10000), symbol: 'EURUSD', bid: 1, ask: 1.1
+        }],
+        accountId: 'accountId', instanceIndex: 0, host: 'ps-mpa-0', type: 'prices'
+      };
+      await server.emit('synchronization', prices);
+      await new Promise(res => setTimeout(res, 100)); 
+      sinon.assert.match(connection.terminalState.price('EURUSD').bid, 1);
+
+      prices.prices[0].time = new Date(Date.now() - 20000);
+      prices.prices[0].bid = 1.1;
+      await server.emit('synchronization', prices);
+      await new Promise(res => setTimeout(res, 100)); 
+      sinon.assert.match(connection.terminalState.price('EURUSD').bid, 1);
+
+      prices.prices[0].time = new Date();
+      prices.prices[0].bid = 1.2;
+      await server.emit('synchronization', prices);
+      await new Promise(res => setTimeout(res, 100)); 
+      sinon.assert.match(connection.terminalState.price('EURUSD').bid, 1.2);
+
+    }).timeout(10000);
+
   });
 });

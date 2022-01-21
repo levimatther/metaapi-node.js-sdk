@@ -30,12 +30,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     historyStartTime?: Date, refreshSubscriptionsOpts?: RefreshSubscriptionsOpts);
   
   /**
-   * Opens the connection. Can only be called the first time, next calls will be ignored.
-   * @return {Promise} promise resolving when the connection is opened
-   */
-  connect(): Promise<any>;
-  
-  /**
    * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
    * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
    * @param {string} [application] application to remove history for
@@ -217,11 +211,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise which resolves when synchronization to MetaTrader terminal is completed
    */
   waitSynchronized(opts: SynchronizationOptions): Promise<any>;
-  
-  /**
-   * Closes the connection. The instance of the class should no longer be used after this method is invoked.
-   */
-  close(): Promise<void>;
   
   /**
    * Returns synchronization status

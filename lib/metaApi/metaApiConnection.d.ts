@@ -1,4 +1,4 @@
-import MetaApiWebsocketClient, { MetatraderTradeResponse } from "../clients/metaApi/metaApiWebsocket.client";
+import MetaApiWebsocketClient, { MetatraderTradeResponse, TrailingStopLoss } from "../clients/metaApi/metaApiWebsocket.client";
 import SynchronizationListener from "../clients/metaApi/synchronizationListener";
 import MetatraderAccount from "./metatraderAccount";
 
@@ -14,7 +14,18 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @param {string} [application] application to use
    */
   constructor(websocketClient: MetaApiWebsocketClient, account: MetatraderAccount, application: string);
-  
+
+  /**
+   * Opens the connection. Can only be called the first time, next calls will be ignored.
+   * @return {Promise} promise resolving when the connection is opened
+   */
+  connect(): Promise<void>;
+
+  /**
+   * Closes the connection. The instance of the class should no longer be used after this method is invoked.
+   */
+  close(): Promise<void>;
+
   /**
    * Creates a market buy order (see https://metaapi.cloud/docs/client/websocket/api/trade/).
    * @param {string} symbol symbol to trade

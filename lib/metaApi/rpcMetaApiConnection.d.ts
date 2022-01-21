@@ -180,5 +180,5 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @param {number} timeoutInSeconds synchronization timeout in seconds
    * @return {Promise} promise which resolves when synchronization to RPC application is completed
    */
-   waitSynchronized(timeoutInSeconds?: number): Promise<any>;
+  waitSynchronized(timeoutInSeconds?: number): Promise<any>;
 }
