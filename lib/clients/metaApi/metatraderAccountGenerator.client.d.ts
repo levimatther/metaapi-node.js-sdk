@@ -1,33 +1,56 @@
 import MetaApiClient from "../metaApi.client"
 
 /**
- * metaapi.cloud MetaTrader demo account API client
+ * metaapi.cloud MetaTrader account generator API client
  */
-export default class MetatraderDemoAccountClient extends MetaApiClient {
+export default class MetatraderAccountGeneratorClient extends MetaApiClient {
   
   /**
    * Creates new MetaTrader 4 demo account
+   * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4DemoAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT4DemoAccount} account demo account to create
-   * @return {Promise<MetatraderDemoAccountDto>} promise resolving with MetaTrader demo account created
+   * @param {NewMT4Account} account account to create
+   * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
-  createMT4DemoAccount(profileId: string, account: NewMT4DemoAccount): Promise<MetatraderDemoAccountDto>;
-  
+  createMT4DemoAccount(profileId: string, account: NewMT4Account): Promise<MetatraderAccountCredentialsDto>;
+
   /**
-   * Creates new MetaTrader 5 demo account
+   * Creates new MetaTrader 4 live account
+   * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4LiveAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT5DemoAccount} account demo account to create
-   * @return {Promise<MetatraderDemoAccountDto>} promise resolving with MetaTrader demo account created
+   * @param {NewMT4Account} account account to create
+   * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
-   createMT5DemoAccount(profileId: string, account: NewMT5DemoAccount): Promise<MetatraderDemoAccountDto>;
+  createMT4LiveAccount(profileId: string, account: NewMT4Account): Promise<MetatraderAccountCredentialsDto>;
+
+  /**
+   * Creates new MetaTrader 5 demo account.
+   * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5DemoAccount/
+   * Method is accessible only with API access token
+   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
+   * @param {NewMT5Account} account account to create
+   * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
+   */
+   createMT5DemoAccount(profileId: string, account: NewMT5Account): Promise<MetatraderAccountCredentialsDto>;
+
+  /**
+   * Creates new MetaTrader 5 live account.
+   * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5LiveAccount/
+   * Method is accessible only with API access token
+   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
+   * @param {NewMT5Account} account account to create
+   * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
+   */
+  createMT5LiveAccount(profileId: string, account: NewMT5Account): Promise<MetatraderAccountCredentialsDto>;
+
 }
 
 /**
  * New MetaTrader 4 demo account model
  */
-export declare type NewMT4DemoAccount = {
+export declare type NewMT4Account = {
 
   /**
    * account type
@@ -93,7 +116,7 @@ export declare type NewMT4DemoAccount = {
 /**
  * New MetaTrader 5 demo account model
  */
-export declare type NewMT5DemoAccount = {
+export declare type NewMT5Account = {
 
   /**
    * account holder's address
@@ -159,7 +182,7 @@ export declare type NewMT5DemoAccount = {
 /**
  * MetaTrader demo account model
  */
-export declare type MetatraderDemoAccountDto = {
+export declare type MetatraderAccountCredentialsDto = {
 
   /**
    * account login

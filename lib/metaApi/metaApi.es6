@@ -6,8 +6,8 @@ import ProvisioningProfileApi from './provisioningProfileApi';
 import MetaApiWebsocketClient from '../clients/metaApi/metaApiWebsocket.client';
 import MetatraderAccountApi from './metatraderAccountApi';
 import MetatraderAccountClient from '../clients/metaApi/metatraderAccount.client';
-import MetatraderDemoAccountApi from './metatraderDemoAccountApi';
-import MetatraderDemoAccountClient from '../clients/metaApi/metatraderDemoAccount.client';
+import MetatraderAccountGeneratorApi from './metatraderAccountGeneratorApi';
+import MetatraderAccountGeneratorClient from '../clients/metaApi/metatraderAccountGenerator.client';
 import HistoricalMarketDataClient from '../clients/metaApi/historicalMarketData.client';
 import ClientApiClient from '../clients/metaApi/clientApi.client';
 import ConnectionRegistry from './connectionRegistry';
@@ -51,6 +51,7 @@ import LoggerManager from '../logger';
  * @property {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
  * @property {Number} [unsubscribeThrottlingIntervalInSeconds] a timeout in seconds for throttling repeat unsubscribe
  * requests when synchronization packets still arrive after unsubscription, default is 10 seconds
+ * @property {number} [accountGeneratorRequestTimeout] MT account generator API request timeout. Default is 4 minutes
  */
 
 /**
@@ -85,8 +86,8 @@ export default class MetaApi {
     const retryOpts = opts.retryOpts || {};
     const packetLogger = opts.packetLogger || {};
     const synchronizationThrottler = opts.synchronizationThrottler || {};
-    const demoAccountRequestTimeout = validator.validateNonZero(opts.demoAccountRequestTimeout, 240,
-      'demoAccountRequestTimeout');
+    const accountGeneratorRequestTimeout = validator.validateNonZero(opts.accountGeneratorRequestTimeout, 240,
+      'accountGeneratorRequestTimeout');
     if (!application.match(/[a-zA-Z0-9_]+/)) {
       throw new ValidationError('Application name must be non-empty string consisting from letters, digits and _ only');
     }
@@ -94,7 +95,7 @@ export default class MetaApi {
     const refreshSubscriptionsOpts = opts.refreshSubscriptionsOpts || {};
     let httpClient = new HttpClient(requestTimeout, retryOpts);
     let historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
-    let demoAccountHttpClient = new HttpClient(demoAccountRequestTimeout, retryOpts);
+    let accountGeneratorHttpClient = new HttpClient(accountGeneratorRequestTimeout, retryOpts);
     let clientApiClient = new ClientApiClient(httpClient, token, domain); 
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(httpClient, token, {application, domain, requestTimeout,
       connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, useSharedClientApi, 
@@ -106,8 +107,8 @@ export default class MetaApi {
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, token, domain),
       this._metaApiWebsocketClient, this._connectionRegistry, 
       new ExpertAdvisorClient(httpClient, token, domain), historicalMarketDataClient, application);
-    this._metatraderDemoAccountApi = new MetatraderDemoAccountApi(
-      new MetatraderDemoAccountClient(demoAccountHttpClient, token, domain));
+    this._metatraderAccountGeneratorApi = new MetatraderAccountGeneratorApi(
+      new MetatraderAccountGeneratorClient(accountGeneratorHttpClient, token, domain));
     if (opts.enableLatencyTracking || opts.enableLatencyMonitor) {
       this._latencyMonitor = new LatencyMonitor();
       this._metaApiWebsocketClient.addLatencyListener(this._latencyMonitor);
@@ -131,11 +132,11 @@ export default class MetaApi {
   }
 
   /**
-   * Returns MetaTrader demo account API
-   * @return {MetatraderDemoAccountApi} MetaTrader demo account API
+   * Returns MetaTrader account generator API
+   * @return {MetatraderDemoAccountApi} MetaTrader account generator API
    */
-  get metatraderDemoAccountApi() {
-    return this._metatraderDemoAccountApi;
+  get metatraderAccountGeneratorApi() {
+    return this._metatraderAccountGeneratorApi;
   }
 
   /**

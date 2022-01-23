@@ -1,15 +1,15 @@
-import { MetatraderDemoAccountDto } from "../clients/metaApi/metatraderDemoAccount.client";
+import { MetatraderAccountCredentialsDto } from "../clients/metaApi/metatraderAccountGenerator.client";
 
 /**
- * Implements a MetaTrader demo account entity
+ * Implements a MetaTrader account credentials entity
  */
-export default class MetatraderDemoAccount {
+export default class MetatraderAccountCredentials {
   
   /**
-   * Constructs a MetaTrader demo account entity
-   * @param {MetatraderDemoAccountDto} data MetaTrader demo account data
+   * Constructs a MetaTrader account credentials entity
+   * @param {MetatraderAccountCredentialsDto} data MetaTrader account credentials data
    */
-  constructor(data: MetatraderDemoAccountDto);
+  constructor(data: MetatraderAccountCredentialsDto);
   
   /**
    * Returns account login

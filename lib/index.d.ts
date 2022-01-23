@@ -9,7 +9,7 @@ import HistoricalMarketDataClient from "./clients/metaApi/historicalMarketData.c
 import LatencyListener from "./clients/metaApi/latencyListener";
 import MetaApiWebsocketClient from "./clients/metaApi/metaApiWebsocket.client";
 import MetatraderAccountClient from "./clients/metaApi/metatraderAccount.client";
-import MetatraderDemoAccountClient from "./clients/metaApi/metatraderDemoAccount.client";
+import MetatraderAccountGeneratorClient from "./clients/metaApi/metatraderAccountGenerator.client";
 import PacketLogger from "./clients/metaApi/packetLogger";
 import SynchronizationThrottler from "./clients/metaApi/synchronizationThrottler";
 import HttpClient from "./clients/httpClient";
@@ -21,8 +21,8 @@ import LatencyMonitor from "./metaApi/latencyMonitor";
 import MetaApiConnection from "./metaApi/metaApiConnection";
 import MetatraderAccount from "./metaApi/metatraderAccount";
 import MetatraderAccountApi from "./metaApi/metatraderAccountApi";
-import MetatraderDemoAccount from "./metaApi/metatraderDemoAccount";
-import MetatraderDemoAccountApi from "./metaApi/metatraderDemoAccountApi";
+import MetatraderAccountCredentials from "./metaApi/metatraderAccountCredentials";
+import MetatraderAccountGeneratorApi from "./metaApi/metatraderAccountGeneratorApi";
 import ProvisioningProfile from "./metaApi/provisioningProfile";
 import ProvisioningProfileApi from "./metaApi/provisioningProfileApi";
 import RpcMetaApiConnection from "./metaApi/rpcMetaApiConnection";
@@ -34,7 +34,7 @@ export * from './clients/metaApi/expertAdvisor.client';
 export * from './clients/metaApi/latencyListener';
 export * from './clients/metaApi/metaApiWebsocket.client';
 export * from './clients/metaApi/metatraderAccount.client';
-export * from './clients/metaApi/metatraderDemoAccount.client';
+export * from './clients/metaApi/metatraderAccountGenerator.client';
 export * from './clients/metaApi/packetLogger';
 export * from './clients/metaApi/provisioningProfile.client';
 export * from './clients/metaApi/reconnectListener';
@@ -58,7 +58,7 @@ export {
   LatencyListener,
   MetaApiWebsocketClient,
   MetatraderAccountClient,
-  MetatraderDemoAccountClient,
+  MetatraderAccountGeneratorClient,
   PacketLogger,
   SynchronizationThrottler,
   HttpClient,
@@ -70,8 +70,8 @@ export {
   MetaApiConnection,
   MetatraderAccount,
   MetatraderAccountApi,
-  MetatraderDemoAccount,
-  MetatraderDemoAccountApi,
+  MetatraderAccountCredentials,
+  MetatraderAccountGeneratorApi,
   ProvisioningProfile,
   ProvisioningProfileApi,
   RpcMetaApiConnection,

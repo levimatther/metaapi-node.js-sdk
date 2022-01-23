@@ -1,13 +1,13 @@
 'use strict';
 
 /**
- * Implements a MetaTrader demo account entity
+ * Implements a MetaTrader account credentials entity
  */
-export default class MetatraderDemoAccount {
+export default class MetatraderAccountCredentials {
 
   /**
-   * Constructs a MetaTrader demo account entity
-   * @param {MetatraderDemoAccountDto} data MetaTrader demo account data
+   * Constructs a MetaTrader account credentials entity
+   * @param {MetatraderAccountCredentialsDto} data MetaTrader account credentials data
    */
   constructor(data) {
     this._data = data;

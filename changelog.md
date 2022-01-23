@@ -8,6 +8,7 @@
   - implemented region support for historical market data requests and socket connections
   - improved price and equity tracking
   - added SL and TP fields to MetatraderDeal
+  - breaking change: replaced MetatraderDemoAccountApi with MetatraderAccountGeneratorApi since we can create live accounts now as well
 
 17.0.0
   - breaking change: updated typescript types

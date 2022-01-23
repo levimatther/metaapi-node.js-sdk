@@ -1,6 +1,6 @@
 import MetatraderAccountApi from "./metatraderAccountApi"
 import ProvisioningProfileApi from "./provisioningProfileApi"
-import MetatraderDemoAccountApi from "./metatraderDemoAccountApi"
+import MetatraderAccountGeneratorApi from "./metatraderAccountGeneratorApi"
 import LatencyMonitor from "./latencyMonitor"
 import { SynchronizationThrottlerOpts } from "../clients/metaApi/synchronizationThrottler"
 import { PacketLoggerOpts } from "../clients/metaApi/packetLogger"
@@ -36,10 +36,10 @@ export default class MetaApi {
   get metatraderAccountApi(): MetatraderAccountApi;
 
   /**
-   * Returns MetaTrader demo account API
-   * @return {MetatraderDemoAccountApi} MetaTrader demo account API
+   * Returns MetaTrader account generator API
+   * @return {MetatraderAccountGeneratorApi} MetaTrader account generator API
    */
-  get metatraderDemoAccountApi(): MetatraderDemoAccountApi;
+  get metatraderAccountGeneratorApi(): MetatraderAccountGeneratorApi;
 
   /**
    * Returns MetaApi application latency monitor
@@ -127,7 +127,12 @@ export declare type MetaApiOpts = {
    * a timeout in seconds for throttling repeat unsubscribe
    * requests when synchronization packets still arrive after unsubscription, default is 10 seconds
    */
-  unsubscribeThrottlingIntervalInSeconds?: number
+  unsubscribeThrottlingIntervalInSeconds?: number,
+
+  /**
+   * MT account generator API request timeout. Default is 4 minutes
+   */
+  accountGeneratorRequestTimeout?: number
 }
 
 /**
