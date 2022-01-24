@@ -522,8 +522,21 @@ export default class MetaApiWebsocketClient {
    * @property {Number} [takeProfit] optional position take profit price
    * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
    * @property {Number} volume position volume
-   * @property {Number} swap position cumulative swap
-   * @property {Number} profit position cumulative profit
+   * @property {Number} profit position cumulative profit, including realized profit resulting from currently open
+   * position part (except swap and commissions) and unrealized profit resulting from partially closed position part
+   * and including swap and commissions
+   * @property {Number} realizedProfit profit of the already closed part, including commissions and swap (realized and
+   * unrealized)
+   * @property {Number} unrealizedProfit profit of the part of the position which is not yet closed, excluding swap and
+   * commissions
+   * @property {Number} swap position cumulative swap, including both swap from currently open position part (unrealized
+   * swap) and swap from partially closed position part (realized swap)
+   * @property {Number} realizedSwap swap from partially closed position part
+   * @property {Number} unrealizedSwap swap resulting from currently open position part
+   * @property {Number} commission total position commissions, resulting both from currently open and closed position
+   * parts
+   * @property {Number} realizedCommission position realized commission, resulting from partially closed position part
+   * @property {Number} unrealizedCommission position unrealized commission, resulting from currently open position part
    * @property {String} [comment] optional position comment. The sum of the line lengths of the comment and the clientId
    * must be less than or equal to 26. For more information see https://metaapi.cloud/docs/client/clientIdUsage/
    * @property {String} [clientId] optional client-assigned id. The id value can be assigned when submitting a trade and
@@ -531,9 +544,6 @@ export default class MetaApiWebsocketClient {
    * your trades to objects in your application and then track trade progress. The sum of the line lengths of the
    * comment and the clientId must be less than or equal to 26. For more information see
    * https://metaapi.cloud/docs/client/clientIdUsage/
-   * @property {Number} unrealizedProfit profit of the part of the position which is not yet closed, including swap
-   * @property {Number} realizedProfit profit of the already closed part, including commissions and swap
-   * @property {Number} commission position commission
    * @property {String} reason position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,
    * POSITION_REASON_MOBILE, POSITION_REASON_WEB, POSITION_REASON_UNKNOWN. See
    * https://www.mql5.com/en/docs/constants/tradingconstants/positionproperties#enum_position_reason',

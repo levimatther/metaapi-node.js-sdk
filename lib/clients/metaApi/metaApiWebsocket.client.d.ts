@@ -712,12 +712,24 @@ export declare type MetatraderPosition = {
   volume: number,
 
   /**
-   * position cumulative swap
+   * position cumulative swap, including both swap from currently open position part (unrealized
+   * swap) and swap from partially closed position part (realized swap)
    */
   swap: number,
 
   /**
-   * position cumulative profit
+   * swap from partially closed position part
+   */
+  realizedSwap: number,
+
+  /**
+   * swap resulting from currently open position part
+   */
+  unrealizedSwap: number,
+
+  /**
+   * position cumulative profit, including realized profit resulting from currently open position part (except swap and
+   * commissions) and unrealized profit resulting from partially closed position part and including swap and commissions
    */
   profit: number,
 
@@ -737,19 +749,29 @@ export declare type MetatraderPosition = {
   clientId?: string,
 
   /**
-   * profit of the part of the position which is not yet closed, including swap
+   * profit of the part of the position which is not yet closed, excluding swap and commissions
    */
   unrealizedProfit: number,
 
   /**
-   * profit of the already closed part, including commissions and swap
+   * profit of the already closed part, including commissions and swap (realized and unrealized)
    */
   realizedProfit: number,
 
   /**
-   * position commission
+   * total position commissions, resulting both from currently open and closed position parts
    */
   commission: number,
+
+  /**
+   * position realized commission, resulting from partially closed position part
+   */
+  realizedCommission: number,
+
+  /**
+   * position unrealized commission, resulting from currently open position part
+   */
+  unrealizedCommission: number,
 
   /**
    * position opening reason. One of POSITION_REASON_CLIENT, POSITION_REASON_EXPERT,

@@ -9,6 +9,7 @@
   - improved price and equity tracking
   - added SL and TP fields to MetatraderDeal
   - breaking change: replaced MetatraderDemoAccountApi with MetatraderAccountGeneratorApi since we can create live accounts now as well
+  - breaking change: refactored MetatraderPosition model, see updated descriptions for *commission, *swap and *profit fields
 
 17.0.0
   - breaking change: updated typescript types
