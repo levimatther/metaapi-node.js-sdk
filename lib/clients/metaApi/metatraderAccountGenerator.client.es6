@@ -8,40 +8,63 @@ import MetaApiClient from '../metaApi.client';
 export default class MetatraderAccountGeneratorClient extends MetaApiClient {
 
   /**
-   * New MetaTrader 4 account generator model
-   * @typedef {Object} NewMT4Account
-   * @property {String} accountType account type. Available account type values can be found in mobile MT application or
+   * New MetaTrader 4 demo account request model
+   * @typedef {Object} NewMT4DemoAccount
+   * @property {string} accountType account type. Available account type values can be found in mobile MT application or
    * in MT terminal downloaded from our broker
-   * @property {String} [address] account holder's address
-   * @property {Number} balance account balance
-   * @property {String} [city] account holder's city
-   * @property {String} [country] account holder's country
-   * @property {String} email account holder's email
-   * @property {Number} leverage account leverage
-   * @property {String} [name] account holder's name
-   * @property {String} [phone] account holder's phone
-   * @property {String} serverName server name
-   * @property {String} [state] account holder's state
-   * @property {String} [zip] zip address
+   * @property {number} balance account balance
+   * @property {string} email account holder's email
+   * @property {number} leverage account leverage
+   * @property {string} name account holder's name
+   * @property {string} phone account holder's phone, in international format
+   * @property {string} serverName server name
    */
 
   /**
-   * New MetaTrader 5 account model
-   * @typedef {Object} NewMT5Account
-   * @property {String} accountType account type. Available account type values can be found in mobile MT application or
+   * New MetaTrader 4 live account request model
+   * @typedef {Object} NewMT4LiveAccount
+   * @property {string} accountType account type. Available account type values can be found in mobile MT application or
    * in MT terminal downloaded from our broker
-   * @property {String} [address] account holder's address
-   * @property {Number} balance account balance
-   * @property {String} [city] account holder's city
-   * @property {String} [country] account holder's country
-   * @property {String} email account holder's email
-   * @property {Number} [languageId] language id (default is 1)
-   * @property {Number} leverage account leverage
-   * @property {String} [name] account holder's name
-   * @property {String} [phone] account holder's phone
-   * @property {String} serverName server name
-   * @property {String} [state] account holder's state
-   * @property {String} [zip] zip address
+   * @property {string} address account holder's address
+   * @property {string} city account holder's city
+   * @property {string} country account holder's country
+   * @property {string} email account holder's email
+   * @property {number} leverage account leverage
+   * @property {string} name account holder's name
+   * @property {string} phone account holder's phone, in international format
+   * @property {string} serverName server name
+   * @property {string} state account holder's state
+   * @property {string} zip zip address
+   */
+
+  /**
+   * New MetaTrader 5 demo account request model
+   * @typedef {Object} NewMT5DemoAccount
+   * @property {string} accountType account type. Available account type values can be found in mobile MT application or
+   * in MT terminal downloaded from our broker
+   * @property {number} balance account balance
+   * @property {string} email account holder's email
+   * @property {number} leverage account leverage
+   * @property {string} name account holder's name
+   * @property {string} phone account holder's phone, in international format
+   * @property {string} serverName server name
+   */
+
+  /**
+   * New MetaTrader 5 live account request model
+   * @typedef {Object} NewMT5LiveAccount
+   * @property {string} accountType account type. Available account type values can be found in mobile MT application or
+   * in MT terminal downloaded from our broker
+   * @property {string} address account holder's address
+   * @property {string} city account holder's city
+   * @property {string} country account holder's country
+   * @property {string} email account holder's email
+   * @property {number} leverage account leverage
+   * @property {string} name account holder's name
+   * @property {string} phone account holder's phone, in international format
+   * @property {string} serverName server name
+   * @property {string} state account holder's state
+   * @property {string} zip zip address
    */
 
   /**
@@ -58,7 +81,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4DemoAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT4Account} account account to create
+   * @param {NewMT4DemoAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
   createMT4DemoAccount(profileId, account) {
@@ -82,7 +105,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4LiveAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT4Account} account account to create
+   * @param {NewMT4LiveAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
   createMT4LiveAccount(profileId, account) {
@@ -106,7 +129,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5DemoAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT5Account} account account to create
+   * @param {NewMT5DemoAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
    */
   createMT5DemoAccount(profileId, account) {
@@ -130,7 +153,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5LiveAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT5Account} account account to create
+   * @param {NewMT5LiveAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
    */
   createMT5LiveAccount(profileId, account) {

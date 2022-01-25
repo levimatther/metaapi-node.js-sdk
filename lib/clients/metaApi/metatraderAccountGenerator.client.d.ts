@@ -10,72 +10,57 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4DemoAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT4Account} account account to create
+   * @param {NewMT4DemoAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
-  createMT4DemoAccount(profileId: string, account: NewMT4Account): Promise<MetatraderAccountCredentialsDto>;
+  createMT4DemoAccount(profileId: string, account: NewMT4DemoAccount): Promise<MetatraderAccountCredentialsDto>;
 
   /**
    * Creates new MetaTrader 4 live account
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4LiveAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT4Account} account account to create
+   * @param {NewMT4LiveAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
-  createMT4LiveAccount(profileId: string, account: NewMT4Account): Promise<MetatraderAccountCredentialsDto>;
+  createMT4LiveAccount(profileId: string, account: NewMT4LiveAccount): Promise<MetatraderAccountCredentialsDto>;
 
   /**
    * Creates new MetaTrader 5 demo account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5DemoAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT5Account} account account to create
+   * @param {NewMT5DemoAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
    */
-   createMT5DemoAccount(profileId: string, account: NewMT5Account): Promise<MetatraderAccountCredentialsDto>;
+   createMT5DemoAccount(profileId: string, account: NewMT5DemoAccount): Promise<MetatraderAccountCredentialsDto>;
 
   /**
    * Creates new MetaTrader 5 live account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5LiveAccount/
    * Method is accessible only with API access token
    * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
-   * @param {NewMT5Account} account account to create
+   * @param {NewMT5LiveAccount} account account to create
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
    */
-  createMT5LiveAccount(profileId: string, account: NewMT5Account): Promise<MetatraderAccountCredentialsDto>;
+  createMT5LiveAccount(profileId: string, account: NewMT5LiveAccount): Promise<MetatraderAccountCredentialsDto>;
 
 }
 
 /**
- * New MetaTrader 4 demo account model
+ * New MetaTrader 4 demo account request model
  */
-export declare type NewMT4Account = {
+export declare type NewMT4DemoAccount = {
 
   /**
    * account type
    */
-  accountType?: string,
-
-  /**
-   * account holder's address
-   */
-  address?: string,
+  accountType: string,
 
   /**
    * account balance
    */
   balance: number,
-
-  /**
-   * account holder's city
-   */
-  city?: string,
-
-  /**
-   * account holder's country
-   */
-  country?: string,
 
   /**
    * account holder's email
@@ -90,63 +75,49 @@ export declare type NewMT4Account = {
   /**
    * account holder's name
    */
-  name?: string,
+  name: string,
 
   /**
-   * account holder's phone
+   * account holder's phone, in international format
    */
-  phone?: string,
+  phone: string,
 
   /**
    * server name
    */
-  serverName?: string,
+  serverName: string
 
-  /**
-   * account holder's state
-   */
-  state?: string,
-
-  /**
-   * zip address
-   */
-  zip?: string
 }
 
 /**
- * New MetaTrader 5 demo account model
+ * New MetaTrader 4 live account request model
  */
-export declare type NewMT5Account = {
+export declare type NewMT4LiveAccount = {
+
+  /**
+   * account type
+   */
+  accountType: string,
 
   /**
    * account holder's address
    */
-  address?: string,
-
-  /**
-   * account balance
-   */
-  balance: number,
+  address: string,
 
   /**
    * account holder's city
    */
-  city?: string,
+  city: string,
 
   /**
    * account holder's country
    */
-  country?: string;
+  country: string,
 
   /**
    * account holder's email
    */
   email: string,
-
-  /**
-   * language id (default is 1)
-   */
-  languageId?: number,
 
   /**
    * account leverage
@@ -156,12 +127,12 @@ export declare type NewMT5Account = {
   /**
    * account holder's name
    */
-  name?: string,
+  name: string,
 
   /**
-   * account holder's phone
+   * account holder's phone, in international format
    */
-  phone?: string,
+  phone: string,
 
   /**
    * server name
@@ -171,12 +142,106 @@ export declare type NewMT5Account = {
   /**
    * account holder's state
    */
-  state?: string,
+  state: string,
 
   /**
    * zip address
    */
-  zip?: string
+  zip: string
+}
+
+/**
+ * New MetaTrader 5 demo account request model
+ */
+export declare type NewMT5DemoAccount = {
+
+  /**
+   * account balance
+   */
+  balance: number,
+
+  /**
+   * account holder's email
+   */
+  email: string,
+
+  /**
+   * account leverage
+   */
+  leverage: number,
+
+  /**
+   * account holder's name
+   */
+  name: string,
+
+  /**
+   * account holder's phone, in international format
+   */
+  phone: string,
+
+  /**
+   * server name
+   */
+  serverName: string
+
+}
+
+/**
+ * New MetaTrader 5 live account request model
+ */
+export declare type NewMT5LiveAccount = {
+
+  /**
+   * account holder's address
+   */
+  address: string,
+
+  /**
+   * account holder's city
+   */
+  city: string,
+
+  /**
+   * account holder's country
+   */
+  country: string;
+
+  /**
+   * account holder's email
+   */
+  email: string,
+
+  /**
+   * account leverage
+   */
+  leverage: number,
+
+  /**
+   * account holder's name
+   */
+  name: string,
+
+  /**
+   * account holder's phone, in international format
+   */
+  phone: string,
+
+  /**
+   * server name
+   */
+  serverName: string,
+
+  /**
+   * account holder's state
+   */
+  state: string,
+
+  /**
+   * zip address
+   */
+  zip: string
+    
 }
 
 /**
