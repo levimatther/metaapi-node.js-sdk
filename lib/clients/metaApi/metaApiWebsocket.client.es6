@@ -522,8 +522,8 @@ export default class MetaApiWebsocketClient {
    * @property {Number} [takeProfit] optional position take profit price
    * @property {TrailingStopLoss} [trailingStopLoss] distance trailing stop loss configuration
    * @property {Number} volume position volume
-   * @property {Number} profit position cumulative profit, including realized profit resulting from currently open
-   * position part (except swap and commissions) and unrealized profit resulting from partially closed position part
+   * @property {Number} profit position cumulative profit, including unrealized profit resulting from currently open
+   * position part (except swap and commissions) and realized profit resulting from partially closed position part
    * and including swap and commissions
    * @property {Number} realizedProfit profit of the already closed part, including commissions and swap (realized and
    * unrealized)

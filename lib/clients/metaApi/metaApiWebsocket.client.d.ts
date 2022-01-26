@@ -728,8 +728,9 @@ export declare type MetatraderPosition = {
   unrealizedSwap: number,
 
   /**
-   * position cumulative profit, including realized profit resulting from currently open position part (except swap and
-   * commissions) and unrealized profit resulting from partially closed position part and including swap and commissions
+   * position cumulative profit, including unrealized profit resulting from currently open position part (except swap
+   * and commissions) and realized profit resulting from partially closed position part and including swap and
+   * commissions
    */
   profit: number,
 
