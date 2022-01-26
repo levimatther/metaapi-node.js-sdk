@@ -596,12 +596,14 @@ Please note that not all MT4/MT5 servers allows you to create MT accounts using 
 ### Create a MetaTrader 4 demo account
 ```javascript
 const demoAccount = await api.metatraderAccountGeneratorApi.createMT4DemoAccount(provisioningProfile.id, {
-  accountType: 'type',
   balance: 100000,
+  accountType: 'type',
   email: 'example@example.com',
   leverage: 100,
-  serverName: 'Exness-Trial4'
-  });
+  serverName: 'Exness-Trial4',
+  name: 'Test User',
+  phone: '+12345678901'
+});
 ```
 
 ### Create a MetaTrader 4 live account
@@ -611,8 +613,15 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT4LiveAccount
   balance: 100000,
   email: 'example@example.com',
   leverage: 100,
-  serverName: 'Exness-Live4'
-  });
+  serverName: 'Exness-Live4',
+  name: 'Test User',
+  phone: '+12345678901',
+  country: 'Unites States',
+  zip: '12345',
+  state: 'New York',
+  city: 'New York',
+  address: 'customer address'
+});
 ```
 
 ### Create a MetaTrader 5 demo account
@@ -622,8 +631,10 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount
   balance: 100000,
   email: 'example@example.com',
   leverage: 100,
-  serverName: 'ICMarketsSC-Demo'
-  });
+  serverName: 'ICMarketsSC-Demo',
+  name: 'Test User',
+  phone: '+12345678901'
+});
 ```
 
 ### Create a MetaTrader 5 live account
@@ -633,8 +644,15 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT5LiveAccount
   balance: 100000,
   email: 'example@example.com',
   leverage: 100,
-  serverName: 'ICMarketsSC-MT5'
-  });
+  serverName: 'ICMarketsSC-MT5',
+  name: 'Test User',
+  phone: '+12345678901',
+  country: 'Unites States',
+  zip: '12345',
+  state: 'New York',
+  city: 'New York',
+  address: 'customer address'
+});
 ```
 
 ## Enable log4js logging
