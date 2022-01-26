@@ -53,7 +53,8 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
 export declare type NewMT4DemoAccount = {
 
   /**
-   * account type
+   * Account type. Available account type values can be found in mobile MT application or in MT terminal downloaded
+   * from our broker
    */
   accountType: string,
 
@@ -95,7 +96,8 @@ export declare type NewMT4DemoAccount = {
 export declare type NewMT4LiveAccount = {
 
   /**
-   * account type
+   * Account type. Available account type values can be found in mobile MT application or in MT terminal downloaded
+   * from our broker
    */
   accountType: string,
 
@@ -156,6 +158,12 @@ export declare type NewMT4LiveAccount = {
 export declare type NewMT5DemoAccount = {
 
   /**
+   * Account type. Available account type values can be found in mobile MT application or in MT terminal downloaded
+   * from our broker
+   */
+  accountType: string,
+
+  /**
    * account balance
    */
   balance: number,
@@ -191,6 +199,12 @@ export declare type NewMT5DemoAccount = {
  * New MetaTrader 5 live account request model
  */
 export declare type NewMT5LiveAccount = {
+
+  /**
+   * Account type. Available account type values can be found in mobile MT application or in MT terminal downloaded
+   * from our broker
+   */
+  accountType: string,
 
   /**
    * account holder's address
