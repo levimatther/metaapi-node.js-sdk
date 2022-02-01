@@ -231,8 +231,9 @@ export default class SynchronizationThrottler {
    * Schedules to send a synchronization request for account
    * @param {String} accountId account id
    * @param {Object} request request to send
+   * @param {Function} getHashes function to get terminal state hashes
    */
-  async scheduleSynchronize(accountId, request) {
+  async scheduleSynchronize(accountId, request, getHashes) {
     const synchronizationId = request.requestId;
     for (let key of Object.keys(this._accountsBySynchronizationIds)) {
       if(this._accountsBySynchronizationIds[key].accountId === accountId &&
@@ -263,6 +264,10 @@ export default class SynchronizationThrottler {
       }
     }
     this.updateSynchronizationId(synchronizationId);
+    const hashes = await getHashes();
+    request.specificationsMd5 = hashes.specificationsMd5;
+    request.positionsMd5 = hashes.positionsMd5;
+    request.ordersMd5 = hashes.ordersMd5;
     await this._client.rpcRequest(accountId, request);
     return true;
   }

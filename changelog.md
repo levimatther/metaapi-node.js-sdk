@@ -1,5 +1,6 @@
 18.0.0
   - breaking change: refactored HistoryStorage & MemoryHistoryStorage classes
+  - breaking change: changed rpc connection initialization
   - fixed html example
   - fixed terminal state memory leak
   - split account instance connections into multiple availability zones for redundancy and failover
@@ -10,6 +11,7 @@
   - added SL and TP fields to MetatraderDeal
   - breaking change: replaced MetatraderDemoAccountApi with MetatraderAccountGeneratorApi since we can create live accounts now as well
   - breaking change: refactored MetatraderPosition model, see updated descriptions for *commission, *swap and *profit fields
+  - optimized CPU load during mass synchronization
 
 17.0.0
   - breaking change: updated typescript types

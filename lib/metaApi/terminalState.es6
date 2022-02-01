@@ -87,6 +87,7 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} instanceIndex index of instance to get hashes of
    * @returns {Promise<Object>} promise resolving with hashes of terminal state data
    */
+  // eslint-disable-next-line complexity
   async getHashes(accountType, instanceIndex) {
     const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists();
     // get latest instance number state
@@ -115,7 +116,8 @@ export default class TerminalState extends SynchronizationListener {
       }
     });
     const specificationsHash = specifications.length ? 
-      this._getHash(specifications, accountType, ['digits']) : null;
+      state.specificationsHash || this._getHash(specifications, accountType, ['digits']) : null;
+    state.specificationsHash = specificationsHash;
 
     const positions = JSON.parse(JSON.stringify(state.positions));
     if(accountType === 'cloud-g1') {
@@ -131,7 +133,8 @@ export default class TerminalState extends SynchronizationListener {
       }
     });
     const positionsHash = state.positionsInitialized ? 
-      this._getHash(positions, accountType, ['magic']) : null;
+      state.positionsHash || this._getHash(positions, accountType, ['magic']) : null;
+    state.positionsHash = positionsHash;
 
     const orders = JSON.parse(JSON.stringify(state.orders));
     if(accountType === 'cloud-g1') {
@@ -147,7 +150,8 @@ export default class TerminalState extends SynchronizationListener {
       }
     });
     const ordersHash = state.ordersInitialized ? 
-      this._getHash(orders, accountType, ['magic']) : null;
+      state.ordersHash || this._getHash(orders, accountType, ['magic']) : null;
+    state.ordersHash = ordersHash;
 
     return {
       specificationsMd5: specificationsHash,
@@ -241,14 +245,17 @@ export default class TerminalState extends SynchronizationListener {
       state.positions = [];
       state.removedPositions = {};
       state.positionsInitialized = false;
+      state.positionsHash = null;
     }
     if(ordersUpdated) {
       state.orders = [];
       state.completedOrders = {};
       state.ordersInitialized = false;
+      state.ordersHash = null;
     }
     if(specificationsUpdated) {
       state.specificationsBySymbol = {};
+      state.specificationsHash = null;
     }
   }
 
@@ -274,6 +281,7 @@ export default class TerminalState extends SynchronizationListener {
     let state = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
     state.positions = positions;
+    state.positionsHash = null;
   }
 
   /**
@@ -296,6 +304,7 @@ export default class TerminalState extends SynchronizationListener {
   onPositionUpdated(instanceIndex, position) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    instanceState.positionsHash = null;
 
     const updatePosition = (state) => {
       let index = state.positions.findIndex(p => p.id === position.id);
@@ -317,6 +326,7 @@ export default class TerminalState extends SynchronizationListener {
   onPositionRemoved(instanceIndex, positionId) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    instanceState.positionsHash = null;
 
     const removePosition = (state) => {
       let position = state.positions.find(p => p.id === positionId);
@@ -344,6 +354,7 @@ export default class TerminalState extends SynchronizationListener {
   onPendingOrdersReplaced(instanceIndex, orders) {
     let state = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    state.ordersHash = null;
     state.orders = orders;
   }
 
@@ -383,6 +394,7 @@ export default class TerminalState extends SynchronizationListener {
   onPendingOrderUpdated(instanceIndex, order) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    instanceState.ordersHash = null;
     
     const updatePendingOrder = (state) => {
       let index = state.orders.findIndex(o => o.id === order.id);
@@ -405,6 +417,7 @@ export default class TerminalState extends SynchronizationListener {
   onPendingOrderCompleted(instanceIndex, orderId) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    instanceState.ordersHash = null;
 
     const completeOrder = (state) => {
       let order = state.orders.find(o => o.id === orderId);
@@ -432,6 +445,7 @@ export default class TerminalState extends SynchronizationListener {
   onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    instanceState.specificationsHash = null;
 
     const updateSpecifications = (state) => {
       for (let specification of specifications) {
@@ -613,7 +627,10 @@ export default class TerminalState extends SynchronizationListener {
       ordersInitialized: false,
       positionsInitialized: false,
       lastUpdateTime: 0,
-      lastSyncUpdateTime: 0
+      lastSyncUpdateTime: 0,
+      positionsHash: null,
+      ordersHash: null,
+      specificationsHash: null,
     };
   }
 
