@@ -275,13 +275,11 @@ export default class MetaApiWebsocketClient {
    * the entire order history will be downloaded.
    * @param {Date} startingDealTime from what date to start deal synchronization from. If not specified, then all
    * history deals will be downloaded.
-   * @param {string} specificationsMd5 specifications MD5 hash
-   * @param {string} positionsMd5 positions MD5 hash
-   * @param {string} ordersMd5 orders MD5 hash
+   * @param {Function} getHashes function to get terminal state hashes
    * @returns {Promise} promise which resolves when synchronization started
    */
   synchronize(accountId: string, instanceIndex: number, host: string, synchronizationId: string, startingHistoryOrderTime: Date, startingDealTime: Date, 
-    specificationsMd5: string, positionsMd5: string, ordersMd5: string): Promise<any>;
+    getHashes: Function): Promise<any>;
   
     /**
    * Waits for server-side terminal state synchronization to complete.

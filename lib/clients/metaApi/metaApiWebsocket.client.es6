@@ -901,18 +901,15 @@ export default class MetaApiWebsocketClient {
    * the entire order history will be downloaded.
    * @param {Date} startingDealTime from what date to start deal synchronization from. If not specified, then all
    * history deals will be downloaded.
-   * @param {String} specificationsMd5 specifications MD5 hash
-   * @param {String} positionsMd5 positions MD5 hash
-   * @param {String} ordersMd5 orders MD5 hash
+   * @param {Function} getHashes function to get terminal state hashes
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime, 
-    specificationsMd5, positionsMd5, ordersMd5) {
+  synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime,  
+    getHashes) {
     const syncThrottler = this._getSocketInstanceByAccount(accountId, instanceIndex)
       .synchronizationThrottler;
     return syncThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, 
-      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host,
-      specificationsMd5, positionsMd5, ordersMd5});
+      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host}, getHashes);
   }
 
   /**

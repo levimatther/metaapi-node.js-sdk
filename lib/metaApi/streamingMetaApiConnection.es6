@@ -111,9 +111,9 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     ));
     let synchronizationId = randomstring.generate(32);
     this._getState(instanceIndex).lastSynchronizationId = synchronizationId;
-    const hashes = await this.terminalState.getHashes(this._account.type, instanceIndex);
     return this._websocketClient.synchronize(this._account.id, instance, host, synchronizationId,
-      startingHistoryOrderTime, startingDealTime, hashes.specificationsMd5, hashes.positionsMd5, hashes.ordersMd5);
+      startingHistoryOrderTime, startingDealTime,
+      async () => await this.terminalState.getHashes(this._account.type, instanceIndex));
   }
 
   /**

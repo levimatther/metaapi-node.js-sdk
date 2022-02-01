@@ -10,8 +10,12 @@ import crypto from 'crypto-js';
  */
 describe('TerminalState', () => {
 
-  let state;
+  let state, sandbox;
   const md5 = (arg) => crypto.MD5(arg).toString();
+
+  before(() => {
+    sandbox = sinon.createSandbox();
+  });
 
   beforeEach(() => {
     const clientApiClient = {
@@ -82,6 +86,10 @@ describe('TerminalState', () => {
       })
     };
     state = new TerminalState(clientApiClient);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   /**
@@ -355,139 +363,253 @@ describe('TerminalState', () => {
   /**
    * @test {TerminalState#getHashes}
    */
-  it('should return hashes for terminal state data for cloud-g1 accounts', async () => {
-    const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01000000},{"symbol":"EURUSD",' +
+  describe('hashes', () => {
+
+    let getHashesSpy;
+
+    beforeEach(() => {
+      getHashesSpy = sandbox.spy(state, '_getHash');
+    });
+
+    /**
+     * @test {TerminalState#getHashes}
+     */
+    it('should return hashes for terminal state data for cloud-g1 accounts', async () => {
+      const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01000000},{"symbol":"EURUSD",' +
       '"tickSize":0.00000100,"contractSize":1.00000000,"maxVolume":30000.00000000,' +
       '"hedgedMarginUsesLargerLeg":false,"digits":3}]');
-    const positionsHash = md5('[{"id":"46214692","type":"POSITION_TYPE_BUY","symbol":"GBPUSD","magic":1000,' +
+      const positionsHash = md5('[{"id":"46214692","type":"POSITION_TYPE_BUY","symbol":"GBPUSD","magic":1000,' +
       '"openPrice":1.26101000,"volume":0.07000000,"swap":0.00000000,"commission":-0.25000000,' +
       '"stopLoss":1.17721000}]');
-    const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
+      const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","openPrice":1.03000000,' +
       '"volume":0.01000000,"currentVolume":0.01000000}]');
-    let hashes = await state.getHashes('cloud-g1', '1:ps-mpa-1');
-    sinon.assert.match(hashes.specificationsMd5, null);
-    sinon.assert.match(hashes.positionsMd5, null);
-    sinon.assert.match(hashes.ordersMd5, null);
-    await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
-      {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
-      {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
-        hedgedMarginUsesLargerLeg: false, digits: 3, description: 'Test2'}], []);
-    await state.onPositionsReplaced('1:ps-mpa-1', [{
-      id: '46214692',
-      type: 'POSITION_TYPE_BUY',
-      symbol: 'GBPUSD',
-      magic: 1000,
-      time: new Date('2020-04-15T02:45:06.521Z'),
-      updateTime: new Date('2020-04-15T02:45:06.521Z'),
-      openPrice: 1.26101,
-      currentPrice: 1.24883,
-      currentTickValue: 1,
-      volume: 0.07,
-      swap: 0,
-      profit: -85.25999999999966,
-      commission: -0.25,
-      clientId: 'TE_GBPUSD_7hyINWqAlE',
-      stopLoss: 1.17721,
-      unrealizedProfit: -85.25999999999901,
-      realizedProfit: -6.536993168992922e-13,
-      updateSequenceNumber: 13246,
-      accountCurrencyExchangeRate: 1,
-      comment: 'test',
-      brokerComment: 'test2',
-    }]);
-    await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
-      id: '46871284',
-      type: 'ORDER_TYPE_BUY_LIMIT',
-      state: 'ORDER_STATE_PLACED',
-      symbol: 'AUDNZD',
-      magic: 123456,
-      platform: 'mt5',
-      time: '2020-04-20T08:38:58.270Z',
-      openPrice: 1.03,
-      currentPrice: 1.05206,
-      volume: 0.01,
-      currentVolume: 0.01,
-      comment: 'COMMENT2',
-      updateSequenceNumber: 13246,
-      accountCurrencyExchangeRate: 1,
-      brokerComment: 'test2',
-      clientId: 'TE_GBPUSD_7hyINWqAlE',
-    }]);
-    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-    hashes = await state.getHashes('cloud-g1', '1:ps-mpa-1');
-    sinon.assert.match(hashes.specificationsMd5, specificationsHash);
-    sinon.assert.match(hashes.positionsMd5, positionsHash);
-    sinon.assert.match(hashes.ordersMd5, ordersHash);
-  });
+      let hashes = await state.getHashes('cloud-g1', '1:ps-mpa-1');
+      sinon.assert.match(hashes.specificationsMd5, null);
+      sinon.assert.match(hashes.positionsMd5, null);
+      sinon.assert.match(hashes.ordersMd5, null);
+      await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
+        {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
+        {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
+          hedgedMarginUsesLargerLeg: false, digits: 3, description: 'Test2'}], []);
+      await state.onPositionsReplaced('1:ps-mpa-1', [{
+        id: '46214692',
+        type: 'POSITION_TYPE_BUY',
+        symbol: 'GBPUSD',
+        magic: 1000,
+        time: new Date('2020-04-15T02:45:06.521Z'),
+        updateTime: new Date('2020-04-15T02:45:06.521Z'),
+        openPrice: 1.26101,
+        currentPrice: 1.24883,
+        currentTickValue: 1,
+        volume: 0.07,
+        swap: 0,
+        profit: -85.25999999999966,
+        commission: -0.25,
+        clientId: 'TE_GBPUSD_7hyINWqAlE',
+        stopLoss: 1.17721,
+        unrealizedProfit: -85.25999999999901,
+        realizedProfit: -6.536993168992922e-13,
+        updateSequenceNumber: 13246,
+        accountCurrencyExchangeRate: 1,
+        comment: 'test',
+        brokerComment: 'test2',
+      }]);
+      await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
+        id: '46871284',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        state: 'ORDER_STATE_PLACED',
+        symbol: 'AUDNZD',
+        magic: 123456,
+        platform: 'mt5',
+        time: '2020-04-20T08:38:58.270Z',
+        openPrice: 1.03,
+        currentPrice: 1.05206,
+        volume: 0.01,
+        currentVolume: 0.01,
+        comment: 'COMMENT2',
+        updateSequenceNumber: 13246,
+        accountCurrencyExchangeRate: 1,
+        brokerComment: 'test2',
+        clientId: 'TE_GBPUSD_7hyINWqAlE',
+      }]);
+      state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
+      hashes = await state.getHashes('cloud-g1', '1:ps-mpa-1');
+      sinon.assert.match(hashes.specificationsMd5, specificationsHash);
+      sinon.assert.match(hashes.positionsMd5, positionsHash);
+      sinon.assert.match(hashes.ordersMd5, ordersHash);
+    });
 
-  /**
-   * @test {TerminalState#getHashes}
-   */
-  it('should return hashes for terminal state data for cloud-g2 accounts', async () => {
-    const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01,"description":"Test1"},' +
+    /**
+     * @test {TerminalState#getHashes}
+     */
+    it('should return hashes for terminal state data for cloud-g2 accounts', async () => {
+      const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01,"description":"Test1"},' +
       '{"symbol":"EURUSD","tickSize":0.000001,"contractSize":1,"maxVolume":30000,' +
       '"hedgedMarginUsesLargerLeg":false,"digits":3,"description":"Test2"}]');
-    const positionsHash = md5('[{"id":"46214692","type":"POSITION_TYPE_BUY","symbol":"GBPUSD","magic":1000,' +
+      const positionsHash = md5('[{"id":"46214692","type":"POSITION_TYPE_BUY","symbol":"GBPUSD","magic":1000,' +
       '"time":"2020-04-15T02:45:06.521Z","updateTime":"2020-04-15T02:45:06.521Z","openPrice":1.26101,' + 
       '"volume":0.07,"swap":0,"commission":-0.25,"stopLoss":1.17721}]');
-    const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
+      const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
       '"symbol":"AUDNZD","magic":123456,"platform":"mt5","time":"2020-04-20T08:38:58.270Z","openPrice":1.03,' +
       '"volume":0.01,"currentVolume":0.01}]');
-    let hashes = await state.getHashes('cloud-g2', '1:ps-mpa-1');
-    sinon.assert.match(hashes.specificationsMd5, null);
-    sinon.assert.match(hashes.positionsMd5, null);
-    sinon.assert.match(hashes.ordersMd5, null);
-    await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
-      {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
-      {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
-        hedgedMarginUsesLargerLeg: false, digits: 3, description: 'Test2'}], []);
-    await state.onPositionsReplaced('1:ps-mpa-1', [{
-      id: '46214692',
-      type: 'POSITION_TYPE_BUY',
-      symbol: 'GBPUSD',
-      magic: 1000,
-      time: new Date('2020-04-15T02:45:06.521Z'),
-      updateTime: new Date('2020-04-15T02:45:06.521Z'),
-      openPrice: 1.26101,
-      currentPrice: 1.24883,
-      currentTickValue: 1,
-      volume: 0.07,
-      swap: 0,
-      profit: -85.25999999999966,
-      commission: -0.25,
-      clientId: 'TE_GBPUSD_7hyINWqAlE',
-      stopLoss: 1.17721,
-      unrealizedProfit: -85.25999999999901,
-      realizedProfit: -6.536993168992922e-13,
-      updateSequenceNumber: 13246,
-      accountCurrencyExchangeRate: 1,
-      comment: 'test',
-      brokerComment: 'test2',
-    }]);
-    await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
-      id: '46871284',
-      type: 'ORDER_TYPE_BUY_LIMIT',
-      state: 'ORDER_STATE_PLACED',
-      symbol: 'AUDNZD',
-      magic: 123456,
-      platform: 'mt5',
-      time: '2020-04-20T08:38:58.270Z',
-      openPrice: 1.03,
-      currentPrice: 1.05206,
-      volume: 0.01,
-      currentVolume: 0.01,
-      comment: 'COMMENT2',
-      updateSequenceNumber: 13246,
-      accountCurrencyExchangeRate: 1,
-      brokerComment: 'test2',
-      clientId: 'TE_GBPUSD_7hyINWqAlE',
-    }]);
-    state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-    hashes = await state.getHashes('cloud-g2', '1:ps-mpa-1');
-    sinon.assert.match(hashes.specificationsMd5, specificationsHash);
-    sinon.assert.match(hashes.positionsMd5, positionsHash);
-    sinon.assert.match(hashes.ordersMd5, ordersHash);
+      let hashes = await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.match(hashes.specificationsMd5, null);
+      sinon.assert.match(hashes.positionsMd5, null);
+      sinon.assert.match(hashes.ordersMd5, null);
+      await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
+        {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
+        {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
+          hedgedMarginUsesLargerLeg: false, digits: 3, description: 'Test2'}], []);
+      await state.onPositionsReplaced('1:ps-mpa-1', [{
+        id: '46214692',
+        type: 'POSITION_TYPE_BUY',
+        symbol: 'GBPUSD',
+        magic: 1000,
+        time: new Date('2020-04-15T02:45:06.521Z'),
+        updateTime: new Date('2020-04-15T02:45:06.521Z'),
+        openPrice: 1.26101,
+        currentPrice: 1.24883,
+        currentTickValue: 1,
+        volume: 0.07,
+        swap: 0,
+        profit: -85.25999999999966,
+        commission: -0.25,
+        clientId: 'TE_GBPUSD_7hyINWqAlE',
+        stopLoss: 1.17721,
+        unrealizedProfit: -85.25999999999901,
+        realizedProfit: -6.536993168992922e-13,
+        updateSequenceNumber: 13246,
+        accountCurrencyExchangeRate: 1,
+        comment: 'test',
+        brokerComment: 'test2',
+      }]);
+      await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
+        id: '46871284',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        state: 'ORDER_STATE_PLACED',
+        symbol: 'AUDNZD',
+        magic: 123456,
+        platform: 'mt5',
+        time: '2020-04-20T08:38:58.270Z',
+        openPrice: 1.03,
+        currentPrice: 1.05206,
+        volume: 0.01,
+        currentVolume: 0.01,
+        comment: 'COMMENT2',
+        updateSequenceNumber: 13246,
+        accountCurrencyExchangeRate: 1,
+        brokerComment: 'test2',
+        clientId: 'TE_GBPUSD_7hyINWqAlE',
+      }]);
+      state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
+      hashes = await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.match(hashes.specificationsMd5, specificationsHash);
+      sinon.assert.match(hashes.positionsMd5, positionsHash);
+      sinon.assert.match(hashes.ordersMd5, ordersHash);
+    });
+
+    /**
+     * @test {TerminalState#getHashes}
+     */
+    it('should cache specifications hash', async () => {
+      await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
+        {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'}], []);
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.calledOnce(getHashesSpy);
+      await state.onSymbolSpecificationsUpdated('1:ps-mpa-1', [
+        {symbol: 'AUDNZD', tickSize: 0.02, description: 'Test1'}], []);
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.calledTwice(getHashesSpy);
+    });
+
+    /**
+     * @test {TerminalState#getHashes}
+     */
+    it('should cache positions hash', async () => {
+      await state.onPositionsReplaced('1:ps-mpa-1', [{
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'POSITION_TYPE_BUY',
+        currentPrice: 9,
+        currentTickValue: 0.5,
+        openPrice: 8,
+        profit: 100,
+        volume: 2
+      }]);
+      state.onPositionsSynchronized('1:ps-mpa-1', 'synchronizationId');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.calledOnce(getHashesSpy);
+      state.onPositionUpdated('1:ps-mpa-1', {
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'POSITION_TYPE_BUY',
+        currentPrice: 9,
+        currentTickValue: 0.5,
+        openPrice: 8,
+        profit: 1000,
+        volume: 2
+      });
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.calledTwice(getHashesSpy);
+      state.onPositionRemoved('1:ps-mpa-1', '1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.calledThrice(getHashesSpy);
+      await state.onPositionsReplaced('1:ps-mpa-1', [{
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'POSITION_TYPE_BUY',
+        currentPrice: 9,
+        currentTickValue: 0.5,
+        openPrice: 8,
+        profit: 100,
+        volume: 2
+      }]);
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.callCount(getHashesSpy, 4);
+    });
+
+    /**
+     * @test {TerminalState#getHashes}
+     */
+    it('should cache orders hash', async () => {
+      await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        currentPrice: 9
+      }]);
+      await state.onPendingOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.calledTwice(getHashesSpy);
+      state.onPendingOrderUpdated('1:ps-mpa-1', {
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        currentPrice: 10
+      });
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.callCount(getHashesSpy, 3);
+      state.onPendingOrderCompleted('1:ps-mpa-1', '1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.callCount(getHashesSpy, 4);
+      await state.onPendingOrdersReplaced('1:ps-mpa-1', [{
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        currentPrice: 10
+      }]);
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      await state.getHashes('cloud-g2', '1:ps-mpa-1');
+      sinon.assert.callCount(getHashesSpy, 5);
+    });
+
   });
 
   /**

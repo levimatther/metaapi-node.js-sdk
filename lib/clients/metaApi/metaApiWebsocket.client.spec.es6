@@ -1342,7 +1342,11 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
       await client.synchronize('accountId', 0, 'ps-mpa-1', 'synchronizationId', new Date('2020-01-01T00:00:00.000Z'),
-        new Date('2020-01-02T00:00:00.000Z'), emptyHash, emptyHash, emptyHash);
+        new Date('2020-01-02T00:00:00.000Z'), () => ({
+          specificationsMd5: '1111',
+          positionsMd5: '2222',
+          ordersMd5: '3333'
+        }));
       requestReceived.should.be.true();
     });
 
