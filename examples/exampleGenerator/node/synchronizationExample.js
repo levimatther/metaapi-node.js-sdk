@@ -42,7 +42,15 @@ async function testMetaApiSynchronization() {
     // access history storage
     const historyStorage = connection.historyStorage;
     console.log('deals:', historyStorage.deals.slice(-5));
+    console.log('deals with id=1:', historyStorage.getDealsByTicket(1));
+    console.log('deals with positionId=1:', historyStorage.getDealsByPosition(1));
+    console.log('deals for the last day:', historyStorage.getDealsByTimeRange(new Date(Date.now() - 24 * 60 * 60 * 1000),
+      new Date()));
     console.log('history orders:', historyStorage.historyOrders.slice(-5));
+    console.log('history orders with id=1:', historyStorage.getHistoryOrdersByTicket(1));
+    console.log('history orders with positionId=1:', historyStorage.getHistoryOrdersByPosition(1));
+    console.log('history orders for the last day:', historyStorage.getHistoryOrdersByTimeRange(
+      new Date(Date.now() - 24 * 60 * 60 * 1000), new Date()));
 
     // trade
     console.log('Submitting pending order');
