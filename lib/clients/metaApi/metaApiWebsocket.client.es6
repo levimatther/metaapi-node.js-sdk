@@ -1263,6 +1263,11 @@ export default class MetaApiWebsocketClient {
     const region = this.getAccountRegion(accountId);
     if(request.instanceIndex) {
       instanceNumber = request.instanceIndex;
+    } else {
+      const instance = Object.keys(this._connectedHosts).find(i => i.startsWith(accountId));
+      if(instance) {
+        instanceNumber = instance.split(':')[1];
+      }
     }
     if(!this._socketInstancesByAccounts[instanceNumber]) {
       this._socketInstancesByAccounts[instanceNumber] = {};
@@ -1714,6 +1719,11 @@ export default class MetaApiWebsocketClient {
             );
           }
           this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
+          if(data.replicas === 1) {
+            this._subscriptionManager.cancelAccount(data.accountId);
+          } else {
+            this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
+          }
           await Promise.all(onConnectedPromises);
         }
       } else if (data.type === 'disconnected') {

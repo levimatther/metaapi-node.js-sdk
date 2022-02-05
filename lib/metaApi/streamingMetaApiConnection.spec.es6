@@ -420,7 +420,8 @@ describe('StreamingMetaApiConnection', () => {
     it('should subscribe to terminal', async () => {
       sandbox.stub(client, 'ensureSubscribe').resolves();
       await api.subscribe();
-      sinon.assert.calledWith(client.ensureSubscribe, 'accountId');
+      sinon.assert.calledWith(client.ensureSubscribe, 'accountId', 0);
+      sinon.assert.calledWith(client.ensureSubscribe, 'accountId', 1);
     });
 
   });

@@ -132,9 +132,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   async subscribe() {
     if(!this._closed) {
       this._websocketClient.ensureSubscribe(this._account.id, 0);
-      if(this._account.reliability === 'high') {
-        this._websocketClient.ensureSubscribe(this._account.id, 1);
-      }
+      this._websocketClient.ensureSubscribe(this._account.id, 1);
     }
   }
 
