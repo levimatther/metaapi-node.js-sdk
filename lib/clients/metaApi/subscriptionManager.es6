@@ -183,6 +183,8 @@ export default class SubscriptionManager {
     for (let instanceId of Object.keys(this._subscriptions).filter(key => key.startsWith(accountId))) {
       this.cancelSubscribe(instanceId);
     }
+    Object.keys(this._awaitingResubscribe).forEach(instanceNumber => 
+      delete this._awaitingResubscribe[instanceNumber][accountId]);
   }
 
   /**
@@ -218,6 +220,9 @@ export default class SubscriptionManager {
    * @param {String[]} reconnectAccountIds account ids to reconnect
    */
   onReconnected(instanceNumber, socketInstanceIndex, reconnectAccountIds) {
+    if(!this._awaitingResubscribe[instanceNumber]) {
+      this._awaitingResubscribe[instanceNumber] = {};
+    }
     try {
       const socketInstancesByAccounts = this._websocketClient.socketInstancesByAccounts[instanceNumber];
       for(let instanceId of Object.keys(this._subscriptions)){
@@ -228,14 +233,16 @@ export default class SubscriptionManager {
       }
       reconnectAccountIds.forEach(async accountId => {
         try {
-          if(!this._awaitingResubscribe[accountId]) {
-            this._awaitingResubscribe[accountId] = true;
+          if(!this._awaitingResubscribe[instanceNumber][accountId]) {
+            this._awaitingResubscribe[instanceNumber][accountId] = true;
             while(this.isAccountSubscribing(accountId, instanceNumber)) {
               await new Promise(res => setTimeout(res, 1000));
             }
-            delete this._awaitingResubscribe[accountId];
             await new Promise(res => setTimeout(res, Math.random() * 5000));
-            this.scheduleSubscribe(accountId, instanceNumber);
+            if(this._awaitingResubscribe[instanceNumber][accountId]) {
+              delete this._awaitingResubscribe[instanceNumber][accountId];
+              this.scheduleSubscribe(accountId, instanceNumber);
+            }
           }
         } catch (err) {
           this._logger.error(`${accountId}: Account resubscribe task failed`, err);

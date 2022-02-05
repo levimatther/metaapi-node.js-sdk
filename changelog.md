@@ -12,6 +12,7 @@
   - breaking change: replaced MetatraderDemoAccountApi with MetatraderAccountGeneratorApi since we can create live accounts now as well
   - breaking change: refactored MetatraderPosition model, see updated descriptions for *commission, *swap and *profit fields
   - optimized CPU load during mass synchronization
+  - support regular account synchronization with a non-zero instance index
 
 17.0.0
   - breaking change: updated typescript types

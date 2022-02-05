@@ -18,6 +18,8 @@ describe('MetaApiWebsocketClient', () => {
 
   let io;
   let server;
+  let server1;
+  let clock;
   let client;
   let sandbox;
   let httpClient = new HttpClient();
@@ -44,11 +46,12 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   beforeEach(async () => {
+    clock = sinon.useFakeTimers({shouldAdvanceTime: true});
     client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true,
       retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
     client.url = 'http://localhost:6784';
-    client._socketInstances = {'vint-hill': {0: []}};
+    client._socketInstances = {'vint-hill': {0: [], 1: []}};
     io = new Server(6784, {path: '/ws', pingTimeout: 1000000});
     io.on('connect', socket => {
       server = socket;
@@ -58,13 +61,23 @@ describe('MetaApiWebsocketClient', () => {
       }
     });
     client._regionsByAccounts.accountId = {region: 'vint-hill', connections: 1};
-    client._socketInstancesByAccounts = {0: {accountId: 0}};
+    client._socketInstancesByAccounts = {0: {accountId: 0}, 1: {accountId: 0}};
+    await client.connect(1, 'vint-hill');
+    server1 = server;
+    server1.on('request', async data => {
+      if (data.type === 'unsubscribe' && data.accountId === 'accountId') {
+        server1.emit('response', {requestId: data.requestId, type: 'response', accountId: 'accountId'});
+      }
+    });
     await client.connect(0, 'vint-hill');
     sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler, 
+      'activeSynchronizationIds').get(() => []);
+    sandbox.stub(client._socketInstances['vint-hill'][1][0].synchronizationThrottler, 
       'activeSynchronizationIds').get(() => []);
   });
 
   afterEach(async () => {
+    clock.restore();
     sandbox.restore();
     let resolve;
     let promise = new Promise(res => resolve = res);
@@ -77,7 +90,6 @@ describe('MetaApiWebsocketClient', () => {
    * @test {MetaApiWebsocketClient#_tryReconnect}
    */
   it('should change client id on reconnect', async () => {
-    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
     client.close();
     let clientId;
     let connectAmount = 0;
@@ -94,7 +106,6 @@ describe('MetaApiWebsocketClient', () => {
     await clock.tickAsync(1500);
     await new Promise(res => setTimeout(res, 50));
     connectAmount.should.be.aboveOrEqual(2);
-    clock.restore();
   });
 
   /**
@@ -911,6 +922,11 @@ describe('MetaApiWebsocketClient', () => {
           id: 1, error: 'NotFoundError', message: 'Account not found', requestId: data.requestId
         });
       });
+      server1.on('request', data => {
+        server1.emit('processingError', {
+          id: 1, error: 'NotFoundError', message: 'Account not found', requestId: data.requestId
+        });
+      });
       await client.unsubscribe('accountId');
     });
 
@@ -918,7 +934,6 @@ describe('MetaApiWebsocketClient', () => {
      * @test {MetaApiWebsocketClient#unsubscribe}
      */
     it('should ignore timeout error on unsubscribe', async () => {
-      let clock = sandbox.useFakeTimers({shouldAdvanceTime: true});
       let promise = client.unsubscribe('accountId').catch(() => {});
       await clock.tickAsync(15000);
       await promise;
@@ -930,7 +945,6 @@ describe('MetaApiWebsocketClient', () => {
     it('should repeat unsubscription on synchronization packets if account must be unsubscribed', async () => {
       let subscribeServerHandler = sandbox.stub();
       let unsubscribeServerHandler = sandbox.stub();
-      let clock = sandbox.useFakeTimers({shouldAdvanceTime: true});
       server.on('request', data => {
         let serverHandler;
         if (data.type === 'subscribe' && data.accountId === 'accountId') {
@@ -1090,8 +1104,12 @@ describe('MetaApiWebsocketClient', () => {
 
   describe('connection status synchronization', () => {
 
+    let sessionId;
+
     beforeEach(() => {
       sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+      sessionId = client.socketInstances['vint-hill'][0].sessionId;
+      client._socketInstancesByAccounts = {0: {accountId: 0}, 1: {accountId: 0}};
     });
 
     afterEach(() => {
@@ -1111,6 +1129,49 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onConnected, '0:ps-mpa-1', 2);
     });
 
+    it('should set instance index for rpc requests according to authenticated instances', async () => {
+      let listener = {
+        onConnected: () => {
+        }
+      };
+      let instanceCalled0 = false;
+      let instanceCalled1 = false;
+      let trade = {
+        actionType: 'ORDER_TYPE_SELL',
+        symbol: 'AUDNZD',
+        volume: 0.07
+      };
+      let response = {
+        numericCode: 10009,
+        stringCode: 'TRADE_RETCODE_DONE',
+        message: 'Request completed',
+        orderId: '46870472'
+      };
+      server.on('request', data => {
+        if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+          instanceCalled0 = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+        }
+      });
+      server1.on('request', data => {
+        if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+          instanceCalled1 = true;
+          server1.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+        }
+      });
+      sandbox.stub(listener, 'onConnected').resolves();
+      await client.trade('accountId', trade);
+      sinon.assert.match(instanceCalled0, true);
+      sinon.assert.match(instanceCalled1, false);
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 1, replicas: 1, sessionId});
+      await new Promise(res => setTimeout(res, 50));
+      await client.trade('accountId', trade);
+      sinon.assert.match(instanceCalled0, true);
+      sinon.assert.match(instanceCalled1, true);
+    });
+
     it('should process authenticated synchronization event with session id', async () => {
       let listener = {
         onConnected: () => {
@@ -1118,13 +1179,33 @@ describe('MetaApiWebsocketClient', () => {
       };
       sandbox.stub(listener, 'onConnected').resolves();
       client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-2',
+        instanceIndex: 0, replicas: 1, sessionId: 'wrong'});
       server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
-        instanceIndex: 2, replicas: 4, sessionId: 'wrong'});
-      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
-        instanceIndex: 0, replicas: 2, sessionId: client._sessionId});
+        instanceIndex: 0, replicas: 2, sessionId });
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.callCount(listener.onConnected, 1);
       sinon.assert.calledWith(listener.onConnected, '0:ps-mpa-1', 2);
+    });
+
+    it('should cancel subscribe on authenticated event', async () => {
+      let listener = {
+        onConnected: () => {}
+      };
+      sandbox.stub(listener, 'onConnected').resolves();
+      const cancelSubscribeStub = sandbox.stub(client._subscriptionManager, 'cancelSubscribe');
+      const cancelAccountStub = sandbox.stub(client._subscriptionManager, 'cancelAccount');
+      client.addSynchronizationListener('accountId', listener);
+      client._socketInstancesByAccounts[0].accountId2 = 0;
+      client._socketInstancesByAccounts[1].accountId2 = 0;
+      client._regionsByAccounts.accountId2 = {region: 'vint-hill', connections: 1};
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 0, replicas: 2, sessionId });
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId2', host: 'ps-mpa-2',
+        instanceIndex: 0, replicas: 1, sessionId });
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledWith(cancelSubscribeStub, 'accountId:0');
+      sinon.assert.calledWith(cancelAccountStub, 'accountId2');
     });
 
     it('should process broker connection status event', async () => {
@@ -1143,7 +1224,6 @@ describe('MetaApiWebsocketClient', () => {
     });
 
     it('should call an onDisconnect if there was no signal for a long time', async () => {
-      const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
       let listener = {
         onConnected: () => {},
         onDisconnected: () => {},
@@ -1176,7 +1256,6 @@ describe('MetaApiWebsocketClient', () => {
     });
 
     it('should close stream on timeout if another stream exists', async () => {
-      const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
       let listener = {
         onConnected: () => {},
         onDisconnected: () => {},
@@ -1226,7 +1305,6 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(onDisconnectedStub, '0:ps-mpa-2');
       sinon.assert.notCalled(client._subscriptionManager.onDisconnected);
       sinon.assert.calledWith(onTimeoutStub, 'accountId', 0);
-      clock.restore();
     });
 
     it('should process server-side health status event', async () => {
@@ -1903,7 +1981,7 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
       try {
-        await client.trade(trade);
+        await client.trade('accountId', trade);
         throw new Error('TimeoutError expected');
       } catch (err) {
         err.name.should.equal('TimeoutError');
@@ -1952,7 +2030,7 @@ describe('MetaApiWebsocketClient', () => {
       server.on('request', data => {
       });
       try {
-        await client.trade(trade);
+        await client.trade('accountId', trade);
         throw new Error('TimeoutError extected');
       } catch (err) {
         err.name.should.equal('TimeoutError');
@@ -2282,7 +2360,6 @@ describe('MetaApiWebsocketClient', () => {
   });
 
   it('should reconnect to server on disconnect', async () => {
-    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
     const trade = {
       actionType: 'ORDER_TYPE_SELL',
       symbol: 'AUDNZD',
@@ -2333,15 +2410,12 @@ describe('MetaApiWebsocketClient', () => {
     await clock.tickAsync(1500);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(requestCounter, 2);
-    clock.restore();
   });
 
   /**
    * @test {MetaApiWebsocketClient#rpcRequest}
    */
   it('should remove reconnect listener', async () => {
-    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
-
     let trade = {
       actionType: 'ORDER_TYPE_SELL',
       symbol: 'AUDNZD',
@@ -2389,14 +2463,12 @@ describe('MetaApiWebsocketClient', () => {
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledOnce(listener.onReconnected);
     sinon.assert.match(requestCounter, 2);
-    clock.restore();
   });
 
   /**
    * @test {MetaApiWebsocketClient#queuePacket}
    */
   it('should process packets in order', async () => {
-    const clock = sinon.useFakeTimers({shouldAdvanceTime: true});
     let ordersCallTime = 0;
     let positionsCallTime = 0;
     let disconnectedCallTime = 0;
@@ -2473,7 +2545,6 @@ describe('MetaApiWebsocketClient', () => {
     (ordersCallTime).should.be.above(pricesCallTime);
     (disconnectedCallTime).should.be.above(ordersCallTime);
     (positionsCallTime).should.be.above(disconnectedCallTime);
-    clock.restore();
   });
 
   /**

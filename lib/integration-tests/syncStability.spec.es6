@@ -57,7 +57,7 @@ const errors = [
   }
 ];
 
-let server;
+let server, server1;
 
 class FakeServer {
   constructor(){
@@ -126,23 +126,27 @@ class FakeServer {
   enableSync(socket){
     socket.removeAllListeners('request');
     socket.on('request', async data => {
-      if(data.type === 'subscribe') {
-        await new Promise(res => setTimeout(res, 200)); 
+      if(data.instanceIndex === 1) {
         await this.respond(socket, data);
-        this.statusTasks[data.accountId] = setInterval(() => this.emitStatus(socket, data.accountId), 100);
-        await new Promise(res => setTimeout(res, 50)); 
-        await this.authenticate(socket, data);
-      } else if (data.type === 'synchronize') {
-        await this.respond(socket, data);
-        await new Promise(res => setTimeout(res, 50)); 
-        await this.syncAccount(socket, data);
-      } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
-        await this.respond(socket, data);
-      } else if (data.type === 'getAccountInformation') {
-        await this.respondAccountInformation(socket, data);
-      } else if (data.type === 'unsubscribe') {
-        this.deleteStatusTask(data.accountId);
-        await this.respond(socket, data);
+      } else {
+        if(data.type === 'subscribe') {
+          await new Promise(res => setTimeout(res, 200)); 
+          await this.respond(socket, data);
+          this.statusTasks[data.accountId] = setInterval(() => this.emitStatus(socket, data.accountId), 100);
+          await new Promise(res => setTimeout(res, 50)); 
+          await this.authenticate(socket, data);
+        } else if (data.type === 'synchronize') {
+          await this.respond(socket, data);
+          await new Promise(res => setTimeout(res, 50)); 
+          await this.syncAccount(socket, data);
+        } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
+          await this.respond(socket, data);
+        } else if (data.type === 'getAccountInformation') {
+          await this.respondAccountInformation(socket, data);
+        } else if (data.type === 'unsubscribe') {
+          this.deleteStatusTask(data.accountId);
+          await this.respond(socket, data);
+        }
       }
     });
   }
@@ -152,12 +156,20 @@ class FakeServer {
     server.on('request', async data => {
       await this.respond(server, data);
     });
+    server1.removeAllListeners('request');
+    server1.on('request', async data => {
+      await this.respond(server1, data);
+    });
   }
 
   async start(port = 6785){
     this.io = new Server(port, {path: '/ws', pingTimeout: 1000000});
     this.io.on('connect', socket => {
-      server = socket;
+      if(server) {
+        server1 = socket;
+      } else {
+        server = socket;
+      }
       socket.emit('response', {type: 'response'});
       this.enableSync(socket);
     });
@@ -193,6 +205,7 @@ sequentialProcessing.forEach(param => {
         login: '50194988',
         name: 'mt5a',
         region: 'vint-hill',
+        reliability: 'regular',
         server: 'ICMarketsSC-Demo',
         provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
         magic: 123456,
@@ -244,6 +257,8 @@ sequentialProcessing.forEach(param => {
       sandbox.restore();
       clock.restore();
       await new Promise(res => setTimeout(res, 50));
+      server = null;
+      server1 = null;
     });
 
     it('should synchronize account', async () => {
@@ -313,6 +328,10 @@ sequentialProcessing.forEach(param => {
         socket.emit('response', {type: 'response'});
         socket.removeAllListeners('request');
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           if(data.type === 'subscribe') {
             await new Promise(res => setTimeout(res, 200)); 
             fakeServer.statusTasks.accountId = setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
@@ -476,7 +495,12 @@ sequentialProcessing.forEach(param => {
         server = socket;
         socket.emit('response', {type: 'response'});
         socket.removeAllListeners('request');
+        // eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           if(data.type === 'subscribe') {
             if (Object.keys(subscribedAccounts).length < 2) {
               subscribedAccounts[data.accountId] = true;
@@ -540,6 +564,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           if(data.type === 'subscribe') {
             if (Object.keys(subscribedAccounts).length < 2 || 
             (requestTimestamp !== 0 && Date.now() - 2 * 1000 > requestTimestamp)) {
@@ -607,6 +635,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           const sid = socket.id;
           if(data.type === 'subscribe') {
             if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2 && 
@@ -666,6 +698,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           const sid = socket.id;
           if(data.type === 'subscribe') {
             sids.push(sid);
@@ -707,6 +743,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           const sid = socket.id;
           if(data.type === 'subscribe') {
             if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2) {
@@ -768,6 +808,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           const sid = socket.id;
           if(data.type === 'subscribe') {
             if(Object.values(sidByAccounts).filter(accountSID => accountSID === sid).length >= 2 && 
@@ -867,6 +911,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           if(data.type === 'subscribe') {
             subscribeCalled = true;
           } else if (data.type === 'synchronize') {
@@ -914,6 +962,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           if(data.type === 'subscribe') {
             subscribeCalled = true;
           } else if (data.type === 'synchronize') {
@@ -955,6 +1007,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           if(data.type === 'subscribe') {
             await new Promise(res => setTimeout(res, 200)); 
             await fakeServer.respond(socket, data);
@@ -1006,6 +1062,10 @@ sequentialProcessing.forEach(param => {
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
         socket.on('request', async data => {
+          if(data.instanceIndex === 1) {
+            await fakeServer.respond(socket, data);
+            return;
+          }
           if(data.type === 'subscribe') {
             subscribeCounter++;
             await new Promise(res => setTimeout(res, 100)); 
@@ -1086,6 +1146,7 @@ sequentialProcessing.forEach(param => {
       connection.terminalState.connectedToBroker.should.equal(false);
 
       server.removeAllListeners('request');
+      server1.removeAllListeners('request');
       //eslint-disable-next-line complexity
       server.on('request', async data => {
         if(data.type === 'subscribe') {
