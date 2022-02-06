@@ -1,5 +1,5 @@
 18.0.1
-  - added a check if connection is open before requests
+  - throw error if a connecion method is invoked and connection is not active
 
 18.0.0
   - breaking change: refactored HistoryStorage & MemoryHistoryStorage classes
