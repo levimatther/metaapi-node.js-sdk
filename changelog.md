@@ -1,3 +1,6 @@
+18.0.1
+  - added a check if connection is open before requests
+
 18.0.0
   - breaking change: refactored HistoryStorage & MemoryHistoryStorage classes
   - breaking change: changed rpc connection initialization

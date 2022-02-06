@@ -39,7 +39,8 @@ describe('RpcMetaApiConnection', () => {
     getTick: () => {},
     getBook: () => {},
     waitSynchronized: () => {},
-    addAccountRegion: () => {}
+    addAccountRegion: () => {},
+    removeAccountRegion: () => {}
   };
 
   before(() => {
@@ -67,6 +68,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#waitSynchronized}
    */
   it('should wait until RPC application is synchronized', async () => {
+    await api.connect();
     sandbox.stub(client, 'waitSynchronized').onFirstCall().rejects(new TimeoutError('test'))
       .onSecondCall().rejects(new TimeoutError('test'))
       .onThirdCall().resolves('response');
@@ -76,13 +78,14 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#waitSynchronized}
    */
   it('should time out waiting for synchronization', async () => {
+    await api.connect();
     sandbox.stub(client, 'waitSynchronized').callsFake(async () => {
       await new Promise(res => setTimeout(res, 100)); 
       throw new TimeoutError('test');
     });
     try {
       await api.waitSynchronized(0.09); 
-      throw new Error('TimeoutError extected');
+      throw new Error('TimeoutError expected');
     } catch (err) {
       err.name.should.equal('TimeoutError');
     }
@@ -92,6 +95,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getAccountInformation}
    */
   it('should retrieve account information', async () => {
+    await api.connect();
     let accountInformation = {
       broker: 'True ECN Trading Ltd',
       currency: 'USD',
@@ -110,9 +114,37 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
+   * @test {MetaApiConnection#getAccountInformation}
+   */
+  it('should not process request if connection is not open', async () => {
+    try {
+      await api.getAccountInformation();
+      throw new Error('Error is expected');
+    } catch (err) {
+      err.message.should.equal('This connection has not been initialized yet,' +
+      ' please invoke await connection.connect()');
+    }
+  });
+
+  /**
+   * @test {MetaApiConnection#getAccountInformation}
+   */
+  it('should not process request if connection is closed', async () => {
+    await api.connect();
+    await api.close();
+    try {
+      await api.getAccountInformation();
+      throw new Error('Error is expected');
+    } catch (err) {
+      err.message.should.equal('This connection has been closed, please create a new connection');
+    }
+  });
+
+  /**
    * @test {MetaApiConnection#getPositions}
    */
   it('should retrieve positions', async () => {
+    await api.connect();
     let positions = [{
       id: '46214692',
       type: 'POSITION_TYPE_BUY',
@@ -142,6 +174,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getPosition}
    */
   it('should retrieve position by id', async () => {
+    await api.connect();
     let position = {
       id: '46214692',
       type: 'POSITION_TYPE_BUY',
@@ -171,6 +204,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getOrders}
    */
   it('should retrieve orders', async () => {
+    await api.connect();
     let orders = [{
       id: '46871284',
       type: 'ORDER_TYPE_BUY_LIMIT',
@@ -195,6 +229,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getOrder}
    */
   it('should retrieve order by id', async () => {
+    await api.connect();
     let order = {
       id: '46871284',
       type: 'ORDER_TYPE_BUY_LIMIT',
@@ -219,6 +254,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getHistoryOrdersByTicket}
    */
   it('should retrieve history orders by ticket', async () => {
+    await api.connect();
     let historyOrders = {
       historyOrders: [{
         clientId: 'TE_GBPUSD_7hyINWqAlE',
@@ -247,6 +283,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getHistoryOrdersByPosition}
    */
   it('should retrieve history orders by position', async () => {
+    await api.connect();
     let historyOrders = {
       historyOrders: [{
         clientId: 'TE_GBPUSD_7hyINWqAlE',
@@ -275,6 +312,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getHistoryOrdersByTimeRange}
    */
   it('should retrieve history orders by time range', async () => {
+    await api.connect();
     let historyOrders = {
       historyOrders: [{
         clientId: 'TE_GBPUSD_7hyINWqAlE',
@@ -305,6 +343,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getDealsByTicket}
    */
   it('should retrieve history deals by ticket', async () => {
+    await api.connect();
     let deals = {
       deals: [{
         clientId: 'TE_GBPUSD_7hyINWqAlE',
@@ -335,6 +374,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getDealsByPosition}
    */
   it('should retrieve history deals by position', async () => {
+    await api.connect();
     let deals = {
       deals: [{
         clientId: 'TE_GBPUSD_7hyINWqAlE',
@@ -365,6 +405,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getDealsByTimeRange}
    */
   it('should retrieve history deals by time range', async () => {
+    await api.connect();
     let deals = {
       deals: [{
         clientId: 'TE_GBPUSD_7hyINWqAlE',
@@ -397,6 +438,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#removeHistory}
    */
   it('should remove history', async () => {
+    await api.connect();
     sandbox.stub(client, 'removeHistory').resolves();
     await api.removeHistory('app');
     sinon.assert.calledWith(client.removeHistory, 'accountId', 'app');
@@ -406,6 +448,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createMarketBuyOrder}
    */
   it('should create market buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -423,6 +466,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createMarketBuyOrder}
    */
   it('should create market buy order with relative SL/TP', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -441,6 +485,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createMarketSellOrder}
    */
   it('should create market sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -458,6 +503,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createLimitBuyOrder}
    */
   it('should create limit buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -476,6 +522,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createLimitSellOrder}
    */
   it('should create limit sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -494,6 +541,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopBuyOrder}
    */
   it('should create stop buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -512,6 +560,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopSellOrder}
    */
   it('should create stop sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -530,6 +579,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopLimitBuyOrder}
    */
   it('should create stop limit buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -548,6 +598,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopLimitSellOrder}
    */
   it('should create stop limit sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -566,6 +617,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#modifyPosition}
    */
   it('should modify position', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -582,6 +634,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#closePositionPartially}
    */
   it('should close position partially', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -599,6 +652,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#closePosition}
    */
   it('should close position', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -615,6 +669,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#closeBy}
    */
   it('should close position by an opposite one', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -633,6 +688,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#closePositionsBySymbol}
    */
   it('should close positions by symbol', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -649,6 +705,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#modifyOrder}
    */
   it('should modify order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -665,6 +722,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#cancelOrder}
    */
   it('should cancel order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -681,6 +739,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getSymbols}
    */
   it('should retrieve symbols', async () => {
+    await api.connect();
     let symbols = ['EURUSD'];
     sandbox.stub(client, 'getSymbols').resolves(symbols);
     let actual = await api.getSymbols();
@@ -692,6 +751,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getSymbolSpecification}
    */
   it('should retrieve symbol specification', async () => {
+    await api.connect();
     let specification = {
       symbol: 'AUDNZD',
       tickSize: 0.00001,
@@ -709,6 +769,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getSymbolPrice}
    */
   it('should retrieve symbol price', async () => {
+    await api.connect();
     let price = {
       symbol: 'AUDNZD',
       bid: 1.05297,
@@ -726,6 +787,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getCandle}
    */
   it('should retrieve current candle', async () => {
+    await api.connect();
     let candle = {
       symbol: 'AUDNZD',
       timeframe: '15m',
@@ -749,6 +811,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getTick}
    */
   it('should retrieve latest tick', async () => {
+    await api.connect();
     let tick = {
       symbol: 'AUDNZD',
       time: new Date('2020-04-07T03:45:00.000Z'),
@@ -769,6 +832,7 @@ describe('RpcMetaApiConnection', () => {
    * @test {MetaApiConnection#getBook}
    */
   it('should retrieve latest order book', async () => {
+    await api.connect();
     let book = {
       symbol: 'AUDNZD',
       time: new Date('2020-04-07T03:45:00.000Z'),

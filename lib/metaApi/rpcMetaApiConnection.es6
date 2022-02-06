@@ -44,6 +44,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderAccountInformation>} promise resolving with account information
    */
   getAccountInformation() {
+    this._checkIsConnectionActive();
     return this._websocketClient.getAccountInformation(this._account.id);
   }
 
@@ -53,6 +54,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<Array<MetatraderPosition>} promise resolving with array of open positions
    */
   getPositions() {
+    this._checkIsConnectionActive();
     return this._websocketClient.getPositions(this._account.id);
   }
 
@@ -63,6 +65,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @return {Promise<MetatraderPosition>} promise resolving with MetaTrader position found
    */
   getPosition(positionId) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getPosition(this._account.id, positionId);
   }
 
@@ -72,6 +75,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @return {Promise<Array<MetatraderOrder>>} promise resolving with open MetaTrader orders
    */
   getOrders() {
+    this._checkIsConnectionActive();
     return this._websocketClient.getOrders(this._account.id);
   }
 
@@ -82,6 +86,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @return {Promise<MetatraderOrder>} promise resolving with metatrader order found
    */
   getOrder(orderId) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getOrder(this._account.id, orderId);
   }
 
@@ -92,6 +97,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   getHistoryOrdersByTicket(ticket) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getHistoryOrdersByTicket(this._account.id, ticket);
   }
 
@@ -102,6 +108,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   getHistoryOrdersByPosition(positionId) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getHistoryOrdersByPosition(this._account.id, positionId);
   }
 
@@ -115,6 +122,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderHistoryOrders>} promise resolving with request results containing history orders found
    */
   getHistoryOrdersByTimeRange(startTime, endTime, offset = 0, limit = 1000) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getHistoryOrdersByTimeRange(this._account.id, startTime, endTime, offset, limit);
   }
 
@@ -125,6 +133,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   getDealsByTicket(ticket) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getDealsByTicket(this._account.id, ticket);
   }
 
@@ -135,6 +144,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   getDealsByPosition(positionId) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getDealsByPosition(this._account.id, positionId);
   }
 
@@ -148,6 +158,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderDeals>} promise resolving with request results containing deals found
    */
   getDealsByTimeRange(startTime, endTime, offset = 0, limit = 1000) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getDealsByTimeRange(this._account.id, startTime, endTime, offset, limit);
   }
 
@@ -158,6 +169,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory(application) {
+    this._checkIsConnectionActive();
     return this._websocketClient.removeHistory(this._account.id, application);
   }
 
@@ -168,6 +180,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<Array<string>>} promise which resolves when symbols are retrieved
    */
   getSymbols() {
+    this._checkIsConnectionActive();
     return this._websocketClient.getSymbols(this._account.id);
   }
 
@@ -178,6 +191,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderSymbolSpecification>} promise which resolves when specification is retrieved
    */
   getSymbolSpecification(symbol) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getSymbolSpecification(this._account.id, symbol);
   }
 
@@ -191,6 +205,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderSymbolPrice>} promise which resolves when price is retrieved
    */
   getSymbolPrice(symbol, keepSubscription) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getSymbolPrice(this._account.id, symbol, keepSubscription);
   }
 
@@ -207,6 +222,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderCandle>} promise which resolves when candle is retrieved
    */
   getCandle(symbol, timeframe, keepSubscription = false) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getCandle(this._account.id, symbol, timeframe, keepSubscription);
   }
 
@@ -220,6 +236,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderTick>} promise which resolves when tick is retrieved
    */
   getTick(symbol, keepSubscription = false) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getTick(this._account.id, symbol, keepSubscription);
   }
 
@@ -233,6 +250,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderTick>} promise which resolves when order book is retrieved
    */
   getBook(symbol, keepSubscription = false) {
+    this._checkIsConnectionActive();
     return this._websocketClient.getBook(this._account.id, symbol, keepSubscription);
   }
 
@@ -243,6 +261,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @throws {TimeoutError} if application failed to synchronize with the teminal withing timeout allowed
    */
   async waitSynchronized(timeoutInSeconds=300) {
+    this._checkIsConnectionActive();
     const startTime = Date.now();
     // eslint-disable-next-line
     while(true) {

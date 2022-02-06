@@ -118,6 +118,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#removeHistory}
    */
   it('should remove history', async () => {
+    await api.connect();
     sandbox.stub(client, 'removeHistory').resolves();
     sandbox.stub(api.historyStorage, 'clear').resolves();
     await api.removeHistory('app');
@@ -129,6 +130,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#removeApplication}
    */
   it('should remove application', async () => {
+    await api.connect();
     sandbox.stub(client, 'removeApplication').resolves();
     sandbox.stub(api.historyStorage, 'clear').resolves();
     await api.removeApplication();
@@ -140,6 +142,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createMarketBuyOrder}
    */
   it('should create market buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -157,6 +160,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createMarketBuyOrder}
    */
   it('should create market buy order with relative SL/TP', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -175,6 +179,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createMarketSellOrder}
    */
   it('should create market sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -192,6 +197,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createLimitBuyOrder}
    */
   it('should create limit buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -210,6 +216,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createLimitSellOrder}
    */
   it('should create limit sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -228,6 +235,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopBuyOrder}
    */
   it('should create stop buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -246,6 +254,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopSellOrder}
    */
   it('should create stop sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -264,6 +273,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopLimitBuyOrder}
    */
   it('should create stop limit buy order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -282,6 +292,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#createStopLimitSellOrder}
    */
   it('should create stop limit sell order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -300,6 +311,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#modifyPosition}
    */
   it('should modify position', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -316,6 +328,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#closePositionPartially}
    */
   it('should close position partially', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -333,6 +346,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#closePosition}
    */
   it('should close position', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -349,6 +363,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#closeBy}
    */
   it('should close position by an opposite one', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -366,6 +381,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#closePositionsBySymbol}
    */
   it('should close positions by symbol', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -382,6 +398,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#modifyOrder}
    */
   it('should modify order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -398,6 +415,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#cancelOrder}
    */
   it('should cancel order', async () => {
+    await api.connect();
     let tradeResult = {
       error: 10009,
       description: 'TRADE_RETCODE_DONE',
@@ -418,6 +436,7 @@ describe('StreamingMetaApiConnection', () => {
      * @test {MetaApiConnection#subscribe}
      */
     it('should subscribe to terminal', async () => {
+      await api.connect();
       sandbox.stub(client, 'ensureSubscribe').resolves();
       await api.subscribe();
       sinon.assert.calledWith(client.ensureSubscribe, 'accountId', 0);
@@ -429,10 +448,31 @@ describe('StreamingMetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#synchronize}
    */
+  it('should not subscribe if connection is not open', async () => {
+    const ensureSubscribeStub = sandbox.stub(client, 'ensureSubscribe').resolves();
+    try {
+      await api.subscribe();
+      throw new Error('Error is expected');
+    } catch (err) {
+      err.message.should.equal('This connection has not been initialized yet,'+
+        ' please invoke await connection.connect()');
+    }
+    sinon.assert.notCalled(ensureSubscribeStub);
+  });
+
+  /**
+   * @test {MetaApiConnection#synchronize}
+   */
   it('should not subscribe if connection is closed', async () => {
+    await api.connect();
     const ensureSubscribeStub = sandbox.stub(client, 'ensureSubscribe').resolves();
     await api.close();
-    await api.subscribe();
+    try {
+      await api.subscribe();
+      throw new Error('Error is expected');
+    } catch (err) {
+      err.message.should.equal('This connection has been closed, please create a new connection');
+    }
     sinon.assert.notCalled(ensureSubscribeStub);
   });
 
@@ -443,6 +483,7 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize('1:ps-mpa-1');
@@ -458,6 +499,7 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry,
       new Date('2020-10-07T00:00:00.000Z'));
+    await api.connect();
     api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.synchronize('1:ps-mpa-1');
@@ -469,6 +511,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#subscribeToMarketData}
    */
   it('should subscribe to market data', async () => {
+    await api.connect();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     let promise = api.subscribeToMarketData('EURUSD', undefined, 1);
     api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
@@ -487,12 +530,13 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#subscribeToMarketData}
    */
   it('should not subscribe to symbol that has no specification', async () => {
+    await api.connect();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'AAAAA', bid: 1, ask: 1.1}]);
     try {
       await api.subscribeToMarketData('AAAAA');
-      throw new Error('ValidationError extected');
+      throw new Error('ValidationError expected');
     } catch (err) {
       err.name.should.equal('ValidationError');
     }
@@ -502,6 +546,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#unsubscribeFromMarketData}
    */
   it('should unsubscribe from market data', async () => {
+    await api.connect();
     await api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1',
       [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     sandbox.stub(client, 'unsubscribeFromMarketData').resolves();
@@ -521,6 +566,7 @@ describe('StreamingMetaApiConnection', () => {
      * @test {MetaApiConnection#onSubscriptionDowngrade}
      */
     it('should unsubscribe during market data subscription downgrade', async () => {
+      await api.connect();
       sandbox.stub(api, 'subscribeToMarketData').resolves();
       sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
       await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', undefined, [{type: 'ticks'}, {type: 'books'}]);
@@ -532,6 +578,7 @@ describe('StreamingMetaApiConnection', () => {
      * @test {MetaApiConnection#onSubscriptionDowngrade}
      */
     it('should update market data subscription on downgrade', async () => {
+      await api.connect();
       sandbox.stub(api, 'subscribeToMarketData').resolves();
       sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
       await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
@@ -545,6 +592,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#saveUptime}
    */
   it('should save uptime stats to the server', async () => {
+    await api.connect();
     sandbox.stub(client, 'saveUptime').resolves();
     await api.saveUptime({'1h': 100});
     sinon.assert.calledWith(client.saveUptime, 'accountId', {'1h': 100});
@@ -557,6 +605,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should initialize listeners, terminal state and history storage for accounts with user synch mode', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     should.exist(api.terminalState);
     should.exist(api.historyStorage);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api);
@@ -570,6 +619,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should add synchronization listeners', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     let listener = {};
     api.addSynchronizationListener(listener);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', listener);
@@ -581,6 +631,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should remove synchronization listeners', async () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     let listener = {};
     api.removeSynchronizationListener(listener);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', listener);
@@ -593,6 +644,7 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected('1:ps-mpa-1', 1);
@@ -610,6 +662,7 @@ describe('StreamingMetaApiConnection', () => {
     stub.onSecondCall().resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.onConnected('1:ps-mpa-1', 1);
@@ -624,6 +677,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should not synchronize if connection is closed', async () => {
     let synchronizeStub = sandbox.stub(client, 'synchronize');
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
     await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.close();
@@ -640,6 +694,7 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'unsubscribe').resolves();
     sandbox.stub(connectionRegistry, 'remove').returns();
     api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    await api.connect();
     await api.close();
     sinon.assert.calledWith(client.unsubscribe, 'accountId');
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
@@ -654,6 +709,7 @@ describe('StreamingMetaApiConnection', () => {
      * @test {MetaApiConnection#waitSynchronized}
      */
     it('should wait util synchronization complete', async () => {
+      await api.connect();
       sandbox.stub(client, 'waitSynchronized').resolves();
       sinon.assert.match(await api.isSynchronized('1:ps-mpa-1'), false);
       (await api.isSynchronized()).should.equal(false);
@@ -674,6 +730,7 @@ describe('StreamingMetaApiConnection', () => {
      * @test {MetaApiConnection#waitSynchronized}
      */
     it('should time out waiting for synchronization complete', async () => {
+      await api.connect();
       try {
         await api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
           timeoutInSeconds: 1, intervalInMilliseconds: 10});
@@ -690,6 +747,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#initialize}
    */
   it('should load data to history storage from disk', async () => {
+    await api.connect();
     sandbox.stub(api.historyStorage, 'initialize').resolves();
     await api.initialize();
     sinon.assert.calledOnce(api.historyStorage.initialize);
@@ -699,6 +757,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#onDisconnected}
    */
   it('should set synchronized false on disconnect', async () => {
+    await api.connect();
     await api.onConnected('1:ps-mpa-1', 2);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(api.synchronized, true);
@@ -710,6 +769,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#onDisconnected}
    */
   it('should delete state if stream closed', async () => {
+    await api.connect();
     await api.onConnected('1:ps-mpa-1', 2);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(api.synchronized, true);
@@ -721,6 +781,7 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#onDisconnected}
    */
   it('should create refresh subscriptions job', async () => {
+    await api.connect();
     sandbox.stub(client, 'refreshMarketDataSubscriptions').resolves();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     sandbox.stub(client, 'waitSynchronized').resolves();
