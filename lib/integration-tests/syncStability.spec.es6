@@ -1045,9 +1045,9 @@ sequentialProcessing.forEach(param => {
       try {
         clock.tickAsync(5000);
         await connection2.waitSynchronized({timeoutInSeconds: 5}); 
-        throw new Error('TimeoutError extected');
+        throw new Error('Error expected');
       } catch (err) {
-        err.name.should.equal('TimeoutError');
+        err.message.should.equal('This connection has been closed, please create a new connection');
       }
       sinon.assert.match(synchronizeCounter, 1);
     }).timeout(10000);

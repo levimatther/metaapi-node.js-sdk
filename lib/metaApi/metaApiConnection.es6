@@ -151,6 +151,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createMarketBuyOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY', symbol, volume},
       this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
@@ -166,6 +167,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createMarketSellOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL', symbol, volume},
       this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
@@ -182,6 +184,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createLimitBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_LIMIT', symbol,
       volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
@@ -198,6 +201,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createLimitSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_LIMIT', symbol,
       volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
@@ -214,6 +218,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createStopBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP', symbol,
       volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
@@ -230,6 +235,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createStopSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP', symbol,
       volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
   }
@@ -247,6 +253,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createStopLimitBuyOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
       symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}),
     this._application);
@@ -265,6 +272,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   createStopLimitSellOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
       symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}),
     this._application);
@@ -282,6 +290,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   modifyPosition(positionId, stopLoss, takeProfit, trailingStopLoss, stopPriceBase) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, 
       Object.assign({actionType: 'POSITION_MODIFY', positionId, trailingStopLoss, stopPriceBase},
         this._generateStopOptions(stopLoss, takeProfit)), this._application);
@@ -296,6 +305,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   closePositionPartially(positionId, volume, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_PARTIAL', positionId,
       volume}, options || {}), this._application);
   }
@@ -308,6 +318,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   closePosition(positionId, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_ID', positionId},
       options || {}), this._application);
   }
@@ -321,6 +332,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   closeBy(positionId, oppositePositionId, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_BY', positionId,
       closeByPositionId: oppositePositionId}, options || {}), this._application);
   }
@@ -333,6 +345,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   closePositionsBySymbol(symbol, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITIONS_CLOSE_SYMBOL', symbol},
       options || {}), this._application);
   }
@@ -348,6 +361,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   modifyOrder(orderId, openPrice, stopLoss, takeProfit, options = {}) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, 
       Object.assign({actionType: 'ORDER_MODIFY', orderId, openPrice},
         this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
@@ -360,6 +374,7 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @throws {TradeError} on trade error, check error properties for error code details
    */
   cancelOrder(orderId) {
+    this._checkIsConnectionActive();
     return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_CANCEL', orderId}, this._application);
   }
 
@@ -423,6 +438,15 @@ export default class MetaApiConnection extends SynchronizationListener {
       };
     }
     return this._stateByInstanceIndex['' + instanceIndex];
+  }
+
+  _checkIsConnectionActive() {
+    if(!this._opened) {
+      throw new Error('This connection has not been initialized yet, please invoke await connection.connect()');
+    }
+    if(this._closed) {
+      throw new Error('This connection has been closed, please create a new connection');
+    }
   }
 
 }

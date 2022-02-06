@@ -78,6 +78,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise resolving when the history is cleared
    */
   removeHistory(application) {
+    this._checkIsConnectionActive();
     this._historyStorage.clear();
     return this._websocketClient.removeHistory(this._account.id, application);
   }
@@ -88,6 +89,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise resolving when the history is cleared and application is removed
    */
   removeApplication() {
+    this._checkIsConnectionActive();
     this._historyStorage.clear();
     return this._websocketClient.removeApplication(this._account.id);
   }
@@ -99,6 +101,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @returns {Promise} promise which resolves when synchronization started
    */
   async synchronize(instanceIndex) {
+    this._checkIsConnectionActive();
     const instance = this.getInstanceNumber(instanceIndex);
     const host = this.getHostName(instanceIndex);
     let startingHistoryOrderTime = new Date(Math.max(
@@ -121,6 +124,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise which resolves when meta api connection is initialized
    */
   async initialize() {
+    this._checkIsConnectionActive();
     await this._historyStorage.initialize(this._account.id, this._connectionRegistry.application);
     this._websocketClient.addAccountRegion(this._account.id, this._account.region);
   }
@@ -130,10 +134,9 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @returns {Promise} promise which resolves when subscription is initiated
    */
   async subscribe() {
-    if(!this._closed) {
-      this._websocketClient.ensureSubscribe(this._account.id, 0);
-      this._websocketClient.ensureSubscribe(this._account.id, 1);
-    }
+    this._checkIsConnectionActive();
+    this._websocketClient.ensureSubscribe(this._account.id, 0);
+    this._websocketClient.ensureSubscribe(this._account.id, 1);
   }
 
   /**
@@ -147,6 +150,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @returns {Promise} promise which resolves when subscription request was processed
    */
   async subscribeToMarketData(symbol, subscriptions, instanceIndex, timeoutInSeconds) {
+    this._checkIsConnectionActive();
     if(!this._terminalState.specification(symbol)){
       throw new ValidationError(`Cannot subscribe to market data for symbol ${symbol} because ` +
       'symbol does not exist');
@@ -182,6 +186,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
   unsubscribeFromMarketData(symbol, subscriptions, instanceIndex) {
+    this._checkIsConnectionActive();
     if (!subscriptions) {
       delete this._subscriptions[symbol];
     } else if (this._subscriptions[symbol]) {
@@ -256,6 +261,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @returns {Array<MarketDataSubscription>} list of market data subscriptions for the symbol
    */
   subscriptions(symbol) {
+    this._checkIsConnectionActive();
     return (this._subscriptions[symbol] || {}).subscriptions;
   }
 
@@ -265,6 +271,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @returns {Promise} promise which resolves when uptime statistics is submitted
    */
   saveUptime(uptime) {
+    this._checkIsConnectionActive();
     return this._websocketClient.saveUptime(this._account.id, uptime);
   }
 
@@ -289,6 +296,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {SynchronizationListener} listener synchronization listener to add
    */
   addSynchronizationListener(listener) {
+    this._checkIsConnectionActive();
     this._synchronizationListeners.push(listener);
     this._websocketClient.addSynchronizationListener(this._account.id, listener);
   }
@@ -298,6 +306,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
   removeSynchronizationListener(listener) {
+    this._checkIsConnectionActive();
     this._synchronizationListeners = this._synchronizationListeners.filter(l => l !== listener);
     this._websocketClient.removeSynchronizationListener(this._account.id, listener);
   }
@@ -443,6 +452,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   // eslint-disable-next-line complexity
   async waitSynchronized(opts) {
+    this._checkIsConnectionActive();
     opts = opts || {};
     let instanceIndex = opts.instanceIndex;
     let synchronizationId = opts.synchronizationId;
