@@ -1,3 +1,6 @@
+18.0.2
+  - fixed connection url generator
+
 18.0.1
   - throw error if a connecion method is invoked and connection is not active
 
