@@ -2235,7 +2235,7 @@ export default class MetaApiWebsocketClient {
         });
 
         const getUrl = (hostname) => 
-          `https://${hostname}.${region}-${String.fromCharCode(97 + instanceNumber)}.${urlSettings.domain}`;
+          `https://${hostname}.${region}-${String.fromCharCode(97 + Number(instanceNumber))}.${urlSettings.domain}`;
 
         let url;
         if(this._useSharedClientApi) {
