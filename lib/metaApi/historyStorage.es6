@@ -23,6 +23,8 @@ export default class HistoryStorage extends SynchronizationListener {
   async initialize(accountId, application) {
     this._accountId = accountId;
     this._application = application;
+    this._orderSynchronizationFinished = {};
+    this._dealSynchronizationFinished = {};
   }
 
   /**

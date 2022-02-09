@@ -1,3 +1,6 @@
+18.0.4
+ - initialize protected properties in base history storage
+
 18.0.3
   - fixed browser SDK compattibility
 
