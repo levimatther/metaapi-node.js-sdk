@@ -1,21 +1,21 @@
 'use strict';
 
 import HistoryDatabase from './historyDatabase';
-import path from 'path';
+import {getLogger} from '../../logger';
 import fs from 'fs';
-import LoggerManager from '../../logger';
+import path from 'path';
 
 /**
  * Provides access to history database stored on filesystem
  */
-module.exports = class FilesystemHistoryDatabase extends HistoryDatabase {
+export default class FilesystemHistoryDatabase extends HistoryDatabase {
 
   /**
    * Constructs the class instance
    */
   constructor() {
     super();
-    this._logger = LoggerManager.getLogger('FilesystemHistoryDatabase');
+    this._logger = getLogger('FilesystemHistoryDatabase');
   }
 
   /**
@@ -121,4 +121,4 @@ module.exports = class FilesystemHistoryDatabase extends HistoryDatabase {
     }
   }
 
-};
+}

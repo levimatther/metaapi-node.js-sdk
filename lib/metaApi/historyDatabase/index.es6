@@ -4,9 +4,9 @@ const isBrowser = process.title === 'browser';
 
 let HistoryDatabase;
 if(isBrowser) {
-  HistoryDatabase = require('./browserHistoryDatabase');
+  HistoryDatabase = require('./browserHistoryDatabase').default;
 } else {
-  HistoryDatabase = require('./filesystemHistoryDatabase');
+  HistoryDatabase = require('./filesystemHistoryDatabase').default;
 }
 
 export default HistoryDatabase;
