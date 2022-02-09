@@ -1,4 +1,4 @@
-18.0.4
+18.0.5
  - initialize protected properties in base history storage
 
 18.0.3
