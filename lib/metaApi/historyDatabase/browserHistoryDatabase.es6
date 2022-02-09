@@ -1,20 +1,20 @@
 'use strict';
 
 import HistoryDatabase from './historyDatabase';
-import LoggerManager from '../../logger';
+import Logger from '../../logger';
 import {openDB} from 'idb';
 
 /**
  * Provides access to history database stored in a browser IndexedDB
  */
-module.exports = class BrowserHistoryDatabase extends HistoryDatabase {
+export default class BrowserHistoryDatabase extends HistoryDatabase {
 
   /**
    * Constructs the class instance
    */
   constructor() {
     super();
-    this._logger = LoggerManager.getLogger('BrowserHistoryDatabase');
+    this._logger = Logger.getLogger('BrowserHistoryDatabase');
   }
 
   /**
@@ -161,4 +161,4 @@ module.exports = class BrowserHistoryDatabase extends HistoryDatabase {
     }
   }
 
-};
+}

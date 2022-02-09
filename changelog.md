@@ -1,3 +1,6 @@
+18.0.3
+  - fixed browser SDK compattibility
+
 18.0.2
   - fixed connection url generator
 
