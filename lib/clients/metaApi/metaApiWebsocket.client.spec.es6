@@ -212,7 +212,7 @@ describe('MetaApiWebsocketClient', () => {
   /**
    * @test {MetaApiWebsocketClient#addAccountRegion}
    */
-  it('should add account region', () => {
+  it('should add account region', async () => {
     client.addAccountRegion('accountId2', 'vint-hill');
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
     client.addAccountRegion('accountId2', 'vint-hill');
@@ -220,6 +220,38 @@ describe('MetaApiWebsocketClient', () => {
     client.removeAccountRegion('accountId2');
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
     client.removeAccountRegion('accountId2');
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    await clock.tickAsync(350000);    
+    sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#addAccountRegion}
+   */
+  it('should delay region deletion if a request is made', async () => {
+    server.on('request', data => {
+      if (data.type === 'getAccountInformation' && data.accountId === 'accountId2' &&
+        data.application === 'RPC') {
+        server.emit('response', {
+          type: 'response', accountId: data.accountId, requestId: data.requestId,
+          accountInformation
+        });
+      }
+    });
+
+    client.addAccountRegion('accountId2', 'vint-hill');
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    await client.getAccountInformation('accountId2');
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    await clock.tickAsync(340000);
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    await client.getAccountInformation('accountId2');
+    client.removeAccountRegion('accountId2');
+    await clock.tickAsync(200000);
+    await client.getAccountInformation('accountId2');
+    await clock.tickAsync(150000);
+    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+    await clock.tickAsync(200000);
     sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
   });
 
