@@ -1,3 +1,7 @@
+18.0.6
+ - added increasing wait time on socket failed reconnect
+ - fixed region data management for websocket client
+
 18.0.5
  - initialize protected properties in base history storage
 

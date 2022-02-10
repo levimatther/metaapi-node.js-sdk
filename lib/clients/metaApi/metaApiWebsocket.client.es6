@@ -55,6 +55,7 @@ export default class MetaApiWebsocketClient {
     this._useSharedClientApi = validator.validateBoolean(opts.useSharedClientApi, false, 'useSharedClientApi');
     this._unsubscribeThrottlingInterval = validator.validateNonZero(opts.unsubscribeThrottlingIntervalInSeconds, 10,
       'unsubscribeThrottlingIntervalInSeconds') * 1000;
+    this._socketMinimumReconnectTimeout = 500;
     this._token = token;
     this._synchronizationListeners = {};
     this._latencyListeners = [];
@@ -77,6 +78,8 @@ export default class MetaApiWebsocketClient {
       this._packetLogger.start();
     }
     this._logger = LoggerManager.getLogger('MetaApiWebsocketClient');
+    this._clearRegionsJob = this._clearRegionsJob.bind(this);
+    setInterval(this._clearRegionsJob, 30000);
   }
 
   /**
@@ -196,7 +199,8 @@ export default class MetaApiWebsocketClient {
     if(!this._regionsByAccounts[accountId]) {
       this._regionsByAccounts[accountId] = {
         region,
-        connections: 1
+        connections: 1,
+        lastUsed: Date.now()
       };
     } else {
       this._regionsByAccounts[accountId].connections++;
@@ -209,9 +213,7 @@ export default class MetaApiWebsocketClient {
    */
   removeAccountRegion(accountId) {
     if(this._regionsByAccounts[accountId]) {
-      if(this._regionsByAccounts[accountId].connections === 1) {
-        delete this._regionsByAccounts[accountId];
-      } else {
+      if(this._regionsByAccounts[accountId].connections > 0) {
         this._regionsByAccounts[accountId].connections--; 
       }
     }
@@ -263,6 +265,7 @@ export default class MetaApiWebsocketClient {
     const socketInstanceIndex = this._socketInstances[region][instanceNumber].length;
     const instance = {
       id: socketInstanceIndex,
+      reconnectWaitTime: this._socketMinimumReconnectTimeout,
       connected: false,
       requestResolves: {},
       resolved: false,
@@ -301,6 +304,7 @@ export default class MetaApiWebsocketClient {
     socketInstance.on('connect', async () => {
       // eslint-disable-next-line no-console
       this._logger.info('MetaApi websocket client connected to the MetaApi server');
+      instance.reconnectWaitTime = this._socketMinimumReconnectTimeout;
       instance.isReconnecting = false;
       if (!instance.resolved) {
         instance.resolved = true;
@@ -1231,6 +1235,7 @@ export default class MetaApiWebsocketClient {
 
   _tryReconnect(instanceNumber, socketInstanceIndex, region) {
     const instance = this.socketInstances[region][instanceNumber][socketInstanceIndex];
+    instance.reconnectWaitTime = Math.min(instance.reconnectWaitTime * 2, 30000);
     return new Promise((resolve) => setTimeout(async () => {
       if (!instance.socket.connected && !instance.isReconnecting && instance.connected) {
         try {
@@ -1247,7 +1252,7 @@ export default class MetaApiWebsocketClient {
         }
       }
       resolve();
-    }, 1000));
+    }, instance.reconnectWaitTime));
   }
 
   /**
@@ -1261,6 +1266,7 @@ export default class MetaApiWebsocketClient {
     let socketInstanceIndex = null;
     let instanceNumber = 0;
     const region = this.getAccountRegion(accountId);
+    this._refreshAccountRegion(accountId);
     if(request.instanceIndex) {
       instanceNumber = request.instanceIndex;
     } else {
@@ -2269,6 +2275,22 @@ export default class MetaApiWebsocketClient {
       return !!lastTime;
     }
     return false;
+  }
+
+  _refreshAccountRegion(accountId) {
+    if(this._regionsByAccounts[accountId]) {
+      this._regionsByAccounts[accountId].lastUsed = Date.now();
+    }
+  }
+
+  _clearRegionsJob() {
+    const date = Date.now();
+    Object.keys(this._regionsByAccounts).forEach(accountId => {
+      const data = this._regionsByAccounts[accountId];
+      if(data.connections === 0 && date - data.lastUsed > 300000) {
+        delete this._regionsByAccounts[accountId];
+      }
+    });
   }
 
 }
