@@ -296,7 +296,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {SynchronizationListener} listener synchronization listener to add
    */
   addSynchronizationListener(listener) {
-    this._checkIsConnectionActive();
     this._synchronizationListeners.push(listener);
     this._websocketClient.addSynchronizationListener(this._account.id, listener);
   }
@@ -306,7 +305,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
   removeSynchronizationListener(listener) {
-    this._checkIsConnectionActive();
     this._synchronizationListeners = this._synchronizationListeners.filter(l => l !== listener);
     this._websocketClient.removeSynchronizationListener(this._account.id, listener);
   }

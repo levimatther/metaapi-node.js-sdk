@@ -1,6 +1,9 @@
-18.0.6
+18.0.7
  - added increasing wait time on socket failed reconnect
  - fixed region data management for websocket client
+
+18.0.6
+ - make it possible to add and remove listeners when connection is not connected yet
 
 18.0.5
  - initialize protected properties in base history storage
