@@ -1,4 +1,4 @@
-import MetatraderAccountGeneratorClient, { MetatraderAccountCredentialsDto, NewMT4Account, NewMT5Account } from "../clients/metaApi/metatraderAccountGenerator.client";
+import MetatraderAccountGeneratorClient, { MetatraderAccountCredentialsDto, NewMT4DemoAccount, NewMT4LiveAccount, NewMT5DemoAccount, NewMT5LiveAccount } from "../clients/metaApi/metatraderAccountGenerator.client";
 import MetatraderAccountCredentials from "./metatraderAccountCredentials";
 
 /**

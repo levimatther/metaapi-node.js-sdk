@@ -1,3 +1,6 @@
+18.0.8
+  - fix typescript types
+
 18.0.7
  - added increasing wait time on socket failed reconnect
  - fixed region data management for websocket client
