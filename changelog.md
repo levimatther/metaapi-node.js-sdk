@@ -1,6 +1,6 @@
 18.0.9
-  - Fixed typescript export
-  - Fixed BrowserHistoryDatabase
+  - fix typescript export
+  - fix BrowserHistoryDatabase
 
 18.0.8
   - fix typescript types
