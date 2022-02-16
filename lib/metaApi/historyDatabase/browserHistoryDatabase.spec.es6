@@ -36,5 +36,14 @@ describe('BrowserHistoryDatabase', () => {
     deals.should.match([{id: '1'}, {id: '2'}]);
     historyOrders.should.match([{id: '2'}, {id: '3'}]);
   });
+  it('should read db contents only for current account and application', async () => {
+    await db.flush('31а3c7b9-958f-4827-96f9-7d296c8ad03e', 'MetaApi', [{id: '4'}], [{id: '5'}]);
+    await db.flush('96773bff-27f4-4070-91eg-d6ba828ae9051', 'MetaApi', [{id: '2'}], [{id: '1'}]);
+    await db.flush('96773bff-27f4-4070-91eg-d6ba828ae9051', 'MetaApi', [{id: '3'}], [{id: '2'}]);
+    let {deals, historyOrders} = await db.loadHistory('31а3c7b9-958f-4827-96f9-7d296c8ad03e', 'MetaApi');
+    deals.should.match([{id: '5'}]);
+    deals.length.should.eql(1);
+    historyOrders.should.match([{id: '4'}]);
+  });
 
 });
