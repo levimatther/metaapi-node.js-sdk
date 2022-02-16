@@ -37,10 +37,10 @@ export default class BrowserHistoryDatabase extends HistoryDatabase {
   async loadHistory(accountId, application) {
     let db;
     try {
-      db = await this._getDatabase(accountId, application);
-      let deals = await this._readDb(db, accountId + '-' + application + '-deals');
+      db = await this._getDatabase();
+      let deals = await this._readDb(db, 'deals', accountId + '-' + application);
       deals.forEach(deal => deal.time = new Date(deal.time));
-      let historyOrders = await this._readDb(db, accountId + '-' + application + '-historyOrders');
+      let historyOrders = await this._readDb(db, 'historyOrders', accountId + '-' + application);
       historyOrders.forEach(historyOrder => {
         historyOrder.time = new Date(historyOrder.time);
         historyOrder.doneTime = new Date(historyOrder.doneTime);
@@ -66,13 +66,17 @@ export default class BrowserHistoryDatabase extends HistoryDatabase {
    * @return {Promise} promise resolving when the history is removed
    */
   async clear(accountId, application) {
+    const prefix = accountId + '-' + application;
+    const range = IDBKeyRange.bound(prefix, prefix + ':');
     let db;
     try {
-      db = await this._getDatabase(accountId, application);
-      await db.clear(accountId + '-' + application + '-deals');
-      await db.clear(accountId + '-' + application + '-dealsIndex');
-      await db.clear(accountId + '-' + application + '-historyOrders');
-      await db.clear(accountId + '-' + application + '-historyOrdersIndex');
+      db = await this._getDatabase();
+      await db.delete('deals', range);
+      await db.delete('dealsIndex', range);
+      await db.delete('historyOrders', range);
+      await db.delete('historyOrdersIndex', range);
+    } catch (e) {
+      this._logger.warn(`${accountId}: failed to clear history storage`, e);
     } finally {
       try {
         await db.close();
@@ -93,9 +97,11 @@ export default class BrowserHistoryDatabase extends HistoryDatabase {
   async flush(accountId, application, newHistoryOrders, newDeals) {
     let db;
     try {
-      db = await this._getDatabase(accountId, application);
-      await this._appendDb(db, accountId + '-' + application + '-deals', newDeals);
-      await this._appendDb(db, accountId + '-' + application + '-historyOrders', newHistoryOrders);
+      db = await this._getDatabase();
+      await this._appendDb(db, 'deals', accountId + '-' + application, newDeals);
+      await this._appendDb(db, 'historyOrders', accountId + '-' + application, newHistoryOrders);
+    } catch (e) {
+      this._logger.warn(`${accountId}: failed to flush history storage`, e);
     } finally {
       try {
         await db.close();
@@ -105,7 +111,7 @@ export default class BrowserHistoryDatabase extends HistoryDatabase {
     }
   }
 
-  async _getDatabase(accountId, application) {
+  async _getDatabase() {
     const keyPath = 'id';
     const db = await openDB('metaapi', 2, {
       upgrade(database, oldVersion, newVersion, transaction) {
@@ -117,25 +123,25 @@ export default class BrowserHistoryDatabase extends HistoryDatabase {
             database.deleteObjectStore('historyOrders');
           }
         }
-        if (!database.objectStoreNames.contains(accountId + '-' + application + '-dealsIndex')) {
-          database.createObjectStore(accountId + '-' + application + '-dealsIndex', {keyPath});
+        if (!database.objectStoreNames.contains('dealsIndex')) {
+          database.createObjectStore('dealsIndex', {keyPath});
         }
-        if (!database.objectStoreNames.contains(accountId + '-' + application + '-deals')) {
-          database.createObjectStore(accountId + '-' + application + '-deals', {keyPath});
+        if (!database.objectStoreNames.contains('deals')) {
+          database.createObjectStore('deals', {keyPath});
         }
-        if (!database.objectStoreNames.contains(accountId + '-' + application + '-historyOrdersIndex')) {
-          database.createObjectStore(accountId + '-' + application + '-historyOrdersIndex', {keyPath});
+        if (!database.objectStoreNames.contains('historyOrdersIndex')) {
+          database.createObjectStore('historyOrdersIndex', {keyPath});
         }
-        if (!database.objectStoreNames.contains(accountId + '-' + application + '-historyOrders')) {
-          database.createObjectStore(accountId + '-' + application + '-historyOrders', {keyPath});
+        if (!database.objectStoreNames.contains('historyOrders')) {
+          database.createObjectStore('historyOrders', {keyPath});
         }
       },
     });
     return db;
   }
 
-  async _readDb(db, store) {
-    const keys = await db.getAllKeys(store);
+  async _readDb(db, store, prefix) {
+    const keys = await db.getAllKeys(store, IDBKeyRange.bound(prefix, prefix + '-' + ':'));
     let result = [];
     for (let key of keys) {
       let value = await db.get(store, key);
@@ -151,13 +157,13 @@ export default class BrowserHistoryDatabase extends HistoryDatabase {
     return result;
   }
 
-  async _appendDb(db, store, records) {
+  async _appendDb(db, store, prefix, records) {
     if (records && records.length) {
-      let lastKey = await db.get(store + 'Index', 'sn');
+      let lastKey = await db.get(store + 'Index', prefix + '-' + 'sn');
       let index = (lastKey || {index: 0}).index + 1;
       let data = records.map(r => JSON.stringify(r) + '\n').join('');
-      await db.put(store, {data, id: '' + index});
-      await db.put(store + 'Index', {id: 'sn', index});
+      await db.put(store, {data, id: prefix + '-' + index});
+      await db.put(store + 'Index', {id: prefix + '-' + 'sn', index});
     }
   }
 

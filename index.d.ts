@@ -1,1 +1,3 @@
-declare module 'metaapi.cloud-sdk';
+import MetaApi from "./lib/metaApi/metaApi";
+export default MetaApi;
+export * from './lib';
