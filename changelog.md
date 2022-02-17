@@ -1,3 +1,6 @@
+18.1.0
+  - added ability to specify region to only allow region accounts
+
 18.0.9
   - fix typescript export
   - fix BrowserHistoryDatabase

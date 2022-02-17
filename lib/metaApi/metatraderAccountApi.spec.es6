@@ -701,6 +701,92 @@ describe('MetatraderAccountApi', () => {
   });
 
   /**
+   * @test {MetatraderAccount#getStreamingConnection}
+   */
+  it('should connect to an MT terminal if in specified region', async () => {
+    sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
+    sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
+    metaApiWebsocketClient.region = 'vint-hill';
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'vint-hill'});
+    let account = await api.getAccount();
+    let storage = {
+      lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
+      lastDealTime: () => new Date('2020-01-02T00:00:00.000Z'),
+      loadDataFromDisk: () => ({deals: [], historyOrders: []})
+    };
+    sandbox.spy(connectionRegistry, 'connect');
+    let connection = account.getStreamingConnection(storage);
+    sinon.assert.calledWith(connectionRegistry.connect, account, storage);
+  });
+
+  /**
+   * @test {MetatraderAccount#getStreamingConnection}
+   */
+  it('should not connect to an MT terminal if in different region', async () => {
+    sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
+    sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
+    metaApiWebsocketClient.region = 'vint-hill';
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'new-york'});
+    let account = await api.getAccount();
+    let storage = {
+      lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
+      lastDealTime: () => new Date('2020-01-02T00:00:00.000Z'),
+      loadDataFromDisk: () => ({deals: [], historyOrders: []})
+    };
+    try {
+      let connection = account.getStreamingConnection(storage);
+      throw new Error('Validation error expected');
+    } catch (error) {
+      error.message.should.equal('Account id is not on specified region vint-hill');
+    }
+  });
+
+  /**
+   * @test {MetatraderAccount#getRPCConnection}
+   */
+  it('should create RPC connection', async () => {
+    sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
+    sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
+    metaApiWebsocketClient.region = 'vint-hill';
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'vint-hill'});
+    let account = await api.getAccount();
+    sandbox.spy(connectionRegistry, 'connect');
+    account.getRPCConnection();
+  });
+
+  /**
+   * @test {MetatraderAccount#getRPCConnection}
+   */
+  it('should create RPC connection if in specified region', async () => {
+    sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
+    sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
+    metaApiWebsocketClient.region = 'vint-hill';
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'vint-hill'});
+    let account = await api.getAccount();
+    sandbox.spy(connectionRegistry, 'connect');
+    account.getRPCConnection();
+  });
+
+  /**
+   * @test {MetatraderAccount#getRPCConnection}
+   */
+  it('should not create RPC connection if in different region', async () => {
+    sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
+    sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
+    metaApiWebsocketClient.region = 'vint-hill';
+    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'new-york'});
+    let account = await api.getAccount();
+    sandbox.spy(connectionRegistry, 'connect');
+    
+    try {
+      account.getRPCConnection();
+      throw new Error('Validation error expected');
+    } catch (error) {
+      error.message.should.equal('Account id is not on specified region vint-hill');
+    }
+  });
+
+  /**
    * @test {MetatraderAccount#update}
    */
   it('should update MT account', async () => {
