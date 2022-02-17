@@ -372,6 +372,11 @@ export default class MetatraderAccount {
    * @return {StreamingMetaApiConnection} MetaApi connection
    */
   getStreamingConnection(historyStorage, historyStartTime) {
+    if(this._metaApiWebsocketClient.region && this._metaApiWebsocketClient.region !== this.region) {
+      throw new ValidationError(
+        `Account ${this.id} is not on specified region ${this._metaApiWebsocketClient.region}`
+      );
+    }
     return this._connectionRegistry.connect(this, historyStorage, historyStartTime);
   }
 
@@ -380,6 +385,11 @@ export default class MetatraderAccount {
    * @returns {RpcMetaApiConnection} MetaApi connection
    */
   getRPCConnection() {
+    if(this._metaApiWebsocketClient.region && this._metaApiWebsocketClient.region !== this.region) {
+      throw new ValidationError(
+        `Account ${this.id} is not on specified region ${this._metaApiWebsocketClient.region}`
+      );
+    }
     return new RpcMetaApiConnection(this._metaApiWebsocketClient, this);
   }
 

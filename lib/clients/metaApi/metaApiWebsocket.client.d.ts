@@ -33,6 +33,12 @@ export default class MetaApiWebsocketClient {
    * @param {string} url patched server URL
    */
   set url(url: string);
+
+  /**
+   * Websocket client predefined region
+   * @returns {string} predefined region
+   */
+  get region(): string;
   
   /**
    * Returns the list of socket instance dictionaries

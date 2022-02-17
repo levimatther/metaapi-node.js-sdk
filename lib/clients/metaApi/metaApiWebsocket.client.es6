@@ -38,6 +38,7 @@ export default class MetaApiWebsocketClient {
     this._httpClient = httpClient;
     this._application = opts.application || 'MetaApi';
     this._domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
+    this._region = opts.region;
     this._hostname = 'mt-client-api-v1';
     this._url = null;
     this._requestTimeout = validator.validateNonZero(opts.requestTimeout, 60, 'requestTimeout') * 1000;
@@ -106,6 +107,14 @@ export default class MetaApiWebsocketClient {
    */
   set url(url) {
     this._url = url;
+  }
+
+  /**
+   * Websocket client predefined region
+   * @returns {String} predefined region
+   */
+  get region() {
+    return this._region;
   }
 
   /**
