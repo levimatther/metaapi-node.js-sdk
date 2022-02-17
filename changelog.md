@@ -1,5 +1,6 @@
 18.1.0
   - added ability to specify region to only allow region accounts
+  - upgraded CopyFactory SDK to 5.1.0
 
 18.0.9
   - fix typescript export
