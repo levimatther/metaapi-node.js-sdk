@@ -1542,6 +1542,9 @@ export default class MetaApiWebsocketClient {
    * @property {String} description symbol description
    * @property {Date} [startTime] date of the symbol trade beginning (usually used for futures)
    * @property {Date} [expirationTime] date of the symbol trade end (usually used for futures)
+   * @property {number} [pipSize] size of a pip. Pip size is defined for spot and CFD symbols only
+   * @property {number} stopsLevel minimal indention in points from the current close price to place Stop orders
+   * @property {number} freezeLevel distance to freeze trade operations in points
    */
 
   /**

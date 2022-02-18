@@ -1,3 +1,6 @@
+18.2.0
+ - added pip size, stops level and freeze level to symbol specification model
+
 18.1.0
   - added ability to specify region to only allow region accounts
   - upgraded CopyFactory SDK to 5.1.0

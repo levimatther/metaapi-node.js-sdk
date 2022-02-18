@@ -1426,7 +1426,23 @@ export declare type MetatraderSymbolSpecification = {
   /**
    * date of the symbol trade end (usually used for futures)
    */
-  expirationTime?: Date
+  expirationTime?: Date,
+
+  /**
+   * size of a pip. Pip size is defined for spot and CFD symbols only
+   */
+  pipSize?: number,
+
+  /**
+   * minimal indention in points from the current close price to place Stop orders
+   */
+  stopsLevel: number,
+
+  /**
+   * distance to freeze trade operations in points
+   */
+  freezeLevel: number
+
 }
 
 /**
