@@ -391,6 +391,9 @@ export default class MetaApiWebsocketClient {
       if (typeof data === 'string') {
         data = JSON.parse(data);
       }
+      if(!this._regionsByAccounts[data.accountId]) {
+        this._regionsByAccounts[data.accountId] = {region, connections: 0, lastUsed: Date.now()};
+      }
       this._logger.trace(() => `${data.accountId}:${data.instanceIndex}: Sync packet received: ${JSON.stringify({
         type: data.type, sequenceNumber: data.sequenceNumber, sequenceTimestamp: data.sequenceTimestamp,
         synchronizationId: data.synchronizationId, application: data.application, host: data.host})}`);
@@ -402,9 +405,6 @@ export default class MetaApiWebsocketClient {
         if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && data.type !== 'disconnected') {
           if (this._throttleRequest('unsubscribe', data.accountId, data.instanceIndex, 
             this._unsubscribeThrottlingInterval)) {
-            if(!this._regionsByAccounts[data.accountId]) {
-              this._regionsByAccounts[data.accountId] = {region, connections: 1};
-            }
             this.unsubscribe(data.accountId).catch(err => {
               this._logger.warn(`${data.accountId}:${data.instanceIndex || 0}: failed to unsubscribe`, err);
             });
@@ -2299,7 +2299,7 @@ export default class MetaApiWebsocketClient {
     const date = Date.now();
     Object.keys(this._regionsByAccounts).forEach(accountId => {
       const data = this._regionsByAccounts[accountId];
-      if(data.connections === 0 && date - data.lastUsed > 300000) {
+      if(data.connections === 0 && date - data.lastUsed > 2 * 60 * 60 * 1000) {
         delete this._regionsByAccounts[accountId];
       }
     });
