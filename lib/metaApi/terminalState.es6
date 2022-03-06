@@ -553,9 +553,11 @@ export default class TerminalState extends SynchronizationListener {
         if(!this._stateByInstanceIndex[instanceIndex].ordersInitialized 
             && this._stateByInstanceIndex[instanceIndex].lastSyncUpdateTime <= instanceState.lastSyncUpdateTime) {
           delete this._stateByInstanceIndex[instanceIndex];
+          break;
         }
         if(instanceState.connected && instanceState.ordersInitialized) {
           delete this._stateByInstanceIndex[instanceIndex];
+          break;
         }
       }
     }

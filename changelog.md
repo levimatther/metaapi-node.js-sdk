@@ -1,3 +1,6 @@
+18.2.1
+  - fixed a type error that can happen in terminal state when a stream is closed
+
 18.2.0
  - added pip size, stops level and freeze level to symbol specification model
  - bugfix related to region management
