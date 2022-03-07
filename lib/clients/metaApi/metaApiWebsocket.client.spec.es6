@@ -22,6 +22,7 @@ describe('MetaApiWebsocketClient', () => {
   let clock;
   let client;
   let sandbox;
+  let activeSynchronizationIdsStub;
   let httpClient = new HttpClient();
   const emptyHash = 'd41d8cd98f00b204e9800998ecf8427e';
   const synchronizationThrottler = {
@@ -51,7 +52,7 @@ describe('MetaApiWebsocketClient', () => {
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true,
       retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
     client.url = 'http://localhost:6784';
-    client._socketInstances = {'vint-hill': {0: [], 1: []}};
+    client._socketInstances = {'vint-hill': {0: [], 1: []}, 'new-york': {0: []}};
     io = new Server(6784, {path: '/ws', pingTimeout: 1000000});
     io.on('connect', socket => {
       server = socket;
@@ -62,6 +63,7 @@ describe('MetaApiWebsocketClient', () => {
     });
     client._regionsByAccounts.accountId = {region: 'vint-hill', connections: 1};
     client._socketInstancesByAccounts = {0: {accountId: 0}, 1: {accountId: 0}};
+    await client.connect(0, 'new-york');
     await client.connect(1, 'vint-hill');
     server1 = server;
     server1.on('request', async data => {
@@ -70,7 +72,7 @@ describe('MetaApiWebsocketClient', () => {
       }
     });
     await client.connect(0, 'vint-hill');
-    sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler, 
+    activeSynchronizationIdsStub = sandbox.stub(client._socketInstances['vint-hill'][0][0].synchronizationThrottler,
       'activeSynchronizationIds').get(() => []);
     sandbox.stub(client._socketInstances['vint-hill'][1][0].synchronizationThrottler, 
       'activeSynchronizationIds').get(() => []);
@@ -257,7 +259,7 @@ describe('MetaApiWebsocketClient', () => {
       await clock.tickAsync(30 * 60 * 1000 + 500);
     }
     sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
-  });
+  }).timeout(3000);
 
   /**
    * @test {MetaApiWebsocketClient#getAccountInformation}
@@ -2455,6 +2457,41 @@ describe('MetaApiWebsocketClient', () => {
     await clock.tickAsync(1500);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(requestCounter, 2);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#rpcRequest}
+   */
+  it('should cancel synchronization on disconnect', async () => {
+    sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    activeSynchronizationIdsStub.get(() => [
+      'synchronizationId', 'ABC2', 'ABC3', 'ABC4'
+    ]);
+    client._socketInstancesByAccounts[0].accountId2 = 1;
+    client._socketInstancesByAccounts[0].accountId3 = 0;
+    client._socketInstancesByAccounts[1].accountId4 = 0;
+    client.addAccountRegion('accountId2', 'vint-hill');
+    client.addAccountRegion('accountId3', 'new-york');
+    client.addAccountRegion('accountId4', 'vint-hill');
+    server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
+      sequenceTimestamp: 1603124267178, synchronizationId: 'synchronizationId'});
+    server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId2',
+      sequenceTimestamp: 1603124267178, synchronizationId: 'ABC2'});
+    server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId3',
+      sequenceTimestamp: 1603124267178, synchronizationId: 'ABC3'});
+    server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId4',
+      sequenceTimestamp: 1603124267178, synchronizationId: 'ABC4'});
+    await new Promise(res => setTimeout(res, 50));
+    should.exist(client._synchronizationFlags.synchronizationId);
+    should.exist(client._synchronizationFlags.ABC2);
+    should.exist(client._synchronizationFlags.ABC3);
+    should.exist(client._synchronizationFlags.ABC4);
+    await server.disconnect();
+    await new Promise(res => setTimeout(res, 1200));
+    should.not.exist(client._synchronizationFlags.synchronizationId);
+    should.exist(client._synchronizationFlags.ABC2);
+    should.exist(client._synchronizationFlags.ABC3);
+    should.exist(client._synchronizationFlags.ABC4);
   });
 
   /**

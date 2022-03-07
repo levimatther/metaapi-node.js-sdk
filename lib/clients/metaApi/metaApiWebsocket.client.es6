@@ -1752,6 +1752,7 @@ export default class MetaApiWebsocketClient {
         const promises = [];
         this._synchronizationFlags[data.synchronizationId] = {
           accountId: data.accountId,
+          instanceNumber,
           positionsUpdated: data.positionsUpdated !== undefined ? data.positionsUpdated : true,
           ordersUpdated: data.ordersUpdated !== undefined ? data.ordersUpdated : true
         };
@@ -2243,8 +2244,11 @@ export default class MetaApiWebsocketClient {
         }
       }
       Object.keys(this._synchronizationFlags).forEach(synchronizationId => {
-        if (this._socketInstancesByAccounts[region][instanceNumber][
-          this._synchronizationFlags[synchronizationId].accountId] === socketInstanceIndex) {
+        const accountId = this._synchronizationFlags[synchronizationId].accountId;
+        if (this._socketInstancesByAccounts[instanceNumber][accountId] === socketInstanceIndex
+          && this._synchronizationFlags[synchronizationId].instanceNumber === instanceNumber
+          && this._regionsByAccounts[accountId]
+          && this._regionsByAccounts[accountId].region === region) {
           delete this._synchronizationFlags[synchronizationId];
         }
       });

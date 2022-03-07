@@ -486,7 +486,7 @@ sequentialProcessing.forEach(param => {
       connection3.synchronized.should.equal(true);
       connection3.terminalState.connected.should.equal(true);
       connection3.terminalState.connectedToBroker.should.equal(true);
-    });
+    }).timeout(10000);
 
     it('should limit subscriptions during per user 429 error', async () => {
       const subscribedAccounts = {};
@@ -897,7 +897,7 @@ sequentialProcessing.forEach(param => {
       await clock.tickAsync(5000);
       (connection.synchronized && connection.terminalState.connected 
       && connection.terminalState.connectedToBroker).should.equal(true);
-    });
+    }).timeout(10000);
 
     it('should handle multiple streams in one instance number', async () => {
       const account = await api.metatraderAccountApi.getAccount('accountId');
@@ -1128,7 +1128,7 @@ sequentialProcessing.forEach(param => {
       await new Promise(res => setTimeout(res, 100)); 
       await clock.tickAsync(62000); 
       connection.synchronized.should.equal(false);
-    });
+    }).timeout(10000);
 
     it('should not send multiple subscribe requests if status arrives faster than subscribe', async () => {
       let subscribeCounter = 0;
