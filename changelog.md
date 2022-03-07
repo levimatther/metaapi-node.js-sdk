@@ -1,6 +1,8 @@
+18.2.2
+  - improve synchronization stability in case concurrent synchronizations are streamed
+
 18.2.1
   - fixed a type error that can happen in terminal state when a stream is closed
-  - improve synchronization stability in case concurrent synchronizations are streamed
 
 18.2.0
  - added pip size, stops level and freeze level to symbol specification model
