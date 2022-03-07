@@ -70,6 +70,7 @@ export default class MetaApiWebsocketClient {
     this._statusTimers = {};
     this._eventQueues = {};
     this._synchronizationFlags = {};
+    this._synchronizationIdByInstance = {};
     this._subscribeLock = null;
     this._firstConnect = true;
     this._lastRequestsTime = {};
@@ -80,7 +81,7 @@ export default class MetaApiWebsocketClient {
     }
     this._logger = LoggerManager.getLogger('MetaApiWebsocketClient');
     this._clearRegionsJob = this._clearRegionsJob.bind(this);
-    setInterval(this._clearRegionsJob, 30000);
+    setInterval(this._clearRegionsJob, 30 * 60 * 1000);
   }
 
   /**
@@ -1754,6 +1755,7 @@ export default class MetaApiWebsocketClient {
           positionsUpdated: data.positionsUpdated !== undefined ? data.positionsUpdated : true,
           ordersUpdated: data.ordersUpdated !== undefined ? data.ordersUpdated : true
         };
+        this._synchronizationIdByInstance[instanceId] = data.synchronizationId;
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           promises.push(
             Promise.resolve((async () => {
@@ -1769,6 +1771,9 @@ export default class MetaApiWebsocketClient {
         }
         await Promise.all(promises);
       } else if (data.type === 'accountInformation') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         if (data.accountInformation) {
           const onAccountInformationUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1802,6 +1807,9 @@ export default class MetaApiWebsocketClient {
           }
         }
       } else if (data.type === 'deals') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         for (let deal of (data.deals || [])) {
           const onDealAddedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1816,6 +1824,9 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onDealAddedPromises);
         }
       } else if (data.type === 'orders') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         const onPendingOrdersReplacedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           onPendingOrdersReplacedPromises.push(
@@ -1837,6 +1848,9 @@ export default class MetaApiWebsocketClient {
           delete this._synchronizationFlags[data.synchronizationId];
         }
       } else if (data.type === 'historyOrders') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         for (let historyOrder of (data.historyOrders || [])) {
           const onHistoryOrderAddedPromises = [];
           for (let listener of this._synchronizationListeners[data.accountId] || []) {
@@ -1852,6 +1866,9 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onHistoryOrderAddedPromises);
         }
       } else if (data.type === 'positions') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         const onPositionsReplacedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           onPositionsReplacedPromises.push(
@@ -1989,6 +2006,10 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onUpdatePromises);
         }
       } else if (data.type === 'dealSynchronizationFinished') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          delete this._synchronizationIdByInstance[instanceId];
+          return;
+        }
         const onDealsSynchronizedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           if(socketInstance) {
@@ -2004,6 +2025,9 @@ export default class MetaApiWebsocketClient {
         }
         await Promise.all(onDealsSynchronizedPromises);
       } else if (data.type === 'orderSynchronizationFinished') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         const onHistoryOrdersSynchronizedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           onHistoryOrdersSynchronizedPromises.push(
@@ -2076,6 +2100,9 @@ export default class MetaApiWebsocketClient {
         }
         await Promise.all(onSubscriptionDowngradePromises);
       } else if (data.type === 'specifications') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         const onSymbolSpecificationsUpdatedPromises = [];
         for (let listener of this._synchronizationListeners[data.accountId] || []) {
           onSymbolSpecificationsUpdatedPromises.push(
@@ -2117,6 +2144,9 @@ export default class MetaApiWebsocketClient {
           await Promise.all(onSymbolSpecificationRemovedPromises);
         }
       } else if (data.type === 'prices') {
+        if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
+          return;
+        }
         let prices = data.prices || [];
         let candles = data.candles || [];
         let ticks = data.ticks || [];

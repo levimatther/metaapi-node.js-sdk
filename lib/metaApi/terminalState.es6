@@ -268,7 +268,9 @@ export default class TerminalState extends SynchronizationListener {
     let state = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
     state.accountInformation = accountInformation;
-    this._combinedState.accountInformation = accountInformation;
+    if (accountInformation) {
+      this._combinedState.accountInformation = Object.assign({}, accountInformation);
+    }
   }
 
   /**
@@ -370,9 +372,10 @@ export default class TerminalState extends SynchronizationListener {
     state.completedOrders = {};
     state.positionsInitialized = true;
     state.ordersInitialized = true;
-    this._combinedState.accountInformation = state.accountInformation;
-    this._combinedState.positions = state.positions;
-    this._combinedState.orders = state.orders;
+    this._combinedState.accountInformation = state.accountInformation ? Object.assign({}, state.accountInformation) :
+      undefined;
+    this._combinedState.positions = (state.positions || []).map(p => Object.assign({}, p));
+    this._combinedState.orders = (state.orders || []).map(o => Object.assign({}, o));
     this._combinedState.specificationsBySymbol = state.specificationsBySymbol;
     this._combinedState.positionsInitialized = true;
     this._combinedState.ordersInitialized = true;
@@ -519,8 +522,8 @@ export default class TerminalState extends SynchronizationListener {
         if (state.positionsInitialized && pricesInitialized) {
           if (state.accountInformation.platform === 'mt5') {
             state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
-            state.positions.reduce((acc, p) => acc +
-              Math.round((p.unrealizedProfit || 0) * 100) / 100 + Math.round((p.swap || 0) * 100) / 100, 0);
+              state.positions.reduce((acc, p) => acc +
+                Math.round((p.unrealizedProfit || 0) * 100) / 100 + Math.round((p.swap || 0) * 100) / 100, 0);
           } else {
             state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
             state.positions.reduce((acc, p) => acc + Math.round((p.swap || 0) * 100) / 100 +

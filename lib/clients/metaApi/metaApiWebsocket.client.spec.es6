@@ -221,7 +221,9 @@ describe('MetaApiWebsocketClient', () => {
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
     client.removeAccountRegion('accountId2');
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    await clock.tickAsync(350000);    
+    for (let i = 0; i < 5; i++) {
+      await clock.tickAsync(30 * 60 * 1000 + 500);
+    }
     sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
   });
 
@@ -243,15 +245,17 @@ describe('MetaApiWebsocketClient', () => {
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
     await client.getAccountInformation('accountId2');
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    await clock.tickAsync(340000);
+    await clock.tickAsync(30 * 60 * 1000 + 500);
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
     await client.getAccountInformation('accountId2');
     client.removeAccountRegion('accountId2');
-    await clock.tickAsync(200000);
+    await clock.tickAsync(30 * 60 * 1000 + 500);
     await client.getAccountInformation('accountId2');
-    await clock.tickAsync(150000);
+    await clock.tickAsync(30 * 60 * 1000 + 500);
     sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    await clock.tickAsync(200000);
+    for (let i = 0; i < 5; i++) {
+      await clock.tickAsync(30 * 60 * 1000 + 500);
+    }
     sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
   });
 
@@ -1425,7 +1429,10 @@ describe('MetaApiWebsocketClient', () => {
         accountInformation: {}, instanceIndex: 0});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.callCount(listener.onAccountInformationUpdated, 1);
-      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
+        instanceIndex: 0, synchronizationId: 'synchronizationId'});
+      await new Promise(res => setTimeout(res, 50));
+      server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId',
         accountInformation: {}, instanceIndex: 0, synchronizationId: 'wrong'});
       await new Promise(res => setTimeout(res, 50));
       sinon.assert.callCount(listener.onAccountInformationUpdated, 1);
@@ -1637,6 +1644,9 @@ describe('MetaApiWebsocketClient', () => {
       sandbox.stub(listener, 'onPositionsReplaced').resolves();
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
+        instanceIndex: 0, synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      await new Promise(res => setTimeout(res, 50));
       server.emit('synchronization', {type: 'positions', accountId: 'accountId', positions, instanceIndex: 0,
         synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
       await new Promise(res => setTimeout(res, 50));
@@ -1667,6 +1677,9 @@ describe('MetaApiWebsocketClient', () => {
       sandbox.stub(listener, 'onPendingOrdersReplaced').resolves();
       sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId',
+        instanceIndex: 0, synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
+      await new Promise(res => setTimeout(res, 50));
       server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders, instanceIndex: 0,
         synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
       await new Promise(res => setTimeout(res, 100));

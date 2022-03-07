@@ -50,7 +50,9 @@ export default class PacketOrderer {
     if (packet.sequenceNumber === undefined) {
       return [packet];
     }
-    if (packet.type === 'synchronizationStarted' && packet.synchronizationId) {
+    if (packet.type === 'synchronizationStarted' && packet.synchronizationId &&
+      (!this._lastSessionStartTimestamp[instanceId] || this._lastSessionStartTimestamp[instanceId] <
+        packet.sequenceTimestamp)) {
       // synchronization packet sequence just started
       this._isOutOfOrderEmitted[instanceId] = false;
       this._sequenceNumberByInstance[instanceId] = packet.sequenceNumber;

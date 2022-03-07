@@ -49,7 +49,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     this._stateByInstanceIndex = {};
     this._refreshMarketDataSubscriptionSessions = {};
     this._refreshMarketDataSubscriptionTimeouts = {};
-    this._synchronized = false;
     this._synchronizationListeners = [];
     this._logger = LoggerManager.getLogger('MetaApiConnection');
   }
@@ -348,6 +347,43 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     delete this._refreshMarketDataSubscriptionSessions[instance];
     clearTimeout(this._refreshMarketDataSubscriptionTimeouts[instance]);
     delete this._refreshMarketDataSubscriptionTimeouts[instance];
+    if (state.synchronizationTimeout) {
+      clearTimeout(state.synchronizationTimeout);
+      delete state.synchronizationTimeout;
+    }
+    if (state.ensureSynchronizeTimeout) {
+      clearTimeout(state.ensureSynchronizeTimeout);
+      delete state.ensureSynchronizeTimeout;
+    }
+  }
+
+  /**
+   * Invoked when a symbol specifications were updated
+   * @param {String} instanceIndex index of account instance connected
+   * @param {Array<MetatraderSymbolSpecification>} specifications updated specifications
+   * @param {Array<String>} removedSymbols removed symbols
+   */
+  onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
+    this._scheduleSynchronizationTimeout(instanceIndex);
+  }
+
+  /**
+   * Invoked when position synchronization fnished to indicate progress of an initial terminal state synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   */
+  onPositionsSynchronized(instanceIndex, synchronizationId) {
+    this._scheduleSynchronizationTimeout(instanceIndex);
+  }
+
+  /**
+   * Invoked when pending order synchronization fnished to indicate progress of an initial terminal state
+   * synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {String} synchronizationId synchronization request id
+   */
+  onPendingOrdersSynchronized(instanceIndex, synchronizationId) {
+    this._scheduleSynchronizationTimeout(instanceIndex);
   }
 
   /**
@@ -360,6 +396,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   async onDealsSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.dealsSynchronized[synchronizationId] = true;
+    this._scheduleSynchronizationTimeout(instanceIndex);
   }
 
   /**
@@ -372,6 +409,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   async onHistoryOrdersSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.ordersSynchronized[synchronizationId] = true;
+    this._scheduleSynchronizationTimeout(instanceIndex);
   }
 
   /**
@@ -410,6 +448,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     clearTimeout(this._refreshMarketDataSubscriptionTimeouts[instance]);
     delete this._refreshMarketDataSubscriptionTimeouts[instance];
     await this._refreshMarketDataSubscriptions(instance, sessionId);
+    this._scheduleSynchronizationTimeout(instanceIndex);
   }
 
   /**
@@ -589,12 +628,17 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
         if(synchronizationResult) {
           state.synchronized = true;
           state.synchronizationRetryIntervalInSeconds = 1;
+          delete state.ensureSynchronizeTimeout;
         }
+        this._scheduleSynchronizationTimeout(instanceIndex);
       } catch (err) {
         this._logger.error('MetaApi websocket client for account ' + this._account.id +
           ':' + instanceIndex + ' failed to synchronize', err);
         if (state.shouldSynchronize === key) {
-          setTimeout(this._ensureSynchronized.bind(this, instanceIndex, key),
+          if (state.ensureSynchronizeTimeout) {
+            clearTimeout(state.ensureSynchronizeTimeout);
+          }
+          state.ensureSynchronizeTimeout = setTimeout(this._ensureSynchronized.bind(this, instanceIndex, key),
             state.synchronizationRetryIntervalInSeconds * 1000);
           state.synchronizationRetryIntervalInSeconds = Math.min(state.synchronizationRetryIntervalInSeconds * 2, 300);
         }
@@ -617,6 +661,29 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       };
     }
     return this._stateByInstanceIndex['' + instanceIndex];
+  }
+
+  _scheduleSynchronizationTimeout(instanceIndex) {
+    let state = this._getState(instanceIndex);
+    if (state && !this._closed) {
+      if (state.synchronizationTimeout) {
+        clearTimeout(state.synchronizationTimeout);
+      }
+      let synchronizationTimeout = 2 * 60 * 1000;
+      state.synchronizationTimeout =
+        setTimeout(() => this._checkSynchronizationTimedOut(instanceIndex), synchronizationTimeout);
+    }
+  }
+
+  _checkSynchronizationTimedOut(instanceIndex) {
+    let state = this._getState(instanceIndex);
+    if (state && !this._closed) {
+      let synchronizationId = state.lastSynchronizationId;
+      let synchronized = !!state.dealsSynchronized[synchronizationId];
+      if (!synchronized && synchronizationId && state.shouldSynchronize) {
+        this._ensureSynchronized(instanceIndex, state.shouldSynchronize);
+      }
+    }
   }
 
 }
