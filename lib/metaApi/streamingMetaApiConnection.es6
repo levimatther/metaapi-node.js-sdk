@@ -440,7 +440,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated) {
+  async onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated,
+    synchronizationId) {
     const instance = this.getInstanceNumber(instanceIndex);
     delete this._refreshMarketDataSubscriptionSessions[instance];
     let sessionId = randomstring.generate(32);
@@ -449,6 +450,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     delete this._refreshMarketDataSubscriptionTimeouts[instance];
     await this._refreshMarketDataSubscriptions(instance, sessionId);
     this._scheduleSynchronizationTimeout(instanceIndex);
+    let state = this._getState(instanceIndex);
+    if (state && !this._closed) {
+      state.lastSynchronizationId = synchronizationId;
+    }
   }
 
   /**

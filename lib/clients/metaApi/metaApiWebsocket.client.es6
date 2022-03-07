@@ -1762,7 +1762,8 @@ export default class MetaApiWebsocketClient {
               await _processEvent(Promise.resolve(listener.onSynchronizationStarted(instanceIndex, 
                 data.specificationsUpdated !== undefined ? data.specificationsUpdated : true,
                 data.positionsUpdated !== undefined ? data.positionsUpdated : true,
-                data.ordersUpdated !== undefined ? data.ordersUpdated : true)), 'onSynchronizationStarted');
+                data.ordersUpdated !== undefined ? data.ordersUpdated : true), data.synchronizationId),
+                'onSynchronizationStarted');
             })())
               // eslint-disable-next-line no-console
               .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
