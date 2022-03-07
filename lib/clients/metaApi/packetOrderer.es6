@@ -69,6 +69,8 @@ export default class PacketOrderer {
     } else if (packet.sequenceNumber === this._sequenceNumberByInstance[instanceId] + 1) {
       // in-order packet was received
       this._sequenceNumberByInstance[instanceId]++;
+      this._lastSessionStartTimestamp[instanceId] = packet.sequenceTimestamp ||
+        this._lastSessionStartTimestamp[instanceId];
       return [packet].concat(this._findNextPacketsFromWaitList(instanceId));
     } else {
       // out-of-order packet was received, add it to the wait list
@@ -129,11 +131,16 @@ export default class PacketOrderer {
   _findNextPacketsFromWaitList(instanceId) {
     let result = [];
     let waitList = this._packetsByInstance[instanceId] || [];
-    while (waitList.length && [this._sequenceNumberByInstance[instanceId],
-      this._sequenceNumberByInstance[instanceId] + 1].includes(waitList[0].sequenceNumber)) {
-      result.push(waitList[0].packet);
-      if (waitList[0].sequenceNumber === this._sequenceNumberByInstance[instanceId] + 1) {
-        this._sequenceNumberByInstance[instanceId]++;
+    while (waitList.length && ([this._sequenceNumberByInstance[instanceId],
+      this._sequenceNumberByInstance[instanceId] + 1].includes(waitList[0].sequenceNumber) ||
+      waitList[0].packet.sequenceTimestamp < this._lastSessionStartTimestamp[instanceId])) {
+      if (waitList[0].packet.sequenceTimestamp >= this._lastSessionStartTimestamp[instanceId]) {
+        result.push(waitList[0].packet);
+        if (waitList[0].packet.sequenceNumber === this._sequenceNumberByInstance[instanceId] + 1) {
+          this._sequenceNumberByInstance[instanceId]++;
+          this._lastSessionStartTimestamp[instanceId] = waitList[0].packet.sequenceTimestamp ||
+            this._lastSessionStartTimestamp[instanceId];
+        }
       }
       waitList.splice(0, 1);
     }

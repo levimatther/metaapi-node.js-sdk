@@ -1,5 +1,6 @@
 18.2.5
   - fixed reconnect event
+  - fixed packet orderer to improve synchronization stability
 
 18.2.4
   - fixed synchronization
