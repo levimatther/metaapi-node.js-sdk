@@ -1,3 +1,6 @@
+18.2.4
+  - fixed synchronization
+
 18.2.3
   - improve waitSynchronized stability for streaming API
 
