@@ -1,3 +1,6 @@
+18.2.5
+  - fixed reconnect event
+
 18.2.4
   - fixed synchronization
 
