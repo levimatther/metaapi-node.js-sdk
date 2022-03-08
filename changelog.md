@@ -1,3 +1,6 @@
+18.2.7
+  - improve logging of important events in streaming connection
+
 18.2.6
   - improve logging of important events in streaming connection
 

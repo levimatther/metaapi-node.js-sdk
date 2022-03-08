@@ -113,6 +113,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     ));
     let synchronizationId = randomstring.generate(32);
     this._getState(instanceIndex).lastSynchronizationId = synchronizationId;
+    this._logger.info(`${this._account.id}:${instanceIndex}: initiating synchronization ${synchronizationId}`);
     return this._websocketClient.synchronize(this._account.id, instance, host, synchronizationId,
       startingHistoryOrderTime, startingDealTime,
       async () => await this.terminalState.getHashes(this._account.type, instanceIndex));
@@ -690,8 +691,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       let synchronizationId = state.lastSynchronizationId;
       let synchronized = !!state.dealsSynchronized[synchronizationId];
       if (!synchronized && synchronizationId && state.shouldSynchronize) {
-        this._logger.warn(`${this._account.id}: resynchronized since latest synchronization ${synchronizationId} ` +
-          'has hung');
+        this._logger.warn(`${this._account.id}:${instanceIndex}: resynchronized since latest synchronization ` +
+          `${synchronizationId} did not finish in time`);
         this._ensureSynchronized(instanceIndex, state.shouldSynchronize);
       }
     }
