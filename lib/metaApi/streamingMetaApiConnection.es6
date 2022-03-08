@@ -330,6 +330,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
         delete this._stateByInstanceIndex[e[0]];
       }
     }
+    this._logger.debug(`${this._account.id}:${instanceIndex}: connected to broker`);
   }
 
   /**
@@ -355,6 +356,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       clearTimeout(state.ensureSynchronizeTimeout);
       delete state.ensureSynchronizeTimeout;
     }
+    this._logger.debug(`${this._account.id}:${instanceIndex}: disconnected from broker`);
   }
 
   /**
