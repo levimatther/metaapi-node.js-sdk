@@ -128,6 +128,7 @@ export default class PacketOrderer {
     return instanceId.split(':')[0];
   }
 
+  // eslint-disable-next-line complexity
   _findNextPacketsFromWaitList(instanceId) {
     let result = [];
     let waitList = this._packetsByInstance[instanceId] || [];

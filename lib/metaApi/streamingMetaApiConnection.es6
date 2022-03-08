@@ -397,6 +397,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     let state = this._getState(instanceIndex);
     state.dealsSynchronized[synchronizationId] = true;
     this._scheduleSynchronizationTimeout(instanceIndex);
+    this._logger.debug(`${this._account.id}:${instanceIndex}: finished synchronization ${synchronizationId}`);
   }
 
   /**
@@ -442,6 +443,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   async onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated,
     synchronizationId) {
+    this._logger.debug(`${this._account.id}:${instanceIndex}: starting synchronization ${synchronizationId}`);
     const instance = this.getInstanceNumber(instanceIndex);
     delete this._refreshMarketDataSubscriptionSessions[instance];
     let sessionId = randomstring.generate(32);
@@ -686,6 +688,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       let synchronizationId = state.lastSynchronizationId;
       let synchronized = !!state.dealsSynchronized[synchronizationId];
       if (!synchronized && synchronizationId && state.shouldSynchronize) {
+        this._logger.warn(`${this._account.id}: resynchronized since latest synchronization ${synchronizationId} ` +
+          'has hung');
         this._ensureSynchronized(instanceIndex, state.shouldSynchronize);
       }
     }
