@@ -37,7 +37,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       'refreshSubscriptionsOpts.maxDelayInSeconds');
     this._connectionRegistry = connectionRegistry;
     this._historyStartTime = historyStartTime;
-    this._terminalState = new TerminalState(clientApiClient);
+    this._terminalState = new TerminalState(this._account.id, clientApiClient);
     this._historyStorage = historyStorage || new MemoryHistoryStorage();
     this._healthMonitor = new ConnectionHealthMonitor(this);
     this._websocketClient.addSynchronizationListener(account.id, this);

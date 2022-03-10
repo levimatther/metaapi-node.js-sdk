@@ -9,9 +9,10 @@ export default class TerminalState extends SynchronizationListener {
   
   /**
    * Constructs the instance of terminal state class
+   * @param {string} accountId account id
    * @param {ClientApiClient} clientApiClient client API client
    */
-  constructor(clientApiClient: ClientApiClient);
+  constructor(accountId: string, clientApiClient: ClientApiClient);
   
   /**
    * Returns true if MetaApi have connected to MetaTrader terminal

@@ -2,6 +2,7 @@
 
 import crypto from 'crypto-js';
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
+import LoggerManager from '../logger';
 
 /**
  * Responsible for storing a local copy of remote terminal state
@@ -10,10 +11,12 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Constructs the instance of terminal state class
+   * @param {string} accountId account id
    * @param {ClientApiClient} clientApiClient client api client
    */
-  constructor(clientApiClient) {
+  constructor(accountId, clientApiClient) {
     super();
+    this._accountId = accountId;
     this._clientApiClient = clientApiClient;
     this._stateByInstanceIndex = {};
     this._waitForPriceResolves = {};
@@ -29,6 +32,7 @@ export default class TerminalState extends SynchronizationListener {
       positionsInitialized: false,
       lastUpdateTime: 0
     };
+    this._logger = LoggerManager.getLogger('TerminalState');
   }
 
   /**
@@ -231,7 +235,7 @@ export default class TerminalState extends SynchronizationListener {
    * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated) {
+  onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated, synchronizationId) {
     const unsynchronizedStates = this._getStateIndicesOfSameInstanceNumber(instanceIndex)
       .filter(stateIndex => !this._stateByInstanceIndex[stateIndex].ordersInitialized);
     unsynchronizedStates.sort((a,b) => b.lastSyncUpdateTime - a.lastSyncUpdateTime);
@@ -254,6 +258,8 @@ export default class TerminalState extends SynchronizationListener {
       state.ordersHash = null;
     }
     if(specificationsUpdated) {
+      this._logger.trace(`${this._accountId}:${instanceIndex}:${synchronizationId}: cleared specifications ` +
+        'on synchronization start');
       state.specificationsBySymbol = {};
       state.specificationsHash = null;
     }
@@ -376,7 +382,10 @@ export default class TerminalState extends SynchronizationListener {
       undefined;
     this._combinedState.positions = (state.positions || []).map(p => Object.assign({}, p));
     this._combinedState.orders = (state.orders || []).map(o => Object.assign({}, o));
-    this._combinedState.specificationsBySymbol = state.specificationsBySymbol;
+    this._combinedState.specificationsBySymbol = Object.assign({}, state.specificationsBySymbol);
+    this._logger.trace(`${this._accountId}:${instanceIndex}:${synchronizationId}: assigned specifications to ` +
+      'combined state from ' +
+      `${instanceIndex}, ${Object.keys(state.specificationsBySymbol || {}).lengh} specifications assigned`);
     this._combinedState.positionsInitialized = true;
     this._combinedState.ordersInitialized = true;
     this._combinedState.completedOrders = {};
@@ -460,6 +469,8 @@ export default class TerminalState extends SynchronizationListener {
     };
     updateSpecifications(instanceState);
     updateSpecifications(this._combinedState);
+    this._logger.trace(`${this._accountId}:${instanceIndex}: updated ${specifications.length} specifications, ` +
+      `removed ${removedSymbols.length} specifications`);
   }
 
   /**
@@ -612,6 +623,7 @@ export default class TerminalState extends SynchronizationListener {
   
   _getState(instanceIndex) {
     if (!this._stateByInstanceIndex['' + instanceIndex]) {
+      this._logger.trace(`${this._accountId}:${instanceIndex}: constructed new state`);
       this._stateByInstanceIndex['' + instanceIndex] = this._constructTerminalState(instanceIndex);
     }
     return this._stateByInstanceIndex['' + instanceIndex];

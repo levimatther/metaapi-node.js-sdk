@@ -1,3 +1,6 @@
+18.2.8
+  - added extra logging to debug specific synchronization issues
+
 18.2.7
   - improve logging of important events in streaming connection
 

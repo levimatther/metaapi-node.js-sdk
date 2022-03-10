@@ -85,7 +85,7 @@ describe('TerminalState', () => {
         }
       })
     };
-    state = new TerminalState(clientApiClient);
+    state = new TerminalState('accountId', clientApiClient);
   });
 
   afterEach(() => {
