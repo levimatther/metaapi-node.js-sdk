@@ -303,12 +303,12 @@ export default class MetaApiWebsocketClient {
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
    * @param {string} accountId id of the MetaTrader account
-   * @param {number} instanceNumber instance index number
    * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update
+   * @param {string} [reliability] account reliability
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(accountId: string, instanceNumber: number, symbol: string, subscriptions: Array<MarketDataSubscription>): Promise<any>;
+  subscribeToMarketData(accountId: string, instanceNumber: number, symbol: string, subscriptions: Array<MarketDataSubscription>, reliability?: string): Promise<any>;
   
   /**
    * Refreshes market data subscriptions on the server to prevent them from expiring
@@ -325,9 +325,10 @@ export default class MetaApiWebsocketClient {
    * @param {number} instanceNumber instance index
    * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
+   * @param {String} [reliability] account reliability
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(accountId: string, instanceNumber: number, symbol: string, subscriptions: Array<MarketDataUnsubscription>): Promise<any>;
+  unsubscribeFromMarketData(accountId: string, instanceNumber: number, symbol: string, subscriptions: Array<MarketDataUnsubscription>, reliability?: string): Promise<any>;
   
   /**
    * Retrieves symbols available on an account (see
@@ -469,6 +470,15 @@ export default class MetaApiWebsocketClient {
    * @param {Promise} event event to execute
    */
   queueEvent(accountId: string, event: Promise<any>): void;
+
+  /**
+   * Simulataneously sends RPC requests to all synchronized instances
+   * @param {String} accountId metatrader account id
+   * @param {Object} request base request data
+   * @param {String} [reliability] account reliability
+   * @param {Number} [timeoutInSeconds] request timeout in seconds
+   */
+  rpcRequestAllInstances(aaccountId: string, request: Object, reliability?: string, timeoutInSeconds?: number): Promise<any>;
   
   /**
    * Makes a RPC request

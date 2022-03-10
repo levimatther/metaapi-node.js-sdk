@@ -1,3 +1,7 @@
+18.3.0
+  - improved stability of subscribeToMarketData, unsubscribeFromMarketData, trade requests
+  - simplified interface of subscribeToMarketData, unsubscribeFromMarketData requests
+
 18.2.8
   - added extra logging to debug specific synchronization issues
 

@@ -145,11 +145,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {String} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
    * note that this feature is not fully implemented on server-side yet
-   * @param {Number} instanceIndex instance index
    * @param {number} [timeoutInSeconds] timeout to wait for prices in seconds, default is 30
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  async subscribeToMarketData(symbol, subscriptions, instanceIndex, timeoutInSeconds) {
+  async subscribeToMarketData(symbol, subscriptions, timeoutInSeconds) {
     this._checkIsConnectionActive();
     if(!this._terminalState.specification(symbol)){
       throw new ValidationError(`Cannot subscribe to market data for symbol ${symbol} because ` +
@@ -172,7 +171,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       } else {
         this._subscriptions[symbol] = {subscriptions};
       }
-      await this._websocketClient.subscribeToMarketData(this._account.id, instanceIndex, symbol, subscriptions);
+      await this._websocketClient.subscribeToMarketData(this._account.id, symbol, subscriptions,
+        this._account.reliability);
       return this.terminalState.waitForPrice(symbol, timeoutInSeconds);
     }
   }
@@ -182,10 +182,9 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
    * @param {String} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
-   * @param {Number} instanceIndex instance index
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(symbol, subscriptions, instanceIndex) {
+  unsubscribeFromMarketData(symbol, subscriptions) {
     this._checkIsConnectionActive();
     if (!subscriptions) {
       delete this._subscriptions[symbol];
@@ -198,7 +197,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
         delete this._subscriptions[symbol];
       }
     }
-    return this._websocketClient.unsubscribeFromMarketData(this._account.id, instanceIndex, symbol, subscriptions);
+    return this._websocketClient.unsubscribeFromMarketData(this._account.id, symbol, subscriptions,
+      this._account.reliability);
   }
 
   /**

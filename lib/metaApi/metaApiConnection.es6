@@ -152,8 +152,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createMarketBuyOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY', symbol, volume},
-      this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_BUY', symbol, volume},
+      this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -168,8 +168,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createMarketSellOrder(symbol, volume, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL', symbol, volume},
-      this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_SELL', symbol, volume},
+      this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -185,8 +185,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createLimitBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_LIMIT', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_BUY_LIMIT', symbol,
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -202,8 +202,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createLimitSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_LIMIT', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_SELL_LIMIT', symbol,
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -219,8 +219,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopBuyOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_BUY_STOP', symbol,
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -236,8 +236,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopSellOrder(symbol, volume, openPrice, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP', symbol,
-      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_SELL_STOP', symbol,
+      volume, openPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -254,9 +254,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopLimitBuyOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
-      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}),
-    this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
+      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -273,9 +272,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   createStopLimitSellOrder(symbol, volume, openPrice, stopLimitPrice, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
-      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}),
-    this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
+      symbol, volume, openPrice, stopLimitPrice}, this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -291,9 +289,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   modifyPosition(positionId, stopLoss, takeProfit, trailingStopLoss, stopPriceBase) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, 
-      Object.assign({actionType: 'POSITION_MODIFY', positionId, trailingStopLoss, stopPriceBase},
-        this._generateStopOptions(stopLoss, takeProfit)), this._application);
+    return this._trade(Object.assign({actionType: 'POSITION_MODIFY', positionId, trailingStopLoss, stopPriceBase},
+      this._generateStopOptions(stopLoss, takeProfit)));
   }
 
   /**
@@ -306,8 +303,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closePositionPartially(positionId, volume, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_PARTIAL', positionId,
-      volume}, options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'POSITION_PARTIAL', positionId,
+      volume}, options || {}));
   }
 
   /**
@@ -319,8 +316,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closePosition(positionId, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_ID', positionId},
-      options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'POSITION_CLOSE_ID', positionId},
+      options || {}));
   }
 
   /**
@@ -333,8 +330,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closeBy(positionId, oppositePositionId, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITION_CLOSE_BY', positionId,
-      closeByPositionId: oppositePositionId}, options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'POSITION_CLOSE_BY', positionId,
+      closeByPositionId: oppositePositionId}, options || {}));
   }
 
   /**
@@ -346,8 +343,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   closePositionsBySymbol(symbol, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, Object.assign({actionType: 'POSITIONS_CLOSE_SYMBOL', symbol},
-      options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'POSITIONS_CLOSE_SYMBOL', symbol},
+      options || {}));
   }
 
   /**
@@ -362,9 +359,8 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   modifyOrder(orderId, openPrice, stopLoss, takeProfit, options = {}) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, 
-      Object.assign({actionType: 'ORDER_MODIFY', orderId, openPrice},
-        this._generateStopOptions(stopLoss, takeProfit), options || {}), this._application);
+    return this._trade(Object.assign({actionType: 'ORDER_MODIFY', orderId, openPrice},
+      this._generateStopOptions(stopLoss, takeProfit), options || {}));
   }
 
   /**
@@ -375,7 +371,11 @@ export default class MetaApiConnection extends SynchronizationListener {
    */
   cancelOrder(orderId) {
     this._checkIsConnectionActive();
-    return this._websocketClient.trade(this._account.id, {actionType: 'ORDER_CANCEL', orderId}, this._application);
+    return this._trade({actionType: 'ORDER_CANCEL', orderId});
+  }
+
+  _trade(request) {
+    return this._websocketClient.trade(this._account.id, request, this._application, this._account.reliability);
   }
 
   /**

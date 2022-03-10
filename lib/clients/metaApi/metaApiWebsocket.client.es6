@@ -12,6 +12,7 @@ import PacketOrderer from './packetOrderer';
 import SynchronizationThrottler from './synchronizationThrottler';
 import SubscriptionManager from './subscriptionManager';
 import LoggerManager from '../../logger';
+import any from 'promise.any';
 
 let PacketLogger;
 if (typeof window === 'undefined') { // don't import PacketLogger for browser version
@@ -867,12 +868,19 @@ export default class MetaApiWebsocketClient {
    * @param {String} accountId id of the MetaTrader account to execute trade for
    * @param {MetatraderTrade} trade trade to execute (see docs for possible trade types)
    * @param {String} [application] application to use
+   * @param {String} [reliability] account reliability
    * @returns {Promise<MetatraderTradeResponse>} promise resolving with trade result
    * @throws {TradeError} on trade error, check error properties for error code details
    */
-  async trade(accountId, trade, application) {
-    let response = await this.rpcRequest(accountId, {type: 'trade', trade,
-      application: application || this._application});
+  // eslint-disable-next-line complexity
+  async trade(accountId, trade, application, reliability) {
+    let response;
+    if(application === 'RPC') {
+      response = await this.rpcRequest(accountId, {type: 'trade', trade, application});
+    } else {
+      response = await this.rpcRequestAllInstances(accountId, {type: 'trade', trade,
+        application: application || this._application}, reliability);
+    }
     response.response = response.response || {};
     response.response.stringCode = response.response.stringCode || response.response.description;
     response.response.numericCode = response.response.numericCode !== undefined ? response.response.numericCode :
@@ -957,14 +965,14 @@ export default class MetaApiWebsocketClient {
    * Subscribes on market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/subscribeToMarketData/).
    * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceNumber instance index number
    * @param {String} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update
+   * @param {String} [reliability] account reliability
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(accountId, instanceNumber, symbol, subscriptions) {
-    return this.rpcRequest(accountId, {type: 'subscribeToMarketData', symbol, subscriptions,
-      instanceIndex: instanceNumber});
+  subscribeToMarketData(accountId, symbol, subscriptions, reliability) {
+    return this.rpcRequestAllInstances(accountId,
+      {type: 'subscribeToMarketData', symbol, subscriptions}, reliability);
   }
 
   /**
@@ -988,14 +996,14 @@ export default class MetaApiWebsocketClient {
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
    * @param {String} accountId id of the MetaTrader account
-   * @param {Number} instanceNumber instance index
    * @param {String} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
+   * @param {String} [reliability] account reliability
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(accountId, instanceNumber, symbol, subscriptions) {
-    return this.rpcRequest(accountId, {type: 'unsubscribeFromMarketData', symbol, subscriptions,
-      instanceIndex: instanceNumber});
+  unsubscribeFromMarketData(accountId, symbol, subscriptions, reliability) {
+    return this.rpcRequestAllInstances(accountId, {type: 'unsubscribeFromMarketData', symbol, subscriptions},
+      reliability);
   }
 
   /**
@@ -1266,6 +1274,33 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Simulataneously sends RPC requests to all synchronized instances
+   * @param {String} accountId metatrader account id
+   * @param {Object} request base request data
+   * @param {String} [reliability] account reliability
+   * @param {Number} [timeoutInSeconds] request timeout in seconds
+   */
+  async rpcRequestAllInstances(accountId, request, reliability, timeoutInSeconds)  {
+    if(reliability === 'high') {
+      try {
+        return await any([0, 1].map(instanceNumber => {
+          return this.rpcRequest(accountId, Object.assign({}, request, 
+            {instanceIndex: instanceNumber}), timeoutInSeconds);
+        }));
+      } catch (error) {
+        throw error.errors[0]; 
+      }
+    } else {
+      const instance = Object.keys(this._connectedHosts).find(i => i.startsWith(accountId));
+      if(instance) {
+        const instanceNumber = Number(instance.split(':')[1]);
+        request = Object.assign({}, request, {instanceIndex: instanceNumber});
+      }
+      return await this.rpcRequest(accountId, request, timeoutInSeconds);
+    }
+  }
+
+  /**
    * Makes a RPC request
    * @param {String} accountId metatrader account id
    * @param {Object} request base request data
@@ -1282,7 +1317,7 @@ export default class MetaApiWebsocketClient {
     } else {
       const instance = Object.keys(this._connectedHosts).find(i => i.startsWith(accountId));
       if(instance) {
-        instanceNumber = instance.split(':')[1];
+        instanceNumber = Number(instance.split(':')[1]);
       }
     }
     if(!this._socketInstancesByAccounts[instanceNumber]) {
