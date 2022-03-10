@@ -513,15 +513,15 @@ describe('StreamingMetaApiConnection', () => {
   it('should subscribe to market data', async () => {
     await api.connect();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
-    let promise = api.subscribeToMarketData('EURUSD', undefined, 1);
+    let promise = api.subscribeToMarketData('EURUSD', undefined);
     api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     await promise;
-    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
+    sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 'EURUSD', [{type: 'quotes'}]);
     sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}]);
-    await api.subscribeToMarketData('EURUSD', [{type: 'books'}, {type: 'candles', timeframe: '1m'}], 1);
+    await api.subscribeToMarketData('EURUSD', [{type: 'books'}, {type: 'candles', timeframe: '1m'}]);
     sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}, {type: 'books'},
       {type: 'candles', timeframe: '1m'}]);
-    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}, {type: 'candles', timeframe: '5m'}], 1);
+    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}, {type: 'candles', timeframe: '5m'}]);
     sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}, {type: 'books'},
       {type: 'candles', timeframe: '1m'}, {type: 'candles', timeframe: '5m'}]);
   });
@@ -550,13 +550,13 @@ describe('StreamingMetaApiConnection', () => {
     await api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1',
       [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     sandbox.stub(client, 'unsubscribeFromMarketData').resolves();
-    await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}], 1);
-    sinon.assert.calledWith(client.unsubscribeFromMarketData, 'accountId', 1, 'EURUSD', [{type: 'quotes'}]);
+    await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}]);
+    sinon.assert.calledWith(client.unsubscribeFromMarketData, 'accountId', 'EURUSD', [{type: 'quotes'}]);
     await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}, {type: 'books'},
-      {type: 'candles', timeframe: '1m'}, {type: 'candles', timeframe: '5m'}], 1);
+      {type: 'candles', timeframe: '1m'}, {type: 'candles', timeframe: '5m'}]);
     sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}, {type: 'books'},
       {type: 'candles', timeframe: '1m'}, {type: 'candles', timeframe: '5m'}]);
-    await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}, {type: 'candles', timeframe: '5m'}], 1);
+    await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}, {type: 'candles', timeframe: '5m'}]);
     sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'books'}, {type: 'candles', timeframe: '1m'}]);
   });
 

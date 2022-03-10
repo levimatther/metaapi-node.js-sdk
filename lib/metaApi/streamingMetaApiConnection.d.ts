@@ -70,21 +70,19 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
    * note that this feature is not fully implemented on server-side yet
-   * @param {number} instanceIndex instance index
    * @param {number} [timeoutInSeconds] timeout to wait for prices in seconds, default is 30
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  subscribeToMarketData(symbol: string, subscriptions: Array<MarketDataSubscription>, instanceIndex: number, timeoutInSeconds?: number): Promise<any>;
+  subscribeToMarketData(symbol: string, subscriptions: Array<MarketDataSubscription>, timeoutInSeconds?: number): Promise<any>;
   
   /**
    * Unsubscribes from market data of specified symbol (see
    * https://metaapi.cloud/docs/client/websocket/marketDataStreaming/unsubscribeFromMarketData/).
    * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
-   * @param {number} instanceIndex instance index
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(symbol: string, subscriptions: MarketDataUnsubscription, instanceIndex: number): Promise<any>;
+  unsubscribeFromMarketData(symbol: string, subscriptions: MarketDataUnsubscription): Promise<any>;
   
   /**
    * Invoked when subscription downgrade has occurred

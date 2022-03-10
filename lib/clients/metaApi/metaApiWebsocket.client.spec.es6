@@ -645,7 +645,13 @@ describe('MetaApiWebsocketClient', () => {
       message: 'Request completed',
       orderId: '46870472'
     };
+    sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+      instanceIndex: 0, replicas: 1});
+    await new Promise(res => setTimeout(res, 100));
+    let instanceIndex;
     server.on('request', data => {
+      instanceIndex = data.instanceIndex;
       data.trade.should.match(trade);
       if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
         server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
@@ -653,6 +659,39 @@ describe('MetaApiWebsocketClient', () => {
     });
     let actual = await client.trade('accountId', trade);
     actual.should.match(response);
+    should.equal(instanceIndex, 0);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#trade}
+   */
+  it('should execute an RPC trade', async () => {
+    let trade = {
+      actionType: 'ORDER_TYPE_SELL',
+      symbol: 'AUDNZD',
+      volume: 0.07
+    };
+    let response = {
+      numericCode: 10009,
+      stringCode: 'TRADE_RETCODE_DONE',
+      message: 'Request completed',
+      orderId: '46870472'
+    };
+    sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+      instanceIndex: 0, replicas: 1});
+    await new Promise(res => setTimeout(res, 50));
+    let instanceIndex;
+    server.on('request', data => {
+      instanceIndex = data.instanceIndex;
+      data.trade.should.match(trade);
+      if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'RPC') {
+        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+      }
+    });
+    let actual = await client.trade('accountId', trade, 'RPC');
+    actual.should.match(response);
+    should.not.exist(instanceIndex);
   });
 
   /**
@@ -2001,7 +2040,7 @@ describe('MetaApiWebsocketClient', () => {
         requestCounter ++;
       });
       try {
-        await client.subscribeToMarketData('accountId', 0, 'EURUSD');
+        await client.subscribeToMarketData('accountId', 'EURUSD', 'regular');
         throw new Error('ValidationError expected');
       } catch (err) {
         err.name.should.equal('ValidationError');
@@ -2089,6 +2128,9 @@ describe('MetaApiWebsocketClient', () => {
      */
     it('should subscribe to market data with MetaTrader terminal', async () => {
       let requestReceived = false;
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 0, replicas: 1});
+      await new Promise(res => setTimeout(res, 50));
       server.on('request', data => {
         if (data.type === 'subscribeToMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
           data.application === 'application' && data.instanceIndex === 0 &&
@@ -2097,8 +2139,36 @@ describe('MetaApiWebsocketClient', () => {
           server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         }
       });
-      await client.subscribeToMarketData('accountId', 0, 'EURUSD', [{type: 'quotes'}]);
+      await client.subscribeToMarketData('accountId', 'EURUSD', [{type: 'quotes'}], 'regular');
       requestReceived.should.be.true();
+    });
+
+    /**
+     * @test {MetaApiWebsocketClient#subscribeToMarketData}
+     */
+    it('should subscribe to market data with MetaTrader terminal for high reliability account', async () => {
+      let requestReceived = false;
+      let requestReceived1 = false;
+      server.on('request', data => {
+        if (data.type === 'subscribeToMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
+              data.application === 'application' && data.instanceIndex === 0 &&
+              JSON.stringify(data.subscriptions) === JSON.stringify([{type: 'quotes'}])) {
+          requestReceived = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      server1.on('request', data => {
+        if (data.type === 'subscribeToMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
+              data.application === 'application' && data.instanceIndex === 1 &&
+              JSON.stringify(data.subscriptions) === JSON.stringify([{type: 'quotes'}])) {
+          requestReceived1 = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      await client.subscribeToMarketData('accountId', 'EURUSD', [{type: 'quotes'}], 'high');
+      await new Promise(res => setTimeout(res, 100));
+      requestReceived.should.be.true();
+      requestReceived1.should.be.true();
     });
 
     /**
@@ -2123,6 +2193,9 @@ describe('MetaApiWebsocketClient', () => {
      */
     it('should unsubscribe from market data with MetaTrader terminal', async () => {
       let requestReceived = false;
+      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 0, replicas: 1});
+      await new Promise(res => setTimeout(res, 50));
       server.on('request', data => {
         if (data.type === 'unsubscribeFromMarketData' && data.accountId === 'accountId' && data.symbol === 'EURUSD' &&
           data.application === 'application' && data.instanceIndex === 0 &&
@@ -2131,7 +2204,7 @@ describe('MetaApiWebsocketClient', () => {
           server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
         }
       });
-      await client.unsubscribeFromMarketData('accountId', 0, 'EURUSD', [{type: 'quotes'}]);
+      await client.unsubscribeFromMarketData('accountId', 'EURUSD', [{type: 'quotes'}], 'regular');
       requestReceived.should.be.true();
     });
 
