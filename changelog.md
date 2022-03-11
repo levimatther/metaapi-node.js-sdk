@@ -1,3 +1,6 @@
+18.3.3
+  - improve synchronization stability
+
 18.3.2
   - improve synchronization stability
 
