@@ -1318,7 +1318,7 @@ export default class MetaApiWebsocketClient {
     let instanceNumber = 0;
     const region = this.getAccountRegion(accountId);
     this._refreshAccountRegion(accountId);
-    if(request.instanceIndex) {
+    if(request.instanceIndex !== undefined) {
       instanceNumber = request.instanceIndex;
     } else {
       const instance = Object.keys(this._connectedHosts).find(i => i.startsWith(accountId));
