@@ -1,4 +1,4 @@
-18.3.4
+18.3.5
   - improve trade request stability
 
 18.3.3

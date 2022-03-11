@@ -1446,6 +1446,7 @@ export default class MetaApiWebsocketClient {
     } else {
       this._logger.trace(() => `${accountId}:${request.instanceIndex}: skipping request because it is being sent to ` +
         `the socket of the wrong instance index, request=${JSON.stringify(request)}`);
+      return result;
     }
   }
 
