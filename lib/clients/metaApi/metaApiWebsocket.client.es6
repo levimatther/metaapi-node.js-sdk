@@ -286,7 +286,8 @@ export default class MetaApiWebsocketClient {
       socket: null,
       synchronizationThrottler: new SynchronizationThrottler(this, socketInstanceIndex, instanceNumber, region,
         this._synchronizationThrottlerOpts),
-      subscribeLock: null
+      subscribeLock: null,
+      instanceNumber
     };
     instance.connected = true;
     this._socketInstances[region][instanceNumber].push(instance);
@@ -392,6 +393,11 @@ export default class MetaApiWebsocketClient {
     socketInstance.on('synchronization', async data => {
       if (typeof data === 'string') {
         data = JSON.parse(data);
+      }
+      if (data.instanceIndex && data.instanceIndex !== instanceNumber) {
+        this._logger.trace(() => `${data.accountId}:${data.instanceNumber}: received packet with wrong instance ` +
+          `index via a socket with instance number of ${instanceNumber}, data=${JSON.stringify(data)}`);
+        return;
       }
       if(!this._regionsByAccounts[data.accountId]) {
         this._regionsByAccounts[data.accountId] = {region, connections: 0, lastUsed: Date.now()};
@@ -1433,9 +1439,14 @@ export default class MetaApiWebsocketClient {
     if (!request.requestId) {
       request.requestId = requestId;
     }
-    this._logger.debug(() => `${accountId}: Sending request: ${JSON.stringify(request)}`);
-    socketInstance.socket.emit('request', request);
-    return result;
+    if (request.applicaion === 'RPC' || request.instanceIndex === socketInstance.instanceNumber) {
+      this._logger.debug(() => `${accountId}: Sending request: ${JSON.stringify(request)}`);
+      socketInstance.socket.emit('request', request);
+      return result;
+    } else {
+      this._logger.trace(() => `${accountId}:${request.instanceIndex}: skipping request because it is being sent to ` +
+        `the socket of the wrong instance index, request=${JSON.stringify(request)}`);
+    }
   }
 
   // eslint-disable-next-line complexity

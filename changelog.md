@@ -1,3 +1,6 @@
+18.3.2
+  - improve synchronization stability
+
 18.3.1
   - fixed duplicate trade execution issue introduced in 18.3.0 version
 
