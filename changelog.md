@@ -1,3 +1,6 @@
+18.3.1
+  - fixed duplicate trade execution issue introduced in 18.3.0 version
+
 18.3.0
   - improved stability of subscribeToMarketData, unsubscribeFromMarketData, trade requests
   - simplified interface of subscribeToMarketData, unsubscribeFromMarketData requests

@@ -879,7 +879,7 @@ export default class MetaApiWebsocketClient {
       response = await this.rpcRequest(accountId, {type: 'trade', trade, application});
     } else {
       response = await this.rpcRequestAllInstances(accountId, {type: 'trade', trade,
-        application: application || this._application}, reliability);
+        application: application || this._application, requestId: randomstring.generate(32)}, reliability);
     }
     response.response = response.response || {};
     response.response.stringCode = response.response.stringCode || response.response.description;
