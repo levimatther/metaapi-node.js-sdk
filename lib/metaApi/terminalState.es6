@@ -93,6 +93,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   // eslint-disable-next-line complexity
   async getHashes(accountType, instanceIndex) {
+    let requestedState = this._getState(instanceIndex);
     const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists();
     // get latest instance number state
     const instanceNumber = instanceIndex.split(':')[0];
@@ -156,6 +157,13 @@ export default class TerminalState extends SynchronizationListener {
     const ordersHash = state.ordersInitialized ? 
       state.ordersHash || this._getHash(orders, accountType, ['magic']) : null;
     state.ordersHash = ordersHash;
+
+    requestedState.specificationsBySymbol = Object.assign({}, state.specificationsBySymbol || {});
+    requestedState.specificationsHash = specificationsHash;
+    requestedState.positions = (state.positions || []).map(p => Object.assign({}, p));
+    requestedState.positionsHash = positionsHash;
+    requestedState.orders = (state.orders || []).map(o => Object.assign({}, o));
+    requestedState.ordersHash = ordersHash;
 
     return {
       specificationsMd5: specificationsHash,
@@ -258,10 +266,14 @@ export default class TerminalState extends SynchronizationListener {
       state.ordersHash = null;
     }
     if(specificationsUpdated) {
-      this._logger.trace(`${this._accountId}:${instanceIndex}:${synchronizationId}: cleared specifications ` +
+      this._logger.trace(() => `${this._accountId}:${instanceIndex}:${synchronizationId}: cleared specifications ` +
         'on synchronization start');
       state.specificationsBySymbol = {};
       state.specificationsHash = null;
+    } else {
+      this._logger.trace(() => `${this._accountId}:${instanceIndex}:${synchronizationId}: no need to clear ` +
+        `specifications on synchronization start, ${Object.keys(state.specificationsBySymbol || {}).length} ` +
+        'specifications reused');
     }
   }
 
@@ -383,9 +395,9 @@ export default class TerminalState extends SynchronizationListener {
     this._combinedState.positions = (state.positions || []).map(p => Object.assign({}, p));
     this._combinedState.orders = (state.orders || []).map(o => Object.assign({}, o));
     this._combinedState.specificationsBySymbol = Object.assign({}, state.specificationsBySymbol);
-    this._logger.trace(`${this._accountId}:${instanceIndex}:${synchronizationId}: assigned specifications to ` +
+    this._logger.trace(() => `${this._accountId}:${instanceIndex}:${synchronizationId}: assigned specifications to ` +
       'combined state from ' +
-      `${instanceIndex}, ${Object.keys(state.specificationsBySymbol || {}).lengh} specifications assigned`);
+      `${instanceIndex}, ${Object.keys(state.specificationsBySymbol || {}).length} specifications assigned`);
     this._combinedState.positionsInitialized = true;
     this._combinedState.ordersInitialized = true;
     this._combinedState.completedOrders = {};
@@ -469,8 +481,9 @@ export default class TerminalState extends SynchronizationListener {
     };
     updateSpecifications(instanceState);
     updateSpecifications(this._combinedState);
-    this._logger.trace(`${this._accountId}:${instanceIndex}: updated ${specifications.length} specifications, ` +
-      `removed ${removedSymbols.length} specifications`);
+    this._logger.trace(() => `${this._accountId}:${instanceIndex}: updated ${specifications.length} specifications, ` +
+      `removed ${removedSymbols.length} specifications. There are ` +
+      `${Object.keys(instanceState.specificationsBySymbol || {}).length} specifications after update`);
   }
 
   /**

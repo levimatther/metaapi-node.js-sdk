@@ -396,7 +396,12 @@ export default class MetaApiWebsocketClient {
       }
       if (data.instanceIndex && data.instanceIndex !== instanceNumber) {
         this._logger.trace(() => `${data.accountId}:${data.instanceNumber}: received packet with wrong instance ` +
-          `index via a socket with instance number of ${instanceNumber}, data=${JSON.stringify(data)}`);
+          `index via a socket with instance number of ${instanceNumber}, data=${JSON.stringify({
+            type: data.type, sequenceNumber: data.sequenceNumber, sequenceTimestamp: data.sequenceTimestamp,
+            synchronizationId: data.synchronizationId, application: data.application, host: data.host,
+            specificationsUpdated: data.specificationsUpdated, positionsUpdated: data.positionsUpdated,
+            ordersUpdated: data.ordersUpdated,
+            specifications: data.specifications ? (data.specifications || []).length : undefined})}`);
         return;
       }
       if(!this._regionsByAccounts[data.accountId]) {
@@ -404,7 +409,10 @@ export default class MetaApiWebsocketClient {
       }
       this._logger.trace(() => `${data.accountId}:${data.instanceIndex}: Sync packet received: ${JSON.stringify({
         type: data.type, sequenceNumber: data.sequenceNumber, sequenceTimestamp: data.sequenceTimestamp,
-        synchronizationId: data.synchronizationId, application: data.application, host: data.host})}`);
+        synchronizationId: data.synchronizationId, application: data.application, host: data.host, 
+        specificationsUpdated: data.specificationsUpdated, positionsUpdated: data.positionsUpdated,
+        ordersUpdated: data.ordersUpdated, 
+        specifications: data.specifications ? (data.specifications || []).length : undefined})}`);
       let activeSynchronizationIds = instance.synchronizationThrottler.activeSynchronizationIds; 
       if (!data.synchronizationId || activeSynchronizationIds.includes(data.synchronizationId)) {
         if (this._packetLogger) {
