@@ -1447,7 +1447,8 @@ export default class MetaApiWebsocketClient {
     if (!request.requestId) {
       request.requestId = requestId;
     }
-    if (request.application === 'RPC' || request.instanceIndex === socketInstance.instanceNumber) {
+    if (request.type === 'unsubscribe' || request.application === 'RPC' ||
+      request.instanceIndex === socketInstance.instanceNumber) {
       this._logger.debug(() => `${accountId}: Sending request: ${JSON.stringify(request)}`);
       socketInstance.socket.emit('request', request);
       return result;

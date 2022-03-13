@@ -158,12 +158,14 @@ export default class TerminalState extends SynchronizationListener {
       state.ordersHash || this._getHash(orders, accountType, ['magic']) : null;
     state.ordersHash = ordersHash;
 
-    requestedState.specificationsBySymbol = Object.assign({}, state.specificationsBySymbol || {});
-    requestedState.specificationsHash = specificationsHash;
-    requestedState.positions = (state.positions || []).map(p => Object.assign({}, p));
-    requestedState.positionsHash = positionsHash;
-    requestedState.orders = (state.orders || []).map(o => Object.assign({}, o));
-    requestedState.ordersHash = ordersHash;
+    if (requestedState !== state) {
+      requestedState.specificationsBySymbol = Object.assign({}, state.specificationsBySymbol || {});
+      requestedState.specificationsHash = specificationsHash;
+      requestedState.positions = (state.positions || []).map(p => Object.assign({}, p));
+      requestedState.positionsHash = positionsHash;
+      requestedState.orders = (state.orders || []).map(o => Object.assign({}, o));
+      requestedState.ordersHash = ordersHash;
+    }
 
     return {
       specificationsMd5: specificationsHash,
