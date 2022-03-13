@@ -1,3 +1,6 @@
+18.3.8
+  - minor bugfix
+
 18.3.7
   - improve synchronization stability
 
