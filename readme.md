@@ -595,7 +595,7 @@ console.log(monitor.requestLatencies);
 Please note that not all MT4/MT5 servers allows you to create MT accounts using the method below.
 ### Create a MetaTrader 4 demo account
 ```javascript
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT4DemoAccount(provisioningProfile.id, {
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT4DemoAccount({
   balance: 100000,
   accountType: 'type',
   email: 'example@example.com',
@@ -604,11 +604,23 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT4DemoAccount
   name: 'Test User',
   phone: '+12345678901'
 });
+
+// optionally specify a provisioning profile id if servers file is not found by server name
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT4DemoAccount({
+  balance: 100000,
+  accountType: 'type',
+  email: 'example@example.com',
+  leverage: 100,
+  serverName: 'Exness-Trial4',
+  name: 'Test User',
+  phone: '+12345678901'
+}, provisioningProfile.id);
+
 ```
 
 ### Create a MetaTrader 4 live account
 ```javascript
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT4LiveAccount(provisioningProfile.id, {
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT4LiveAccount({
   accountType: 'type',
   balance: 100000,
   email: 'example@example.com',
@@ -622,11 +634,27 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT4LiveAccount
   city: 'New York',
   address: 'customer address'
 });
+
+// optionally specify provisioning profile id is servers file not found by server name
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT4LiveAccount({
+  accountType: 'type',
+  balance: 100000,
+  email: 'example@example.com',
+  leverage: 100,
+  serverName: 'Exness-Live4',
+  name: 'Test User',
+  phone: '+12345678901',
+  country: 'Unites States',
+  zip: '12345',
+  state: 'New York',
+  city: 'New York',
+  address: 'customer address'
+}, provisioningProfile.id);
 ```
 
 ### Create a MetaTrader 5 demo account
 ```javascript
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount(provisioningProfile.id, {
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount({
   accountType: 'type',
   balance: 100000,
   email: 'example@example.com',
@@ -635,11 +663,22 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount
   name: 'Test User',
   phone: '+12345678901'
 });
+
+// optionally specify provisioning profile id if servers file not found by server name
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount({
+  accountType: 'type',
+  balance: 100000,
+  email: 'example@example.com',
+  leverage: 100,
+  serverName: 'ICMarketsSC-Demo',
+  name: 'Test User',
+  phone: '+12345678901'
+}, provisioningProfile.id);
 ```
 
 ### Create a MetaTrader 5 live account
 ```javascript
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT5LiveAccount(provisioningProfile.id, {
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT5LiveAccount({
   accountType: 'type',
   balance: 100000,
   email: 'example@example.com',
@@ -653,6 +692,22 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT5LiveAccount
   city: 'New York',
   address: 'customer address'
 });
+
+// optionally specify a provisioning profile id if servers file is not found by server name
+const demoAccount = await api.metatraderAccountGeneratorApi.createMT5LiveAccount({
+  accountType: 'type',
+  balance: 100000,
+  email: 'example@example.com',
+  leverage: 100,
+  serverName: 'ICMarketsSC-MT5',
+  name: 'Test User',
+  phone: '+12345678901',
+  country: 'Unites States',
+  zip: '12345',
+  state: 'New York',
+  city: 'New York',
+  address: 'customer address'
+}, provisioningProfile.id);
 ```
 
 ## Enable log4js logging

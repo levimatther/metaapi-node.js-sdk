@@ -80,16 +80,16 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * Creates new MetaTrader 4 demo account
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4DemoAccount/
    * Method is accessible only with API access token
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT4DemoAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
-  createMT4DemoAccount(profileId, account) {
+  createMT4DemoAccount(account, profileId) {
     if (this._isNotJwtToken()) {
       return this._handleNoAccessError('createMT4DemoAccount');
     }
     const opts = {
-      url: `${this._host}/users/current/provisioning-profiles/${profileId}/mt4-demo-accounts`,
+      url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt4-demo-accounts`,
       method: 'POST',
       headers: {
         'auth-token': this._token
@@ -104,16 +104,16 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * Creates new MetaTrader 4 live account
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4LiveAccount/
    * Method is accessible only with API access token
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT4LiveAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
    */
-  createMT4LiveAccount(profileId, account) {
+  createMT4LiveAccount(account, profileId) {
     if (this._isNotJwtToken()) {
       return this._handleNoAccessError('createMT4LiveAccount');
     }
     const opts = {
-      url: `${this._host}/users/current/provisioning-profiles/${profileId}/mt4-live-accounts`,
+      url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt4-live-accounts`,
       method: 'POST',
       headers: {
         'auth-token': this._token
@@ -128,16 +128,16 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * Creates new MetaTrader 5 demo account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5DemoAccount/
    * Method is accessible only with API access token
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT5DemoAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
    */
-  createMT5DemoAccount(profileId, account) {
+  createMT5DemoAccount(account, profileId) {
     if (this._isNotJwtToken()) {
       return this._handleNoAccessError('createMT5DemoAccount');
     }
     const opts = {
-      url: `${this._host}/users/current/provisioning-profiles/${profileId}/mt5-demo-accounts`,
+      url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt5-demo-accounts`,
       method: 'POST',
       headers: {
         'auth-token': this._token
@@ -152,16 +152,16 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * Creates new MetaTrader 5 live account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5LiveAccount/
    * Method is accessible only with API access token
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT5LiveAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
    */
-  createMT5LiveAccount(profileId, account) {
+  createMT5LiveAccount(account, profileId) {
     if (this._isNotJwtToken()) {
       return this._handleNoAccessError('createMT5LiveAccount');
     }
     const opts = {
-      url: `${this._host}/users/current/provisioning-profiles/${profileId}/mt5-live-accounts`,
+      url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt5-live-accounts`,
       method: 'POST',
       headers: {
         'auth-token': this._token

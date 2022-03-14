@@ -19,48 +19,48 @@ export default class MetatraderAccountGeneratorApi {
   /**
    * Creates new MetaTrader 4 demo account.
    * See (https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4DemoAccount/)
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT4DemoAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentials>} promise resolving with MetaTrader account credentials entity
    */
-  async createMT4DemoAccount(profileId, account) {
-    let mtAccount = await this._metatraderAccountGeneratorClient.createMT4DemoAccount(profileId, account);
+  async createMT4DemoAccount(account, profileId) {
+    let mtAccount = await this._metatraderAccountGeneratorClient.createMT4DemoAccount(account, profileId);
     return new MetatraderAccountCredentials(mtAccount);
   }
 
   /**
    * Creates new MetaTrader 4 live account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4LiveAccount/
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT4LiveAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentials>} promise resolving with MetaTrader account credentials entity
    */
-  async createMT4LiveAccount(profileId, account) {
-    let mtAccount = await this._metatraderAccountGeneratorClient.createMT4LiveAccount(profileId, account);
+  async createMT4LiveAccount(account, profileId) {
+    let mtAccount = await this._metatraderAccountGeneratorClient.createMT4LiveAccount(account, profileId);
     return new MetatraderAccountCredentials(mtAccount);
   }
 
   /**
    * Creates new MetaTrader 5 demo account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5DemoAccount/
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT5DemoAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentials>} promise resolving with MetaTrader account credentials entity
    */
-  async createMT5DemoAccount(profileId, account) {
-    let mtAccount = await this._metatraderAccountGeneratorClient.createMT5DemoAccount(profileId, account);
+  async createMT5DemoAccount(account, profileId) {
+    let mtAccount = await this._metatraderAccountGeneratorClient.createMT5DemoAccount(account, profileId);
     return new MetatraderAccountCredentials(mtAccount);
   }
 
   /**
    * Creates new MetaTrader 5 live account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5LiveAccount/
-   * @param {string} profileId id of the provisioning profile that will be used as the basis for creating this account
    * @param {NewMT5LiveAccount} account account to create
+   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
    * @return {Promise<MetatraderAccountCredentials>} promise resolving with MetaTrader account credentials entity
    */
-  async createMT5LiveAccount(profileId, account) {
-    let mtAccount = await this._metatraderAccountGeneratorClient.createMT5LiveAccount(profileId, account);
+  async createMT5LiveAccount(account, profileId) {
+    let mtAccount = await this._metatraderAccountGeneratorClient.createMT5LiveAccount(account, profileId);
     return new MetatraderAccountCredentials(mtAccount);
   }
 
