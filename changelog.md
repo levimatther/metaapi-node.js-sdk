@@ -1,3 +1,6 @@
+19.0.1
+  - fixed recording historyOrders to disk
+
 19.0.0
   - breaking change: refactored demo account generator API to allow creating demo accounts without need to specify a provisioning profile, using server name only
 
