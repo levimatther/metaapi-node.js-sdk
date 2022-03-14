@@ -230,15 +230,6 @@ export default class MetaApiWebsocketClient {
   getDealsByTimeRange(accountId: string, startTime: Date, endTime: Date, offset: number, limit: number): Promise<MetatraderDeals>;
   
   /**
-   * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
-   * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {string} accountId id of the MetaTrader account to remove history for
-   * @param {string} [application] application to remove history for
-   * @return {Promise} promise resolving when the history is cleared
-   */
-  removeHistory(accountId: string, application: string): Promise<any>;
-  
-  /**
    * Clears the order and transaction history of a specified application and removes the application (see
    * https://metaapi.cloud/docs/client/websocket/api/removeApplication/).
    * @param {string} accountId id of the MetaTrader account to remove history and application for

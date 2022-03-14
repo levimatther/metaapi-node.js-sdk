@@ -840,17 +840,6 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
-   * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
-   * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {String} accountId id of the MetaTrader account to remove history for
-   * @param {String} [application] application to remove history for
-   * @return {Promise} promise resolving when the history is cleared
-   */
-  removeHistory(accountId, application) {
-    return this.rpcRequest(accountId, {application, type: 'removeHistory'});
-  }
-
-  /**
    * Clears the order and transaction history of a specified application and removes the application (see
    * https://metaapi.cloud/docs/client/websocket/api/removeApplication/).
    * @param {String} accountId id of the MetaTrader account to remove history and application for
@@ -1128,7 +1117,7 @@ export default class MetaApiWebsocketClient {
     try {
       const region = this.getAccountRegion(accountId);
       await Promise.all(Object.keys(this._socketInstances[region]).map(async instanceNumber => {
-        await this._subscriptionManager.unsubscribe(accountId, instanceNumber);
+        await this._subscriptionManager.unsubscribe(accountId, Number(instanceNumber));
         delete this._socketInstancesByAccounts[instanceNumber][accountId];
       }));
     } catch (err) {
@@ -1305,11 +1294,6 @@ export default class MetaApiWebsocketClient {
         throw error.errors[0]; 
       }
     } else {
-      const instance = Object.keys(this._connectedHosts).find(i => i.startsWith(accountId));
-      if(instance) {
-        const instanceNumber = Number(instance.split(':')[1]);
-        request = Object.assign({}, request, {instanceIndex: instanceNumber});
-      }
       return await this.rpcRequest(accountId, request, timeoutInSeconds);
     }
   }
@@ -1332,6 +1316,9 @@ export default class MetaApiWebsocketClient {
       const instance = Object.keys(this._connectedHosts).find(i => i.startsWith(accountId));
       if(instance) {
         instanceNumber = Number(instance.split(':')[1]);
+      }
+      if(request.application !== 'RPC') {
+        request = Object.assign({}, request, {instanceIndex: instanceNumber});
       }
     }
     if(!this._socketInstancesByAccounts[instanceNumber]) {

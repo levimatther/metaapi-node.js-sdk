@@ -28,7 +28,6 @@ describe('StreamingMetaApiConnection', () => {
     getDealsByTicket: () => {},
     getDealsByPosition: () => {},
     getDealsByTimeRange: () => {},
-    removeHistory: () => {},
     removeApplication: () => {},
     trade: () => {},
     reconnect: () => {},
@@ -112,18 +111,6 @@ describe('StreamingMetaApiConnection', () => {
   afterEach(() => {
     clock.restore();
     sandbox.restore();
-  });
-
-  /**
-   * @test {MetaApiConnection#removeHistory}
-   */
-  it('should remove history', async () => {
-    await api.connect();
-    sandbox.stub(client, 'removeHistory').resolves();
-    sandbox.stub(api.historyStorage, 'clear').resolves();
-    await api.removeHistory('app');
-    sinon.assert.calledWith(client.removeHistory, 'accountId', 'app');
-    sinon.assert.calledOnce(api.historyStorage.clear);
   });
 
   /**
