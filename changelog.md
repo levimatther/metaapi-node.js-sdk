@@ -1,3 +1,6 @@
+18.3.9
+  - fixed streaming connection requests
+
 18.3.8
   - minor bugfix
 

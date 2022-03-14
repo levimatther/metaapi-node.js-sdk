@@ -106,14 +106,6 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   getDealsByTimeRange(startTime: Date, endTime: Date, offset?: number, limit?: number): Promise<MetatraderDeals>;
   
   /**
-   * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
-   * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {string} [application] application to remove history for
-   * @return {Promise} promise resolving when the history is cleared
-   */
-  removeHistory(application?: string): Promise<any>;
-  
-  /**
    * Retrieves available symbols for an account (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbols/).
    * @returns {Promise<Array<string>>} promise which resolves when symbols are retrieved

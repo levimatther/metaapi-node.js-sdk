@@ -163,17 +163,6 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   }
 
   /**
-   * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
-   * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {String} [application] application to remove history for
-   * @return {Promise} promise resolving when the history is cleared
-   */
-  removeHistory(application) {
-    this._checkIsConnectionActive();
-    return this._websocketClient.removeHistory(this._account.id, application);
-  }
-
-  /**
    * Retrieves available symbols for an account (see
    * https://metaapi.cloud/docs/client/websocket/api/retrieveMarketData/readSymbols/).
    * @param {String} symbol symbol to retrieve symbols for

@@ -63,6 +63,7 @@ describe('MetaApiWebsocketClient', () => {
     });
     client._regionsByAccounts.accountId = {region: 'vint-hill', connections: 1};
     client._socketInstancesByAccounts = {0: {accountId: 0}, 1: {accountId: 0}};
+    client._connectedHosts = {'accountId:0:ps-mpa-1': 'ps-mpa-1'};
     await client.connect(0, 'new-york');
     await client.connect(1, 'vint-hill');
     server1 = server;
@@ -598,21 +599,6 @@ describe('MetaApiWebsocketClient', () => {
     let actual = await client.getDealsByTimeRange('accountId', new Date('2020-04-15T02:45:00.000Z'),
       new Date('2020-04-15T02:46:00.000Z'), 1, 100);
     actual.should.match({deals, synchronizing: false});
-  });
-
-  /**
-   * @test {MetaApiWebsocketClient#removeHistory}
-   */
-  it('should remove history from API', async () => {
-    let requestReceived = false;
-    server.on('request', data => {
-      if (data.type === 'removeHistory' && data.accountId === 'accountId' && data.application === 'app') {
-        requestReceived = true;
-        server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
-      }
-    });
-    await client.removeHistory('accountId', 'app');
-    requestReceived.should.be.true();
   });
 
   /**
@@ -1206,7 +1192,7 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onConnected, '0:ps-mpa-1', 2);
     });
 
-    it('should set instance index for rpc requests according to authenticated instances', async () => {
+    it('should send trade requests to both instances', async () => {
       let listener = {
         onConnected: () => {
         }
@@ -1237,16 +1223,102 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
       sandbox.stub(listener, 'onConnected').resolves();
-      await client.trade('accountId', trade);
-      sinon.assert.match(instanceCalled0, true);
-      sinon.assert.match(instanceCalled1, false);
       client.addSynchronizationListener('accountId', listener);
-      server.emit('synchronization', {type: 'authenticated', accountId: 'accountId', host: 'ps-mpa-1',
-        instanceIndex: 1, replicas: 1, sessionId});
-      await new Promise(res => setTimeout(res, 50));
-      await client.trade('accountId', trade);
+      await client.trade('accountId', trade, undefined, 'high');
+      await new Promise(res => setTimeout(res, 100));
       sinon.assert.match(instanceCalled0, true);
       sinon.assert.match(instanceCalled1, true);
+    });
+
+    it('should not send requests to mismatching instances', async () => {
+      let requestReceivedAssigned0 = false;
+      let requestReceivedAssigned1 = false;
+      server.on('request', data => {
+        if (data.type === 'subscribe' && data.accountId === 'accountId' && data.application === 'application'
+        && data.instanceIndex === 0) {
+          requestReceivedAssigned0 = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      server1.on('request', data => {
+        if (data.type === 'subscribe' && data.accountId === 'accountId' && data.application === 'application' 
+        && data.instanceIndex === 1) {
+          requestReceivedAssigned1 = true;
+          server1.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      await client.subscribe('accountId', 0);
+      sinon.assert.match(requestReceivedAssigned0, true);
+      await client.subscribe('accountId', 1);
+      sinon.assert.match(requestReceivedAssigned1, true);
+
+      let requestReceivedAuthenticated0 = false;
+      let requestReceivedAuthenticated1 = false;
+      server.on('request', data => {
+        if (data.type === 'removeApplication' && data.accountId === 'accountId' && data.application === 'application'
+        && data.instanceIndex === 0) {
+          requestReceivedAuthenticated0 = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      server1.on('request', data => {
+        if (data.type === 'removeApplication' && data.accountId === 'accountId' && data.application === 'application'
+        && data.instanceIndex === 1) {
+          requestReceivedAuthenticated1 = true;
+          server1.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId});
+        }
+      });
+      await client.removeApplication('accountId');
+      sinon.assert.match(requestReceivedAuthenticated0, true);
+      sinon.assert.match(requestReceivedAuthenticated1, false);
+
+      requestReceivedAuthenticated0 = false;
+      client._connectedHosts = {'accountId:1:ps-mpa-1': 'ps-mpa-1'};
+      await client.removeApplication('accountId');
+      sinon.assert.match(requestReceivedAuthenticated0, false);
+      sinon.assert.match(requestReceivedAuthenticated1, true);
+
+      let listener = {
+        onConnected: () => {
+        }
+      };
+      let instanceCalledTrade0 = false;
+      let instanceCalledTrade1 = false;
+      let trade = {
+        actionType: 'ORDER_TYPE_SELL',
+        symbol: 'AUDNZD',
+        volume: 0.07
+      };
+      let response = {
+        numericCode: 10009,
+        stringCode: 'TRADE_RETCODE_DONE',
+        message: 'Request completed',
+        orderId: '46870472'
+      };
+      server.on('request', data => {
+        if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+          instanceCalledTrade0 = true;
+          server.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+        }
+      });
+      server1.on('request', data => {
+        if (data.type === 'trade' && data.accountId === 'accountId' && data.application === 'application') {
+          instanceCalledTrade1 = true;
+          server1.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, response});
+        }
+      });
+      client._connectedHosts = {'accountId:0:ps-mpa-1': 'ps-mpa-1'};
+      sandbox.stub(listener, 'onConnected').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      await client.trade('accountId', trade, undefined, 'regular');
+      sinon.assert.match(instanceCalledTrade0, true);
+      sinon.assert.match(instanceCalledTrade1, false);
+
+      instanceCalledTrade0 = false;
+      client._connectedHosts = {'accountId:1:ps-mpa-1': 'ps-mpa-1'};
+      await client.trade('accountId', trade, undefined, 'regular');
+      sinon.assert.match(instanceCalledTrade0, false);
+      sinon.assert.match(instanceCalledTrade1, true);
     });
 
     it('should process authenticated synchronization event with session id', async () => {

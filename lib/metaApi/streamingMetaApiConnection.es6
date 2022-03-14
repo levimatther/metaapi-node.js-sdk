@@ -71,18 +71,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   }
 
   /**
-   * Clears the order and transaction history of a specified application so that it can be synchronized from scratch
-   * (see https://metaapi.cloud/docs/client/websocket/api/removeHistory/).
-   * @param {String} [application] application to remove history for
-   * @return {Promise} promise resolving when the history is cleared
-   */
-  removeHistory(application) {
-    this._checkIsConnectionActive();
-    this._historyStorage.clear();
-    return this._websocketClient.removeHistory(this._account.id, application);
-  }
-
-  /**
    * Clears the order and transaction history of a specified application and removes application (see
    * https://metaapi.cloud/docs/client/websocket/api/removeApplication/).
    * @return {Promise} promise resolving when the history is cleared and application is removed

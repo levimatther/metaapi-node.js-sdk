@@ -28,7 +28,6 @@ describe('RpcMetaApiConnection', () => {
     getDealsByTicket: () => {},
     getDealsByPosition: () => {},
     getDealsByTimeRange: () => {},
-    removeHistory: () => {},
     removeApplication: () => {},
     trade: () => {},
     reconnect: () => {},
@@ -432,16 +431,6 @@ describe('RpcMetaApiConnection', () => {
     let actual = await api.getDealsByTimeRange(startTime, endTime, 1, 100);
     actual.should.match(deals);
     sinon.assert.calledWith(client.getDealsByTimeRange, 'accountId', startTime, endTime, 1, 100);
-  });
-
-  /**
-   * @test {MetaApiConnection#removeHistory}
-   */
-  it('should remove history', async () => {
-    await api.connect();
-    sandbox.stub(client, 'removeHistory').resolves();
-    await api.removeHistory('app');
-    sinon.assert.calledWith(client.removeHistory, 'accountId', 'app');
   });
 
   /**
