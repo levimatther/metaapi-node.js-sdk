@@ -37,14 +37,13 @@ describe('MetatraderAccountGeneratorClient', () => {
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
     requestStub.resolves(expected);
     let account = await client.createMT4DemoAccount(
-      'profileId1',
       {
         accountType: 'type',
         balance: 10,
         email: 'test@test.com',
         leverage: 15,
         serverName: 'HugosWay-Demo3'
-      });
+      }, 'profileId1');
     account.should.equal(expected);
     sinon.assert.calledOnceWithExactly(httpClient.request, {
       url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId1/mt4-demo-accounts`,
@@ -69,7 +68,7 @@ describe('MetatraderAccountGeneratorClient', () => {
   it('should not create MetaTrader 4 demo account via API with account token', async () => {
     client = new MetatraderAccountGeneratorClient(httpClient, 'token');
     try {
-      await client.createMT4DemoAccount('profileId1', {});
+      await client.createMT4DemoAccount({}, 'profileId1');
     } catch (error) {
       error.message.should.equal(
         'You can not invoke createMT4DemoAccount method, because you have connected with account access token. ' +
@@ -85,14 +84,13 @@ describe('MetatraderAccountGeneratorClient', () => {
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Live3', investorPassword: 'qwerty'};
     requestStub.resolves(expected);
     let account = await client.createMT4LiveAccount(
-      'profileId1',
       {
         accountType: 'type',
         balance: 10,
         email: 'test@test.com',
         leverage: 15,
         serverName: 'HugosWay-Live3'
-      });
+      }, 'profileId1');
     account.should.equal(expected);
     sinon.assert.calledOnceWithExactly(httpClient.request, {
       url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId1/mt4-live-accounts`,
@@ -117,7 +115,7 @@ describe('MetatraderAccountGeneratorClient', () => {
   it('should not create MetaTrader 4 live account via API with account token', async () => {
     client = new MetatraderAccountGeneratorClient(httpClient, 'token');
     try {
-      await client.createMT4LiveAccount('profileId1', {});
+      await client.createMT4LiveAccount({}, 'profileId1');
     } catch (error) {
       error.message.should.equal(
         'You can not invoke createMT4LiveAccount method, because you have connected with account access token. ' +
@@ -133,14 +131,13 @@ describe('MetatraderAccountGeneratorClient', () => {
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
     requestStub.resolves(expected);
     let account = await client.createMT5DemoAccount(
-      'profileId2',
       {
         accountType: 'type',
         balance: 10,
         email: 'test@test.com',
         leverage: 15,
         serverName: 'HugosWay-Demo3'
-      });
+      }, 'profileId2');
     account.should.equal(expected);
     sinon.assert.calledOnceWithExactly(httpClient.request, {
       url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId2/mt5-demo-accounts`,
@@ -165,7 +162,7 @@ describe('MetatraderAccountGeneratorClient', () => {
   it('should not create MetaTrader 5 demo account via API with account token', async () => {
     client = new MetatraderAccountGeneratorClient(httpClient, 'token');
     try {
-      await client.createMT5DemoAccount('profileId1', {});
+      await client.createMT5DemoAccount({}, 'profileId2');
     } catch (error) {
       error.message.should.equal(
         'You can not invoke createMT5DemoAccount method, because you have connected with account access token. ' +
@@ -181,14 +178,14 @@ describe('MetatraderAccountGeneratorClient', () => {
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Live3', investorPassword: 'qwerty'};
     requestStub.resolves(expected);
     let account = await client.createMT5LiveAccount(
-      'profileId2',
       {
         accountType: 'type',
         balance: 10,
         email: 'test@test.com',
         leverage: 15,
         serverName: 'HugosWay-Live3'
-      });
+      },
+      'profileId2');
     account.should.equal(expected);
     sinon.assert.calledOnceWithExactly(httpClient.request, {
       url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId2/mt5-live-accounts`,
@@ -213,7 +210,7 @@ describe('MetatraderAccountGeneratorClient', () => {
   it('should not create MetaTrader 5 live account via API with account token', async () => {
     client = new MetatraderAccountGeneratorClient(httpClient, 'token');
     try {
-      await client.createMT5LiveAccount('profileId1', {});
+      await client.createMT5LiveAccount({}, 'profileId2');
     } catch (error) {
       error.message.should.equal(
         'You can not invoke createMT5LiveAccount method, because you have connected with account access token. ' +

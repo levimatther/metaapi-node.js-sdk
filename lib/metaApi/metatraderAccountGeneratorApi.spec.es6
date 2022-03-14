@@ -46,11 +46,11 @@ describe('MetatraderAccountGeneratorApi', () => {
       leverage: 15,
       serverName: 'HugosWay-Demo3'
     };
-    let account = await api.createMT4DemoAccount('profileId1', newAccountData);
+    let account = await api.createMT4DemoAccount(newAccountData, 'profileId1');
     account.should.match({login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3',
       investorPassword: 'qwerty'});
     (account instanceof MetatraderAccountCredentials).should.be.true();
-    sinon.assert.calledWith(client.createMT4DemoAccount, 'profileId1', newAccountData);
+    sinon.assert.calledWith(client.createMT4DemoAccount, newAccountData, 'profileId1');
   });
 
   /**
@@ -70,11 +70,11 @@ describe('MetatraderAccountGeneratorApi', () => {
       leverage: 15,
       serverName: 'HugosWay-Live3'
     };
-    let account = await api.createMT4LiveAccount('profileId1', newAccountData);
+    let account = await api.createMT4LiveAccount(newAccountData, 'profileId1');
     account.should.match({login: '12345', password: 'qwerty', serverName: 'HugosWay-Live3',
       investorPassword: 'qwerty'});
     (account instanceof MetatraderAccountCredentials).should.be.true();
-    sinon.assert.calledWith(client.createMT4LiveAccount, 'profileId1', newAccountData);
+    sinon.assert.calledWith(client.createMT4LiveAccount, newAccountData, 'profileId1');
   });
 
   /**
@@ -94,11 +94,11 @@ describe('MetatraderAccountGeneratorApi', () => {
       leverage: 20,
       serverName: 'HugosWay-Demo3'
     };
-    let account = await api.createMT5DemoAccount('profileId2', newAccountData);
+    let account = await api.createMT5DemoAccount(newAccountData, 'profileId2');
     account.should.match({login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', 
       investorPassword: 'qwerty'});
     (account instanceof MetatraderAccountCredentials).should.be.true();
-    sinon.assert.calledWith(client.createMT5DemoAccount, 'profileId2', newAccountData);
+    sinon.assert.calledWith(client.createMT5DemoAccount, newAccountData, 'profileId2');
   });
 
   /**
@@ -118,11 +118,11 @@ describe('MetatraderAccountGeneratorApi', () => {
       leverage: 20,
       serverName: 'HugosWay-Live3'
     };
-    let account = await api.createMT5LiveAccount('profileId2', newAccountData);
+    let account = await api.createMT5LiveAccount(newAccountData, 'profileId2');
     account.should.match({login: '12345', password: 'qwerty', serverName: 'HugosWay-Live3',
       investorPassword: 'qwerty'});
     (account instanceof MetatraderAccountCredentials).should.be.true();
-    sinon.assert.calledWith(client.createMT5LiveAccount, 'profileId2', newAccountData);
+    sinon.assert.calledWith(client.createMT5LiveAccount, newAccountData, 'profileId2');
   });
 
 });
