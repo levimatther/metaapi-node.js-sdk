@@ -310,7 +310,7 @@ export default class MemoryHistoryStorage extends HistoryStorage {
     this._flushPromise = new Promise(res => resolve = res);
     try {
       await this._historyDatabase.flush(this._accountId, this._application, this._newHistoryOrders, this._newDeals);
-      this._newOrders = [];
+      this._newHistoryOrders = [];
       this._newDeals = [];
       this._logger.debug(`${this._accountId}: flushed history db`);
     } catch (err) {
