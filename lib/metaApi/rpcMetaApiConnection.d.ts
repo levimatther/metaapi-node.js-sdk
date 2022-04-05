@@ -166,7 +166,14 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @returns {Promise<MetatraderTick>} promise which resolves when order book is retrieved
    */
   getBook(symbol: string, keepSubscription?: boolean): Promise<MetatraderTick>;
-  
+
+  /**
+   * Returns server time for a specified MetaTrader account (see
+   * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readServerTime/).
+   * @returns {Promise<ServerTime>} promise resolving with server time
+   */
+  getServerTime(): Promise<ServerTime>;
+
   /**
    * Waits until synchronization to RPC application is completed
    * @param {number} timeoutInSeconds synchronization timeout in seconds

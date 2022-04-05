@@ -396,7 +396,7 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when uptime statistics is submitted
    */
   saveUptime(accountId: string, uptime: Object): Promise<any>;
-  
+
   /**
    * Unsubscribe from account (see
    * https://metaapi.cloud/docs/client/websocket/api/synchronizing/unsubscribe).
@@ -406,6 +406,14 @@ export default class MetaApiWebsocketClient {
   unsubscribe(accountId: string): Promise<void>;
 
   /**
+   * Returns server time for a specified MetaTrader account (see
+   * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readServerTime/).
+   * @param {String} accountId id of the MetaTrader account to return server time for
+   * @returns {Promise<ServerTime>} promise resolving with server time
+   */
+  getServerTime(accountId: string): Promise<ServerTime>;
+
+    /**
    * Adds synchronization listener for specific account
    * @param {string} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add
@@ -1801,4 +1809,31 @@ export declare type MetatraderBookEntry = {
    * volume
    */
   volume: number
+}
+
+/**
+ * Current server time (see https://metaapi.cloud/docs/client/models/serverTime/)
+ */
+export declare type ServerTime = {
+
+  /**
+   * Current server time
+   */
+  time: Date,
+
+  /**
+   * Current broker time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   */
+  brokerTime: string,
+
+  /**
+   * Last quote time
+   */
+  lastQuoteTime?: Date,
+
+  /**
+   * Last quote time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   */
+  lastQuoteBrokerTime?: string
+
 }

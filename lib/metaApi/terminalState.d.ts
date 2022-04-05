@@ -74,7 +74,13 @@ export default class TerminalState extends SynchronizationListener {
    * @return {MetatraderSymbolPrice} MetatraderSymbolPrice found or undefined if price for a symbol is not found
    */
   price(symbol: string): MetatraderSymbolPrice;
-  
+
+  /**
+   * Returns time of the last received quote
+   * @return {QuoteTime} time of the last received quote
+   */
+  get lastQuoteTime(): QuoteTime;
+
   /**
    * Waits for price to be received
    * @param {string} symbol symbol (e.g. currency pair or an index)
@@ -207,4 +213,21 @@ export default class TerminalState extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onStreamClosed(instanceIndex: string): Promise<any>;  
+}
+
+/**
+ * Quote time
+ */
+export declare type QuoteTime = {
+
+  /**
+   * Quote time
+   */
+  time: Date,
+
+  /**
+   * Quote broker time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   */
+  brokerTime: string
+
 }

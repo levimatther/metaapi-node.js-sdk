@@ -1968,6 +1968,27 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onDealAdded, '0:ps-mpa-1', update.deals[0]);
     });
 
+    /**
+     * @test {MetaApiWebsocketClient#getServerTime}
+     */
+    it('should retrieve server time from API', async () => {
+      let serverTime = {
+        time: new Date('2022-01-01T00:00:00.000Z'),
+        brokerTime: '2022-01-01 02:00:00.000Z'
+      };
+      server.on('request', data => {
+        if (data.type === 'getServerTime' && data.accountId === 'accountId' &&
+          data.application === 'RPC') {
+          server.emit('response', {
+            type: 'response', accountId: data.accountId, requestId: data.requestId,
+            serverTime
+          });
+        }
+      });
+      let actual = await client.getServerTime('accountId');
+      actual.should.match(serverTime);
+    });
+
   });
 
   describe('market data synchronization', () => {

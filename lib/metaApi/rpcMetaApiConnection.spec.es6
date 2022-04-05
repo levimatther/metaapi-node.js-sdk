@@ -37,6 +37,7 @@ describe('RpcMetaApiConnection', () => {
     getCandle: () => {},
     getTick: () => {},
     getBook: () => {},
+    getServerTime: () => {},
     waitSynchronized: () => {},
     addAccountRegion: () => {},
     removeAccountRegion: () => {}
@@ -843,6 +844,21 @@ describe('RpcMetaApiConnection', () => {
     let actual = await api.getBook('AUDNZD', true);
     actual.should.match(book);
     sinon.assert.calledWith(client.getBook, 'accountId', 'AUDNZD', true);
+  });
+
+  /**
+   * @test {MetaApiConnection#getServerTime}
+   */
+  it('should retrieve latest server time', async () => {
+    await api.connect();
+    let serverTime = {
+      time: new Date('2022-01-01T00:00:00.000Z'),
+      brokerTime: '2022-01-01 02:00:00.000Z'
+    };
+    sandbox.stub(client, 'getServerTime').resolves(serverTime);
+    let actual = await api.getServerTime();
+    actual.should.match(serverTime);
+    sinon.assert.calledWith(client.getServerTime, 'accountId');
   });
 
 });

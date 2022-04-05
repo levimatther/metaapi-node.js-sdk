@@ -244,6 +244,16 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   }
 
   /**
+   * Returns server time for a specified MetaTrader account (see
+   * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readServerTime/).
+   * @returns {Promise<ServerTime>} promise resolving with server time
+   */
+  async getServerTime() {
+    this._checkIsConnectionActive();
+    return this._websocketClient.getServerTime(this._account.id);
+  }
+
+  /**
    * Waits until synchronization to RPC application is completed
    * @param {Number} timeoutInSeconds synchronization timeout in seconds
    * @return {Promise} promise which resolves when synchronization to RPC application is completed

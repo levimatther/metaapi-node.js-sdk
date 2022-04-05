@@ -1128,6 +1128,26 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Current server time (see https://metaapi.cloud/docs/client/models/serverTime/)
+   * @typedef {Object} ServerTime
+   * @property {Date} time current server time
+   * @property {String} brokerTime current broker time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   * @property {Date} [lastQuoteTime] last quote time
+   * @property {String} [lastQuoteBrokerTime] last quote time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   */
+
+  /**
+   * Returns server time for a specified MetaTrader account (see
+   * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readServerTime/).
+   * @param {string} accountId id of the MetaTrader account to return server time for
+   * @returns {Promise<ServerTime>} promise resolving with server time
+   */
+  async getServerTime(accountId) {
+    let response = await this.rpcRequest(accountId, {application: 'RPC', type: 'getServerTime'});
+    return response.serverTime;
+  }
+
+  /**
    * Adds synchronization listener for specific account
    * @param {String} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add

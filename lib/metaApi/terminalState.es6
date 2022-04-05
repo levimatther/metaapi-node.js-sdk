@@ -30,7 +30,9 @@ export default class TerminalState extends SynchronizationListener {
       removedPositions: {},
       ordersInitialized: false,
       positionsInitialized: false,
-      lastUpdateTime: 0
+      lastUpdateTime: 0,
+      lastQuoteTime: undefined,
+      lastQuoteBrokerTime: undefined
     };
     this._logger = LoggerManager.getLogger('TerminalState');
   }
@@ -191,6 +193,28 @@ export default class TerminalState extends SynchronizationListener {
    */
   price(symbol) {
     return this._combinedState.pricesBySymbol[symbol];
+  }
+
+  /**
+   * Quote time
+   * @typdef {Object} QuoteTime
+   * @property {Date} time quote time
+   * @property {String} brokerTime quote time in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
+   */
+
+  /**
+   * Returns time of the last received quote
+   * @return {QuoteTime} time of the last received quote
+   */
+  get lastQuoteTime() {
+    if (this._combinedState.lastQuoteTime) {
+      return {
+        time: this._combinedState.lastQuoteTime,
+        brokerTime: this._combinedState.lastQuoteBrokerTime,
+      };
+    } else {
+      return undefined;
+    }
   }
 
   /**
@@ -502,7 +526,7 @@ export default class TerminalState extends SynchronizationListener {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
 
-    // eslint-disable-next-line complexity
+    // eslint-disable-next-line complexity,max-statements
     const updateSymbolPrices = (state) => {
       state.lastUpdateTime = Math.max(prices.map(p => p.time.getTime()));
       let pricesInitialized = false;
@@ -513,6 +537,10 @@ export default class TerminalState extends SynchronizationListener {
           continue;
         } else {
           priceUpdated = true;
+        }
+        if (!state.lastQuoteTime || state.lastQuoteTime.getTime() < price.time.getTime()) {
+          state.lastQuoteTime = price.time;
+          state.lastQuoteBrokerTime = price.brokerTime;
         }
         state.pricesBySymbol[price.symbol] = price;
         let positions = state.positions.filter(p => p.symbol === price.symbol);
@@ -663,6 +691,8 @@ export default class TerminalState extends SynchronizationListener {
       positionsHash: null,
       ordersHash: null,
       specificationsHash: null,
+      lastQuoteTime: undefined,
+      lastQuoteBrokerTime: undefined
     };
   }
 

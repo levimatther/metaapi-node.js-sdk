@@ -182,13 +182,19 @@ describe('TerminalState', () => {
   /**
    * @test {TerminalState#onSymbolPricesUpdated}
    * @test {TerminalState#price}
+   * @test {TerminalState#lastQuoteTime}
    */
   it('should return price', () => {
     should.not.exist(state.price('EURUSD'));
-    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
-    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'GBPUSD'}]);
-    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.2}]);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date('2022-01-01T00:00:00.000Z'),
+      brokerTime: '2022-01-01 02:00:00.000', symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date('2022-01-01T00:00:01.000Z'),
+      brokerTime: '2022-01-01 02:00:01.000', symbol: 'GBPUSD'}]);
+    state.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date('2022-01-01T00:00:02.000Z'),
+      brokerTime: '2022-01-01 02:00:02.000', symbol: 'EURUSD', bid: 1, ask: 1.2}]);
     state.price('EURUSD').should.match({symbol: 'EURUSD', bid: 1, ask: 1.2});
+    state.lastQuoteTime.should.match({time: new Date('2022-01-01T00:00:02.000Z'),
+      brokerTime: '2022-01-01 02:00:02.000'})
   });
 
   /**
