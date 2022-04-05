@@ -491,7 +491,34 @@ export declare type MetatraderAccountDto = {
   /**
    * MetaTrader account replicas
    */
-  accountReplicas?: Array<string>
+  accountReplicas?: Array<string>,
+
+  /**
+   * Active account connections
+   */
+  connections: Array<AccountConnection>
+}
+
+/**
+ * Account connection
+ */
+export declare type AccountConnection = {
+
+  /**
+   * Region the account is connected at
+   */
+  region: string,
+
+  /**
+   * Availability zone the account is connected at
+   */
+  zone: string,
+
+  /**
+   * Application the account is connected to
+   */
+  application: string
+
 }
 
 /**

@@ -120,6 +120,16 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Boolean} [primaryReplica] flag indicating that account is primary
    * @property {Boolean} [enableEquityTracking] flag indicating that equity tracking API should be enabled on account
    * @property {Array<MetatraderAccountReplica>} [accountReplicas] MetaTrader account replicas
+   * @property {Array<AccountConnection>} connections active account connections
+   */
+
+  /**
+   * Account connection
+   * @typedef {Object} AccountConnection
+   * @property {string} region region the account is connected at
+   * @property {string} zone availability zone the account is connected at
+   * @property {string} application application the account is connected to, one of `MetaApi`, `CopyFactory subscriber`,
+   * `CopyFactory provider`, `CopyFactory history import`, `Risk management`
    */
 
   /**

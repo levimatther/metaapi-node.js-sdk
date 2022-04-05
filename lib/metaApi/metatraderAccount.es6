@@ -214,6 +214,14 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns active account connections
+   * @returns {Array<AccountConnection>} active account connections
+   */
+  get connections() {
+    return this._data.connections
+  }
+
+  /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */

@@ -1,3 +1,6 @@
+19.1.0
+  - added connections field to MetatraderAccount model to track CopyFactory / risk management API connection status in addition to MetaApi connection status
+
 19.0.1
   - fixed recording historyOrders to disk
 

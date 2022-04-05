@@ -165,8 +165,14 @@ export default class MetatraderAccount {
    * @return {string} account region value
    */
   get region(): string;
-  
+
   /**
+   * Returns active account connections
+   * @return {Array<AccountConnection>} active account connections
+   */
+  get connections(): Array<AccountConnection>;
+
+    /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
