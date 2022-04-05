@@ -218,7 +218,7 @@ export default class MetatraderAccount {
    * @returns {Array<AccountConnection>} active account connections
    */
   get connections() {
-    return this._data.connections
+    return this._data.connections;
   }
 
   /**
