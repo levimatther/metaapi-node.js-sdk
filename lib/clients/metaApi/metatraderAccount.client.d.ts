@@ -484,9 +484,9 @@ export declare type MetatraderAccountDto = {
   primaryReplica?: boolean,
 
   /**
-   * flag indicating that equity tracking API should be enabled on account
+   * flag indicating that risk management API should be enabled on account
    */
-  enableEquityTracking?: boolean,
+  riskManagementApiEnabled?: boolean,
 
   /**
    * MetaTrader account replicas

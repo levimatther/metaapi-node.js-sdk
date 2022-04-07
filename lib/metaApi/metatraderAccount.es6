@@ -215,10 +215,18 @@ export default class MetatraderAccount {
 
   /**
    * Returns active account connections
-   * @returns {Array<AccountConnection>} active account connections
+   * @return {Array<AccountConnection>} active account connections
    */
   get connections() {
     return this._data.connections;
+  }
+
+  /**
+   * Returns flag indicating that risk management API is enabled on account
+   * @return {boolean} flag indicating that risk management API is enabled on account
+   */
+  get riskManagementApiEnabled() {
+    return this._data.riskManagementApiEnabled;
   }
 
   /**

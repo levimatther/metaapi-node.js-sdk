@@ -118,7 +118,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Number} [slippage] default trade slippage in points. Should be greater or equal to zero. If not
    * specified, system internal setting will be used which we believe is reasonable for most cases
    * @property {Boolean} [primaryReplica] flag indicating that account is primary
-   * @property {Boolean} [enableEquityTracking] flag indicating that equity tracking API should be enabled on account
+   * @property {Boolean} [riskManagementApiEnabled] flag indicating that risk management API should be enabled on
+   * account
    * @property {Array<MetatraderAccountReplica>} [accountReplicas] MetaTrader account replicas
    * @property {Array<AccountConnection>} connections active account connections
    */
