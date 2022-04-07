@@ -173,7 +173,7 @@ export default class MetatraderAccount {
   get connections(): Array<AccountConnection>;
 
   /**
-   * Returns flag indicating that risk management API is enabled on account
+   * Returns flag indicating that risk management API is enabled on account. Default is false.
    * @return {boolean} flag indicating that risk management API is enabled on account
    */
   get riskManagementApiEnabled(): boolean,

@@ -119,7 +119,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * specified, system internal setting will be used which we believe is reasonable for most cases
    * @property {Boolean} [primaryReplica] flag indicating that account is primary
    * @property {Boolean} [riskManagementApiEnabled] flag indicating that risk management API should be enabled on
-   * account
+   * account. Default is false
    * @property {Array<MetatraderAccountReplica>} [accountReplicas] MetaTrader account replicas
    * @property {Array<AccountConnection>} connections active account connections
    */

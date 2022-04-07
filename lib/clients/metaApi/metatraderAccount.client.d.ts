@@ -484,7 +484,7 @@ export declare type MetatraderAccountDto = {
   primaryReplica?: boolean,
 
   /**
-   * flag indicating that risk management API should be enabled on account
+   * flag indicating that risk management API should be enabled on account. Default is false
    */
   riskManagementApiEnabled?: boolean,
 
