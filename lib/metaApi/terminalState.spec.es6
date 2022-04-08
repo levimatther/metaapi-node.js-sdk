@@ -194,7 +194,7 @@ describe('TerminalState', () => {
       brokerTime: '2022-01-01 02:00:02.000', symbol: 'EURUSD', bid: 1, ask: 1.2}]);
     state.price('EURUSD').should.match({symbol: 'EURUSD', bid: 1, ask: 1.2});
     state.lastQuoteTime.should.match({time: new Date('2022-01-01T00:00:02.000Z'),
-      brokerTime: '2022-01-01 02:00:02.000'})
+      brokerTime: '2022-01-01 02:00:02.000'});
   });
 
   /**

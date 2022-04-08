@@ -59,6 +59,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   async connect() {
     if (!this._opened) {
+      this._logger.trace(`${this._account.id}: Opening connection`);
       this._opened = true;
       try {
         await this.initialize();
@@ -546,6 +547,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       this._refreshMarketDataSubscriptionTimeouts = {};
       this._websocketClient.removeAccountRegion(this.account.id);
       this._closed = true;
+      this._logger.trace(`${this._account.id}: Closed connection`);
     }
   }
 

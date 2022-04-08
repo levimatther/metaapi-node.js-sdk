@@ -163,8 +163,8 @@ export default class MemoryHistoryStorage extends HistoryStorage {
    */
   getHistoryOrdersByTimeRange(startTime, endTime) {
     let historyOrders = this._historyOrdersByTime.betweenBounds({
-      $gte: {doneTime: startTime, id: 0, type: '', status: ''},
-      $lte: {doneTime: endTime, id: Number.MAX_VALUE, type: '', status: ''}
+      $gte: {doneTime: startTime, id: 0, type: '', state: ''},
+      $lte: {doneTime: endTime, id: Number.MAX_VALUE, type: '', state: ''}
     });
     return historyOrders;
   }
@@ -199,9 +199,9 @@ export default class MemoryHistoryStorage extends HistoryStorage {
           } else if (o1.type < o2.type) {
             return -1;
           } else {
-            if (o1.status > o2.status) {
+            if (o1.state > o2.state) {
               return 1;
-            } else if (o1.status < o2.status) {
+            } else if (o1.state < o2.state) {
               return -1;
             } else {
               return 0;

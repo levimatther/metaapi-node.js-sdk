@@ -412,13 +412,15 @@ export default class MetaApiWebsocketClient {
         synchronizationId: data.synchronizationId, application: data.application, host: data.host, 
         specificationsUpdated: data.specificationsUpdated, positionsUpdated: data.positionsUpdated,
         ordersUpdated: data.ordersUpdated, 
-        specifications: data.specifications ? (data.specifications || []).length : undefined})}`);
+        specifications: data.specifications ? (data.specifications || []).length : undefined})}, ` +
+        `active listeners: ${(this._synchronizationListeners[data.accountId] || []).length}`);
       let activeSynchronizationIds = instance.synchronizationThrottler.activeSynchronizationIds; 
       if (!data.synchronizationId || activeSynchronizationIds.includes(data.synchronizationId)) {
         if (this._packetLogger) {
           await this._packetLogger.logPacket(data);
         }
         if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && data.type !== 'disconnected') {
+          this._logger.trace(`${data.accountId}: Packet arrived to inactive connection, attempting unsubscribe`);
           if (this._throttleRequest('unsubscribe', data.accountId, data.instanceIndex, 
             this._unsubscribeThrottlingInterval)) {
             this.unsubscribe(data.accountId).catch(err => {
@@ -1153,6 +1155,7 @@ export default class MetaApiWebsocketClient {
    * @param {SynchronizationListener} listener synchronization listener to add
    */
   addSynchronizationListener(accountId, listener) {
+    this._logger.trace(`${accountId}: Added synchronization listener`);
     let listeners = this._synchronizationListeners[accountId];
     if (!listeners) {
       listeners = [];
@@ -1167,6 +1170,7 @@ export default class MetaApiWebsocketClient {
    * @param {SynchronizationListener} listener synchronization listener to remove
    */
   removeSynchronizationListener(accountId, listener) {
+    this._logger.trace(`${accountId}: Removed synchronization listener`);
     let listeners = this._synchronizationListeners[accountId];
     if (!listeners) {
       listeners = [];
