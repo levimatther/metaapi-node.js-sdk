@@ -176,7 +176,13 @@ export default class MetatraderAccount {
    * Returns flag indicating that risk management API is enabled on account. Default is false.
    * @return {boolean} flag indicating that risk management API is enabled on account
    */
-  get riskManagementApiEnabled(): boolean,
+  get riskManagementApiEnabled(): boolean;
+
+  /**
+   * Returns user id
+   * @return {string} user id
+   */
+  get userId(): string;
 
   /**
    * Reloads MetaTrader account from API
