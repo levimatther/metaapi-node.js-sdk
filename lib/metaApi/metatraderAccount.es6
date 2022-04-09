@@ -230,6 +230,14 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns user id
+   * @return {String} user id
+   */
+  get userId() {
+    return this._data.userId;
+  }
+
+  /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */

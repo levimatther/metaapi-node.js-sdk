@@ -1,3 +1,6 @@
+19.2.0
+  - added userId field to metatrader account
+
 19.1.0
   - added connections field to MetatraderAccount model to track CopyFactory / risk management API connection status in addition to MetaApi connection status
   - added RPC method to retrieve current server time and a terminal state method to retrieve latest quote time
