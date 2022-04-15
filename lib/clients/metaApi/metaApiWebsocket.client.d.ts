@@ -413,7 +413,18 @@ export default class MetaApiWebsocketClient {
    */
   getServerTime(accountId: string): Promise<ServerTime>;
 
-    /**
+  /**
+   * Calculates margin required to open a trade on the specified trading account (see
+   * https://metaapi.cloud/docs/client/websocket/api/calculateMargin/).
+   * @param {string} accountId id of the trading account to calculate margin for
+   * @param {string} application application to send the request to
+   * @param {String} reliability account reliability
+   * @param {MarginOrder} order order to calculate margin for
+   * @returns {Promise<Margin>} promise resolving with margin calculation result
+   */
+  calculateMargin(accountId: string, application: string, reliability: string, order: MarginOrder): Promise<Margin>;
+
+  /**
    * Adds synchronization listener for specific account
    * @param {string} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add
@@ -1835,5 +1846,44 @@ export declare type ServerTime = {
    * Last quote time, in broker timezone, YYYY-MM-DD HH:mm:ss.SSS format
    */
   lastQuoteBrokerTime?: string
+
+}
+
+/**
+ * Margin required to open a trade (see https://metaapi.cloud/docs/client/models/margin/)
+ */
+export declare type Margin = {
+
+  /**
+   * Margin required to open a trade. If margin can not be calculated, then this field is not defined
+   */
+  margin?: number
+
+}
+
+/**
+ * Contains order to calculate margin for (see https://metaapi.cloud/docs/client/models/marginOrder/)
+ */
+export declare type MarginOrder = {
+
+    /**
+     * Order symbol
+     */
+    symbol: string,
+
+    /**
+     * Order type, one of ORDER_TYPE_BUY or ORDER_TYPE_SELL
+     */
+    type: string,
+
+    /**
+     * Order volume, must be greater than 0
+     */
+    volume: number,
+
+    /**
+     * Order open price, must be greater than 0
+     */
+    openPrice: number
 
 }

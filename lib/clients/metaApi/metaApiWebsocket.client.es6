@@ -1150,6 +1150,42 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
+   * Margin required to open a trade (see https://metaapi.cloud/docs/client/models/margin/)
+   * @typedef {Object} Margin
+   * @property {number} [margin] margin required to open a trade. If margin can not be calculated, then this field is
+   * not defined
+   */
+
+  /**
+   * Contains order to calculate margin for (see https://metaapi.cloud/docs/client/models/marginOrder/)
+   * @typedef {Object} MarginOrder
+   * @property {string} symbol order symbol
+   * @property {string} type order type, one of ORDER_TYPE_BUY or ORDER_TYPE_SELL
+   * @property {number} volume order volume, must be greater than 0
+   * @property {number} openPrice order open price, must be greater than 0
+   */
+
+  /**
+   * Calculates margin required to open a trade on the specified trading account (see
+   * https://metaapi.cloud/docs/client/websocket/api/calculateMargin/).
+   * @param {string} accountId id of the trading account to calculate margin for
+   * @param {string} application application to send the request to
+   * @param {string} reliability account reliability
+   * @param {MarginOrder} order order to calculate margin for
+   * @returns {Promise<Margin>} promise resolving with margin calculation result
+   */
+  async calculateMargin(accountId, application, reliability, order) {
+    let response;
+    if(application === 'RPC') {
+      response = await this.rpcRequest(accountId, {application, type: 'calculateMargin', order});
+    } else {
+      response = await this.rpcRequestAllInstances(accountId, {application, type: 'calculateMargin', order},
+        reliability);
+    }
+    return response.margin;
+  }
+
+  /**
    * Adds synchronization listener for specific account
    * @param {String} accountId account id
    * @param {SynchronizationListener} listener synchronization listener to add

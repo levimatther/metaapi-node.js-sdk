@@ -30,6 +30,7 @@ describe('StreamingMetaApiConnection', () => {
     getDealsByTimeRange: () => {},
     removeApplication: () => {},
     trade: () => {},
+    calculateMargin: () => {},
     reconnect: () => {},
     synchronize: () => true,
     ensureSubscribe: () => {},
@@ -412,6 +413,26 @@ describe('StreamingMetaApiConnection', () => {
     let actual = await api.cancelOrder('46870472');
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_CANCEL', orderId: '46870472'}));
+  });
+
+  /**
+   * @test {MetaApiConnection#calculateMargin}
+   */
+  it('should calculate margin', async () => {
+    await api.connect();
+    let margin = {
+      margin: 110
+    };
+    let order = {
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY',
+      volume: 0.1,
+      openPrice: 1.1
+    };
+    sandbox.stub(client, 'calculateMargin').resolves(margin);
+    let actual = await api.calculateMargin(order);
+    actual.should.match(margin);
+    sinon.assert.calledWith(client.calculateMargin, 'accountId', undefined, undefined, sinon.match(order));
   });
 
   /**

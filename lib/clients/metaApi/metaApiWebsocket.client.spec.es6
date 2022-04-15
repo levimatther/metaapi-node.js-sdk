@@ -1989,6 +1989,32 @@ describe('MetaApiWebsocketClient', () => {
       actual.should.match(serverTime);
     });
 
+    /**
+     * @test {MetaApiWebsocketClient#calculateMargin}
+     */
+    it('should calculate margin', async () => {
+      let margin = {
+        margin: 110
+      };
+      let order = {
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY',
+        volume: 0.1,
+        openPrice: 1.1
+      };
+      server.on('request', data => {
+        if (data.type === 'calculateMargin' && data.accountId === 'accountId' &&
+          data.application === 'MetaApi' && JSON.stringify(data.order) === JSON.stringify(order)) {
+          server.emit('response', {
+            type: 'response', accountId: data.accountId, requestId: data.requestId,
+            margin
+          });
+        }
+      });
+      let actual = await client.calculateMargin('accountId', 'MetaApi', 'high', order);
+      actual.should.match(margin);
+    });
+
   });
 
   describe('market data synchronization', () => {

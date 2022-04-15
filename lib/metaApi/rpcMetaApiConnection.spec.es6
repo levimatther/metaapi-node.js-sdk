@@ -38,6 +38,7 @@ describe('RpcMetaApiConnection', () => {
     getTick: () => {},
     getBook: () => {},
     getServerTime: () => {},
+    calculateMargin: () => {},
     waitSynchronized: () => {},
     addAccountRegion: () => {},
     removeAccountRegion: () => {}
@@ -723,6 +724,26 @@ describe('RpcMetaApiConnection', () => {
     actual.should.match(tradeResult);
     sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_CANCEL', orderId: '46870472'}),
       'RPC');
+  });
+
+  /**
+   * @test {MetaApiConnection#calculateMargin}
+   */
+  it('should calculate margin', async () => {
+    await api.connect();
+    let margin = {
+      margin: 110
+    };
+    let order = {
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY',
+      volume: 0.1,
+      openPrice: 1.1
+    };
+    sandbox.stub(client, 'calculateMargin').resolves(margin);
+    let actual = await api.calculateMargin(order);
+    actual.should.match(margin);
+    sinon.assert.calledWith(client.calculateMargin, 'accountId', 'RPC', undefined, sinon.match(order));
   });
 
   /**

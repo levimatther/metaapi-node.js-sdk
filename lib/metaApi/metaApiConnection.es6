@@ -379,6 +379,17 @@ export default class MetaApiConnection extends SynchronizationListener {
   }
 
   /**
+   * Calculates margin required to open a trade on the specified trading account (see
+   * https://metaapi.cloud/docs/client/websocket/api/calculateMargin/).
+   * @param {MarginOrder} order order to calculate margin for
+   * @returns {Promise<Margin>} promise resolving with margin calculation result
+   */
+  calculateMargin(order) {
+    this._checkIsConnectionActive();
+    return this._websocketClient.calculateMargin(this._account.id, this._application, this._account.reliability, order);
+  }
+
+  /**
    * Returns MetaApi account
    * @return {MetatraderAccount} MetaApi account
    */

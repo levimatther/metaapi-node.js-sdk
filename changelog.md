@@ -1,3 +1,6 @@
+19.3.0
+  - added method to calculate margin requirements for a future order
+
 19.2.0
   - added userId field to metatrader account
 

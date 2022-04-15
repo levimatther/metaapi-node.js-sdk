@@ -1,4 +1,8 @@
-import MetaApiWebsocketClient, { MetatraderTradeResponse, TrailingStopLoss } from "../clients/metaApi/metaApiWebsocket.client";
+import MetaApiWebsocketClient, {
+    Margin,
+    MarginOrder, MetatraderTradeResponse,
+    TrailingStopLoss
+} from "../clients/metaApi/metaApiWebsocket.client";
 import SynchronizationListener from "../clients/metaApi/synchronizationListener";
 import MetatraderAccount from "./metatraderAccount";
 
@@ -182,7 +186,15 @@ export default class MetaApiConnection extends SynchronizationListener {
    * @returns {Promise<TradeResponse>} promise resolving with trade result
    */
   cancelOrder(orderId: string): Promise<MetatraderTradeResponse>;
-  
+
+  /**
+   * Calculates margin required to open a trade on the specified trading account (see
+   * https://metaapi.cloud/docs/client/websocket/api/calculateMargin/).
+   * @param {MarginOrder} order order to calculate margin for
+   * @returns {Promise<Margin>} promise resolving with margin calculation result
+   */
+  calculateMargin(order: MarginOrder): Promise<Margin>;
+
   /**
    * Returns MetaApi account
    * @return {MetatraderAccount} MetaApi account
