@@ -203,6 +203,12 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   waitSynchronized(opts: SynchronizationOptions): Promise<any>;
   
   /**
+   * Queues an event for processing among other synchronization events within same account
+   * @param {Function} event async or regular function to execute
+   */
+  queueEvent(event: Function): void;
+
+  /**
    * Returns synchronization status
    * @return {boolean} synchronization status
    */

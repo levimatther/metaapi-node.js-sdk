@@ -524,6 +524,14 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   }
 
   /**
+   * Queues an event for processing among other synchronization events within same account
+   * @param {Function} event async or regular function to execute
+   */
+  queueEvent(event) {
+    this._websocketClient.queueEvent(this._account.id, event);
+  }
+
+  /**
    * Closes the connection. The instance of the class should no longer be used after this method is invoked.
    */
   async close() {

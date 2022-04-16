@@ -1280,7 +1280,7 @@ export default class MetaApiWebsocketClient {
   /**
    * Queues account event for processing
    * @param {String} accountId account id
-   * @param {Promise} event event to execute
+   * @param {Function} event async or regular function to execute
    */
   queueEvent(accountId, event) {
     if(this._sequentialEventProcessing) {

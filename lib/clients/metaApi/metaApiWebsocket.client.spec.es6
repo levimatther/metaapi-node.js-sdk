@@ -2857,4 +2857,46 @@ describe('MetaApiWebsocketClient', () => {
     sinon.assert.calledTwice(listener.onPendingOrdersReplaced);
   });
 
+  /**
+   * @test {MetaApiWebsocketClient#queueEvent}
+   */
+  it('should process queued events sequentially', async () => {
+    let event1 = sandbox.stub().callsFake(() => new Promise(res => setTimeout(res, 100)));
+    let event2 = sandbox.stub().callsFake(() => new Promise(res => setTimeout(res, 25)));
+    client.queueEvent('accountId', event1);
+    client.queueEvent('accountId', event2);
+    
+    await clock.tickAsync(75);
+    sinon.assert.calledOnce(event1);
+    sinon.assert.notCalled(event2);
+    
+    await clock.tickAsync(30);
+    sinon.assert.calledOnce(event2);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#queueEvent}
+   * @test {MetaApiWebsocketClient#queuePacket}
+   */
+  it('should process queued events among synchronization packets', async () => {
+    let listener = {
+      onSynchronizationStarted: sandbox.stub().callsFake(() => new Promise(res => setTimeout(res, 100)))
+    };
+    let event = sandbox.stub().callsFake(() => new Promise(res => setTimeout(res, 25)));
+    client.addSynchronizationListener('accountId', listener);
+
+    client.queuePacket({
+      type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 0, sequenceNumber: 1, sequenceTimestamp: 1,
+      synchronizationId: 'synchronizationId', host: 'ps-mpa-1'
+    });
+    client.queueEvent('accountId', event);
+    
+    await clock.tickAsync(75);
+    sinon.assert.calledOnce(listener.onSynchronizationStarted);
+    sinon.assert.notCalled(event);
+
+    await clock.tickAsync(30);
+    sinon.assert.calledOnce(event);
+  });
+
 });
