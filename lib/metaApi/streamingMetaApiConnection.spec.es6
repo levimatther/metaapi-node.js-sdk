@@ -52,7 +52,8 @@ describe('StreamingMetaApiConnection', () => {
     refreshMarketDataSubscriptions: () => {},
     regionsByAccounts: {},
     addAccountRegion: () => {},
-    removeAccountRegion: () => {}
+    removeAccountRegion: () => {},
+    queueEvent: () => {}
   };
 
   let clientApiClient = {
@@ -811,6 +812,16 @@ describe('StreamingMetaApiConnection', () => {
     await api.close();
     await clock.tickAsync(1050);
     sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
+  });
+
+  /**
+   * @test {StreamingMetaApiConnection#queueEvent}
+   */
+  it('should queue events', () => {
+    sandbox.stub(client, 'queueEvent').returns();
+    let eventCallable = () => {};
+    api.queueEvent(eventCallable);
+    sinon.assert.calledOnceWithExactly(client.queueEvent, 'accountId', eventCallable);
   });
 
 });

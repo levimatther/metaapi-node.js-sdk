@@ -1,3 +1,6 @@
+19.4.0
+  - added method to queue an event executed among other synchronization events 
+
 19.3.0
   - added method to calculate margin requirements for a future order
 
