@@ -525,10 +525,11 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
 
   /**
    * Queues an event for processing among other synchronization events within same account
-   * @param {Function} event async or regular function to execute
+   * @param {String} name event label name
+   * @param {Function} callable async or regular function to execute
    */
-  queueEvent(event) {
-    this._websocketClient.queueEvent(this._account.id, event);
+  queueEvent(name, callable) {
+    this._websocketClient.queueEvent(this._account.id, name, callable);
   }
 
   /**

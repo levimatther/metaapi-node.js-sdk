@@ -476,10 +476,11 @@ export default class MetaApiWebsocketClient {
   
   /**
    * Queues account event for processing
-   * @param {string} accountId account id
-   * @param {Promise} event event to execute
+   * @param {String} accountId account id
+   * @param {String} name event label name
+   * @param {Function} callable async or regular function to execute
    */
-  queueEvent(accountId: string, event: Promise<any>): void;
+  queueEvent(accountId: string, name: string, callable: Function): void;
 
   /**
    * Simulataneously sends RPC requests to all synchronized instances

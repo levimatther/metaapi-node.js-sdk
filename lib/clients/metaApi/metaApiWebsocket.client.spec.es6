@@ -2863,8 +2863,8 @@ describe('MetaApiWebsocketClient', () => {
   it('should process queued events sequentially', async () => {
     let event1 = sandbox.stub().callsFake(() => new Promise(res => setTimeout(res, 100)));
     let event2 = sandbox.stub().callsFake(() => new Promise(res => setTimeout(res, 25)));
-    client.queueEvent('accountId', event1);
-    client.queueEvent('accountId', event2);
+    client.queueEvent('accountId', 'test', event1);
+    client.queueEvent('accountId', 'test', event2);
     
     await clock.tickAsync(75);
     sinon.assert.calledOnce(event1);
@@ -2889,13 +2889,23 @@ describe('MetaApiWebsocketClient', () => {
       type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 0, sequenceNumber: 1, sequenceTimestamp: 1,
       synchronizationId: 'synchronizationId', host: 'ps-mpa-1'
     });
-    client.queueEvent('accountId', event);
+    client.queueEvent('accountId', 'test', event);
     
     await clock.tickAsync(75);
     sinon.assert.calledOnce(listener.onSynchronizationStarted);
     sinon.assert.notCalled(event);
 
     await clock.tickAsync(30);
+    sinon.assert.calledOnce(event);
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#queueEvent}
+   */
+  it('should not throw errors from queued events', async () => {
+    let event = sandbox.stub().rejects();
+    client.queueEvent('accountId', 'test', event);
+    await new Promise(res => setTimeout(res, 10));
     sinon.assert.calledOnce(event);
   });
 

@@ -820,8 +820,8 @@ describe('StreamingMetaApiConnection', () => {
   it('should queue events', () => {
     sandbox.stub(client, 'queueEvent').returns();
     let eventCallable = () => {};
-    api.queueEvent(eventCallable);
-    sinon.assert.calledOnceWithExactly(client.queueEvent, 'accountId', eventCallable);
+    api.queueEvent('test', eventCallable);
+    sinon.assert.calledOnceWithExactly(client.queueEvent, 'accountId', 'test', eventCallable);
   });
 
 });
