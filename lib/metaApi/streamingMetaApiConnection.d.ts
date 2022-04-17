@@ -204,9 +204,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   
   /**
    * Queues an event for processing among other synchronization events within same account
-   * @param {Function} event async or regular function to execute
+   * @param {String} name event label name
+   * @param {Function} callable async or regular function to execute
    */
-  queueEvent(event: Function): void;
+  queueEvent(name: string, callable: Function): void;
 
   /**
    * Returns synchronization status

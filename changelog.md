@@ -1,3 +1,6 @@
+19.4.1
+  - handle errors for queued events and warn if they are executing too long
+
 19.4.0
   - added method to queue an event executed among other synchronization events 
 
