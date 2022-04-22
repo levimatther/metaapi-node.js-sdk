@@ -3,7 +3,8 @@ import HistoryStorage from "./metaApi/historyStorage";
 import MemoryHistoryStorage from "./metaApi/memoryHistoryStorage";
 import SynchronizationListener from "./clients/metaApi/synchronizationListener";
 import MetaStats from 'metaapi.cloud-metastats-sdk';
-import CopyFactory from "metaapi.cloud-copyfactory-sdk";
+import CopyFactory, { StopoutListener } from "metaapi.cloud-copyfactory-sdk";
+import RiskManagement, { DrawdownListener } from "metaapi.cloud-risk-management-sdk";
 import ExpertAdvisorClient from "./clients/metaApi/expertAdvisor.client";
 import HistoricalMarketDataClient from "./clients/metaApi/historicalMarketData.client";
 import LatencyListener from "./clients/metaApi/latencyListener";
@@ -53,6 +54,9 @@ export {
   MemoryHistoryStorage,
   MetaStats,
   CopyFactory,
+  StopoutListener,
+  RiskManagement,
+  DrawdownListener,
   ExpertAdvisorClient,
   HistoricalMarketDataClient,
   LatencyListener,
