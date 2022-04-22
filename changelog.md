@@ -1,3 +1,6 @@
+19.4.2
+  - added references to MT manager api and risk management api
+
 19.4.1
   - handle errors for queued events and warn if they are executing too long
 
