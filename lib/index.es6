@@ -6,6 +6,7 @@ import MemoryHistoryStorage from './metaApi/memoryHistoryStorage';
 import SynchronizationListener from './clients/metaApi/synchronizationListener';
 import CopyFactory, {StopoutListener} from 'metaapi.cloud-copyfactory-sdk';
 import MetaStats from 'metaapi.cloud-metastats-sdk';
+import RiskManagement, {DrawdownListener} from 'metaapi.cloud-risk-management-sdk';
 
 export default MetaApi;
 
@@ -15,5 +16,7 @@ export {
   MemoryHistoryStorage,
   CopyFactory,
   StopoutListener,
-  MetaStats
+  MetaStats,
+  RiskManagement,
+  DrawdownListener
 };
