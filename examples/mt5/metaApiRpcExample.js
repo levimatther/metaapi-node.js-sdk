@@ -61,6 +61,15 @@ async function testMetaApiSynchronization() {
     console.log('history deals by ticket:', await connection.getDealsByTicket('1234567'));
     console.log('history deals by position:', await connection.getDealsByPosition('1234567'));
     console.log('history deals (~last 3 months):', await connection.getDealsByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date()));
+    console.log('server time', await connection.getServerTime());
+
+    // calculate margin required for trade
+    console.log('margin required for trade', await connection.calculateMargin({
+      symbol: 'GBPUSD',
+      type: 'ORDER_TYPE_BUY',
+      volume: 0.1,
+      openPrice: 1.1
+    }));
 
     // trade
     console.log('Submitting pending order');
