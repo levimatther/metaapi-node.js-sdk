@@ -1,3 +1,7 @@
+19.5.1
+  - added margin calculation code examples
+  - added get server time code examples
+
 19.5.0
   - added references to MT manager api and risk management api
   - added risk management API

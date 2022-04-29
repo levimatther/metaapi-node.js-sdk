@@ -70,6 +70,14 @@ async function testMetaApiSynchronization() {
     console.log('history orders for the last day:', historyStorage.getHistoryOrdersByTimeRange(
       new Date(Date.now() - 24 * 60 * 60 * 1000), new Date()));
 
+    // calculate margin required for trade
+    console.log('margin required for trade', await connection.calculateMargin({
+      symbol: 'GBPUSD',
+      type: 'ORDER_TYPE_BUY',
+      volume: 0.1,
+      openPrice: 1.1
+    }));
+
     // trade
     console.log('Submitting pending order');
     try {

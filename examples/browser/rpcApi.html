@@ -59,6 +59,15 @@
           log('history deals by ticket:', JSON.stringify(await connection.getDealsByTicket('1234567')));
           log('history deals by position:', JSON.stringify(await connection.getDealsByPosition('1234567')));
           log('history deals (~last 3 months):', JSON.stringify(await connection.getDealsByTimeRange(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), new Date())));
+          log('server time', JSON.stringify(await connection.getServerTime()));
+
+          // calculate margin required for trade
+          log('margin required for trade', JSON.stringify(await connection.calculateMargin({
+            symbol: 'GBPUSD',
+            type: 'ORDER_TYPE_BUY',
+            volume: 0.1,
+            openPrice: 1.1
+          })));
 
           // trade
           log('Submitting pending order');
