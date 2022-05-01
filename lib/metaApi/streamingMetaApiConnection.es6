@@ -200,7 +200,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   // eslint-disable-next-line complexity
   async onSubscriptionDowngraded(instanceIndex, symbol, updates, unsubscriptions) {
-    let subscriptions = this._subscriptions[symbol];
+    let subscriptions = this._subscriptions[symbol] || [];
     if (unsubscriptions && unsubscriptions.length) {
       if (subscriptions) {
         for (let subscription of unsubscriptions) {
