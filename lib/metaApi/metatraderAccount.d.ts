@@ -263,7 +263,7 @@ export default class MetatraderAccount {
    * @param {Date} [historyStartTime] history start time. Used for tests
    * @return {StreamingMetaApiConnection} MetaApi connection
    */
-  getStreamingConnection(historyStorage: HistoryStorage, historyStartTime?: Date): StreamingMetaApiConnection;
+  getStreamingConnection(historyStorage?: HistoryStorage, historyStartTime?: Date): StreamingMetaApiConnection;
   
   /**
    * Connects to MetaApi via RPC connection.
