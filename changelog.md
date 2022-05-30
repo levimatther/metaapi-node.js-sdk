@@ -1,3 +1,6 @@
+19.5.3
+  - made accountCurrencyExchangeRate optional in SynchronizationListener.onSymbolPricesUpdated
+
 19.5.2
   - fixed typings for MetatraderAccount.getStreamingConnection: historyStorage parameter is now optional
 
