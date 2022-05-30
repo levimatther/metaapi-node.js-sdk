@@ -220,7 +220,7 @@ export default class SynchronizationListener {
    * @param {Number} margin margin used
    * @param {Number} freeMargin free margin
    * @param {Number} marginLevel margin level calculated as % of equity/margin
-   * @param {Number} accountCurrencyExchangeRate current exchange rate of account currency into USD
+   * @param {Number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onSymbolPricesUpdated(instanceIndex, prices, equity, margin, freeMargin, marginLevel,
