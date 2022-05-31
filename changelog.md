@@ -1,3 +1,6 @@
+19.5.4
+  - add accountCurrencyExchangeRate to MetatraderAccountInformation
+
 19.5.3
   - made accountCurrencyExchangeRate optional in SynchronizationListener.onSymbolPricesUpdated
 

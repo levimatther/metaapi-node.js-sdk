@@ -483,6 +483,8 @@ export default class MetaApiWebsocketClient {
    * @property {String} name Account owner name
    * @property {Number} login Account login
    * @property {Number} credit Account credit in the deposit currency
+   * @property {number} accountCurrencyExchangeRate current exchange rate of account currency into account base currency
+   * (USD if you did not override it)
    */
 
   /**

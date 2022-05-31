@@ -584,7 +584,13 @@ export declare type MetatraderAccountInformation = {
   /**
    * Account credit in the deposit currency
    */
-  credit: number
+  credit: number,
+
+  /**
+   * Current exchange rate of account currency into account base currency (USD if you did not override it)
+   */
+  accountCurrencyExchangeRate?: number
+
 }
 
 /**

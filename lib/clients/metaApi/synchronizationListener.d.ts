@@ -208,11 +208,11 @@ export default class SynchronizationListener {
    * @param {number} margin margin used
    * @param {number} freeMargin free margin
    * @param {number} marginLevel margin level calculated as % of equity/margin
-   * @param {number} [accountCurrencyExchangeRate] current exchange rate of account currency into USD
+   * @param {number} accountCurrencyExchangeRate current exchange rate of account currency into USD
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onSymbolPricesUpdated(instanceIndex: string, prices: Array<MetatraderSymbolPrice>, equity: number, margin: number, freeMargin: number, marginLevel: number,
-    accountCurrencyExchangeRate?: number): Promise<any>;
+    accountCurrencyExchangeRate: number): Promise<any>;
   
     /**
    * Invoked when symbol candles were updated
