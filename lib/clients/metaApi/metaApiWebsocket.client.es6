@@ -13,6 +13,7 @@ import SynchronizationThrottler from './synchronizationThrottler';
 import SubscriptionManager from './subscriptionManager';
 import LoggerManager from '../../logger';
 import any from 'promise.any';
+import LatencyService from './latencyService';
 
 let PacketLogger;
 if (typeof window === 'undefined') { // don't import PacketLogger for browser version
@@ -58,6 +59,7 @@ export default class MetaApiWebsocketClient {
     this._unsubscribeThrottlingInterval = validator.validateNonZero(opts.unsubscribeThrottlingIntervalInSeconds, 10,
       'unsubscribeThrottlingIntervalInSeconds') * 1000;
     this._socketMinimumReconnectTimeout = 500;
+    this._latencyService = new LatencyService(this, token, this._connectTimeout);
     this._token = token;
     this._synchronizationListeners = {};
     this._latencyListeners = [];
@@ -66,6 +68,8 @@ export default class MetaApiWebsocketClient {
     this._socketInstances = {};
     this._socketInstancesByAccounts = {};
     this._regionsByAccounts = {};
+    this._accountsByReplicaId = {};
+    this._accountReplicas = {};
     this._synchronizationThrottlerOpts = opts.synchronizationThrottler;
     this._subscriptionManager = new SubscriptionManager(this);
     this._statusTimers = {};
@@ -81,8 +85,8 @@ export default class MetaApiWebsocketClient {
       this._packetLogger.start();
     }
     this._logger = LoggerManager.getLogger('MetaApiWebsocketClient');
-    this._clearRegionsJob = this._clearRegionsJob.bind(this);
-    setInterval(this._clearRegionsJob, 30 * 60 * 1000);
+    this._clearAccountCacheJob = this._clearAccountCacheJob.bind(this);
+    setInterval(this._clearAccountCacheJob, 30 * 60 * 1000);
   }
 
   /**
@@ -133,6 +137,22 @@ export default class MetaApiWebsocketClient {
    */
   get socketInstancesByAccounts() {
     return this._socketInstancesByAccounts;
+  }
+
+  /**
+   * Returns the dictionary of account replicas by region
+   * @return {Object} dictionary of account replicas by region
+   */
+  get accountReplicas() {
+    return this._accountReplicas;
+  }
+
+  /**
+   * Returns the dictionary of primary account ids by replica ids
+   * @return {Object} dictionary of primary account ids by replica ids
+   */
+  get accountsByReplicaId() {
+    return this._accountsByReplicaId;
   }
 
   /**
@@ -202,27 +222,32 @@ export default class MetaApiWebsocketClient {
   }
 
   /**
-   * Adds account region info
+   * Adds account cache info
    * @param {String} accountId account id
-   * @param {String} region account region
+   * @param {Object} replicas account replicas
    */
-  addAccountRegion(accountId, region) {
-    if(!this._regionsByAccounts[accountId]) {
-      this._regionsByAccounts[accountId] = {
-        region,
-        connections: 1,
-        lastUsed: Date.now()
-      };
-    } else {
-      this._regionsByAccounts[accountId].connections++;
-    }
+  addAccountCache(accountId, replicas) {
+    this._accountReplicas[accountId] = replicas;
+    Object.keys(replicas).forEach(region => {
+      const replicaId = replicas[region];
+      if(!this._regionsByAccounts[replicaId]) {
+        this._regionsByAccounts[replicaId] = {
+          region,
+          connections: 1,
+          lastUsed: Date.now()
+        };
+      } else {
+        this._regionsByAccounts[replicaId].connections++;
+      }
+      this._accountsByReplicaId[replicaId] = accountId;
+    });
   }
 
   /**
    * Removes account region info
    * @param {String} accountId account id
    */
-  removeAccountRegion(accountId) {
+  removeAccountCache(accountId) {
     if(this._regionsByAccounts[accountId]) {
       if(this._regionsByAccounts[accountId].connections > 0) {
         this._regionsByAccounts[accountId].connections--; 
@@ -419,8 +444,11 @@ export default class MetaApiWebsocketClient {
         if (this._packetLogger) {
           await this._packetLogger.logPacket(data);
         }
-        if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && data.type !== 'disconnected') {
-          this._logger.trace(`${data.accountId}: Packet arrived to inactive connection, attempting unsubscribe`);
+        const ignoredPacketTypes = ['disconnected', 'status', 'keepalive'];
+        if (!this._subscriptionManager.isSubscriptionActive(data.accountId) && 
+          !ignoredPacketTypes.includes(data.type)) {
+          this._logger.debug(`${data.accountId}: Packet arrived to inactive connection, attempting` +
+            ` unsubscribe, packet: ${data.type}`);
           if (this._throttleRequest('unsubscribe', data.accountId, data.instanceIndex, 
             this._unsubscribeThrottlingInterval)) {
             this.unsubscribe(data.accountId).catch(err => {
@@ -903,7 +931,7 @@ export default class MetaApiWebsocketClient {
   /**
    * Creates a task that ensures the account gets subscribed to the server
    * @param {String} accountId account id to subscribe
-   * @param {Number} [instanceNumber] instance index number
+   * @param {Number} instanceNumber instance index number
    */
   ensureSubscribe(accountId, instanceNumber) {
     this._subscriptionManager.scheduleSubscribe(accountId, instanceNumber);
@@ -912,7 +940,7 @@ export default class MetaApiWebsocketClient {
   /**
    * Subscribes to the Metatrader terminal events (see https://metaapi.cloud/docs/client/websocket/api/subscribe/).
    * @param {String} accountId id of the MetaTrader account to subscribe to
-   * @param {Number} [instanceNumber] instance index number
+   * @param {Number} instanceNumber instance index number
    * @returns {Promise} promise which resolves when subscription started
    */
   subscribe(accountId, instanceNumber) {
@@ -933,8 +961,11 @@ export default class MetaApiWebsocketClient {
    * @param {Function} getHashes function to get terminal state hashes
    * @returns {Promise} promise which resolves when synchronization started
    */
-  synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime,  
+  async synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime,  
     getHashes) {
+    if(this._getSocketInstanceByAccount(accountId, instanceIndex) === undefined) {
+      await this._createSocketInstanceByAccount(accountId, instanceIndex);
+    }
     const syncThrottler = this._getSocketInstanceByAccount(accountId, instanceIndex)
       .synchronizationThrottler;
     return syncThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, 
@@ -1120,6 +1151,7 @@ export default class MetaApiWebsocketClient {
   async unsubscribe(accountId) {
     try {
       const region = this.getAccountRegion(accountId);
+      this._latencyService.onUnsubscribe(accountId);
       await Promise.all(Object.keys(this._socketInstances[region]).map(async instanceNumber => {
         await this._subscriptionManager.unsubscribe(accountId, Number(instanceNumber));
         delete this._socketInstancesByAccounts[instanceNumber][accountId];
@@ -1185,6 +1217,27 @@ export default class MetaApiWebsocketClient {
         reliability);
     }
     return response.margin;
+  }
+
+  /**
+   * Calls onUnsubscribeRegion listener event 
+   * @param {String} accountId account id
+   * @param {String} region account region to unsubscribe
+   */
+  async unsubscribeAccountRegion(accountId, region) {
+    const unsubscribePromises = [];
+    for (let listener of this._synchronizationListeners[accountId] || []) {
+      unsubscribePromises.push(
+        Promise.resolve((async () => {
+          await this._processEvent(
+            () => listener.onUnsubscribeRegion(region),
+            `${accountId}:${region}:onUnsubscribeRegion`, true);
+        })())
+          .catch(err => this._logger.error(`${accountId}:${region}: Failed to notify listener ` +
+               'about onUnsubscribeRegion event', err))
+      );
+    }
+    await Promise.all(unsubscribePromises);
   }
 
   /**
@@ -1370,6 +1423,13 @@ export default class MetaApiWebsocketClient {
    */
   //eslint-disable-next-line complexity, max-statements
   async rpcRequest(accountId, request, timeoutInSeconds) {
+    const ignoredRequestTypes = ['subscribe', 'synchronize', 'refreshMarketDataSubscriptions', 'unsubscribe'];
+    const primaryAccountId = this._accountsByReplicaId[accountId];
+    const connectedInstance = this._latencyService.getActiveAccountInstances(primaryAccountId)[0];
+    if(!ignoredRequestTypes.includes(request.type) && connectedInstance) {
+      const activeRegion = connectedInstance.split(':')[1];
+      accountId = this._accountReplicas[primaryAccountId][activeRegion];
+    }
     let socketInstanceIndex = null;
     let instanceNumber = 0;
     const region = this.getAccountRegion(accountId);
@@ -1377,9 +1437,8 @@ export default class MetaApiWebsocketClient {
     if(request.instanceIndex !== undefined) {
       instanceNumber = request.instanceIndex;
     } else {
-      const instance = Object.keys(this._connectedHosts).find(i => i.startsWith(accountId));
-      if(instance) {
-        instanceNumber = Number(instance.split(':')[1]);
+      if(connectedInstance) {
+        instanceNumber = Number(connectedInstance.split(':')[2]);
       }
       if(request.application !== 'RPC') {
         request = Object.assign({}, request, {instanceIndex: instanceNumber});
@@ -1397,38 +1456,8 @@ export default class MetaApiWebsocketClient {
     if (this._socketInstancesByAccounts[instanceNumber][accountId] !== undefined) {
       socketInstanceIndex = this._socketInstancesByAccounts[instanceNumber][accountId];
     } else {
-      while (this._subscribeLock && ((new Date(this._subscribeLock.recommendedRetryTime).getTime() > Date.now() && 
-        this.subscribedAccountIds(instanceNumber, undefined, region).length < this._subscribeLock.lockedAtAccounts) || 
-        (new Date(this._subscribeLock.lockedAtTime).getTime() + this._subscribeCooldownInSeconds * 1000 > 
-        Date.now() && this.subscribedAccountIds(instanceNumber, undefined, region).length >= 
-        this._subscribeLock.lockedAtAccounts))) {
-        await new Promise(res => setTimeout(res, 1000));
-      }
-      for (let index = 0; index < this._socketInstances[region][instanceNumber].length; index++) {
-        const accountCounter = this.getAssignedAccounts(instanceNumber, index, region).length;
-        const instance = this.socketInstances[region][instanceNumber][index];
-        if (instance.subscribeLock) {
-          if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER' && 
-          (new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() || 
-          this.subscribedAccountIds(instanceNumber, index, region).length >= instance.subscribeLock.lockedAtAccounts)) {
-            continue;
-          }
-          if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER' && 
-          new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() &&
-          this.subscribedAccountIds(instanceNumber, index, region).length >= instance.subscribeLock.lockedAtAccounts) {
-            continue;
-          }
-        }
-        if(accountCounter < this._maxAccountsPerInstance) {
-          socketInstanceIndex = index;
-          break;
-        }
-      }
-      if(socketInstanceIndex === null) {
-        socketInstanceIndex = this._socketInstances[region][instanceNumber].length;
-        await this.connect(instanceNumber, region);
-      }
-      this._socketInstancesByAccounts[instanceNumber][accountId] = socketInstanceIndex;
+      await this._createSocketInstanceByAccount(accountId, instanceNumber);
+      socketInstanceIndex = this._socketInstancesByAccounts[instanceNumber][accountId];
     }
     const instance = this._socketInstances[region][instanceNumber][socketInstanceIndex];
     if (!instance.connected) {
@@ -1745,12 +1774,15 @@ export default class MetaApiWebsocketClient {
       if (data.synchronizationId && socketInstance) {
         socketInstance.synchronizationThrottler.updateSynchronizationId(data.synchronizationId);
       }
-      let instanceId = data.accountId + ':' + instanceNumber + ':' + (data.host || 0);
-      let instanceIndex = instanceNumber + ':' + (data.host || 0);
+      const region = this.getAccountRegion(data.accountId);
+      const primaryAccountId = this._accountsByReplicaId[data.accountId];
+      let instanceId = this._accountsByReplicaId[data.accountId] + ':' + 
+        region + ':' + instanceNumber + ':' + (data.host || 0);
+      let instanceIndex = region + ':' + instanceNumber + ':' + (data.host || 0);
 
       const isOnlyActiveInstance = () => {
         const activeInstanceIds = Object.keys(this._connectedHosts).filter(instance => 
-          instance.startsWith(data.accountId + ':' + instanceNumber));
+          instance.startsWith(primaryAccountId + ':' + region + ':' + instanceNumber));
         return !activeInstanceIds.length || activeInstanceIds.length === 1 && activeInstanceIds[0] === instanceId;
       };
 
@@ -1766,7 +1798,7 @@ export default class MetaApiWebsocketClient {
           if(isOnlyActiveInstance()) {
             this._subscriptionManager.onTimeout(data.accountId, instanceNumber);
           }
-          this.queueEvent(data.accountId, `${instanceIndex}:onDisconnected`, () => onDisconnected(true));
+          this.queueEvent(primaryAccountId, `${instanceIndex}:onDisconnected`, () => onDisconnected(true));
           clearTimeout(this._statusTimers[instanceId]);
         }, 60000);
       };
@@ -1774,15 +1806,16 @@ export default class MetaApiWebsocketClient {
       // eslint-disable-next-line complexity
       const onDisconnected = async (isTimeout = false) => { 
         if (this._connectedHosts[instanceId]) {
+          this._latencyService.onDisconnected(instanceId);
           if(isOnlyActiveInstance()) {
             const onDisconnectedPromises = [];
             if(!isTimeout) {
               onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, instanceNumber));
             }
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
               onDisconnectedPromises.push(this._processEvent(
                 () => listener.onDisconnected(instanceIndex),
-                `${data.accountId}:${instanceIndex}:onDisconnected`));
+                `${primaryAccountId}:${instanceIndex}:onDisconnected`));
             }
             await Promise.all(onDisconnectedPromises);
           }
@@ -1791,10 +1824,10 @@ export default class MetaApiWebsocketClient {
           if(socketInstance) {
             socketInstance.synchronizationThrottler.removeIdByParameters(data.accountId, instanceNumber, data.host);
           }
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onStreamClosedPromises.push(this._processEvent(
               () => listener.onStreamClosed(instanceIndex),
-              `${data.accountId}:${instanceIndex}:onStreamClosed`));
+              `${primaryAccountId}:${instanceIndex}:onStreamClosed`));
           }
           await Promise.all(onStreamClosedPromises);
           delete this._connectedHosts[instanceId];
@@ -1803,12 +1836,13 @@ export default class MetaApiWebsocketClient {
       if (data.type === 'authenticated') {
         resetDisconnectTimer();
         if((!data.sessionId) || socketInstance && (data.sessionId === socketInstance.sessionId)) {
+          this._latencyService.onConnected(instanceId);
           this._connectedHosts[instanceId] = data.host;
           const onConnectedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onConnectedPromises.push(this._processEvent(
               () => listener.onConnected(instanceIndex, data.replicas),
-              `${data.accountId}:${instanceIndex}:onConnected`));
+              `${primaryAccountId}:${instanceIndex}:onConnected`));
           }
           this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
           if(data.replicas === 1) {
@@ -1830,13 +1864,13 @@ export default class MetaApiWebsocketClient {
           ordersUpdated: data.ordersUpdated !== undefined ? data.ordersUpdated : true
         };
         this._synchronizationIdByInstance[instanceId] = data.synchronizationId;
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           promises.push(this._processEvent(
             () => listener.onSynchronizationStarted(instanceIndex,
               data.specificationsUpdated !== undefined ? data.specificationsUpdated : true,
               data.positionsUpdated !== undefined ? data.positionsUpdated : true,
               data.ordersUpdated !== undefined ? data.ordersUpdated : true, data.synchronizationId),
-            `${data.accountId}:${instanceIndex}:onSynchronizationStarted`));
+            `${primaryAccountId}:${instanceIndex}:onSynchronizationStarted`));
         }
         await Promise.all(promises);
       } else if (data.type === 'accountInformation') {
@@ -1845,25 +1879,25 @@ export default class MetaApiWebsocketClient {
         }
         if (data.accountInformation) {
           const onAccountInformationUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onAccountInformationUpdatedPromises.push(
               Promise.resolve((async () => {
                 await this._processEvent(
                   () => listener.onAccountInformationUpdated(instanceIndex, data.accountInformation),
-                  `${data.accountId}:${instanceIndex}:onAccountInformationUpdated`, true);
+                  `${primaryAccountId}:${instanceIndex}:onAccountInformationUpdated`, true);
                 if(this._synchronizationFlags[data.synchronizationId] && 
                     !this._synchronizationFlags[data.synchronizationId].positionsUpdated) {
                   await this._processEvent(
                     () => listener.onPositionsSynchronized(instanceIndex, data.synchronizationId),
-                    `${data.accountId}:${instanceIndex}:onPositionsSynchronized`, true);
+                    `${primaryAccountId}:${instanceIndex}:onPositionsSynchronized`, true);
                   if(!this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
                     await this._processEvent(
                       () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
-                      `${data.accountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
+                      `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
                   }
                 }
               })())
-                .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+                .catch(err => this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
                   'about accountInformation event', err))
             );
           }
@@ -1880,10 +1914,10 @@ export default class MetaApiWebsocketClient {
         }
         for (let deal of (data.deals || [])) {
           const onDealAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onDealAddedPromises.push(this._processEvent(
               () => listener.onDealAdded(instanceIndex, deal),
-              `${data.accountId}:${instanceIndex}:onDealAdded`));
+              `${primaryAccountId}:${instanceIndex}:onDealAdded`));
           }
           await Promise.all(onDealAddedPromises);
         }
@@ -1892,17 +1926,17 @@ export default class MetaApiWebsocketClient {
           return;
         }
         const onPendingOrdersReplacedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           onPendingOrdersReplacedPromises.push(
             Promise.resolve((async () => {
               await this._processEvent(
                 () => listener.onPendingOrdersReplaced(instanceIndex, data.orders || []),
-                `${data.accountId}:${instanceIndex}:onPendingOrdersReplaced`, true);
+                `${primaryAccountId}:${instanceIndex}:onPendingOrdersReplaced`, true);
               await this._processEvent(
                 () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
-                `${data.accountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
+                `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
             })())
-              .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+              .catch(err => this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
                 'about orders event', err))
           );
         }
@@ -1916,10 +1950,10 @@ export default class MetaApiWebsocketClient {
         }
         for (let historyOrder of (data.historyOrders || [])) {
           const onHistoryOrderAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onHistoryOrderAddedPromises.push(this._processEvent(
               () => listener.onHistoryOrderAdded(instanceIndex, historyOrder),
-              `${data.accountId}:${instanceIndex}:onHistoryOrderAdded`));
+              `${primaryAccountId}:${instanceIndex}:onHistoryOrderAdded`));
           }
           await Promise.all(onHistoryOrderAddedPromises);
         }
@@ -1928,22 +1962,22 @@ export default class MetaApiWebsocketClient {
           return;
         }
         const onPositionsReplacedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           onPositionsReplacedPromises.push(Promise.resolve((async () => {
             await this._processEvent(
               () => listener.onPositionsReplaced(instanceIndex, data.positions || []),
-              `${data.accountId}:${instanceIndex}:onPositionsReplaced`, true);
+              `${primaryAccountId}:${instanceIndex}:onPositionsReplaced`, true);
             await this._processEvent(
               () => listener.onPositionsSynchronized(instanceIndex, data.synchronizationId),
-              `${data.accountId}:${instanceIndex}:onPositionsSynchronized`, true);
+              `${primaryAccountId}:${instanceIndex}:onPositionsSynchronized`, true);
             if(this._synchronizationFlags[data.synchronizationId] && 
               !this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
               await this._processEvent(
                 () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
-                `${data.accountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
+                `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
             }
           })())
-            .catch(err => this._logger.error(`${data.accountId}:${instanceIndex}: Failed to notify listener ` +
+            .catch(err => this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
               'about positions event', err))
           );
         }
@@ -1955,64 +1989,64 @@ export default class MetaApiWebsocketClient {
       } else if (data.type === 'update') {
         if (data.accountInformation) {
           const onAccountInformationUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onAccountInformationUpdatedPromises.push(this._processEvent(
               () => listener.onAccountInformationUpdated(instanceIndex, data.accountInformation),
-              `${data.accountId}:${instanceIndex}:onAccountInformationUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onAccountInformationUpdated`));
           }
           await Promise.all(onAccountInformationUpdatedPromises);
         }
         for (let position of (data.updatedPositions || [])) {
           const onPositionUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPositionUpdatedPromises.push(this._processEvent(
               () => listener.onPositionUpdated(instanceIndex, position),
-              `${data.accountId}:${instanceIndex}:onPositionUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onPositionUpdated`));
           }
           await Promise.all(onPositionUpdatedPromises);
         }
         for (let positionId of (data.removedPositionIds || [])) {
           const onPositionRemovedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPositionRemovedPromises.push(this._processEvent(
               () => listener.onPositionRemoved(instanceIndex, positionId),
-              `${data.accountId}:${instanceIndex}:onPositionRemoved`));
+              `${primaryAccountId}:${instanceIndex}:onPositionRemoved`));
           }
           await Promise.all(onPositionRemovedPromises);
         }
         for (let order of (data.updatedOrders || [])) {
           const onPendingOrderUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPendingOrderUpdatedPromises.push(this._processEvent(
               () => listener.onPendingOrderUpdated(instanceIndex, order),
-              `${data.accountId}:${instanceIndex}:onPendingOrderUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onPendingOrderUpdated`));
           }
           await Promise.all(onPendingOrderUpdatedPromises);
         }
         for (let orderId of (data.completedOrderIds || [])) {
           const onPendingOrderCompletedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPendingOrderCompletedPromises.push(this._processEvent(
               () => listener.onPendingOrderCompleted(instanceIndex, orderId),
-              `${data.accountId}:${instanceIndex}:onPendingOrderCompleted`));
+              `${primaryAccountId}:${instanceIndex}:onPendingOrderCompleted`));
           }
           await Promise.all(onPendingOrderCompletedPromises);
         }
         for (let historyOrder of (data.historyOrders || [])) {
           const onHistoryOrderAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onHistoryOrderAddedPromises.push(this._processEvent(
               () => listener.onHistoryOrderAdded(instanceIndex, historyOrder),
-              `${data.accountId}:${instanceIndex}:onHistoryOrderAdded`));
+              `${primaryAccountId}:${instanceIndex}:onHistoryOrderAdded`));
           }
           await Promise.all(onHistoryOrderAddedPromises);
         }
         for (let deal of (data.deals || [])) {
           const onDealAddedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onDealAddedPromises.push(this._processEvent(
               () => listener.onDealAdded(instanceIndex, deal),
-              `${data.accountId}:${instanceIndex}:onDealAdded`));
+              `${primaryAccountId}:${instanceIndex}:onDealAdded`));
           }
           await Promise.all(onDealAddedPromises);
         }
@@ -2023,7 +2057,7 @@ export default class MetaApiWebsocketClient {
           for (let listener of this._latencyListeners || []) {
             onUpdatePromises.push(this._processEvent(
               () => listener.onUpdate(data.accountId, data.timestamps),
-              `${data.accountId}:${instanceIndex}:onUpdate`));
+              `${primaryAccountId}:${instanceIndex}:onUpdate`));
           }
           await Promise.all(onUpdatePromises);
         }
@@ -2032,14 +2066,15 @@ export default class MetaApiWebsocketClient {
           delete this._synchronizationIdByInstance[instanceId];
           return;
         }
+        this._latencyService.onDealsSynchronized(instanceId);
         const onDealsSynchronizedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           if(socketInstance) {
             socketInstance.synchronizationThrottler.removeSynchronizationId(data.synchronizationId);
           }
           onDealsSynchronizedPromises.push(this._processEvent(
             () => listener.onDealsSynchronized(instanceIndex, data.synchronizationId),
-            `${data.accountId}:${instanceIndex}:onDealsSynchronized`));
+            `${primaryAccountId}:${instanceIndex}:onDealsSynchronized`));
         }
         await Promise.all(onDealsSynchronizedPromises);
       } else if (data.type === 'orderSynchronizationFinished') {
@@ -2047,10 +2082,10 @@ export default class MetaApiWebsocketClient {
           return;
         }
         const onHistoryOrdersSynchronizedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           onHistoryOrdersSynchronizedPromises.push(this._processEvent(
             () => listener.onHistoryOrdersSynchronized(instanceIndex, data.synchronizationId),
-            `${data.accountId}:${instanceIndex}:onHistoryOrdersSynchronized`));
+            `${primaryAccountId}:${instanceIndex}:onHistoryOrdersSynchronized`));
         }
         await Promise.all(onHistoryOrdersSynchronizedPromises);
       } else if (data.type === 'status') {
@@ -2068,34 +2103,34 @@ export default class MetaApiWebsocketClient {
         } else {
           resetDisconnectTimer();
           const onBrokerConnectionStatusChangedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onBrokerConnectionStatusChangedPromises.push(this._processEvent(
               () => listener.onBrokerConnectionStatusChanged(instanceIndex, !!data.connected),
-              `${data.accountId}:${instanceIndex}:onBrokerConnectionStatusChanged`));
+              `${primaryAccountId}:${instanceIndex}:onBrokerConnectionStatusChanged`));
           }
           await Promise.all(onBrokerConnectionStatusChangedPromises);
           if (data.healthStatus) {
             const onHealthStatusPromises = [];
             // eslint-disable-next-line max-depth
-            for (let listener of this._synchronizationListeners[data.accountId] || []) {
+            for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
               onHealthStatusPromises.push(this._processEvent(
                 () => listener.onHealthStatus(instanceIndex, data.healthStatus),
-                `${data.accountId}:${instanceIndex}:onHealthStatus`));
+                `${primaryAccountId}:${instanceIndex}:onHealthStatus`));
             }
             await Promise.all(onHealthStatusPromises);
           }
         }
       } else if (data.type === 'downgradeSubscription') {
         // eslint-disable-next-line no-console
-        this._logger.info(`${data.accountId}:${instanceIndex}: Market data subscriptions for symbol ` +
+        this._logger.info(`${primaryAccountId}:${instanceIndex}: Market data subscriptions for symbol ` +
           `${data.symbol} were downgraded by the server due to rate limits. Updated subscriptions: ` +
           `${JSON.stringify(data.updates)}, removed subscriptions: ${JSON.stringify(data.unsubscriptions)}. ` +
           'Please read https://metaapi.cloud/docs/client/rateLimiting/ for more details.');
         const onSubscriptionDowngradePromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           onSubscriptionDowngradePromises.push(this._processEvent(
             () => listener.onSubscriptionDowngraded(instanceIndex, data.symbol, data.updates, data.unsubscriptions),
-            `${data.accountId}:${instanceIndex}:onSubscriptionDowngraded`));
+            `${primaryAccountId}:${instanceIndex}:onSubscriptionDowngraded`));
         }
         await Promise.all(onSubscriptionDowngradePromises);
       } else if (data.type === 'specifications') {
@@ -2103,27 +2138,27 @@ export default class MetaApiWebsocketClient {
           return;
         }
         const onSymbolSpecificationsUpdatedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           onSymbolSpecificationsUpdatedPromises.push(this._processEvent(
             () => listener.onSymbolSpecificationsUpdated(instanceIndex, data.specifications || [],
-              data.removedSymbols || []), `${data.accountId}:${instanceIndex}:onSymbolSpecificationsUpdated`));
+              data.removedSymbols || []), `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationsUpdated`));
         }
         await Promise.all(onSymbolSpecificationsUpdatedPromises);
         for (let specification of (data.specifications || [])) {
           const onSymbolSpecificationUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onSymbolSpecificationUpdatedPromises.push(this._processEvent(
               () => listener.onSymbolSpecificationUpdated(instanceIndex, specification),
-              `${data.accountId}:${instanceIndex}:onSymbolSpecificationUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationUpdated`));
           }
           await Promise.all(onSymbolSpecificationUpdatedPromises);
         }
         for (let removedSymbol of (data.removedSymbols || [])) {
           const onSymbolSpecificationRemovedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onSymbolSpecificationRemovedPromises.push(this._processEvent(
               () => listener.onSymbolSpecificationRemoved(instanceIndex, removedSymbol),
-              `${data.accountId}:${instanceIndex}:onSymbolSpecificationRemoved`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationRemoved`));
           }
           await Promise.all(onSymbolSpecificationRemovedPromises);
         }
@@ -2136,39 +2171,39 @@ export default class MetaApiWebsocketClient {
         let ticks = data.ticks || [];
         let books = data.books || [];
         const onSymbolPricesUpdatedPromises = [];
-        for (let listener of this._synchronizationListeners[data.accountId] || []) {
+        for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           if (prices.length) {
             onSymbolPricesUpdatedPromises.push(this._processEvent(
               () => listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${data.accountId}:${instanceIndex}:onSymbolPricesUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolPricesUpdated`));
           }
           if (candles.length) {
             onSymbolPricesUpdatedPromises.push(this._processEvent(
               () => listener.onCandlesUpdated(instanceIndex, candles, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${data.accountId}:${instanceIndex}:onCandlesUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onCandlesUpdated`));
           }
           if (ticks.length) {
             onSymbolPricesUpdatedPromises.push(this._processEvent(
               () => listener.onTicksUpdated(instanceIndex, ticks, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${data.accountId}:${instanceIndex}:onTicksUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onTicksUpdated`));
           }
           if (books.length) {
             onSymbolPricesUpdatedPromises.push(this._processEvent(
               () => listener.onBooksUpdated(instanceIndex, books, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${data.accountId}:${instanceIndex}:onBooksUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onBooksUpdated`));
           }
         }
         await Promise.all(onSymbolPricesUpdatedPromises);
         for (let price of prices) {
           const onSymbolPriceUpdatedPromises = [];
-          for (let listener of this._synchronizationListeners[data.accountId] || []) {
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onSymbolPriceUpdatedPromises.push(this._processEvent(
               () => listener.onSymbolPriceUpdated(instanceIndex, price),
-              `${data.accountId}:${instanceIndex}:onSymbolPriceUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolPriceUpdated`));
           }
           await Promise.all(onSymbolPriceUpdatedPromises);
         }
@@ -2180,7 +2215,7 @@ export default class MetaApiWebsocketClient {
             for (let listener of this._latencyListeners || []) {
               onSymbolPricePromises.push(this._processEvent(
                 () => listener.onSymbolPrice(data.accountId, price.symbol, price.timestamps),
-                `${data.accountId}:${instanceIndex}:onSymbolPrice`));
+                `${primaryAccountId}:${instanceIndex}:onSymbolPrice`));
             }
             await Promise.all(onSymbolPricePromises);
           }
@@ -2255,6 +2290,33 @@ export default class MetaApiWebsocketClient {
     return this._socketInstances[region][instanceNumber][this._socketInstancesByAccounts[instanceNumber][accountId]];
   }
 
+  async getUrlSettings(instanceNumber, region) {
+    if(this._url) {
+      return {url: this._url, isSharedClientApi: true};
+    }
+
+    const urlSettings = await this._httpClient.request({
+      url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
+      method: 'GET',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true,
+    });
+
+    const getUrl = (hostname) => 
+      `https://${hostname}.${region}-${String.fromCharCode(97 + Number(instanceNumber))}.${urlSettings.domain}`;
+
+    let url;
+    if(this._useSharedClientApi) {
+      url = getUrl(this._hostname);
+    } else {
+      url = getUrl(urlSettings.hostname);
+    }
+    const isSharedClientApi = url === getUrl(this._hostname);
+    return {url, isSharedClientApi};
+  }
+
   // eslint-disable-next-line complexity
   async _getServerUrl(instanceNumber, socketInstanceIndex, region) {
     if(this._url) {
@@ -2263,25 +2325,9 @@ export default class MetaApiWebsocketClient {
 
     while(this.socketInstances[region][instanceNumber][socketInstanceIndex].connected) {
       try {
-        const urlSettings = await this._httpClient.request({
-          url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
-          method: 'GET',
-          headers: {
-            'auth-token': this._token
-          },
-          json: true,
-        });
-
-        const getUrl = (hostname) => 
-          `https://${hostname}.${region}-${String.fromCharCode(97 + Number(instanceNumber))}.${urlSettings.domain}`;
-
-        let url;
-        if(this._useSharedClientApi) {
-          url = getUrl(this._hostname);
-        } else {
-          url = getUrl(urlSettings.hostname);
-        }
-        const isSharedClientApi = url === getUrl(this._hostname);
+        const urlSettings = await this.getUrlSettings(instanceNumber, region);
+        const url = urlSettings.url;
+        const isSharedClientApi = urlSettings.isSharedClientApi;
         let logMessage = 'Connecting MetaApi websocket client to the MetaApi server ' +
       `via ${url} ${isSharedClientApi ? 'shared' : 'dedicated'} server.`;
         if(this._firstConnect && !isSharedClientApi) {
@@ -2315,12 +2361,61 @@ export default class MetaApiWebsocketClient {
     }
   }
 
-  _clearRegionsJob() {
+  //eslint-disable-next-line complexity
+  async _createSocketInstanceByAccount(accountId, instanceNumber) {
+    const region = this.getAccountRegion(accountId);
+    if (this._socketInstancesByAccounts[instanceNumber][accountId] === undefined) {
+      let socketInstanceIndex = null;
+      while (this._subscribeLock && ((new Date(this._subscribeLock.recommendedRetryTime).getTime() > Date.now() && 
+          this.subscribedAccountIds(instanceNumber, undefined, region).length < 
+          this._subscribeLock.lockedAtAccounts) || 
+          (new Date(this._subscribeLock.lockedAtTime).getTime() + this._subscribeCooldownInSeconds * 1000 > 
+          Date.now() && this.subscribedAccountIds(instanceNumber, undefined, region).length >= 
+          this._subscribeLock.lockedAtAccounts))) {
+        await new Promise(res => setTimeout(res, 1000));
+      }
+      for (let index = 0; index < this._socketInstances[region][instanceNumber].length; index++) {
+        const accountCounter = this.getAssignedAccounts(instanceNumber, index, region).length;
+        const instance = this.socketInstances[region][instanceNumber][index];
+        if (instance.subscribeLock) {
+          if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_USER_PER_SERVER' && 
+            (new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() || 
+            this.subscribedAccountIds(instanceNumber, index, region).length >= 
+            instance.subscribeLock.lockedAtAccounts)) {
+            continue;
+          }
+          if (instance.subscribeLock.type === 'LIMIT_ACCOUNT_SUBSCRIPTIONS_PER_SERVER' && 
+            new Date(instance.subscribeLock.recommendedRetryTime).getTime() > Date.now() &&
+            this.subscribedAccountIds(instanceNumber, index, region).length >= 
+            instance.subscribeLock.lockedAtAccounts) {
+            continue;
+          }
+        }
+        if(accountCounter < this._maxAccountsPerInstance) {
+          socketInstanceIndex = index;
+          break;
+        }
+      }
+      if(socketInstanceIndex === null) {
+        socketInstanceIndex = this._socketInstances[region][instanceNumber].length;
+        await this.connect(instanceNumber, region);
+      }
+      this._socketInstancesByAccounts[instanceNumber][accountId] = socketInstanceIndex;
+    }
+  }  
+
+  _clearAccountCacheJob() {
     const date = Date.now();
     Object.keys(this._regionsByAccounts).forEach(accountId => {
       const data = this._regionsByAccounts[accountId];
       if(data.connections === 0 && date - data.lastUsed > 2 * 60 * 60 * 1000) {
-        delete this._regionsByAccounts[accountId];
+        const primaryAccountId = this._accountsByReplicaId[accountId];
+        const replicas = Object.values(this._accountReplicas[primaryAccountId]);
+        replicas.forEach(replica => {
+          delete this._accountsByReplicaId[replica];
+          delete this._regionsByAccounts[replica];
+        });
+        delete this._accountReplicas[primaryAccountId];
       }
     });
   }

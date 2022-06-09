@@ -6,11 +6,19 @@
 export default class SynchronizationListener {
 
   /**
+   * Returns region of instance index
+   * @param {String} instanceIndex instance index
+   */
+  getRegion(instanceIndex) {
+    return typeof instanceIndex === 'string' ? instanceIndex.split(':')[0] : undefined;
+  }
+
+  /**
    * Returns instance number of instance index
    * @param {String} instanceIndex instance index
    */
   getInstanceNumber(instanceIndex) {
-    return typeof instanceIndex === 'string' ? Number(instanceIndex.split(':')[0]) : undefined;
+    return typeof instanceIndex === 'string' ? Number(instanceIndex.split(':')[1]) : undefined;
   }
 
   /**
@@ -18,7 +26,7 @@ export default class SynchronizationListener {
    * @param {String} instanceIndex instance index
    */
   getHostName(instanceIndex) {
-    return typeof instanceIndex === 'string' ? instanceIndex.split(':')[1] : undefined;
+    return typeof instanceIndex === 'string' ? instanceIndex.split(':')[2] : undefined;
   }
 
   /**
@@ -283,5 +291,12 @@ export default class SynchronizationListener {
    * @param {String} instanceIndex index of an account instance connected
    */
   async onStreamClosed(instanceIndex) {}
+
+  /**
+   * Invoked when account region has been unsubscribed
+   * @param {String} region account region unsubscribed
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onUnsubscribeRegion(region) {}
 
 }

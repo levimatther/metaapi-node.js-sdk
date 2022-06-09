@@ -51,8 +51,9 @@ describe('StreamingMetaApiConnection', () => {
     unsubscribe: () => {},
     refreshMarketDataSubscriptions: () => {},
     regionsByAccounts: {},
-    addAccountRegion: () => {},
-    removeAccountRegion: () => {},
+    addAccountCache: () => {},
+    getAccountRegion: (accountId) => accountId === 'accountIdReplica' ? 'new-york' : 'vint-hill',
+    removeAccountCache: () => {},
     queueEvent: () => {}
   };
 
@@ -89,6 +90,11 @@ describe('StreamingMetaApiConnection', () => {
     application: 'MetaApi'
   };
 
+  let accountRegions = {
+    'vint-hill': 'accountId',
+    'new-york': 'accountIdReplica'
+  };
+
   before(() => {
     sandbox = sinon.createSandbox();
   });
@@ -98,6 +104,7 @@ describe('StreamingMetaApiConnection', () => {
       id: 'accountId', 
       state: 'DEPLOYED',
       region: 'vint-hill',
+      accountRegions,
       reload: () => {}
     };
     api = new StreamingMetaApiConnection(client, clientApiClient, account, undefined, connectionRegistry, 0, {
@@ -450,6 +457,8 @@ describe('StreamingMetaApiConnection', () => {
       await api.subscribe();
       sinon.assert.calledWith(client.ensureSubscribe, 'accountId', 0);
       sinon.assert.calledWith(client.ensureSubscribe, 'accountId', 1);
+      sinon.assert.calledWith(client.ensureSubscribe, 'accountIdReplica', 0);
+      sinon.assert.calledWith(client.ensureSubscribe, 'accountIdReplica', 1);
     });
 
   });
@@ -491,11 +500,12 @@ describe('StreamingMetaApiConnection', () => {
   it('should synchronize state with terminal', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId', accountRegions},
+      undefined, connectionRegistry);
     await api.connect();
-    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize('1:ps-mpa-1');
+    api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.synchronize('vint-hill:1:ps-mpa-1');
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
   });
@@ -506,12 +516,12 @@ describe('StreamingMetaApiConnection', () => {
   it('should synchronize state with terminal from specified time', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry,
-      new Date('2020-10-07T00:00:00.000Z'));
+    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId', accountRegions}, undefined,
+      connectionRegistry, new Date('2020-10-07T00:00:00.000Z'));
     await api.connect();
-    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.synchronize('1:ps-mpa-1');
+    api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.synchronize('vint-hill:1:ps-mpa-1');
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-10-07T00:00:00.000Z'), new Date('2020-10-07T00:00:00.000Z'));
   });
@@ -523,7 +533,8 @@ describe('StreamingMetaApiConnection', () => {
     await api.connect();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     let promise = api.subscribeToMarketData('EURUSD', undefined);
-    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    api.terminalState.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1', 
+      [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     await promise;
     sinon.assert.calledWith(client.subscribeToMarketData, 'accountId', 'EURUSD', [{type: 'quotes'}]);
     sinon.assert.match(api.subscriptions('EURUSD'), [{type: 'quotes'}]);
@@ -541,8 +552,10 @@ describe('StreamingMetaApiConnection', () => {
   it('should not subscribe to symbol that has no specification', async () => {
     await api.connect();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
-    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
-    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'AAAAA', bid: 1, ask: 1.1}]);
+    api.terminalState.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1', 
+      [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    api.terminalState.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1', 
+      [{time: new Date(), symbol: 'AAAAA', bid: 1, ask: 1.1}]);
     try {
       await api.subscribeToMarketData('AAAAA');
       throw new Error('ValidationError expected');
@@ -556,7 +569,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should unsubscribe from market data', async () => {
     await api.connect();
-    await api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1',
+    await api.terminalState.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1',
       [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     sandbox.stub(client, 'unsubscribeFromMarketData').resolves();
     await api.unsubscribeFromMarketData('EURUSD', [{type: 'quotes'}]);
@@ -578,7 +591,8 @@ describe('StreamingMetaApiConnection', () => {
       await api.connect();
       sandbox.stub(api, 'subscribeToMarketData').resolves();
       sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
-      await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', undefined, [{type: 'ticks'}, {type: 'books'}]);
+      await api.onSubscriptionDowngraded('vint-hill:1:ps-mpa-1', 'EURUSD', undefined, 
+        [{type: 'ticks'}, {type: 'books'}]);
       sinon.assert.calledWith(api.unsubscribeFromMarketData, 'EURUSD', [{type: 'ticks'}, {type: 'books'}]);
       sinon.assert.notCalled(api.subscribeToMarketData);
     });
@@ -590,7 +604,8 @@ describe('StreamingMetaApiConnection', () => {
       await api.connect();
       sandbox.stub(api, 'subscribeToMarketData').resolves();
       sandbox.stub(api, 'unsubscribeFromMarketData').resolves();
-      await api.onSubscriptionDowngraded('1:ps-mpa-1', 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
+      await api.onSubscriptionDowngraded('vint-hill:1:ps-mpa-1', 'EURUSD', 
+        [{type: 'quotes', intervalInMilliseconds: 30000}]);
       sinon.assert.calledWith(api.subscribeToMarketData, 'EURUSD', [{type: 'quotes', intervalInMilliseconds: 30000}]);
       sinon.assert.notCalled(api.unsubscribeFromMarketData);
     });
@@ -613,7 +628,8 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should initialize listeners, terminal state and history storage for accounts with user synch mode', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+      undefined, connectionRegistry);
     await api.connect();
     should.exist(api.terminalState);
     should.exist(api.historyStorage);
@@ -627,7 +643,8 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should add synchronization listeners', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+      undefined, connectionRegistry);
     await api.connect();
     let listener = {};
     api.addSynchronizationListener(listener);
@@ -639,7 +656,8 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should remove synchronization listeners', async () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+      undefined, connectionRegistry);
     await api.connect();
     let listener = {};
     api.removeSynchronizationListener(listener);
@@ -652,11 +670,12 @@ describe('StreamingMetaApiConnection', () => {
   it('should sychronize on connection', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+      undefined, connectionRegistry);
     await api.connect();
-    api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected('1:ps-mpa-1', 1);
+    api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    api.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.onConnected('vint-hill:1:ps-mpa-1', 1);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
@@ -670,11 +689,13 @@ describe('StreamingMetaApiConnection', () => {
     stub.onFirstCall().throws(new Error('test error'));
     stub.onSecondCall().resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+      undefined, connectionRegistry);
     await api.connect();
-    await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
-    await api.onConnected('1:ps-mpa-1', 1);
+    await api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', 
+      {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    await api.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.onConnected('vint-hill:1:ps-mpa-1', 1);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
@@ -685,12 +706,14 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should not synchronize if connection is closed', async () => {
     let synchronizeStub = sandbox.stub(client, 'synchronize');
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions},
+      undefined, connectionRegistry);
     await api.connect();
-    await api.historyStorage.onHistoryOrderAdded('1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    await api.historyStorage.onDealAdded('1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
+    await api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', 
+      {doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    await api.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', {time: new Date('2020-01-02T00:00:00.000Z')});
     await api.close();
-    await api.onConnected('1:ps-mpa-1', 1);
+    await api.onConnected('vint-hill:1:ps-mpa-1', 1);
     sinon.assert.notCalled(synchronizeStub);
   });
 
@@ -702,7 +725,8 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
     sandbox.stub(client, 'unsubscribe').resolves();
     sandbox.stub(connectionRegistry, 'remove').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId'}, undefined, connectionRegistry);
+    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+      undefined, connectionRegistry);
     await api.connect();
     await api.close();
     sinon.assert.calledWith(client.unsubscribe, 'accountId');
@@ -720,19 +744,42 @@ describe('StreamingMetaApiConnection', () => {
     it('should wait util synchronization complete', async () => {
       await api.connect();
       sandbox.stub(client, 'waitSynchronized').resolves();
-      sinon.assert.match(await api.isSynchronized('1:ps-mpa-1'), false);
+      sinon.assert.match(await api.isSynchronized('vint-hill:1:ps-mpa-1'), false);
       (await api.isSynchronized()).should.equal(false);
       let promise = api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
         timeoutInSeconds: 1, intervalInMilliseconds: 10});
       let startTime = Date.now();
       await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
       (Date.now() - startTime).should.be.approximately(50, 10);
-      api.onHistoryOrdersSynchronized('1:ps-mpa-1', 'synchronizationId');
-      api.onDealsSynchronized('1:ps-mpa-1', 'synchronizationId');
+      api.onHistoryOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+      api.onDealsSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
       startTime = Date.now();
       await promise;
       (Date.now() - startTime).should.be.approximately(10, 10);
-      (await api.isSynchronized('1:ps-mpa-1', 'synchronizationId')).should.equal(true);
+      (await api.isSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId')).should.equal(true);
+      sinon.assert.calledWith(client.waitSynchronized, 'accountId', 1, 'app.*', 0.92);
+    });
+
+    /**
+     * @test {MetaApiConnection#waitSynchronized}
+     */
+    it('should wait synchronize on a replica', async () => {
+      await api.connect();
+      sandbox.stub(client, 'waitSynchronized').resolves();
+      sinon.assert.match(await api.isSynchronized('new-york:1:ps-mpa-1'), false);
+      (await api.isSynchronized()).should.equal(false);
+      let promise = api.waitSynchronized({applicationPattern: 'app.*', synchronizationId: 'synchronizationId',
+        timeoutInSeconds: 1, intervalInMilliseconds: 10});
+      let startTime = Date.now();
+      await Promise.race([promise, new Promise(res => setTimeout(res, 50))]);
+      (Date.now() - startTime).should.be.approximately(50, 10);
+      api.onHistoryOrdersSynchronized('new-york:1:ps-mpa-1', 'synchronizationId');
+      api.onDealsSynchronized('new-york:1:ps-mpa-1', 'synchronizationId');
+      startTime = Date.now();
+      await promise;
+      (Date.now() - startTime).should.be.approximately(10, 10);
+      (await api.isSynchronized('new-york:1:ps-mpa-1', 'synchronizationId')).should.equal(true);
+      sinon.assert.calledWith(client.waitSynchronized, 'accountIdReplica', 1, 'app.*', 0.92);
     });
 
     /**
@@ -755,11 +802,13 @@ describe('StreamingMetaApiConnection', () => {
   /**
    * @test {MetaApiConnection#initialize}
    */
-  it('should load data to history storage from disk', async () => {
+  it('should initialize connection', async () => {
+    const addCacheStub = sandbox.stub(client, 'addAccountCache');
     await api.connect();
     sandbox.stub(api.historyStorage, 'initialize').resolves();
     await api.initialize();
     sinon.assert.calledOnce(api.historyStorage.initialize);
+    sinon.assert.calledWith(addCacheStub, 'accountId', { 'new-york': 'accountIdReplica', 'vint-hill': 'accountId' });
   });
 
   /**
@@ -767,10 +816,10 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should set synchronized false on disconnect', async () => {
     await api.connect();
-    await api.onConnected('1:ps-mpa-1', 2);
+    await api.onConnected('vint-hill:1:ps-mpa-1', 2);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(api.synchronized, true);
-    await api.onDisconnected('1:ps-mpa-1');
+    await api.onDisconnected('vint-hill:1:ps-mpa-1');
     sinon.assert.match(api.synchronized, false);
   });
 
@@ -779,10 +828,10 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should delete state if stream closed', async () => {
     await api.connect();
-    await api.onConnected('1:ps-mpa-1', 2);
+    await api.onConnected('vint-hill:1:ps-mpa-1', 2);
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.match(api.synchronized, true);
-    await api.onStreamClosed('1:ps-mpa-1');
+    await api.onStreamClosed('vint-hill:1:ps-mpa-1');
     sinon.assert.match(api.synchronized, false);
   });
 
@@ -794,24 +843,72 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'refreshMarketDataSubscriptions').resolves();
     sandbox.stub(client, 'subscribeToMarketData').resolves();
     sandbox.stub(client, 'waitSynchronized').resolves();
-    await api.onSynchronizationStarted('1:ps-mpa-1');
+    await api.onSynchronizationStarted('vint-hill:1:ps-mpa-1');
     await clock.tickAsync(50);
     sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, []);
-    api.terminalState.onSymbolPricesUpdated('1:ps-mpa-1', [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    api.terminalState.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1', 
+      [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
     await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
     await clock.tickAsync(1050);
     sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, 
       [{symbol: 'EURUSD', subscriptions: [{type: 'quotes'}]}]);
     sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
-    await api.onDisconnected('1:ps-mpa-1');
+    await api.onDisconnected('vint-hill:1:ps-mpa-1');
     await clock.tickAsync(1050);
     sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
-    await api.onSynchronizationStarted('1:ps-mpa-1');
+    await api.onSynchronizationStarted('vint-hill:1:ps-mpa-1');
     await clock.tickAsync(50);
     sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
     await api.close();
     await clock.tickAsync(1050);
     sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
+  });
+
+  /**
+   * @test {MetaApiConnection#onDisconnected}
+   */
+  it('should create refresh subscriptions job with a replica', async () => {
+    await api.connect();
+    sandbox.stub(client, 'refreshMarketDataSubscriptions').resolves();
+    sandbox.stub(client, 'subscribeToMarketData').resolves();
+    sandbox.stub(client, 'waitSynchronized').resolves();
+    await api.onSynchronizationStarted('new-york:1:ps-mpa-1');
+    await clock.tickAsync(50);
+    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountIdReplica', 1, []);
+    api.terminalState.onSymbolPricesUpdated('new-york:1:ps-mpa-1', 
+      [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
+    await clock.tickAsync(1050);
+    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountIdReplica', 1, 
+      [{symbol: 'EURUSD', subscriptions: [{type: 'quotes'}]}]);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
+    await api.onDisconnected('new-york:1:ps-mpa-1');
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
+    await api.onSynchronizationStarted('new-york:1:ps-mpa-1');
+    await clock.tickAsync(50);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
+    await api.close();
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 3);
+  });
+
+  /**
+   * @test {MetaApiConnection#onUnsubscribeRegion}
+   */
+  it('should remove subscription job on region unsubscribe', async () => {
+    await api.connect();
+    sandbox.stub(client, 'refreshMarketDataSubscriptions').resolves();
+    sandbox.stub(client, 'subscribeToMarketData').resolves();
+    sandbox.stub(client, 'waitSynchronized').resolves();
+    await api.onSynchronizationStarted('vint-hill:1:ps-mpa-1');
+    await clock.tickAsync(50);
+    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, []);
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
+    await api.onUnsubscribeRegion('vint-hill');
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 2);
   });
 
   /**

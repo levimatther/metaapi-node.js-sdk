@@ -42,7 +42,7 @@ describe('ConnectionRegistry', () => {
    * @test {ConnectionRegistry#connect}
    */
   it('should connect and add connection to registry', async () => {
-    let account = {id: 'id', region: 'vint-hill'};
+    let account = {id: 'id', region: 'vint-hill', accountRegions: {'vint-hill': 'id', 'new-york': 'idReplica'}};
     let connection = registry.connect(account, storage);
     await connection.connect();
     (connection instanceof StreamingMetaApiConnection).should.be.true();
@@ -56,7 +56,8 @@ describe('ConnectionRegistry', () => {
    * @test {ConnectionRegistry#connect}
    */
   it('should return the same connection on second connect if same account id', async () => {
-    let accounts = [{id: 'id0', region: 'vint-hill'}, {id: 'id1', region: 'vint-hill'}];
+    let accounts = [{id: 'id0', region: 'vint-hill', accountRegions: {'vint-hill': 'id0', 'new-york': 'id0Replica'}}, 
+      {id: 'id1', region: 'vint-hill', accountRegions: {'vint-hill': 'id1', 'new-york': 'id1Replica'}}];
     let connection0 = registry.connect(accounts[0], storage);
     let connection02 = registry.connect(accounts[0], storage);
     let connection1 = registry.connect(accounts[1], storage);
@@ -77,7 +78,8 @@ describe('ConnectionRegistry', () => {
    * @test {ConnectionRegistry#remove}
    */
   it('should remove the account from registry', async () => {
-    let accounts = [{id: 'id0', region: 'vint-hill'}, {id: 'id1', region: 'vint-hill'}];
+    let accounts = [{id: 'id0', region: 'vint-hill', accountRegions: {'vint-hill': 'id0', 'new-york': 'id0Replica'}}, 
+      {id: 'id1', region: 'vint-hill', accountRegions: {'vint-hill': 'id1', 'new-york': 'id1Replica'}}];
     let connection0 = await registry.connect(accounts[0], storage);
     let connection1 = await registry.connect(accounts[1], storage);
     sinon.assert.match(registry._connections, sinon.match.has('id0', connection0));

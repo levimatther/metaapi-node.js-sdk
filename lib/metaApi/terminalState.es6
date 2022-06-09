@@ -98,9 +98,10 @@ export default class TerminalState extends SynchronizationListener {
     let requestedState = this._getState(instanceIndex);
     const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists();
     // get latest instance number state
-    const instanceNumber = instanceIndex.split(':')[0];
+    const region = instanceIndex.split(':')[0];
+    const instanceNumber = instanceIndex.split(':')[1];
     const instanceNumberStates = Object.keys(this._stateByInstanceIndex)
-      .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${instanceNumber}:`));
+      .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${region}:${instanceNumber}:`));
     instanceNumberStates.sort((a,b) => b.lastSyncUpdateTime - a.lastSyncUpdateTime);
     const state = this._getState(instanceNumberStates[0]);
 
@@ -628,9 +629,10 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   _getStateIndicesOfSameInstanceNumber(instanceIndex) {
-    const instanceNumber = instanceIndex.split(':')[0];
+    const region = instanceIndex.split(':')[0];
+    const instanceNumber = instanceIndex.split(':')[1];
     return Object.keys(this._stateByInstanceIndex)
-      .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${instanceNumber}:`) && 
+      .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${region}:${instanceNumber}:`) && 
       instanceIndex !== stateInstanceIndex);
   }
 

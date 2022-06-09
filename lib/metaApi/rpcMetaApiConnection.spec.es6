@@ -18,6 +18,8 @@ describe('RpcMetaApiConnection', () => {
   let clock;
   let client = {
     getAccountInformation: () => {},
+    addSynchronizationListener: () => {},
+    ensureSubscribe: () => {},
     getPositions: () => {},
     getPosition: () => {},
     getOrders: () => {},
@@ -40,8 +42,13 @@ describe('RpcMetaApiConnection', () => {
     getServerTime: () => {},
     calculateMargin: () => {},
     waitSynchronized: () => {},
-    addAccountRegion: () => {},
-    removeAccountRegion: () => {}
+    addAccountCache: () => {},
+    removeAccountCache: () => {}
+  };
+
+  let accountRegions = {
+    'vint-hill': 'accountId',
+    'new-york': 'accountIdReplica'
   };
 
   before(() => {
@@ -52,6 +59,7 @@ describe('RpcMetaApiConnection', () => {
     account = {
       id: 'accountId', 
       state: 'DEPLOYED',
+      accountRegions,
       reload: () => {}
     };
     api = new RpcMetaApiConnection(client, account);
@@ -73,6 +81,11 @@ describe('RpcMetaApiConnection', () => {
     sandbox.stub(client, 'waitSynchronized').onFirstCall().rejects(new TimeoutError('test'))
       .onSecondCall().rejects(new TimeoutError('test'))
       .onThirdCall().resolves('response');
+    (async () => {
+      await new Promise(res => setTimeout(res, 50));
+      await api.onConnected();
+    })();
+    await api.waitSynchronized();
   });
 
   /**

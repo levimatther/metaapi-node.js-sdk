@@ -186,6 +186,13 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   onSynchronizationStarted(instanceIndex: string, specificationsUpdated: boolean, positionsUpdated: boolean, ordersUpdated: boolean): Promise<any>;
   
   /**
+   * Invoked when account region has been unsubscribed
+   * @param {string} region account region unsubscribed
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onUnsubscribeRegion(region: string): Promise<any>;
+
+  /**
    * Returns flag indicating status of state synchronization with MetaTrader terminal
    * @param {string} instanceIndex index of an account instance connected
    * @param {string} synchronizationId optional synchronization request id, last synchronization request id will be used

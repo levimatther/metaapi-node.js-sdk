@@ -1,6 +1,7 @@
 'use strict';
 import LoggerManager from '../logger';
 import MetaApiConnection from './metaApiConnection';
+import TimeoutError from '../clients/timeoutError';
 
 /**
  * Exposes MetaApi MetaTrader RPC API connection to consumers
@@ -15,6 +16,8 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   constructor(websocketClient, account) {
     super(websocketClient, account, 'RPC');
     this._logger = LoggerManager.getLogger('MetaApiConnection');
+    this._websocketClient.addSynchronizationListener(account.id, this);
+    this._connectPromiseResolve = null;
   }
 
   /**
@@ -24,7 +27,12 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   async connect() {
     if (!this._opened) {
       this._opened = true;
-      this._websocketClient.addAccountRegion(this.account.id, this.account.region);
+      const accountRegions = this._account.accountRegions;
+      this._websocketClient.addAccountCache(this._account.id, accountRegions);
+      Object.keys(accountRegions).forEach(region => {
+        this._websocketClient.ensureSubscribe(accountRegions[region], 0);
+        this._websocketClient.ensureSubscribe(accountRegions[region], 1);
+      });
     }
   }
 
@@ -33,7 +41,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    */
   async close() {
     if (!this._closed) {
-      this._websocketClient.removeAccountRegion(this.account.id);
+      this._websocketClient.removeAccountCache(this.account.id);
       this._closed = true;
     }
   }
@@ -254,6 +262,18 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   }
 
   /**
+   * Invoked when connection to MetaTrader terminal established
+   * @param {String} instanceIndex index of an account instance connected
+   * @param {Number} replicas number of account replicas launched
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onConnected(instanceIndex, replicas) {
+    if(this._connectPromiseResolve) {
+      this._connectPromiseResolve();
+    }
+  }
+
+  /**
    * Waits until synchronization to RPC application is completed
    * @param {Number} timeoutInSeconds synchronization timeout in seconds
    * @return {Promise} promise which resolves when synchronization to RPC application is completed
@@ -262,6 +282,10 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   async waitSynchronized(timeoutInSeconds=300) {
     this._checkIsConnectionActive();
     const startTime = Date.now();
+    const promise = new Promise((res) => this._connectPromiseResolve = res);
+    await Promise.race([promise, new Promise((res, rej) => 
+      setTimeout(() => rej(new TimeoutError(`RPC synchronization for account ${this._account.id} timed out`)), 
+        timeoutInSeconds * 1000))]);
     // eslint-disable-next-line
     while(true) {
       try {

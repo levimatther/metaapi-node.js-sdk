@@ -521,7 +521,7 @@ sequentialProcessing.forEach(param => {
             await fakeServer.respondAccountInformation(socket, data);
           } else if (data.type === 'unsubscribe') {
             delete subscribedAccounts[data.accountId];
-            await fakeServer.respondAccountInformation(socket, data);
+            await fakeServer.respond(socket, data);
           }
         });
       });
@@ -1054,10 +1054,11 @@ sequentialProcessing.forEach(param => {
 
     it('should not resubscribe after connection is closed', async () => {
       let subscribeCounter = 0;
+      const servers = [];
 
       fakeServer.io.removeAllListeners('connect');
       fakeServer.io.on('connect', socket => {
-        server = socket;
+        servers.push(socket);
         socket.emit('response', {type: 'response'});
         socket.removeAllListeners('request');
         //eslint-disable-next-line complexity
@@ -1095,7 +1096,7 @@ sequentialProcessing.forEach(param => {
       (connection.synchronized && connection.terminalState.connected 
       && connection.terminalState.connectedToBroker).should.equal(true);
       subscribeCounter.should.equal(1);
-      await server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+      await servers[0].emit('synchronization', {type: 'disconnected', accountId: 'accountId',
         host: 'ps-mpa-0', instanceIndex: 0});
       await new Promise(res => setTimeout(res, 50)); 
       await clock.tickAsync(100000); 
@@ -1104,7 +1105,7 @@ sequentialProcessing.forEach(param => {
       const previousSubscribeCounter = subscribeCounter;
       (connection.synchronized && connection.terminalState.connected 
       && connection.terminalState.connectedToBroker).should.equal(true);
-      server.emit('synchronization', {type: 'disconnected', accountId: 'accountId',
+      servers[0].emit('synchronization', {type: 'disconnected', accountId: 'accountId',
         host: 'ps-mpa-0', instanceIndex: 0});
       await connection.close();
       await new Promise(res => setTimeout(res, 50)); 
@@ -1207,6 +1208,238 @@ sequentialProcessing.forEach(param => {
       sinon.assert.match(connection.terminalState.price('EURUSD').bid, 1.2);
 
     }).timeout(10000);
+
+    describe('Region replica support', () => {
+
+      beforeEach(() => {
+        api.metatraderAccountApi._metatraderAccountClient.getAccount = (accountId) => ({
+          _id:  accountId,
+          login: '50194988',
+          name: 'mt5a',
+          region: 'vint-hill',
+          reliability: 'regular',
+          server: 'ICMarketsSC-Demo',
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'CONNECTED',
+          state: 'DEPLOYED',
+          type: 'cloud',
+          accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA',
+          accountReplicas: [
+            {
+              '_id': 'accountIdReplica',
+              'quoteStreamingIntervalInSeconds': 2.5,
+              'region': 'new-york',
+              'magic': 0,
+              'symbol': 'EURUSD',
+              'copyFactoryResourceSlots': 1,
+              'resourceSlots': 1,
+              'extensions': [],
+              'tags': [],
+              'state': 'DEPLOYED',
+              'connectionStatus': 'CONNECTED',
+              'reliability': 'regular'
+            }
+          ],
+        });
+      });
+
+      it('should synchronize account', async () => {
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        connection = account.getStreamingConnection();
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        const response = connection.terminalState.accountInformation;
+        sinon.assert.match(response, accountInformation);
+        (connection.synchronized && connection.terminalState.connected 
+        && connection.terminalState.connectedToBroker).should.equal(true);
+      }).timeout(10000);
+
+      it('should synchronize using a replica', async () => {
+        let calledAccountId;
+
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        fakeServer.io.removeAllListeners('connect');
+        fakeServer.io.on('connect', socket => {
+          server = socket;
+          socket.emit('response', {type: 'response'});
+          socket.removeAllListeners('request');
+          // eslint-disable-next-line complexity
+          socket.on('request', async data => {
+            if(data.instanceIndex === 1) {
+              await fakeServer.respond(socket, data);
+              return;
+            }
+            if(data.type === 'subscribe') {
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks[data.accountId] = 
+                setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            } else if (data.type === 'synchronize') {
+              await fakeServer.respond(socket, data);
+              await fakeServer.syncAccount(socket, data);
+            } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
+              calledAccountId = data.accountId;
+              await fakeServer.respond(socket, data);
+            } else if (data.type === 'getAccountInformation') {
+              await fakeServer.respondAccountInformation(socket, data);
+            } else if (data.type === 'unsubscribe') {
+              fakeServer.deleteStatusTask(data.accountId);
+              await fakeServer.respond(socket, data);
+            }
+          });
+        });
+        
+        connection = account.getStreamingConnection();
+        connection._websocketClient._latencyService._latencyCache = {'vint-hill': 500, 'new-york': 100};
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        const response = connection.terminalState.accountInformation;
+        sinon.assert.match(response, accountInformation);
+        sinon.assert.match(calledAccountId, 'accountIdReplica');
+        (connection.synchronized && connection.terminalState.connected 
+        && connection.terminalState.connectedToBroker).should.equal(true);
+      }).timeout(10000);
+
+      it('should resynchronize if used account was undeployed, then return when redeployed', async () => {
+        let calledAccountId;
+        let unsubscribedAccountId;
+        const allowedAccounts = ['accountId', 'accountIdReplica'];
+
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        fakeServer.io.removeAllListeners('connect');
+        fakeServer.io.on('connect', socket => {
+          server = socket;
+          socket.emit('response', {type: 'response'});
+          socket.removeAllListeners('request');
+          // eslint-disable-next-line complexity
+          socket.on('request', async data => {
+            if(data.instanceIndex === 1) {
+              await fakeServer.respond(socket, data);
+              return;
+            }
+            if(!allowedAccounts.includes(data.accountId)) {
+              return;
+            }
+            if(data.type === 'subscribe') {
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks[data.accountId] = 
+                setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            } else if (data.type === 'synchronize') {
+              calledAccountId = data.accountId;
+              await fakeServer.respond(socket, data);
+              await fakeServer.syncAccount(socket, data);
+            } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
+              calledAccountId = data.accountId;
+              await fakeServer.respond(socket, data);
+            } else if (data.type === 'getAccountInformation') {
+              await fakeServer.respondAccountInformation(socket, data);
+            } else if (data.type === 'unsubscribe') {
+              unsubscribedAccountId = data.accountId;
+              fakeServer.deleteStatusTask(data.accountId);
+              await fakeServer.respond(socket, data);
+            }
+          });
+        });
+        
+        connection = account.getStreamingConnection();
+        connection._websocketClient._latencyService._latencyCache = {'vint-hill': 500, 'new-york': 100};
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        const response = connection.terminalState.accountInformation;
+        sinon.assert.match(response, accountInformation);
+        sinon.assert.match(calledAccountId, 'accountIdReplica');
+        sinon.assert.match(unsubscribedAccountId, 'accountId');
+        (connection.synchronized && connection.terminalState.connected 
+          && connection.terminalState.connectedToBroker).should.equal(true);
+        allowedAccounts.splice(1, 1);
+        fakeServer.deleteStatusTask('accountIdReplica');
+        await clock.tickAsync(61000);
+        await new Promise(res => setTimeout(res, 50));
+        sinon.assert.match(calledAccountId, 'accountId');
+        sinon.assert.match(unsubscribedAccountId, 'accountId');
+        (connection.synchronized && connection.terminalState.connected 
+          && connection.terminalState.connectedToBroker).should.equal(true);
+        allowedAccounts.splice(1, 1, 'accountIdReplica');
+        await fakeServer.emitStatus(server, 'accountIdReplica');
+        await clock.tickAsync(5000);
+        await new Promise(res => setTimeout(res, 50));
+        sinon.assert.match(calledAccountId, 'accountIdReplica');
+        sinon.assert.match(unsubscribedAccountId, 'accountId');
+        (connection.synchronized && connection.terminalState.connected 
+        && connection.terminalState.connectedToBroker).should.equal(true);
+      }).timeout(10000);
+
+      it('should change replica if region priority changed', async () => {
+        let calledAccountId;
+        let unsubscribedAccountId;
+
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        fakeServer.io.removeAllListeners('connect');
+        fakeServer.io.on('connect', socket => {
+          server = socket;
+          socket.emit('response', {type: 'response'});
+          socket.removeAllListeners('request');
+          // eslint-disable-next-line complexity
+          socket.on('request', async data => {
+            if(data.instanceIndex === 1) {
+              await fakeServer.respond(socket, data);
+              return;
+            }
+            if(data.type === 'subscribe') {
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks[data.accountId] = 
+                setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            } else if (data.type === 'synchronize') {
+              calledAccountId = data.accountId;
+              await fakeServer.respond(socket, data);
+              await fakeServer.syncAccount(socket, data);
+            } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
+              calledAccountId = data.accountId;
+              await fakeServer.respond(socket, data);
+            } else if (data.type === 'getAccountInformation') {
+              await fakeServer.respondAccountInformation(socket, data);
+            } else if (data.type === 'unsubscribe') {
+              unsubscribedAccountId = data.accountId;
+              fakeServer.deleteStatusTask(data.accountId);
+              await fakeServer.respond(socket, data);
+            }
+          });
+        });
+        
+        connection = account.getStreamingConnection();
+        sandbox.stub(connection._websocketClient._latencyService, '_refreshLatency').resolves();
+        connection._websocketClient._latencyService._latencyCache = {'vint-hill': 500, 'new-york': 100};
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        const response = connection.terminalState.accountInformation;
+        sinon.assert.match(response, accountInformation);
+        sinon.assert.match(calledAccountId, 'accountIdReplica');
+        sinon.assert.match(unsubscribedAccountId, 'accountId');
+        (connection.synchronized && connection.terminalState.connected 
+          && connection.terminalState.connectedToBroker).should.equal(true);
+        connection._websocketClient._latencyService._latencyCache = {'vint-hill': 100, 'new-york': 500};
+        await clock.tickAsync(15 * 60 * 1000 + 5000); 
+        sinon.assert.match(calledAccountId, 'accountId');
+        sinon.assert.match(unsubscribedAccountId, 'accountIdReplica');
+        (connection.synchronized && connection.terminalState.connected 
+        && connection.terminalState.connectedToBroker).should.equal(true);
+      }).timeout(20000);
+
+    });
 
   });
 });

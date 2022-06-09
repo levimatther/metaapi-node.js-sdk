@@ -238,6 +238,24 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns account replica list
+   * @return {MetatraderAccountReplica[]} account replica list
+   */
+  get accountReplicas() {
+    return this._data.accountReplicas || [];
+  }
+
+  /**
+   * Returns a dictionary with account's available regions and replicas
+   * @returns {[id: string]: string}
+   */
+  get accountRegions() {
+    const regions = {[this.region]: this.id};
+    this.accountReplicas.forEach(replica => regions[replica.region] = replica._id);
+    return regions;
+  }
+
+  /**
    * Reloads MetaTrader account from API
    * @return {Promise} promise resolving when MetaTrader account is updated
    */

@@ -1,4 +1,4 @@
-import MetatraderAccountClient, { Extension } from "../clients/metaApi/metatraderAccount.client";
+import MetatraderAccountClient, { MetatraderAccountReplica } from "../clients/metaApi/metatraderAccount.client";
 import { MetatraderAccountDto } from "../clients/metaApi/metatraderAccount.client";
 import MetaApiWebsocketClient, { MetatraderCandle, MetatraderTick } from "../clients/metaApi/metaApiWebsocket.client";
 import ConnectionRegistry from "./connectionRegistry";
@@ -183,6 +183,18 @@ export default class MetatraderAccount {
    * @return {string} user id
    */
   get userId(): string;
+
+  /**
+   * Returns account replica list
+   * @return {MetatraderAccountReplica[]} account replica list
+   */
+  get accountReplicas(): MetatraderAccountReplica[];
+
+  /**
+   * Returns a dictionary with account's available regions and replicas
+   * @returns {[id: string]: string}
+   */
+  get accountRegions(): {[id: string]: string};
 
   /**
    * Reloads MetaTrader account from API

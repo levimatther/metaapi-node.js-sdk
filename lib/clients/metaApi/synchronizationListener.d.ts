@@ -270,7 +270,14 @@ export default class SynchronizationListener {
    * Invoked when a stream for an instance index is closed
    * @param {string} instanceIndex index of an account instance connected
    */
-   onStreamClosed(instanceIndex: string): Promise<any>;
+  onStreamClosed(instanceIndex: string): Promise<any>;
+
+  /**
+   * Invoked when account region has been unsubscribed
+   * @param {string} region account region unsubscribed
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  onUnsubscribeRegion(region: string): Promise<any>;
 }
 
 /**

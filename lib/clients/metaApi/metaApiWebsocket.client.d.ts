@@ -97,13 +97,13 @@ export default class MetaApiWebsocketClient {
    * @param {string} accountId account id
    * @param {string} region account region
    */
-  addAccountRegion(accountId: string, region: string): void;
+  addAccountCache(accountId: string, region: string): void;
 
   /**
    * Removes account region info
    * @param {string} accountId account id
    */
-  removeAccountRegion(accountId: string): void;
+  removeAccountCache(accountId: string): void;
 
   /**
    * Locks subscription for a socket instance based on TooManyRequestsError metadata
@@ -316,7 +316,7 @@ export default class MetaApiWebsocketClient {
    * @param {number} instanceNumber instance index
    * @param {string} symbol symbol (e.g. currency pair or an index)
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
-   * @param {String} [reliability] account reliability
+   * @param {string} [reliability] account reliability
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
   unsubscribeFromMarketData(accountId: string, instanceNumber: number, symbol: string, subscriptions: Array<MarketDataUnsubscription>, reliability?: string): Promise<any>;
@@ -408,7 +408,7 @@ export default class MetaApiWebsocketClient {
   /**
    * Returns server time for a specified MetaTrader account (see
    * https://metaapi.cloud/docs/client/websocket/api/readTradingTerminalState/readServerTime/).
-   * @param {String} accountId id of the MetaTrader account to return server time for
+   * @param {string} accountId id of the MetaTrader account to return server time for
    * @returns {Promise<ServerTime>} promise resolving with server time
    */
   getServerTime(accountId: string): Promise<ServerTime>;
@@ -418,11 +418,18 @@ export default class MetaApiWebsocketClient {
    * https://metaapi.cloud/docs/client/websocket/api/calculateMargin/).
    * @param {string} accountId id of the trading account to calculate margin for
    * @param {string} application application to send the request to
-   * @param {String} reliability account reliability
+   * @param {string} reliability account reliability
    * @param {MarginOrder} order order to calculate margin for
    * @returns {Promise<Margin>} promise resolving with margin calculation result
    */
   calculateMargin(accountId: string, application: string, reliability: string, order: MarginOrder): Promise<Margin>;
+
+  /**
+   * Calls onUnsubscribeRegion listener event 
+   * @param {string} accountId account id
+   * @param {string} region account region to unsubscribe
+   */
+  unsubscribeAccountRegion(accountId: string, region: string): Promise<void>;
 
   /**
    * Adds synchronization listener for specific account
@@ -476,17 +483,17 @@ export default class MetaApiWebsocketClient {
   
   /**
    * Queues account event for processing
-   * @param {String} accountId account id
-   * @param {String} name event label name
+   * @param {string} accountId account id
+   * @param {string} name event label name
    * @param {Function} callable async or regular function to execute
    */
   queueEvent(accountId: string, name: string, callable: Function): void;
 
   /**
    * Simulataneously sends RPC requests to all synchronized instances
-   * @param {String} accountId metatrader account id
+   * @param {string} accountId metatrader account id
    * @param {Object} request base request data
-   * @param {String} [reliability] account reliability
+   * @param {string} [reliability] account reliability
    * @param {Number} [timeoutInSeconds] request timeout in seconds
    */
   rpcRequestAllInstances(aaccountId: string, request: Object, reliability?: string, timeoutInSeconds?: number): Promise<any>;
