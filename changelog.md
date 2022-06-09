@@ -1,3 +1,6 @@
+19.6.0
+  - added support for multiple account region replicas
+
 19.5.4
   - add accountCurrencyExchangeRate to MetatraderAccountInformation
 

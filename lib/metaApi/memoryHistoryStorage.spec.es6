@@ -30,7 +30,7 @@ describe('MemoryHistoryStorage', () => {
     storage._historyDatabase = db;
     await storage.initialize('accountId', 'MetaApi');
     await storage.clear();
-    storage.onConnected('1:ps-mpa-1', 1);
+    storage.onConnected('vint-hill:1:ps-mpa-1', 1);
     clock = sinon.useFakeTimers();
   });
 
@@ -60,8 +60,9 @@ describe('MemoryHistoryStorage', () => {
    */
   it('should clear db storage', async () => {
     sandbox.stub(db, 'clear').resolves();
-    storage.onDealAdded('1:ps-mpa-1', {id: '1', time: new Date('2020-01-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'),
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '1', time: new Date('2020-01-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'),
       type: 'ORDER_TYPE_SELL'});
     await storage.clear();
     sinon.assert.match(storage.deals, []);
@@ -73,9 +74,9 @@ describe('MemoryHistoryStorage', () => {
    * @test {MemoryHistoryStorage#lastHistoryOrderTime}
    */
   it('should return last history order time', () => {
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '2', doneTime: new Date('2020-01-01T00:00:00.000Z')});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '3', doneTime: new Date('2020-01-02T00:00:00.000Z')});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '1'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '2', doneTime: new Date('2020-01-01T00:00:00.000Z')});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '3', doneTime: new Date('2020-01-02T00:00:00.000Z')});
     storage.lastHistoryOrderTime().should.match(new Date('2020-01-02T00:00:00.000Z'));
   });
 
@@ -83,9 +84,9 @@ describe('MemoryHistoryStorage', () => {
    * @test {MemoryHistoryStorage#lastDealTime}
    */
   it('should return last history deal time', () => {
-    storage.onDealAdded('1:ps-mpa-1', {id: '1'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '2', time: new Date('2020-01-01T00:00:00.000Z')});
-    storage.onDealAdded('1:ps-mpa-1', {id: '3', time: new Date('2020-01-02T00:00:00.000Z')});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '1'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '2', time: new Date('2020-01-01T00:00:00.000Z')});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '3', time: new Date('2020-01-02T00:00:00.000Z')});
     storage.lastDealTime().should.match(new Date('2020-01-02T00:00:00.000Z'));
   });
 
@@ -93,20 +94,27 @@ describe('MemoryHistoryStorage', () => {
    * @test {MemoryHistoryStorage#deals}
    */
   it('should return saved deals', () => {
-    storage.onDealAdded('1:ps-mpa-1', {id: '1', positionId: '1', time: new Date('2020-01-01T00:00:00.000Z'),
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '1', positionId: '1', time: new Date('2020-01-01T00:00:00.000Z'),
       type: 'DEAL_TYPE_SELL'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '7', time: new Date('2020-05-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '8', time: new Date('2020-02-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '6', time: new Date('2020-10-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '4', time: new Date('2020-02-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '5', time: new Date('2020-06-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '11', type: 'DEAL_TYPE_SELL'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '3', time: new Date('2020-09-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '5', time: new Date('2020-06-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '2', positionId: '1', time: new Date('2020-08-01T00:00:00.000Z'),
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '7', time: new Date('2020-05-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '8', time: new Date('2020-02-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '6', time: new Date('2020-10-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '4', time: new Date('2020-02-01T00:00:00.000Z'), type: 'DEAL_TYPE_SELL'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '5', time: new Date('2020-06-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '11', type: 'DEAL_TYPE_SELL'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '3', time: new Date('2020-09-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', 
+      {id: '5', time: new Date('2020-06-01T00:00:00.000Z'), type: 'DEAL_TYPE_BUY'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '2', positionId: '1', time: new Date('2020-08-01T00:00:00.000Z'),
       type: 'DEAL_TYPE_SELL'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '10', type: 'DEAL_TYPE_SELL'});
-    storage.onDealAdded('1:ps-mpa-1', {id: '12', type: 'DEAL_TYPE_BUY'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '10', type: 'DEAL_TYPE_SELL'});
+    storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '12', type: 'DEAL_TYPE_BUY'});
     storage.deals.should.match([
       {id: '10', type: 'DEAL_TYPE_SELL'},
       {id: '11', type: 'DEAL_TYPE_SELL'},
@@ -138,27 +146,27 @@ describe('MemoryHistoryStorage', () => {
    * @test {MemoryHistoryStorage#historyOrders}
    */
   it('should return saved historyOrders', () => {
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1', positionId: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'),
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', 
+      {id: '1', positionId: '1', doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '7', doneTime: new Date('2020-05-01T00:00:00.000Z'),
+      type: 'ORDER_TYPE_BUY'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '8', doneTime: new Date('2020-02-01T00:00:00.000Z'),
       type: 'ORDER_TYPE_SELL'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '7', doneTime: new Date('2020-05-01T00:00:00.000Z'),
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '6', doneTime: new Date('2020-10-01T00:00:00.000Z'),
       type: 'ORDER_TYPE_BUY'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '8', doneTime: new Date('2020-02-01T00:00:00.000Z'),
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '4', doneTime: new Date('2020-02-01T00:00:00.000Z'),
       type: 'ORDER_TYPE_SELL'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '6', doneTime: new Date('2020-10-01T00:00:00.000Z'),
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '5', doneTime: new Date('2020-06-01T00:00:00.000Z'),
       type: 'ORDER_TYPE_BUY'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '4', doneTime: new Date('2020-02-01T00:00:00.000Z'),
-      type: 'ORDER_TYPE_SELL'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '5', doneTime: new Date('2020-06-01T00:00:00.000Z'),
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '11', type: 'ORDER_TYPE_SELL'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '3', doneTime: new Date('2020-09-01T00:00:00.000Z'),
       type: 'ORDER_TYPE_BUY'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '11', type: 'ORDER_TYPE_SELL'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '3', doneTime: new Date('2020-09-01T00:00:00.000Z'),
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '5', doneTime: new Date('2020-06-01T00:00:00.000Z'),
       type: 'ORDER_TYPE_BUY'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '5', doneTime: new Date('2020-06-01T00:00:00.000Z'),
-      type: 'ORDER_TYPE_BUY'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '2', positionId: '1', doneTime: new Date('2020-08-01T00:00:00.000Z'),
-      type: 'ORDER_TYPE_SELL'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '10', type: 'ORDER_TYPE_SELL'});
-    storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '12', type: 'ORDER_TYPE_BUY'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', 
+      {id: '2', positionId: '1', doneTime: new Date('2020-08-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '10', type: 'ORDER_TYPE_SELL'});
+    storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '12', type: 'ORDER_TYPE_BUY'});
     storage.historyOrders.should.match([
       {id: '10', type: 'ORDER_TYPE_SELL'},
       {id: '11', type: 'ORDER_TYPE_SELL'},
@@ -211,9 +219,9 @@ describe('MemoryHistoryStorage', () => {
      */
     it('should flush db when synchronization ends', async () => {
       sandbox.stub(db, 'flush').resolves();
-      storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1', positionId: '1',
+      storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '1', positionId: '1',
         doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
-      storage.onDealAdded('1:ps-mpa-1', {id: '1', positionId: '1', time: new Date('2020-01-01T00:00:00.000Z'),
+      storage.onDealAdded('vint-hill:1:ps-mpa-1', {id: '1', positionId: '1', time: new Date('2020-01-01T00:00:00.000Z'),
         type: 'DEAL_TYPE_SELL'});
       await storage.onDealsSynchronized(1);
       sinon.assert.calledWith(db.flush, 'accountId', 'MetaApi', [
@@ -229,7 +237,7 @@ describe('MemoryHistoryStorage', () => {
     it('should flush db when new record arrives', async () => {
       await storage.onDealsSynchronized(1);
       sandbox.stub(db, 'flush').resolves();
-      await storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1', positionId: '1',
+      await storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '1', positionId: '1',
         doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
       clock.tick(5500);
       await new Promise(res => realSetTimeout(res, 50));
@@ -243,11 +251,11 @@ describe('MemoryHistoryStorage', () => {
     it('should throttle db flush', async () => {
       await storage.onDealsSynchronized(1);
       sandbox.stub(db, 'flush').resolves();
-      await storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '1', positionId: '1',
+      await storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '1', positionId: '1',
         doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
       clock.tick(4500);
       await new Promise(res => realSetTimeout(res, 50));
-      await storage.onHistoryOrderAdded('1:ps-mpa-1', {id: '2', positionId: '1',
+      await storage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {id: '2', positionId: '1',
         doneTime: new Date('2020-01-01T00:00:00.000Z'), type: 'ORDER_TYPE_SELL'});
       clock.tick(4500);
       await new Promise(res => realSetTimeout(res, 50));
