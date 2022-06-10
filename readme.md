@@ -323,6 +323,7 @@ simple trading apps.
 ```javascript
 const connection = account.getRPCConnection();
 
+await connection.connect();
 await connection.waitSynchronized();
 
 // retrieve balance and equity
@@ -353,6 +354,7 @@ console.log(await connection.getDealsByTimeRange(startTime, endTime));
 ```javascript
 const connection = account.getRPCConnection();
 
+await connection.connect();
 await connection.waitSynchronized();
 
 // first, subscribe to market data
@@ -500,8 +502,8 @@ await connection.unsubscribeFromMarketData('GBPUSD');
 const connection = account.getRPCConnection();
 // or
 const connection = account.getStreamingConnection();
-await connection.connect(); // needed only for streaming connection
 
+await connection.connect();
 await connection.waitSynchronized();
 
 // trade
