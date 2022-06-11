@@ -53,6 +53,9 @@ describe('ClientApiClient', () => {
       url: `${clientApiUrl}/hashing-ignored-field-lists`,
       method: 'GET',
       json: true,
+      headers: {
+        'auth-token': token
+      }
     });
   });
 

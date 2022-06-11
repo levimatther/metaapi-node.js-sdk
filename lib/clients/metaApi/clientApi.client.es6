@@ -41,7 +41,10 @@ export default class ClientApiClient extends MetaApiClient {
     const opts = {
       url: `${this._host}/hashing-ignored-field-lists`,
       method: 'GET',
-      json: true
+      json: true,
+      headers: {
+        'auth-token': this._token
+      }
     };
     return this._httpClient.request(opts);
   }
