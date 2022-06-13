@@ -277,7 +277,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * Waits until synchronization to RPC application is completed
    * @param {Number} timeoutInSeconds synchronization timeout in seconds
    * @return {Promise} promise which resolves when synchronization to RPC application is completed
-   * @throws {TimeoutError} if application failed to synchronize with the teminal withing timeout allowed
+   * @throws {TimeoutError} if application failed to synchronize with the teminal within timeout allowed
    */
   async waitSynchronized(timeoutInSeconds=300) {
     this._checkIsConnectionActive();
