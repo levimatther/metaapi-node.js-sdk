@@ -188,7 +188,7 @@ export default class MetatraderAccount {
    * Returns account replica list
    * @return {MetatraderAccountReplica[]} account replica list
    */
-  get accountReplicas(): MetatraderAccountReplica[];
+  get replicas(): MetatraderAccountReplica[];
 
   /**
    * Returns a dictionary with account's available regions and replicas

@@ -16,7 +16,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
 
   /**
    * Metatrader account replica model
-   * @typedef {Object} MetatraderAccountReplica
+   * @typedef {Object} MetatraderAccountReplicaDto
    * @property {String} _id account unique identifier
    * @property {String} name MetaTrader account human-readable name in the MetaApi app
    * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. Cloud and cloud-g2 are
@@ -120,7 +120,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Boolean} [primaryReplica] flag indicating that account is primary
    * @property {Boolean} [riskManagementApiEnabled] flag indicating that risk management API should be enabled on
    * account. Default is false
-   * @property {Array<MetatraderAccountReplica>} [accountReplicas] MetaTrader account replicas
+   * @property {Array<MetatraderAccountReplicaDto>} [accountReplicas] MetaTrader account replicas
    * @property {Array<AccountConnection>} connections active account connections
    */
 
@@ -198,6 +198,26 @@ export default class MetatraderAccountClient extends MetaApiClient {
   getAccount(id) {
     const opts = {
       url: `${this._host}/users/current/accounts/${id}`,
+      method: 'GET',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Retrieves a MetaTrader account replica by id (see 
+   * https://metaapi.cloud/docs/provisioning/api/accountReplica/readAccountReplica/).
+   * Throws an error if account is not found.
+   * @param {String} primaryAccountId MetaTrader account id
+   * @param {String} replicaId MetaTrader account replica id
+   * @return {Promise<MetatraderAccountReplicaDto>} promise resolving with MetaTrader account replica found
+   */
+  getAccountReplica(primaryAccountId, replicaId) {
+    const opts = {
+      url: `${this._host}/users/current/accounts/${primaryAccountId}/replicas/${replicaId}`,
       method: 'GET',
       headers: {
         'auth-token': this._token
@@ -304,6 +324,57 @@ export default class MetatraderAccountClient extends MetaApiClient {
   }
 
   /**
+   * New MetaTrader account replica model
+   * @typedef {Object} NewMetaTraderAccountReplicaDto
+   * @property {String} [symbol] any symbol provided by broker (required for G1 only) 
+   * @property {Number} magic MetaTrader magic to place trades using
+   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
+   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
+   * only for G2
+   * @property {Array<string>} [tags] MetaTrader account tags
+   * @property {Object} [metadata] extra information which can be stored together with your account
+   * @property {String} [reliability] used to increase the reliability of the account. Allowed values are regular and high.
+   * Default is regular
+   * @property {Number} [resourceSlots] number of resource slots to allocate to account. Allocating extra resource slots
+   * results in better account performance under load which is useful for some applications. E.g. if you have many
+   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
+   * @property {number} [copyFactoryResourceSlots] number of CopyFactory 2 resource slots to allocate to account.
+   * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
+   * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
+   * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
+   * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
+   * Default is 1.
+   * @property {String} region region id to deploy account at. One of returned by the /users/current/regions endpoint
+   */
+
+  /**
+   * Starts cloud API server for a MetaTrader account replica using specified primary account (see
+   * https://metaapi.cloud/docs/provisioning/api/accountReplica/createAccountReplica/). It takes some time to launch the terminal and
+   * connect the terminal to the broker, you can use the connectionStatus field to monitor the current status of the
+   * terminal.
+   * Method is accessible only with API access token
+   * @param {String} accountId primary MetaTrader account id
+   * @param {NewMetaTraderAccountReplicaDto} replica MetaTrader account to create
+   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id of the MetaTrader account replica created
+   */
+  createAccountReplica(accountId, replica) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('createAccountReplica');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${accountId}/replicas`,
+      method: 'POST',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true,
+      body: replica
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
    * Starts API server for MetaTrader account. This request will be ignored if the account has already been deployed.
    * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
    * @param {String} id MetaTrader account id to deploy
@@ -315,6 +386,28 @@ export default class MetatraderAccountClient extends MetaApiClient {
     }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}/deploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Starts API server for MetaTrader account replica. This request will be ignored if the replica has already been deployed.
+   * (see https://metaapi.cloud/docs/provisioning/api/accountReplica/deployAccountReplica/)
+   * @param {String} primaryAccountId MetaTrader account id
+   * @param {String} replicaId MetaTrader account replica id to deploy
+   * @return {Promise} promise resolving when MetaTrader account replica is scheduled for deployment
+   */
+  deployAccountReplica(primaryAccountId, replicaId) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('deployAccountReplica');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${primaryAccountId}/replicas/${replicaId}/deploy`,
       method: 'POST',
       headers: {
         'auth-token': this._token
@@ -346,6 +439,28 @@ export default class MetatraderAccountClient extends MetaApiClient {
   }
 
   /**
+   * Stops API server for MetaTrader account replica. Terminal data such as downloaded market history data will be preserved.
+   * (see https://metaapi.cloud/docs/provisioning/api/accountReplica/undeployAccountReplica/)
+   * @param {String} primaryAccountId MetaTrader account id
+   * @param {String} replicaId MetaTrader account replica id to undeploy
+   * @return {Promise} promise resolving when MetaTrader account replica is scheduled for undeployment
+   */
+  undeployAccountReplica(primaryAccountId, replicaId) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('undeployAccountReplica');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${primaryAccountId}/replicas/${replicaId}/undeploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
    * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
    * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
    * @param {String} id MetaTrader account id to redeploy
@@ -357,6 +472,28 @@ export default class MetatraderAccountClient extends MetaApiClient {
     }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}/redeploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
+   * (see https://metaapi.cloud/docs/provisioning/api/account/redeployAccountReplica/)
+   * @param {String} primaryAccountId MetaTrader account id
+   * @param {String} replicaId MetaTrader account replica id to redeploy
+   * @return {Promise} promise resolving when MetaTrader account replica is scheduled for redeployment
+   */
+  redeployAccountReplica(primaryAccountId, replicaId) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('redeployAccountReplica');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${primaryAccountId}/replicas/${replicaId}/redeploy`,
       method: 'POST',
       headers: {
         'auth-token': this._token
@@ -390,12 +527,37 @@ export default class MetatraderAccountClient extends MetaApiClient {
   }
 
   /**
+   * Stops and deletes an API server for a specified MetaTrader account. The terminal state such as downloaded market
+   * data history will be deleted as well when you delete the account. (see
+   * https://metaapi.cloud/docs/provisioning/api/account/deleteAccountReplica/).
+   * Method is accessible only with API access token
+   * @param {String} primaryAccountId MetaTrader account id
+   * @param {String} replicaId MetaTrader account replica id to undeploy
+   * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
+   */
+  deleteAccountReplica(primaryAccountId, replicaId) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('deleteAccountReplica');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${primaryAccountId}/replicas/${replicaId}`,
+      method: 'DELETE',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
    * Updated MetaTrader account data
    * @typedef {Object} MetatraderAccountUpdateDto
    * @property {String} name MetaTrader account human-readable name in the MetaApi app
    * @property {String} password MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
    * @property {String} server MetaTrader server which hosts the account
+   * @property {Number} [magic] MetaTrader magic to place trades using
    * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false
    * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
@@ -425,6 +587,52 @@ export default class MetatraderAccountClient extends MetaApiClient {
     }
     const opts = {
       url: `${this._host}/users/current/accounts/${id}`,
+      method: 'PUT',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true,
+      body: account
+    };
+    return this._httpClient.request(opts);
+  }
+
+  /**
+   * Updated MetaTrader account replica data
+   * @typedef {Object} UpdatedMetatraderAccountReplicaDto
+   * @property {Number} [magic] MetaTrader magic to place trades using
+   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
+   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
+   * only for G2
+   * @property {Array<string>} [tags] MetaTrader account tags
+   * @property {Object} [metadata] extra information which can be stored together with your account
+   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
+   * results in better account performance under load which is useful for some applications. E.g. if you have many
+   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
+   * @property {number} [copyFactoryResourceSlots] number of CopyFactory 2 resource slots to allocate to account.
+   * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
+   * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
+   * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
+   * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
+   * Default is 1.
+   */
+
+  /**
+   * Updates existing metatrader account replica data (see
+   * https://metaapi.cloud/docs/provisioning/api/account/updateAccountReplica/).
+   * Method is accessible only with API access token
+   * @param {String} primaryAccountId MetaTrader account id
+   * @param {String} replicaId MetaTrader account replica id
+   * @param {UpdatedMetatraderAccountReplicaDto} account updated MetaTrader account replica
+   * @return {Promise} promise resolving when MetaTrader account replica is updated
+   */
+  updateAccountReplica(primaryAccountId, replicaId, account) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('updateAccountReplica');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${primaryAccountId}/replicas/${replicaId}`,
       method: 'PUT',
       headers: {
         'auth-token': this._token

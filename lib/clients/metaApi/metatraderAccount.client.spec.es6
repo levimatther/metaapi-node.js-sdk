@@ -200,6 +200,46 @@ describe('MetatraderAccountClient', () => {
   });
 
   /**
+   * @test {MetatraderAccountClient#createAccountReplica}
+   */
+  it('should create MetaTrader account replica via API', async () => {
+    let expected = {
+      id: 'id'
+    };
+    let replica = {
+      magic: 123456,
+      symbol: 'EURUSD'
+    };
+    requestStub.resolves(expected);
+    let id = await accountClient.createAccountReplica('accountId', replica);
+    id.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/accountId/replicas`,
+      method: 'POST',
+      body: replica,
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
+  });
+
+  /**
+   * @test {MetatraderAccountClient#createAccountReplica}
+   */
+  it('should not create MetaTrader account replica via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.createAccountReplica('accountId', {});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke createAccountReplica method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
    * @test {MetatraderAccountClient#deployAccount}
    */
   it('should deploy MetaTrader account via API', async () => {
@@ -224,6 +264,36 @@ describe('MetatraderAccountClient', () => {
     } catch (error) {
       error.message.should.equal(
         'You can not invoke deployAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {MetatraderAccountClient#deployAccountReplica}
+   */
+  it('should deploy MetaTrader account replica via API', async () => {
+    await accountClient.deployAccountReplica('accountId', 'id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/accountId/replicas/id/deploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
+  });
+
+  /**
+   * @test {MetatraderAccountClient#deployAccountReplica}
+   */
+  it('should not deploy MetaTrader account replica via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.deployAccountReplica('accountId', 'id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke deployAccountReplica method, because you have connected with account access token. ' +
         'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
@@ -260,6 +330,36 @@ describe('MetatraderAccountClient', () => {
   });
 
   /**
+   * @test {MetatraderAccountClient#undeployAccountReplica}
+   */
+  it('should undeploy MetaTrader account replica via API', async () => {
+    await accountClient.undeployAccountReplica('accountId', 'id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/accountId/replicas/id/undeploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
+  });
+
+  /**
+   * @test {MetatraderAccountClient#undeployAccountReplica}
+   */
+  it('should not undeploy MetaTrader account replica via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.undeployAccountReplica('accountId', 'id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke undeployAccountReplica method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
    * @test {MetatraderAccountClient#redeployAccount}
    */
   it('should redeploy MetaTrader account via API', async () => {
@@ -290,6 +390,36 @@ describe('MetatraderAccountClient', () => {
   });
 
   /**
+   * @test {MetatraderAccountClient#redeployAccountReplica}
+   */
+  it('should redeploy MetaTrader account replica via API', async () => {
+    await accountClient.redeployAccountReplica('accountId', 'id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/accountId/replicas/id/redeploy`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
+  });
+
+  /**
+   * @test {MetatraderAccountClient#redeployAccountReplica}
+   */
+  it('should not redeploy MetaTrader account replica via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.redeployAccountReplica('accountId', 'id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke redeployAccountReplica method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
    * @test {MetatraderAccountClient#deleteAccount}
    */
   it('should delete MetaTrader account via API', async () => {
@@ -307,13 +437,43 @@ describe('MetatraderAccountClient', () => {
   /**
    * @test {MetatraderAccountClient#deleteAccount}
    */
-  it('should not delete MetaTrader account from via with account token', async () => {
+  it('should not delete MetaTrader account via API with account token', async () => {
     accountClient = new MetatraderAccountClient(httpClient, 'token');
     try {
       await accountClient.deleteAccount('id');
     } catch (error) {
       error.message.should.equal(
         'You can not invoke deleteAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {MetatraderAccountClient#deleteAccountReplica}
+   */
+  it('should delete MetaTrader account replica via API', async () => {
+    await accountClient.deleteAccountReplica('accountId', 'id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/accountId/replicas/id`,
+      method: 'DELETE',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    });
+  });
+
+  /**
+   * @test {MetatraderAccountClient#deleteAccountReplica}
+   */
+  it('should not delete MetaTrader account replica via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.deleteAccountReplica('accountId', 'id');
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke deleteAccountReplica method, because you have connected with account access token. ' +
         'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
@@ -355,6 +515,43 @@ describe('MetatraderAccountClient', () => {
     } catch (error) {
       error.message.should.equal(
         'You can not invoke updateAccount method, because you have connected with account access token. ' +
+        'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {MetatraderAccountClient#updateAccountReplica}
+   */
+  it('should update MetaTrader account replica via API', async () => {
+    await accountClient.updateAccountReplica('accountId', 'id', {
+      magic: 0,
+      tags: ['tag1']
+    });
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/accountId/replicas/id`,
+      method: 'PUT',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+      body: {
+        magic: 0,
+        tags: ['tag1']
+      }
+    });
+  });
+
+  /**
+   * @test {MetatraderAccountClient#updateAccountReplica}
+   */
+  it('should not update MetaTrader account replica via API with account token', async () => {
+    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    try {
+      await accountClient.updateAccountReplica('accountId', 'id', {});
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke updateAccountReplica method, because you have connected with account access token. ' +
         'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }

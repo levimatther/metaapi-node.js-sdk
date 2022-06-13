@@ -512,7 +512,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * Waits until synchronization to MetaTrader terminal is completed
    * @param {SynchronizationOptions} synchronization options
    * @return {Promise} promise which resolves when synchronization to MetaTrader terminal is completed
-   * @throws {TimeoutError} if application failed to synchronize with the teminal withing timeout allowed
+   * @throws {TimeoutError} if application failed to synchronize with the teminal within timeout allowed
    */
   // eslint-disable-next-line complexity
   async waitSynchronized(opts) {

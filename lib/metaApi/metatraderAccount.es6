@@ -5,6 +5,7 @@ import RpcMetaApiConnection from './rpcMetaApiConnection';
 import HistoryDatabase from './historyDatabase/index';
 import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
+import MetatraderAccountReplica from './metatraderAccountReplica';
 
 /**
  * Implements a MetaTrader account entity
@@ -30,6 +31,8 @@ export default class MetatraderAccount {
     this._expertAdvisorClient = expertAdvisorClient;
     this._historicalMarketDataClient = historicalMarketDataClient;
     this._application = application;
+    this._replicas = (data.accountReplicas || [])
+      .map(replica => new MetatraderAccountReplica(replica, this, metatraderAccountClient));
   }
 
   /**
@@ -238,11 +241,11 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns account replica list
-   * @return {MetatraderAccountReplica[]} account replica list
+   * Returns account replica instances
+   * @return {MetatraderAccountReplica[]} account replica instances
    */
-  get accountReplicas() {
-    return this._data.accountReplicas || [];
+  get replicas() {
+    return this._replicas;
   }
 
   /**
@@ -251,7 +254,7 @@ export default class MetatraderAccount {
    */
   get accountRegions() {
     const regions = {[this.region]: this.id};
-    this.accountReplicas.forEach(replica => regions[replica.region] = replica._id);
+    this.replicas.forEach(replica => regions[replica.region] = replica.id);
     return regions;
   }
 
@@ -261,6 +264,15 @@ export default class MetatraderAccount {
    */
   async reload() {
     this._data = await this._metatraderAccountClient.getAccount(this.id);
+    const updatedReplicaData = (this._data.accountReplicas || []);
+    const regions = updatedReplicaData.map(replica => replica.region);
+    const createdReplicaRegions = this._replicas.map(replica => replica.region);
+    this._replicas = this._replicas.filter(replica => regions.includes(replica.region));
+    updatedReplicaData.forEach(replica => {
+      if(!createdReplicaRegions.includes(replica.region)) {
+        this._replicas.push(new MetatraderAccountReplica(replica, this, this._metatraderAccountClient));
+      }
+    });
   }
 
   /**
@@ -330,7 +342,7 @@ export default class MetatraderAccount {
    * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
    * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
-   * @throws {TimeoutError} if account have not reached the DEPLOYED state withing timeout allowed
+   * @throws {TimeoutError} if account have not reached the DEPLOYED state within timeout allowed
    */
   async waitDeployed(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
@@ -349,7 +361,7 @@ export default class MetatraderAccount {
    * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
    * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
-   * @throws {TimeoutError} if account have not reached the UNDEPLOYED state withing timeout allowed
+   * @throws {TimeoutError} if account have not reached the UNDEPLOYED state within timeout allowed
    */
   async waitUndeployed(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
@@ -368,7 +380,7 @@ export default class MetatraderAccount {
    * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
    * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deleted
-   * @throws {TimeoutError} if account was not deleted withing timeout allowed
+   * @throws {TimeoutError} if account was not deleted within timeout allowed
    */
   async waitRemoved(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
@@ -393,7 +405,7 @@ export default class MetatraderAccount {
    * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
    * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when API server is connected to the broker
-   * @throws {TimeoutError} if account have not connected to the broker withing timeout allowed
+   * @throws {TimeoutError} if account have not connected to the broker within timeout allowed
    */
   async waitConnected(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
@@ -443,6 +455,17 @@ export default class MetatraderAccount {
   async update(account) {
     await this._metatraderAccountClient.updateAccount(this.id, account);
     await this.reload();
+  }
+
+  /**
+   * Creates a MetaTrader account replica
+   * @param {NewMetatraderAccountDto} replica MetaTrader account data
+   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
+   */
+  async createReplica(replica) {
+    await this._metatraderAccountClient.createAccountReplica(this.id, replica);
+    await this.reload();
+    return this._replicas[replica.region];
   }
 
   /**
