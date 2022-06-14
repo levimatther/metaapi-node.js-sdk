@@ -81,7 +81,7 @@ describe('HistoricalMarketDataClient', () => {
         'auth-token': token
       },
       json: true
-    });
+    }, 'getHistoricalCandles');
   });
 
   /**
@@ -117,7 +117,7 @@ describe('HistoricalMarketDataClient', () => {
         'auth-token': token
       },
       json: true
-    });
+    }, 'getHistoricalCandles');
   });
   
   /**
@@ -150,7 +150,7 @@ describe('HistoricalMarketDataClient', () => {
         'auth-token': token
       },
       json: true
-    });
+    }, 'getHistoricalTicks');
   });
 
   /**
@@ -183,7 +183,7 @@ describe('HistoricalMarketDataClient', () => {
         'auth-token': token
       },
       json: true
-    });
+    }, 'getHistoricalTicks');
   });
 
   /**

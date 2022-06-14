@@ -56,7 +56,7 @@ describe('ClientApiClient', () => {
       headers: {
         'auth-token': token
       }
-    });
+    }, 'getHashingIgnoredFieldLists');
   });
 
 });

@@ -186,7 +186,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getAccounts');
   }
 
   /**
@@ -204,7 +204,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getAccount');
   }
 
   /**
@@ -224,7 +224,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getAccountReplica');
   }
 
   /**
@@ -242,7 +242,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       method: 'GET',
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getAccountByToken');
   }
 
   /**
@@ -320,7 +320,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       json: true,
       body: account
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'createAccount');
   }
 
   /**
@@ -371,7 +371,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       json: true,
       body: replica
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'createAccountReplica');
   }
 
   /**
@@ -392,7 +392,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'deployAccount');
   }
 
   /**
@@ -414,7 +414,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'deployAccountReplica');
   }
 
   /**
@@ -435,7 +435,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'undeployAccount');
   }
 
   /**
@@ -457,7 +457,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'undeployAccountReplica');
   }
 
   /**
@@ -478,7 +478,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'redeployAccount');
   }
 
   /**
@@ -500,7 +500,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'redeployAccountReplica');
   }
 
   /**
@@ -523,7 +523,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'deleteAccount');
   }
 
   /**
@@ -547,7 +547,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'deleteAccountReplica');
   }
 
   /**
@@ -594,7 +594,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       json: true,
       body: account
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'updateAccount');
   }
 
   /**
@@ -640,7 +640,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       json: true,
       body: account
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'updateAccountReplica');
   }
 
   /**
@@ -662,7 +662,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'increaseReliability');
   }
 
 }

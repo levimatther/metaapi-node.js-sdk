@@ -36,7 +36,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getExpertAdvisors');
   }
 
   /**
@@ -59,7 +59,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getExpertAdvisor');
   }
 
   /**
@@ -95,7 +95,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
       json: true,
       body: expert
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'updateExpertAdvisor');
   }
 
   /**
@@ -108,7 +108,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
    */
   uploadExpertAdvisorFile(accountId, expertId, file) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('uploadProvisioningProfileFile');
+      return this._handleNoAccessError('uploadExpertAdvisorFile');
     }
     if (typeof file === 'string') {
       file = fs.createReadStream(file);
@@ -124,7 +124,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
         'auth-token': this._token
       }
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'uploadExpertAdvisorFile');
   }
 
   /**
@@ -136,7 +136,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
    */
   deleteExpertAdvisor(accountId, expertId) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('getExpertAdvisors');
+      return this._handleNoAccessError('deleteExpertAdvisor');
     }
     const opts = {
       url: `${this._host}/users/current/accounts/${accountId}/expert-advisors/${expertId}`,
@@ -146,7 +146,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'deleteExpertAdvisor');
   }
 
 }

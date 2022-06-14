@@ -49,7 +49,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
       },
       json: true
     };
-    let candles = await this._httpClient.request(opts);
+    let candles = await this._httpClient.request(opts, 'getHistoricalCandles');
     candles = candles || [];
     candles.forEach(c => c.time = new Date(c.time));
     return candles;
@@ -85,7 +85,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
       },
       json: true
     };
-    let ticks = await this._httpClient.request(opts);
+    let ticks = await this._httpClient.request(opts, 'getHistoricalTicks');
     ticks = ticks || [];
     ticks.forEach(t => t.time = new Date(t.time));
     return ticks;
@@ -103,7 +103,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
         'auth-token': this._token
       },
       json: true,
-    });
+    }, '_getHost');
 
     const url = `https://mt-market-data-client-api-v1.${region}.${urlSettings.domain}`;
 

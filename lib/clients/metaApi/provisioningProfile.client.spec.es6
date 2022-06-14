@@ -54,7 +54,7 @@ describe('ProvisioningProfileClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'getProvisioningProfiles');
   });
 
   /**
@@ -92,7 +92,7 @@ describe('ProvisioningProfileClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'getProvisioningProfile');
   });
 
   /**
@@ -132,7 +132,7 @@ describe('ProvisioningProfileClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'createProvisioningProfile');
   });
 
   /**
@@ -171,7 +171,7 @@ describe('ProvisioningProfileClient', () => {
         } 
       },
       json: true,
-    });
+    }, 'uploadProvisioningProfileFile');
   });
 
   /**
@@ -201,7 +201,7 @@ describe('ProvisioningProfileClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'deleteProvisioningProfile');
   });
 
   /**
@@ -234,7 +234,7 @@ describe('ProvisioningProfileClient', () => {
       body: {
         name: 'new name'
       }
-    });
+    }, 'updateProvisioningProfile');
   });
 
   /**
