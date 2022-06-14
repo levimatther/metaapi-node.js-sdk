@@ -43,7 +43,7 @@ export default class HttpClient {
    * @param {Object} options request options
    * @returns {Object|String|any} request result
    */
-  async request(options, retryCounter = 0, endTime = Date.now() + this._maxRetryDelay * this._retries) {
+  async request(options, type = '', retryCounter = 0, endTime = Date.now() + this._maxRetryDelay * this._retries) {
     options.timeout = this._timeout;
     let retryAfterSeconds = 0;
     options.callback = (e, res) => {
@@ -58,8 +58,8 @@ export default class HttpClient {
     try {
       body = await this._makeRequest(options);
     } catch (err) {
-      retryCounter = await this._handleError(err, retryCounter, endTime);
-      return this.request(options, retryCounter, endTime);
+      retryCounter = await this._handleError(err, type, retryCounter, endTime);
+      return this.request(options, type, retryCounter, endTime);
     }
     if (retryAfterSeconds) {
       if(body && body.message) {
@@ -67,7 +67,7 @@ export default class HttpClient {
           'returned message:', body.message);
       }
       await this._handleRetry(endTime, retryAfterSeconds * 1000);
-      body = await this.request(options, retryCounter, endTime);
+      body = await this.request(options, type, retryCounter, endTime);
     }
     return body;
   }
@@ -88,7 +88,7 @@ export default class HttpClient {
     }
   }
 
-  async _handleError(err, retryCounter, endTime) {
+  async _handleError(err, type, retryCounter, endTime) {
     const error = this._convertError(err);
     if(['ConflictError', 'InternalError', 'ApiError', 'TimeoutError'].includes(error.name) 
       && retryCounter < this._retries) {
@@ -98,6 +98,8 @@ export default class HttpClient {
     } else if(error.name === 'TooManyRequestsError') {
       const retryTime = Date.parse(error.metadata.recommendedRetryTime);
       if (retryTime < endTime) {
+        this._logger.debug(`${type} request has failed with TooManyRequestsError (HTTP status code 429). ` +
+          `Will retry request in ${Math.ceil((retryTime - Date.now()) / 1000)} seconds`);
         await this._wait(retryTime - Date.now());
         return retryCounter;
       }

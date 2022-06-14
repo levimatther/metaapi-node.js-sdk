@@ -50,7 +50,7 @@ describe('ExpertAdvisorClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'getExpertAdvisors');
   });
 
   /**
@@ -73,7 +73,7 @@ describe('ExpertAdvisorClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'getExpertAdvisor');
   });
 
   /**
@@ -88,7 +88,7 @@ describe('ExpertAdvisorClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'deleteExpertAdvisor');
   });
 
   /**
@@ -112,7 +112,7 @@ describe('ExpertAdvisorClient', () => {
         period: '15m',
         symbol: 'EURUSD'
       }
-    });
+    }, 'updateExpertAdvisor');
   });
 
   /**
@@ -131,7 +131,7 @@ describe('ExpertAdvisorClient', () => {
         file
       },
       json: true,
-    });
+    }, 'uploadExpertAdvisorFile');
   });
 
 });

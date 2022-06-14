@@ -2302,7 +2302,7 @@ export default class MetaApiWebsocketClient {
         'auth-token': this._token
       },
       json: true,
-    });
+    }, 'getUrlSettings');
 
     const getUrl = (hostname) => 
       `https://${hostname}.${region}-${String.fromCharCode(97 + Number(instanceNumber))}.${urlSettings.domain}`;

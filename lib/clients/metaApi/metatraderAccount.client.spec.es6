@@ -62,7 +62,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'getAccounts');
   });
 
   /**
@@ -107,7 +107,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'getAccount');
   });
 
   /**
@@ -134,7 +134,7 @@ describe('MetatraderAccountClient', () => {
       url: `${provisioningApiUrl}/users/current/accounts/accessToken/token`,
       method: 'GET',
       json: true
-    });
+    }, 'getAccountByToken');
   });
 
   /**
@@ -181,7 +181,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'createAccount');
   });
 
   /**
@@ -221,7 +221,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'createAccountReplica');
   });
 
   /**
@@ -251,7 +251,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'deployAccount');
   });
 
   /**
@@ -281,7 +281,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'deployAccountReplica');
   });
 
   /**
@@ -311,7 +311,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'undeployAccount');
   });
 
   /**
@@ -341,7 +341,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'undeployAccountReplica');
   });
 
   /**
@@ -371,7 +371,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'redeployAccount');
   });
 
   /**
@@ -401,7 +401,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'redeployAccountReplica');
   });
 
   /**
@@ -431,7 +431,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'deleteAccount');
   });
 
   /**
@@ -461,7 +461,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'deleteAccountReplica');
   });
 
   /**
@@ -502,7 +502,7 @@ describe('MetatraderAccountClient', () => {
         server: 'ICMarketsSC2-Demo',
         tags: ['tag1']
       }
-    });
+    }, 'updateAccount');
   });
 
   /**
@@ -539,7 +539,7 @@ describe('MetatraderAccountClient', () => {
         magic: 0,
         tags: ['tag1']
       }
-    });
+    }, 'updateAccountReplica');
   });
 
   /**
@@ -569,7 +569,7 @@ describe('MetatraderAccountClient', () => {
         'auth-token': token
       },
       json: true,
-    });
+    }, 'increaseReliability');
   });
   
   /**

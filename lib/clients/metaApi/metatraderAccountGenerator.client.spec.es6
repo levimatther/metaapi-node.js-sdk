@@ -59,7 +59,7 @@ describe('MetatraderAccountGeneratorClient', () => {
         serverName: 'HugosWay-Demo3'
       },
       json: true,
-    });
+    }, 'createMT4DemoAccount');
   });
 
   /**
@@ -106,7 +106,7 @@ describe('MetatraderAccountGeneratorClient', () => {
         serverName: 'HugosWay-Live3'
       },
       json: true,
-    });
+    }, 'createMT4LiveAccount');
   });
 
   /**
@@ -153,7 +153,7 @@ describe('MetatraderAccountGeneratorClient', () => {
         serverName: 'HugosWay-Demo3'
       },
       json: true,
-    });
+    }, 'createMT5DemoAccount');
   });
   
   /**
@@ -201,7 +201,7 @@ describe('MetatraderAccountGeneratorClient', () => {
         serverName: 'HugosWay-Live3'
       },
       json: true,
-    });
+    }, 'createMT5LiveAccount');
   });
 
   /**

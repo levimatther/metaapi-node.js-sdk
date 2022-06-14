@@ -46,6 +46,6 @@ export default class ClientApiClient extends MetaApiClient {
         'auth-token': this._token
       }
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getHashingIgnoredFieldLists');
   }
 }

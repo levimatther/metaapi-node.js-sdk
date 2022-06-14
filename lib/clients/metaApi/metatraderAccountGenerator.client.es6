@@ -97,7 +97,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
       json: true,
       body: account
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'createMT4DemoAccount');
   }
 
   /**
@@ -121,7 +121,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
       json: true,
       body: account
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'createMT4LiveAccount');
   }
 
   /**
@@ -145,7 +145,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
       json: true,
       body: account
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'createMT5DemoAccount');
   }
 
   /**
@@ -169,7 +169,7 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
       json: true,
       body: account
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'createMT5LiveAccount');
   }
 
 }

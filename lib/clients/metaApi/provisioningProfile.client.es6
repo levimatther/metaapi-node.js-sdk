@@ -48,7 +48,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getProvisioningProfiles');
   }
 
   /**
@@ -71,7 +71,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'getProvisioningProfile');
   }
 
   /**
@@ -110,7 +110,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
       json: true,
       body: provisioningProfile
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'createProvisioningProfile');
   }
 
   /**
@@ -149,7 +149,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
         'auth-token': this._token
       }
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'uploadProvisioningProfileFile');
   }
 
   /**
@@ -172,7 +172,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
       },
       json: true
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'deleteProvisioningProfile');
   }
 
   /**
@@ -202,7 +202,7 @@ export default class ProvisioningProfileClient extends MetaApiClient {
       json: true,
       body: provisioningProfile
     };
-    return this._httpClient.request(opts);
+    return this._httpClient.request(opts, 'updateProvisioningProfile');
   }
 
 }

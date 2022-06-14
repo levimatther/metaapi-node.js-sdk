@@ -2,6 +2,7 @@
   - added support for multiple account region replicas
   - fixed readme for RPC connections
   - added APIs to manage account replicas deployed in different regions
+  - improved logging TooManyRequests error
 
 19.5.4
   - add accountCurrencyExchangeRate to MetatraderAccountInformation
