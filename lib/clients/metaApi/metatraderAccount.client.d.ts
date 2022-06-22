@@ -357,7 +357,7 @@ export declare type MetatraderAccountReplicaDto = {
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
    * is billed as 2 standard resource slots.  Default is 1.
    */
-  resourceSlots: number,
+  resourceSlots?: number,
 
   /**
    * number of CopyFactory 2 resource slots to allocate to account.
@@ -511,7 +511,7 @@ export declare type MetatraderAccountDto = {
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
    * is billed as 2 standard resource slots.  Default is 1.
    */
-  resourceSlots: number,
+  resourceSlots?: number,
 
   /**
    * number of CopyFactory 2 resource slots to allocate to account.
@@ -815,14 +815,14 @@ export declare type MetatraderAccountUpdateDto = {
   /**
    * flag indicating if trades should be placed as manual trades. Default is false
    */
-  manualTrades: boolean,
+  manualTrades?: boolean,
 
   /**
    * Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    */
-  quoteStreamingIntervalInSeconds: number,
+  quoteStreamingIntervalInSeconds?: number,
 
   /**
    * MetaTrader account tags
@@ -832,18 +832,18 @@ export declare type MetatraderAccountUpdateDto = {
   /**
    * API extensions
    */
-  extensions: Array<Extension>,
+  extensions?: Array<Extension>,
 
   /**
    * extra information which can be stored together with your account
    */
-  metadata: Object,
+  metadata?: Object,
 
   /**
    * Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
    */
-  copyFactoryRoles: Array<string>,
+  copyFactoryRoles?: Array<string>,
 
   /**
    * number of resource slots to allocate to account. Allocating extra resource slots
@@ -851,7 +851,7 @@ export declare type MetatraderAccountUpdateDto = {
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
    */
-  resourceSlots: number
+  resourceSlots?: number
 }
 
 /**
@@ -869,7 +869,7 @@ export declare type UpdatedMetatraderAccountReplicaDto = {
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    */
-  quoteStreamingIntervalInSeconds: number,
+  quoteStreamingIntervalInSeconds?: number,
 
   /**
    * MetaTrader account tags

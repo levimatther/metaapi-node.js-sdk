@@ -3,6 +3,7 @@
   - fixed readme for RPC connections
   - added APIs to manage account replicas deployed in different regions
   - improved logging TooManyRequests error
+  - added caching for ignored field lists
 
 19.5.4
   - add accountCurrencyExchangeRate to MetatraderAccountInformation

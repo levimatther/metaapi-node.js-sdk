@@ -16,6 +16,11 @@ export default class ClientApiClient extends MetaApiClient {
   constructor(httpClient, token, domain = 'agiliumtrade.agiliumtrade.ai') {
     super(httpClient, token, domain);
     this._host = `https://mt-client-api-v1.${domain}`;
+    this._ignoredFieldListsCache = {
+      lastUpdated: 0,
+      data: null,
+      requestPromise: null
+    };
   }
 
   /**
@@ -37,15 +42,33 @@ export default class ClientApiClient extends MetaApiClient {
    * Retrieves hashing ignored field lists
    * @returns {Promise<HashingIgnoredFieldLists>} promise resolving with hashing ignored field lists
    */
-  getHashingIgnoredFieldLists() {
-    const opts = {
-      url: `${this._host}/hashing-ignored-field-lists`,
-      method: 'GET',
-      json: true,
-      headers: {
-        'auth-token': this._token
+  async getHashingIgnoredFieldLists() {
+    if(!this._ignoredFieldListsCache.data || Date.now() - this._ignoredFieldListsCache.lastUpdated > 60 * 60 * 1000) {
+      if(this._ignoredFieldListsCache.requestPromise) {
+        await this._ignoredFieldListsCache.requestPromise;
+      } else{
+        let resolve, reject;
+        this._ignoredFieldListsCache.requestPromise = new Promise((res, rej) => {
+          resolve = res, reject = rej;
+        });
+        const opts = {
+          url: `${this._host}/hashing-ignored-field-lists`,
+          method: 'GET',
+          json: true,
+          headers: {
+            'auth-token': this._token
+          }
+        };
+        try {
+          const response = await this._httpClient.request(opts, 'getHashingIgnoredFieldLists');
+          this._ignoredFieldListsCache = { lastUpdated: Date.now(), data: response, requestPromise: null };
+          resolve(response);
+        } catch (error) {
+          reject(error);
+          throw error;
+        }
       }
-    };
-    return this._httpClient.request(opts, 'getHashingIgnoredFieldLists');
+    }
+    return this._ignoredFieldListsCache.data;
   }
 }

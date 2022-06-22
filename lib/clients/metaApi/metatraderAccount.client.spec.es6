@@ -111,6 +111,36 @@ describe('MetatraderAccountClient', () => {
   });
 
   /**
+   * @test {MetatraderAccountClient#getAccountReplica}
+   */
+  it('should retrieve MetaTrader account replica from API', async () => {
+    let expected = {
+      _id: 'idReplica',
+      login: '50194988',
+      name: 'mt5a',
+      server: 'ICMarketsSC-Demo',
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+      magic: 123456,
+      application: 'MetaApi',
+      connectionStatus: 'DISCONNECTED',
+      state: 'DEPLOYED',
+      type: 'cloud',
+      tags: ['tag1', 'tag2']
+    };
+    requestStub.resolves(expected);
+    let account = await accountClient.getAccountReplica('id', 'idReplica');
+    account.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/replicas/idReplica`,
+      method: 'GET',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    }, 'getAccountReplica');
+  });
+
+  /**
    * @test {MetatraderAccountClient#getAccountByToken}
    */
   it('should retrieve MetaTrader account by token from API', async () => {

@@ -95,9 +95,9 @@ export default class MetaApiWebsocketClient {
   /**
    * Adds account region info
    * @param {string} accountId account id
-   * @param {string} region account region
+   * @param {Object} replicas account replicas
    */
-  addAccountCache(accountId: string, region: string): void;
+  addAccountCache(accountId: string, replicas: Object): void;
 
   /**
    * Removes account region info

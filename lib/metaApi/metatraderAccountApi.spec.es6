@@ -1137,13 +1137,12 @@ describe('MetatraderAccountApi', () => {
         });
       sandbox.stub(client, 'createAccountReplica').resolves();
       let account = await api.getAccount('id');
-      await account.createReplica({
+      const replica = await account.createReplica({
         magic: 0,
         symbol: 'EURUSD',
         reliability: 'regular',
         region: 'london'
       });
-      const replica = account.replicas[0];
       replica.id.should.equal('idReplica');
       replica.state.should.equal('CREATED');
       replica.magic.should.equal(0);
@@ -1434,7 +1433,7 @@ describe('MetatraderAccountApi', () => {
         const replica = account.replicas[0];
         await replica.waitDeployed(1, 50);
         replica.state.should.equal('DEPLOYED');
-        sinon.assert.calledWith(client.getAccountReplica, 'id');
+        sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
         sinon.assert.calledThrice(client.getAccountReplica);
       });
   
@@ -1453,7 +1452,7 @@ describe('MetatraderAccountApi', () => {
           err.name.should.equal('TimeoutError');
           replica.state.should.equal('DEPLOYING');
         }
-        sinon.assert.calledWith(client.getAccountReplica, 'id');
+        sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
       });
   
     });

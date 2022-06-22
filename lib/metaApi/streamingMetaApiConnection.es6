@@ -342,9 +342,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     state.disconnected = true;
     const instanceNumber = this.getInstanceNumber(instanceIndex);
     const region = this.getRegion(instanceIndex);
-    delete this._refreshMarketDataSubscriptionSessions[`${region}:${instanceNumber}`];
-    clearTimeout(this._refreshMarketDataSubscriptionTimeouts[`${region}:${instanceNumber}`]);
-    delete this._refreshMarketDataSubscriptionTimeouts[`${region}:${instanceNumber}`];
+    const instance = `${region}:${instanceNumber}`;
+    delete this._refreshMarketDataSubscriptionSessions[instance];
+    clearTimeout(this._refreshMarketDataSubscriptionTimeouts[instance]);
+    delete this._refreshMarketDataSubscriptionTimeouts[instance];
     if (state.synchronizationTimeout) {
       clearTimeout(state.synchronizationTimeout);
       delete state.synchronizationTimeout;
@@ -445,12 +446,13 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     this._logger.debug(`${this._account.id}:${instanceIndex}: starting synchronization ${synchronizationId}`);
     const instanceNumber = this.getInstanceNumber(instanceIndex);
     const region = this.getRegion(instanceIndex);
+    const instance = `${region}:${instanceNumber}`;
     const accountId = this._account.accountRegions[region];
-    delete this._refreshMarketDataSubscriptionSessions[`${region}:${instanceNumber}`];
+    delete this._refreshMarketDataSubscriptionSessions[instance];
     let sessionId = randomstring.generate(32);
-    this._refreshMarketDataSubscriptionSessions[`${region}:${instanceNumber}`] = sessionId;
-    clearTimeout(this._refreshMarketDataSubscriptionTimeouts[`${region}:${instanceNumber}`]);
-    delete this._refreshMarketDataSubscriptionTimeouts[`${region}:${instanceNumber}`];
+    this._refreshMarketDataSubscriptionSessions[instance] = sessionId;
+    clearTimeout(this._refreshMarketDataSubscriptionTimeouts[instance]);
+    delete this._refreshMarketDataSubscriptionTimeouts[instance];
     await this._refreshMarketDataSubscriptions(accountId, instanceNumber, sessionId);
     this._scheduleSynchronizationTimeout(instanceIndex);
     let state = this._getState(instanceIndex);
@@ -619,8 +621,9 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
 
   async _refreshMarketDataSubscriptions(accountId, instanceNumber, session) {
     const region = this._websocketClient.getAccountRegion(accountId);
+    const instance = `${region}:${instanceNumber}`;
     try {
-      if (this._refreshMarketDataSubscriptionSessions[`${region}:${instanceNumber}`] === session) {
+      if (this._refreshMarketDataSubscriptionSessions[instance] === session) {
         const subscriptionsList = [];
         Object.keys(this._subscriptions).forEach(key => {
           const subscriptions = this.subscriptions(key);
@@ -637,10 +640,10 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       this._logger.error(`Error refreshing market data subscriptions job for account ${this._account.id} ` +
       `${instanceNumber}`, err);
     } finally {
-      if (this._refreshMarketDataSubscriptionSessions[`${region}:${instanceNumber}`] === session) {
+      if (this._refreshMarketDataSubscriptionSessions[instance] === session) {
         let refreshInterval = (Math.random() * (this._maxSubscriptionRefreshInterval - 
           this._minSubscriptionRefreshInterval) + this._minSubscriptionRefreshInterval) * 1000;
-        this._refreshMarketDataSubscriptionTimeouts[`${region}:${instanceNumber}`] = setTimeout(() =>
+        this._refreshMarketDataSubscriptionTimeouts[instance] = setTimeout(() =>
           this._refreshMarketDataSubscriptions(accountId, instanceNumber, session), refreshInterval);
       }
     }
