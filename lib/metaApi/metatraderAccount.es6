@@ -459,13 +459,13 @@ export default class MetatraderAccount {
 
   /**
    * Creates a MetaTrader account replica
-   * @param {NewMetatraderAccountDto} replica MetaTrader account data
-   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
+   * @param {NewMetatraderAccountDto} replica MetaTrader account replica data
+   * @return {Promise<MetatraderAccountReplica>} promise resolving with MetaTrader account replica entity
    */
   async createReplica(replica) {
     await this._metatraderAccountClient.createAccountReplica(this.id, replica);
     await this.reload();
-    return this._replicas[replica.region];
+    return this._replicas.find(r => r.region === replica.region);
   }
 
   /**

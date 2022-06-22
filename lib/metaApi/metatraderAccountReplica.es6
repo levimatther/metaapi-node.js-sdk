@@ -131,13 +131,11 @@ export default class MetatraderAccountReplica {
    */
   async remove() {
     await this._metatraderAccountClient.deleteAccountReplica(this.primaryAccount.id, this.id);
-    if (this.type !== 'self-hosted') {
-      try {
-        await this.reload();
-      } catch (err) {
-        if (err.name !== 'NotFoundError') {
-          throw err;
-        }
+    try {
+      await this.reload();
+    } catch (err) {
+      if (err.name !== 'NotFoundError') {
+        throw err;
       }
     }
   }

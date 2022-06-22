@@ -532,7 +532,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * https://metaapi.cloud/docs/provisioning/api/account/deleteAccountReplica/).
    * Method is accessible only with API access token
    * @param {String} primaryAccountId MetaTrader account id
-   * @param {String} replicaId MetaTrader account replica id to undeploy
+   * @param {String} replicaId MetaTrader account replica id to delete
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
    */
   deleteAccountReplica(primaryAccountId, replicaId) {
@@ -558,16 +558,16 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * access or master password to enable trading features. Required for cloud account
    * @property {String} server MetaTrader server which hosts the account
    * @property {Number} [magic] MetaTrader magic to place trades using
-   * @property {Boolean} manualTrades flag indicating if trades should be placed as manual trades. Default is false
-   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
+   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false
+   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Array<Extension>} extensions API extensions
-   * @property {Object} metadata extra information which can be stored together with your account
-   * @property {Array<string>} copyFactoryRoles Account roles for CopyFactory2 application. Allowed values are
+   * @property {Array<Extension>} [extensions] API extensions
+   * @property {Object} [metadata] extra information which can be stored together with your account
+   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
    * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
