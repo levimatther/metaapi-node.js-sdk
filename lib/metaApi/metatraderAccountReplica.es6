@@ -116,11 +116,11 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Reloads MetaTrader account replica from API
-   * @return {Promise} promise resolving when MetaTrader account replica is updated
+   * Updates replica data
+   * @param {MetatraderAccountReplicaDto} data MetaTrader account replica data 
    */
-  async reload() {
-    this._data = await this._metatraderAccountClient.getAccountReplica(this.primaryAccount.id, this.id);
+  updateData(data) {
+    this._data = data;
   }
 
   /**
@@ -132,7 +132,7 @@ export default class MetatraderAccountReplica {
   async remove() {
     await this._metatraderAccountClient.deleteAccountReplica(this.primaryAccount.id, this.id);
     try {
-      await this.reload();
+      await this._primaryAccount.reload();
     } catch (err) {
       if (err.name !== 'NotFoundError') {
         throw err;
@@ -147,7 +147,7 @@ export default class MetatraderAccountReplica {
    */
   async deploy() {
     await this._metatraderAccountClient.deployAccountReplica(this.primaryAccount.id, this.id);
-    await this.reload();
+    await this._primaryAccount.reload();
   }
 
   /**
@@ -157,7 +157,7 @@ export default class MetatraderAccountReplica {
    */
   async undeploy() {
     await this._metatraderAccountClient.undeployAccountReplica(this.primaryAccount.id, this.id);
-    await this.reload();
+    await this._primaryAccount.reload();
   }
 
   /**
@@ -167,7 +167,7 @@ export default class MetatraderAccountReplica {
    */
   async redeploy() {
     await this._metatraderAccountClient.redeployAccountReplica(this.primaryAccount.id, this.id);
-    await this.reload();
+    await this._primaryAccount.reload();
   }
 
   /**
@@ -176,7 +176,7 @@ export default class MetatraderAccountReplica {
    */
   async increaseReliability() {
     await this._metatraderAccountClient.increaseReliability(this.id);
-    await this.reload();
+    await this._primaryAccount.reload();
   }
 
   /**
@@ -188,10 +188,10 @@ export default class MetatraderAccountReplica {
    */
   async waitDeployed(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
-    await this.reload();
+    await this._primaryAccount.reload();
     while (this.state !== 'DEPLOYED' && (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await this._delay(intervalInMilliseconds);
-      await this.reload();
+      await this._primaryAccount.reload();
     }
     if (this.state !== 'DEPLOYED') {
       throw new TimeoutError('Timed out waiting for account replica ' + this.id + ' to be deployed');
@@ -207,10 +207,10 @@ export default class MetatraderAccountReplica {
    */
   async waitUndeployed(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
-    await this.reload();
+    await this._primaryAccount.reload();
     while (this.state !== 'UNDEPLOYED' && (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await this._delay(intervalInMilliseconds);
-      await this.reload();
+      await this._primaryAccount.reload();
     }
     if (this.state !== 'UNDEPLOYED') {
       throw new TimeoutError('Timed out waiting for account replica ' + this.id + ' to be undeployed');
@@ -226,19 +226,14 @@ export default class MetatraderAccountReplica {
    */
   async waitRemoved(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
-    try {
-      await this.reload();
-      while (startTime + timeoutInSeconds * 1000 > Date.now()) {
-        await this._delay(intervalInMilliseconds);
-        await this.reload();
-      }
+    await this._primaryAccount.reload();
+    while (startTime + timeoutInSeconds * 1000 > Date.now() && 
+        this._primaryAccount.accountRegions[this.region] === this.id) {
+      await this._delay(intervalInMilliseconds);
+      await this._primaryAccount.reload();
+    }
+    if(this._primaryAccount.accountRegions[this.region] === this.id) {
       throw new TimeoutError('Timed out waiting for account ' + this.id + ' to be deleted');
-    } catch (err) {
-      if (err.name === 'NotFoundError') {
-        return;
-      } else {
-        throw err;
-      }
     }
   }
 
@@ -251,10 +246,10 @@ export default class MetatraderAccountReplica {
    */
   async waitConnected(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
     let startTime = Date.now();
-    await this.reload();
+    await this._primaryAccount.reload();
     while (this.connectionStatus !== 'CONNECTED' && (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await this._delay(intervalInMilliseconds);
-      await this.reload();
+      await this._primaryAccount.reload();
     }
     if (this.connectionStatus !== 'CONNECTED') {
       throw new TimeoutError('Timed out waiting for account ' + this.id + ' to connect to the broker');
@@ -268,7 +263,7 @@ export default class MetatraderAccountReplica {
    */
   async update(account) {
     await this._metatraderAccountClient.updateAccountReplica(this._primaryAccount.id, this.id, account);
-    await this.reload();
+    await this._primaryAccount.reload();
   }
 
   _delay(timeoutInMilliseconds) {

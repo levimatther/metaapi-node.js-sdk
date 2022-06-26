@@ -268,6 +268,10 @@ export default class MetatraderAccount {
     const regions = updatedReplicaData.map(replica => replica.region);
     const createdReplicaRegions = this._replicas.map(replica => replica.region);
     this._replicas = this._replicas.filter(replica => regions.includes(replica.region));
+    this._replicas.forEach(replica => {
+      const updatedData = updatedReplicaData.find(replicaData => replicaData._id === replica.id);
+      replica.updateData(updatedData);
+    });
     updatedReplicaData.forEach(replica => {
       if(!createdReplicaRegions.includes(replica.region)) {
         this._replicas.push(new MetatraderAccountReplica(replica, this, this._metatraderAccountClient));
@@ -408,13 +412,18 @@ export default class MetatraderAccount {
    * @throws {TimeoutError} if account have not connected to the broker within timeout allowed
    */
   async waitConnected(timeoutInSeconds = 300, intervalInMilliseconds = 1000) {
+    const checkConnected = () => {
+      return [this.connectionStatus].concat(this.replicas.map(replica => 
+        replica.connectionStatus)).includes('CONNECTED');
+    };
+
     let startTime = Date.now();
     await this.reload();
-    while (this.connectionStatus !== 'CONNECTED' && (startTime + timeoutInSeconds * 1000) > Date.now()) {
+    while (!checkConnected() && (startTime + timeoutInSeconds * 1000) > Date.now()) {
       await this._delay(intervalInMilliseconds);
       await this.reload();
     }
-    if (this.connectionStatus !== 'CONNECTED') {
+    if (!checkConnected()) {
       throw new TimeoutError('Timed out waiting for account ' + this.id + ' to connect to the broker');
     }
   }

@@ -12,10 +12,12 @@ import ExpertAdvisor from './expertAdvisor';
  * @test {MetatraderAccountApi}
  * @test {MetatraderAccount}
  */
+// eslint-disable-next-line max-statements
 describe('MetatraderAccountApi', () => {
 
   let sandbox;
   let api;
+  let getAccountStub;
   let client = {
     getAccounts: () => {},
     getAccount: () => {},
@@ -57,6 +59,10 @@ describe('MetatraderAccountApi', () => {
     sandbox = sinon.createSandbox();
   });
 
+  beforeEach(() => {
+    getAccountStub = sandbox.stub(client, 'getAccount');
+  });
+
   afterEach(() => {
     sandbox.restore();
   });
@@ -76,7 +82,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccountApi#getAccount}
    */
   it('should retrieve MT account by id', async () => {
-    sandbox.stub(client, 'getAccount').resolves({
+    getAccountStub.resolves({
       _id: 'id',
       login: '50194988',
       name: 'mt5a',
@@ -143,7 +149,7 @@ describe('MetatraderAccountApi', () => {
    */
   it('should create MT account', async () => {
     sandbox.stub(client, 'createAccount').resolves({id: 'id'});
-    sandbox.stub(client, 'getAccount').resolves({
+    getAccountStub.resolves({
       _id: 'id',
       login: '50194988',
       name: 'mt5a',
@@ -188,7 +194,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#reload}
    */
   it('should reload MT account', async () => {
-    sandbox.stub(client, 'getAccount')
+    getAccountStub
       .onFirstCall().resolves({
         _id: 'id',
         login: '50194988',
@@ -226,7 +232,7 @@ describe('MetatraderAccountApi', () => {
    */
   it('should remove MT account', async () => {
     sandbox.stub(connectionRegistry, 'remove').resolves();
-    sandbox.stub(client, 'getAccount')
+    getAccountStub
       .onFirstCall().resolves({
         _id: 'id',
         login: '50194988',
@@ -267,7 +273,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#deploy}
    */
   it('should deploy MT account', async () => {
-    sandbox.stub(client, 'getAccount')
+    getAccountStub
       .onFirstCall().resolves({
         _id: 'id',
         login: '50194988',
@@ -306,7 +312,7 @@ describe('MetatraderAccountApi', () => {
    */
   it('should undeploy MT account', async () => {
     sandbox.stub(connectionRegistry, 'remove').resolves();
-    sandbox.stub(client, 'getAccount')
+    getAccountStub
       .onFirstCall().resolves({
         _id: 'id',
         login: '50194988',
@@ -345,7 +351,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#redeploy}
    */
   it('should redeploy MT account', async () => {
-    sandbox.stub(client, 'getAccount')
+    getAccountStub
       .onFirstCall().resolves({
         _id: 'id',
         login: '50194988',
@@ -383,7 +389,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#increaseReliability}
    */
   it('should increase MT account reliability', async () => {
-    sandbox.stub(client, 'getAccount')
+    getAccountStub
       .onFirstCall().resolves({
         _id: 'id',
         login: '50194988',
@@ -436,7 +442,7 @@ describe('MetatraderAccountApi', () => {
         state: 'DEPLOYING',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .onFirstCall().resolves(deployingAccount)
         .onSecondCall().resolves(deployingAccount)
         .onThirdCall().resolves({
@@ -474,7 +480,7 @@ describe('MetatraderAccountApi', () => {
         state: 'DEPLOYING',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .resolves(deployingAccount);
       let account = await api.getAccount('id');
       try {
@@ -507,7 +513,7 @@ describe('MetatraderAccountApi', () => {
         state: 'UNDEPLOYING',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .onFirstCall().resolves(undeployingAccount)
         .onSecondCall().resolves(undeployingAccount)
         .onThirdCall().resolves({
@@ -545,7 +551,7 @@ describe('MetatraderAccountApi', () => {
         state: 'UNDEPLOYING',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .resolves(undeployingAccount);
       let account = await api.getAccount('id');
       try {
@@ -578,7 +584,7 @@ describe('MetatraderAccountApi', () => {
         state: 'DELETING',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .onFirstCall().resolves(deletingAccount)
         .onSecondCall().resolves(deletingAccount)
         .onThirdCall().throws(new NotFoundError());
@@ -604,7 +610,7 @@ describe('MetatraderAccountApi', () => {
         state: 'DELETING',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .resolves(deletingAccount);
       let account = await api.getAccount('id');
       try {
@@ -636,7 +642,7 @@ describe('MetatraderAccountApi', () => {
         state: 'DEPLOYED',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .onFirstCall().resolves(disconnectedAccount)
         .onSecondCall().resolves(disconnectedAccount)
         .onThirdCall().resolves({
@@ -674,7 +680,7 @@ describe('MetatraderAccountApi', () => {
         state: 'DEPLOYED',
         type: 'cloud'
       };
-      sandbox.stub(client, 'getAccount')
+      getAccountStub
         .resolves(disconnectedAccount);
       let account = await api.getAccount('id');
       try {
@@ -687,6 +693,62 @@ describe('MetatraderAccountApi', () => {
       sinon.assert.calledWith(client.getAccount, 'id');
     });
 
+    /**
+     * @test {MetatraderAccount#waitConnected}
+     */
+    it('should pass for primary account if replica is connected', async () => {
+      let disconnectedAccount = {
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'DISCONNECTED',
+        state: 'UNDEPLOYED',
+        type: 'cloud',
+        accountReplicas: [{
+          _id: 'idReplica',
+          state: 'DEPLOYED',
+          magic: 0,
+          connectionStatus: 'DISCONNECTED',
+          symbol: 'EURUSD',
+          reliability: 'regular',
+          region: 'london'
+        }]
+      };
+      getAccountStub.resolves(disconnectedAccount).onFirstCall().resolves(disconnectedAccount)
+        .onSecondCall().resolves(disconnectedAccount)
+        .onThirdCall().resolves({
+          _id: 'id',
+          login: '50194988',
+          name: 'mt5a',
+          server: 'ICMarketsSC-Demo',
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'DISCONNECTED',
+          state: 'UNDEPLOYED',
+          type: 'cloud',
+          accountReplicas: [{
+            _id: 'idReplica',
+            state: 'DEPLOYED',
+            magic: 0,
+            connectionStatus: 'CONNECTED',
+            symbol: 'EURUSD',
+            reliability: 'regular',
+            region: 'london'
+          }]
+        });
+      let account = await api.getAccount('id');
+      await account.waitConnected(1, 50);
+      const replica = account.replicas[0];
+      replica.connectionStatus.should.equal('CONNECTED');
+      sinon.assert.calledWith(client.getAccount, 'id');
+      sinon.assert.calledThrice(client.getAccount);
+    });
+
   });
 
   /**
@@ -695,7 +757,7 @@ describe('MetatraderAccountApi', () => {
   it('should connect to an MT terminal', async () => {
     sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
     sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id'});
+    getAccountStub.resolves({_id: 'id'});
     let account = await api.getAccount();
     let storage = {
       lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
@@ -714,7 +776,7 @@ describe('MetatraderAccountApi', () => {
     sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
     sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
     metaApiWebsocketClient.region = 'vint-hill';
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'vint-hill'});
+    getAccountStub.resolves({_id: 'id', region: 'vint-hill'});
     let account = await api.getAccount();
     let storage = {
       lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
@@ -733,7 +795,7 @@ describe('MetatraderAccountApi', () => {
     sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
     sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
     metaApiWebsocketClient.region = 'vint-hill';
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'new-york'});
+    getAccountStub.resolves({_id: 'id', region: 'new-york'});
     let account = await api.getAccount();
     let storage = {
       lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
@@ -755,7 +817,7 @@ describe('MetatraderAccountApi', () => {
     sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
     sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
     metaApiWebsocketClient.region = 'vint-hill';
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'vint-hill'});
+    getAccountStub.resolves({_id: 'id', region: 'vint-hill'});
     let account = await api.getAccount();
     sandbox.spy(connectionRegistry, 'connect');
     account.getRPCConnection();
@@ -768,7 +830,7 @@ describe('MetatraderAccountApi', () => {
     sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
     sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
     metaApiWebsocketClient.region = 'vint-hill';
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'vint-hill'});
+    getAccountStub.resolves({_id: 'id', region: 'vint-hill'});
     let account = await api.getAccount();
     sandbox.spy(connectionRegistry, 'connect');
     account.getRPCConnection();
@@ -781,7 +843,7 @@ describe('MetatraderAccountApi', () => {
     sandbox.stub(metaApiWebsocketClient, 'addSynchronizationListener').returns();
     sandbox.stub(metaApiWebsocketClient, 'subscribe').resolves();
     metaApiWebsocketClient.region = 'vint-hill';
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', region: 'new-york'});
+    getAccountStub.resolves({_id: 'id', region: 'new-york'});
     let account = await api.getAccount();
     sandbox.spy(connectionRegistry, 'connect');
     
@@ -797,7 +859,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#update}
    */
   it('should update MT account', async () => {
-    sandbox.stub(client, 'getAccount')
+    getAccountStub
       .onFirstCall()
       .resolves({
         _id: 'id',
@@ -846,7 +908,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#getExpertAdvisors}
    */
   it('should retrieve expert advisors', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{expertId: 'ea'}]);
     const account = await api.getAccount();
     const experts = await account.getExpertAdvisors();
@@ -859,7 +921,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#getExpertAdvisor}
    */
   it('should retrieve expert advisor by expert id', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
       expertId: 'ea',
       period: '1H',
@@ -880,7 +942,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#getExpertAdvisor}
    */
   it('should validate account version', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 5, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 5, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{
       expertId: 'ea',
       period: '1H',
@@ -909,7 +971,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#getExpertAdvisor}
    */
   it('should validate account type', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g2'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g2'});
     sandbox.stub(eaClient, 'getExpertAdvisors').resolves([{
       expertId: 'ea',
       period: '1H',
@@ -938,7 +1000,7 @@ describe('MetatraderAccountApi', () => {
    * @test {MetatraderAccount#createExpertAdvisor}
    */
   it('should create expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'updateExpertAdvisor').resolves();
     sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
       expertId: 'ea',
@@ -966,7 +1028,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#reload}
    */
   it('should reload expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor')
       .onFirstCall().resolves({
         expertId: 'ea',
@@ -992,7 +1054,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#update}
    */
   it('should update expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor')
       .onFirstCall().resolves({
         expertId: 'ea',
@@ -1025,7 +1087,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#uploadFile}
    */
   it('should upload expert advisor file', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor')
       .onFirstCall().resolves({
         expertId: 'ea',
@@ -1053,7 +1115,7 @@ describe('MetatraderAccountApi', () => {
    * @test {ExpertAdvisor#remove}
    */
   it('should remove expert advisor', async () => {
-    sandbox.stub(client, 'getAccount').resolves({_id: 'id', version: 4, type: 'cloud-g1'});
+    getAccountStub.resolves({_id: 'id', version: 4, type: 'cloud-g1'});
     sandbox.stub(eaClient, 'getExpertAdvisor').resolves({
       expertId: 'ea',
       period: '1H',
@@ -1069,10 +1131,8 @@ describe('MetatraderAccountApi', () => {
 
   describe('MT account replica', () => {
 
-    let getAccountStub;
-
     beforeEach(async () =>{
-      getAccountStub = sandbox.stub(client, 'getAccount').resolves({
+      getAccountStub.resolves({
         _id: 'id',
         login: '50194988',
         name: 'mt5a',
@@ -1162,7 +1222,43 @@ describe('MetatraderAccountApi', () => {
     /**
      * @test {MetatraderAccountReplica#remove}
      */
-    it('should reload MT account replica', async () => {
+    it('should remove MT account replica', async () => {
+      const account = await api.getAccount('id');
+      getAccountStub.resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'DEPLOYED',
+        type: 'cloud',
+        accountReplicas: [{
+          _id: 'idReplica',
+          state: 'DELETING',
+          magic: 0,
+          connectionStatus: 'CONNECTED',
+          symbol: 'EURUSD',
+          reliability: 'regular',
+          region: 'london'
+        }]
+      });
+      sandbox.stub(client, 'deleteAccountReplica').resolves();
+      const replica = account.replicas[0];
+      await replica.remove();
+      replica.state.should.equal('DELETING');
+      sinon.assert.calledWith(client.deleteAccountReplica, 'id', 'idReplica');
+      sinon.assert.calledWith(client.getAccount, 'id');
+      sinon.assert.calledTwice(client.getAccount);
+    });
+
+    /**
+     * @test {MetatraderAccountReplica#deploy}
+     */
+    it('should deploy MT account replica', async () => {
+      const account = await api.getAccount('id');
       getAccountStub.resolves({
         _id: 'id',
         login: '50194988',
@@ -1178,120 +1274,97 @@ describe('MetatraderAccountApi', () => {
           _id: 'idReplica',
           state: 'DEPLOYING',
           magic: 0,
-          connectionStatus: 'DISCONNECTED',
+          connectionStatus: 'CONNECTED',
           symbol: 'EURUSD',
           reliability: 'regular',
           region: 'london'
         }]
       });
-
-      const account = await api.getAccount('id');
-      const replica = account.replicas[0];
-      sandbox.stub(client, 'getAccountReplica')
-        .resolves({
-          _id: 'idReplica',
-          magic: 123456,
-          application: 'MetaApi',
-          connectionStatus: 'CONNECTED',
-          state: 'DEPLOYED',
-          type: 'cloud'
-        });
-      await replica.reload();
-      account.connectionStatus.should.equal('CONNECTED');
-      account.state.should.equal('DEPLOYED');
-      sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledOnce(client.getAccountReplica);
-    });
-
-    /**
-     * @test {MetatraderAccountReplica#remove}
-     */
-    it('should remove MT account replica', async () => {
-      sandbox.stub(client, 'getAccountReplica')
-        .resolves({
-          _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'CONNECTED',
-          state: 'DELETING',
-        });
-      sandbox.stub(client, 'deleteAccountReplica').resolves();
-      const account = await api.getAccount('id');
-      const replica = account.replicas[0];
-      await replica.remove();
-      replica.state.should.equal('DELETING');
-      sinon.assert.calledWith(client.deleteAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledOnce(client.getAccountReplica);
-    });
-
-    /**
-     * @test {MetatraderAccountReplica#deploy}
-     */
-    it('should deploy MT account replica', async () => {
-      sandbox.stub(client, 'getAccountReplica')
-        .resolves({
-          _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'CONNECTED',
-          state: 'DEPLOYING',
-        });
       sandbox.stub(client, 'deployAccountReplica').resolves();
-      const account = await api.getAccount('id');
       const replica = account.replicas[0];
       await replica.deploy();
       replica.state.should.equal('DEPLOYING');
       sinon.assert.calledWith(client.deployAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledOnce(client.getAccountReplica);
+      sinon.assert.calledWith(client.getAccount, 'id');
+      sinon.assert.calledTwice(client.getAccount);
     });
 
     /**
      * @test {MetatraderAccountReplica#undeploy}
      */
     it('should undeploy MT account replica', async () => {
-      sandbox.stub(client, 'getAccountReplica')
-        .resolves({
+      const account = await api.getAccount('id');
+      getAccountStub.resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'DEPLOYED',
+        type: 'cloud',
+        accountReplicas: [{
           _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'CONNECTED',
           state: 'UNDEPLOYING',
-        });
+          magic: 0,
+          connectionStatus: 'CONNECTED',
+          symbol: 'EURUSD',
+          reliability: 'regular',
+          region: 'london'
+        }]
+      });
       sandbox.stub(client, 'undeployAccountReplica').resolves();
-      let account = await api.getAccount('id');
       const replica = account.replicas[0];
       await replica.undeploy();
       replica.state.should.equal('UNDEPLOYING');
       sinon.assert.calledWith(client.undeployAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledOnce(client.getAccountReplica);
+      sinon.assert.calledWith(client.getAccount, 'id');
+      sinon.assert.calledTwice(client.getAccount);
     });
 
     /**
      * @test {MetatraderAccountReplica#redeploy}
      */
     it('should redeploy MT account replica', async () => {
-      sandbox.stub(client, 'getAccountReplica')
-        .resolves({
+      let account = await api.getAccount('id');
+      getAccountStub.resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'DEPLOYED',
+        type: 'cloud',
+        accountReplicas: [{
           _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'CONNECTED',
           state: 'UNDEPLOYING',
-        });
+          magic: 0,
+          connectionStatus: 'CONNECTED',
+          symbol: 'EURUSD',
+          reliability: 'regular',
+          region: 'london'
+        }]
+      });
 
       sandbox.stub(client, 'redeployAccountReplica').resolves();
-      let account = await api.getAccount('id');
       const replica = account.replicas[0];
       await replica.redeploy();
       replica.state.should.equal('UNDEPLOYING');
       sinon.assert.calledWith(client.redeployAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledOnce(client.getAccountReplica);
+      sinon.assert.calledWith(client.getAccount, 'id');
+      sinon.assert.calledTwice(client.getAccount);
     });
 
     /**
      * @test {MetatraderAccountReplica#update}
      */
     it('should update MT account replica', async () => {
+      let account = await api.getAccount('id');
       getAccountStub.resolves({
         _id: 'id',
         login: '50194988',
@@ -1306,23 +1379,14 @@ describe('MetatraderAccountApi', () => {
         accountReplicas: [{
           _id: 'idReplica',
           state: 'DEPLOYED',
-          magic: 123456,
+          magic: 12345,
           connectionStatus: 'CONNECTED',
           symbol: 'EURUSD',
           reliability: 'regular',
           region: 'london'
         }]
       });
-
-      sandbox.stub(client, 'getAccountReplica')
-        .resolves({
-          _id: 'idReplica',
-          magic: 12345,
-          connectionStatus: 'CONNECTED',
-          state: 'UNDEPLOYING',
-        });
       sandbox.stub(client, 'updateAccountReplica').resolves();
-      let account = await api.getAccount('id');
       const replica = account.replicas[0];
       await replica.update({
         magic: 12345,
@@ -1331,14 +1395,15 @@ describe('MetatraderAccountApi', () => {
       sinon.assert.calledWith(client.updateAccountReplica, 'id', 'idReplica', {
         magic: 12345,
       });
-      sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledOnce(client.getAccount);
+      sinon.assert.calledWith(client.getAccount, 'id');
+      sinon.assert.calledTwice(client.getAccount);
     });
 
     /**
      * @test {MetatraderAccountReplica#increaseReliability}
      */
     it('should increase MT account replica reliability', async () => {
+      let account = await api.getAccount('id');
       getAccountStub.resolves({
         _id: 'id',
         login: '50194988',
@@ -1356,44 +1421,26 @@ describe('MetatraderAccountApi', () => {
           magic: 0,
           connectionStatus: 'DISCONNECTED',
           symbol: 'EURUSD',
-          reliability: 'regular',
+          reliability: 'high',
           region: 'london'
         }]
       });
-      sandbox.stub(client, 'getAccountReplica')
-        .resolves({
-          _id: 'idReplica',
-          state: 'DEPLOYING',
-          magic: 0,
-          connectionStatus: 'DISCONNECTED',
-          symbol: 'EURUSD',
-          reliability: 'high',
-          region: 'london'
-        });
 
       sandbox.stub(client, 'increaseReliability').resolves();
-      let account = await api.getAccount('id');
       const replica = account.replicas[0];
       await replica.increaseReliability();
       replica.reliability.should.equal('high');
       sinon.assert.calledWith(client.increaseReliability, 'idReplica');
-      sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-      sinon.assert.calledOnce(client.getAccount);
+      sinon.assert.calledWith(client.getAccount, 'id');
+      sinon.assert.calledTwice(client.getAccount);
     });
 
     describe('MetatraderAccountReplica.waitDeployed', () => {
 
-      let deployingReplica;
+      let startAccount;
 
       beforeEach(async () => {
-        deployingReplica = {
-          _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'CONNECTED',
-          state: 'DEPLOYING',
-        };
-
-        getAccountStub.resolves({
+        startAccount = {
           _id: 'id',
           login: '50194988',
           name: 'mt5a',
@@ -1406,43 +1453,59 @@ describe('MetatraderAccountApi', () => {
           type: 'cloud',
           accountReplicas: [{
             _id: 'idReplica',
-            state: 'CREATED',
+            state: 'DEPLOYING',
             magic: 0,
-            connectionStatus: 'DEPLOYING',
+            connectionStatus: 'CONNECTED',
             symbol: 'EURUSD',
             reliability: 'regular',
             region: 'london'
           }]
-        });
+        };
+
+        getAccountStub.resolves(startAccount);
       });
 
       /**
        * @test {MetatraderAccountReplica#waitDeployed}
        */
       it('should wait for deployment', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .onFirstCall().resolves(deployingReplica)
-          .onSecondCall().resolves(deployingReplica)
-          .onThirdCall().resolves( {
+        const updatedAccount = {
+          _id: 'id',
+          login: '50194988',
+          name: 'mt5a',
+          server: 'ICMarketsSC-Demo',
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'CONNECTED',
+          state: 'DEPLOYED',
+          type: 'cloud',
+          accountReplicas: [{
             _id: 'idReplica',
-            magic: 123456,
-            connectionStatus: 'CONNECTED',
             state: 'DEPLOYED',
-          });
+            magic: 0,
+            connectionStatus: 'CONNECTED',
+            symbol: 'EURUSD',
+            reliability: 'regular',
+            region: 'london'
+          }]
+        };
+        getAccountStub
+          .onFirstCall().resolves(startAccount)
+          .onSecondCall().resolves(startAccount)
+          .onThirdCall().resolves(updatedAccount);
         const account = await api.getAccount('id');
         const replica = account.replicas[0];
         await replica.waitDeployed(1, 50);
         replica.state.should.equal('DEPLOYED');
-        sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-        sinon.assert.calledThrice(client.getAccountReplica);
+        sinon.assert.calledWith(client.getAccount, 'id');
+        sinon.assert.calledThrice(client.getAccount);
       });
   
       /**
        * @test {MetatraderAccountReplica#waitDeployed}
        */
       it('should time out waiting for deployment', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .resolves(deployingReplica);
         let account = await api.getAccount('id');
         const replica = account.replicas[0];
         try {
@@ -1452,24 +1515,17 @@ describe('MetatraderAccountApi', () => {
           err.name.should.equal('TimeoutError');
           replica.state.should.equal('DEPLOYING');
         }
-        sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
+        sinon.assert.calledWith(client.getAccount, 'id');
       });
   
     });
   
     describe('MetatraderAccountReplica.waitUndeployed', () => {
 
-      let deployingReplica;
+      let startAccount;
 
       beforeEach(async () => {
-        deployingReplica = {
-          _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'CONNECTED',
-          state: 'UNDEPLOYING',
-        };
-
-        getAccountStub.resolves({
+        startAccount = {
           _id: 'id',
           login: '50194988',
           name: 'mt5a',
@@ -1482,43 +1538,59 @@ describe('MetatraderAccountApi', () => {
           type: 'cloud',
           accountReplicas: [{
             _id: 'idReplica',
-            state: 'CREATED',
+            state: 'UNDEPLOYING',
             magic: 0,
-            connectionStatus: 'UNDEPLOYING',
+            connectionStatus: 'CONNECTED',
             symbol: 'EURUSD',
             reliability: 'regular',
             region: 'london'
           }]
-        });
+        };
+
+        getAccountStub.resolves(startAccount);
       });
-  
+
       /**
        * @test {MetatraderAccountReplica#waitUndeployed}
        */
       it('should wait for undeployment', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .onFirstCall().resolves(deployingReplica)
-          .onSecondCall().resolves(deployingReplica)
-          .onThirdCall().resolves( {
+        const updatedAccount = {
+          _id: 'id',
+          login: '50194988',
+          name: 'mt5a',
+          server: 'ICMarketsSC-Demo',
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'CONNECTED',
+          state: 'DEPLOYED',
+          type: 'cloud',
+          accountReplicas: [{
             _id: 'idReplica',
-            magic: 123456,
-            connectionStatus: 'CONNECTED',
             state: 'UNDEPLOYED',
-          });
+            magic: 0,
+            connectionStatus: 'CONNECTED',
+            symbol: 'EURUSD',
+            reliability: 'regular',
+            region: 'london'
+          }]
+        };
+        getAccountStub
+          .onFirstCall().resolves(startAccount)
+          .onSecondCall().resolves(startAccount)
+          .onThirdCall().resolves(updatedAccount);
         const account = await api.getAccount('id');
         const replica = account.replicas[0];
         await replica.waitUndeployed(1, 50);
         replica.state.should.equal('UNDEPLOYED');
-        sinon.assert.calledWith(client.getAccountReplica, 'id');
-        sinon.assert.calledThrice(client.getAccountReplica);
+        sinon.assert.calledWith(client.getAccount, 'id');
+        sinon.assert.calledThrice(client.getAccount);
       });
   
       /**
        * @test {MetatraderAccountReplica#waitUndeployed}
        */
       it('should time out waiting for undeployment', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .resolves(deployingReplica);
         let account = await api.getAccount('id');
         const replica = account.replicas[0];
         try {
@@ -1528,24 +1600,17 @@ describe('MetatraderAccountApi', () => {
           err.name.should.equal('TimeoutError');
           replica.state.should.equal('UNDEPLOYING');
         }
-        sinon.assert.calledWith(client.getAccountReplica, 'id');
+        sinon.assert.calledWith(client.getAccount, 'id');
       });
   
     });
   
     describe('MetatraderAccountReplica.waitRemoved', () => {
 
-      let deletingReplica;
+      let startAccount;
 
       beforeEach(async () => {
-        deletingReplica = {
-          _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'DISCONNECTED',
-          state: 'DELETING',
-        };
-
-        getAccountStub.resolves({
+        startAccount = {
           _id: 'id',
           login: '50194988',
           name: 'mt5a',
@@ -1560,35 +1625,48 @@ describe('MetatraderAccountApi', () => {
             _id: 'idReplica',
             state: 'DELETING',
             magic: 0,
-            connectionStatus: 'DISCONNECTED',
+            connectionStatus: 'CONNECTED',
             symbol: 'EURUSD',
             reliability: 'regular',
             region: 'london'
           }]
-        });
+        };
+
+        getAccountStub.resolves(startAccount);
       });
   
       /**
        * @test {MetatraderAccountReplica#waitRemoved}
        */
       it('should wait until removed', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .onFirstCall().resolves(deletingReplica)
-          .onSecondCall().resolves(deletingReplica)
-          .onThirdCall().throws(new NotFoundError());
+        const updatedAccount = {
+          _id: 'id',
+          login: '50194988',
+          name: 'mt5a',
+          server: 'ICMarketsSC-Demo',
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'CONNECTED',
+          state: 'DEPLOYED',
+          type: 'cloud',
+          accountReplicas: []
+        };
+        getAccountStub
+          .onFirstCall().resolves(startAccount)
+          .onSecondCall().resolves(startAccount)
+          .onThirdCall().resolves(updatedAccount);
         const account = await api.getAccount('id');
         const replica = account.replicas[0];
         await replica.waitRemoved(1, 50);
-        sinon.assert.calledWith(client.getAccountReplica, 'id');
-        sinon.assert.calledThrice(client.getAccountReplica);
+        sinon.assert.calledWith(client.getAccount, 'id');
+        sinon.assert.calledThrice(client.getAccount);
       });
   
       /**
        * @test {MetatraderAccountReplica#waitRemoved}
        */
       it('should time out waiting until removed', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .resolves(deletingReplica);
         let account = await api.getAccount('id');
         const replica = account.replicas[0];
         try {
@@ -1598,23 +1676,17 @@ describe('MetatraderAccountApi', () => {
           err.name.should.equal('TimeoutError');
           replica.state.should.equal('DELETING');
         }
-        sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
+        sinon.assert.calledWith(client.getAccount, 'id');
       });
   
     });
   
     describe('MetatraderAccountReplica.waitConnected', () => {
 
-      let disconnectedReplica;
+      let startAccount;
 
-      beforeEach(() => {
-        disconnectedReplica = {
-          _id: 'idReplica',
-          magic: 123456,
-          connectionStatus: 'DISCONNECTED',
-          state: 'DEPLOYED',
-        };
-        getAccountStub.resolves({
+      beforeEach(async () => {
+        startAccount = {
           _id: 'id',
           login: '50194988',
           name: 'mt5a',
@@ -1634,36 +1706,53 @@ describe('MetatraderAccountApi', () => {
             reliability: 'regular',
             region: 'london'
           }]
-        });
+        };
+
+        getAccountStub.resolves(startAccount);
       });
   
       /**
        * @test {MetatraderAccountReplica#waitConnected}
        */
       it('should wait until broker connection', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .onFirstCall().resolves(disconnectedReplica)
-          .onSecondCall().resolves(disconnectedReplica)
-          .onThirdCall().resolves({
+        const updatedAccount = {
+          _id: 'id',
+          login: '50194988',
+          name: 'mt5a',
+          server: 'ICMarketsSC-Demo',
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'CONNECTED',
+          state: 'DEPLOYED',
+          type: 'cloud',
+          accountReplicas: [{
             _id: 'idReplica',
-            magic: 123456,
-            connectionStatus: 'CONNECTED',
             state: 'DEPLOYED',
-          });
+            magic: 0,
+            connectionStatus: 'CONNECTED',
+            symbol: 'EURUSD',
+            reliability: 'regular',
+            region: 'london'
+          }]
+        };
+        getAccountStub
+          .onFirstCall().resolves(startAccount)
+          .onSecondCall().resolves(startAccount)
+          .onThirdCall().resolves(updatedAccount);
+
         let account = await api.getAccount('id');
         const replica = account.replicas[0];
         await replica.waitConnected(1, 50);
         replica.connectionStatus.should.equal('CONNECTED');
-        sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
-        sinon.assert.calledThrice(client.getAccountReplica);
+        sinon.assert.calledWith(client.getAccount, 'id');
+        sinon.assert.calledThrice(client.getAccount);
       });
   
       /**
        * @test {MetatraderAccountReplica#waitConnected}
        */
       it('should time out waiting for broker connection', async () => {
-        sandbox.stub(client, 'getAccountReplica')
-          .resolves(disconnectedReplica);
         let account = await api.getAccount('id');
         const replica = account.replicas[0];
         try {
@@ -1673,7 +1762,7 @@ describe('MetatraderAccountApi', () => {
           err.name.should.equal('TimeoutError');
           replica.connectionStatus.should.equal('DISCONNECTED');
         }
-        sinon.assert.calledWith(client.getAccountReplica, 'id', 'idReplica');
+        sinon.assert.calledWith(client.getAccount, 'id');
       });
   
     });
