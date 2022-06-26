@@ -4,6 +4,7 @@
   - added APIs to manage account replicas deployed in different regions
   - improved logging TooManyRequests error
   - added caching for ignored field lists
+  - waitConnected not takes into account connection status of account replicas in another region
 
 19.5.4
   - add accountCurrencyExchangeRate to MetatraderAccountInformation

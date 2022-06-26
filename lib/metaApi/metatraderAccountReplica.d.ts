@@ -91,10 +91,10 @@ export default class MetatraderAccountReplica {
   get primaryAccount(): MetatraderAccount;
 
   /**
-   * Reloads MetaTrader account replica from API
-   * @return {Promise} promise resolving when MetaTrader account replica is updated
+   * Updates replica data
+   * @param {MetatraderAccountReplicaDto} data MetaTrader account replica data 
    */
-  reload(): Promise<any>;
+  updateData(data: MetatraderAccountReplicaDto): void;
 
   /**
    * Removes MetaTrader account replica. Cloud account transitions to DELETING state. 
