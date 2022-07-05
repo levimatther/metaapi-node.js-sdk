@@ -17,7 +17,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
     super(websocketClient, account, 'RPC');
     this._logger = LoggerManager.getLogger('MetaApiConnection');
     this._websocketClient.addSynchronizationListener(account.id, this);
-    this._connectPromiseResolve = null;
+    this._stateByInstanceIndex = {};
   }
 
   /**
@@ -268,9 +268,37 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onConnected(instanceIndex, replicas) {
-    if(this._connectPromiseResolve) {
-      this._connectPromiseResolve();
-    }
+    const state = this._getState(instanceIndex);
+    state.synchronized = true;
+  }
+
+  /**
+   * Invoked when connection to MetaTrader terminal terminated
+   * @param {String} instanceIndex index of an account instance connected
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onDisconnected(instanceIndex) {
+    const state = this._getState(instanceIndex);
+    state.synchronized = false;
+    this._logger.debug(`${this._account.id}:${instanceIndex}: disconnected from broker`);
+  }
+
+  /**
+   * Invoked when a stream for an instance index is closed
+   * @param {String} instanceIndex index of an account instance connected
+   */
+  async onStreamClosed(instanceIndex) {
+    delete this._stateByInstanceIndex[instanceIndex];
+  }
+
+  /**
+   * Returns flag indicating status of state synchronization with MetaTrader terminal
+   * @returns {Boolean} a flag indicating status of state synchronization with MetaTrader terminal
+   */
+  isSynchronized() {
+    return Object.values(this._stateByInstanceIndex)
+      .map(instance => instance.synchronized)
+      .includes(true);
   }
 
   /**
@@ -282,10 +310,15 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
   async waitSynchronized(timeoutInSeconds=300) {
     this._checkIsConnectionActive();
     const startTime = Date.now();
-    const promise = new Promise((res) => this._connectPromiseResolve = res);
-    await Promise.race([promise, new Promise((res, rej) => 
-      setTimeout(() => rej(new TimeoutError(`RPC synchronization for account ${this._account.id} timed out`)), 
-        timeoutInSeconds * 1000))]);
+    let synchronized = this.isSynchronized();
+    while(!synchronized && startTime + timeoutInSeconds * 1000 > Date.now()) {
+      await new Promise(res => setTimeout(res, 1000));
+      synchronized = this.isSynchronized();
+    }
+    if (!synchronized) {
+      throw new TimeoutError('Timed out waiting for MetaApi to synchronize to MetaTrader account ' +
+        this._account.id);
+    }
     // eslint-disable-next-line
     while(true) {
       try {
@@ -297,6 +330,16 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
         }
       }
     }
+  }
+
+  _getState(instanceIndex) {
+    if(!this._stateByInstanceIndex[instanceIndex]) {
+      this._stateByInstanceIndex[instanceIndex] = {
+        instanceIndex,
+        synchronized: false,
+      };
+    }
+    return this._stateByInstanceIndex[instanceIndex];
   }
 
 }

@@ -1,3 +1,6 @@
+19.6.1
+  - fixed synchronization of RPC connections
+
 19.6.0
   - added support for multiple account region replicas
   - fixed readme for RPC connections

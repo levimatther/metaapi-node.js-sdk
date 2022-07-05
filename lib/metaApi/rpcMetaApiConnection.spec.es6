@@ -85,6 +85,7 @@ describe('RpcMetaApiConnection', () => {
       await new Promise(res => setTimeout(res, 50));
       await api.onConnected();
     })();
+    clock.tickAsync(1100);
     await api.waitSynchronized();
   });
 
@@ -98,6 +99,27 @@ describe('RpcMetaApiConnection', () => {
       throw new TimeoutError('test');
     });
     try {
+      (async () => {
+        await new Promise(res => setTimeout(res, 50));
+        await api.onConnected();
+      })();
+      clock.tickAsync(1100);
+      await api.waitSynchronized(0.09); 
+      throw new Error('TimeoutError expected');
+    } catch (err) {
+      err.name.should.equal('TimeoutError');
+    }
+    sinon.assert.calledOnce(client.waitSynchronized);
+  });
+
+  /**
+   * @test {MetaApiConnection#waitSynchronized}
+   */
+  it('should time out waiting for synchronization if no connected event has arrived', async () => {
+    await api.connect();
+    sandbox.stub(client, 'waitSynchronized').resolves();
+    try {
+      clock.tickAsync(1100);
       await api.waitSynchronized(0.09); 
       throw new Error('TimeoutError expected');
     } catch (err) {
