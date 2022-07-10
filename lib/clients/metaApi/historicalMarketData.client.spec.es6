@@ -14,6 +14,7 @@ describe('HistoricalMarketDataClient', () => {
   let client;
   const token = 'header.payload.sign';
   let httpClient = new HttpClient();
+  let domainClient;
   let sandbox;
   let requestStub;
   let marketDataStub;
@@ -23,8 +24,14 @@ describe('HistoricalMarketDataClient', () => {
   });
 
   beforeEach(() => {
-    client = new HistoricalMarketDataClient(httpClient, token);
+    domainClient = {
+      token,
+      domain: 'agiliumtrade.agiliumtrade.ai',
+      getUrl: () => {}
+    };
+    client = new HistoricalMarketDataClient(httpClient, domainClient);
     requestStub = sandbox.stub(httpClient, 'request');
+    sandbox.stub(domainClient, 'getUrl').resolves(marketDataClientApiUrl);
     requestStub.withArgs({
       url: 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/regions',
       method: 'GET',
@@ -185,38 +192,5 @@ describe('HistoricalMarketDataClient', () => {
       json: true
     }, 'getHistoricalTicks');
   });
-
-  /**
-   * @test {HistoricalMarketDataClient#getHistoricalCandles}
-   */
-  it('should use cached url on repeated request', async () => {
-    const clock = sandbox.useFakeTimers({shouldAdvanceTime: true});
-    let expected = [{
-      symbol: 'AUDNZD',
-      timeframe: '15m',
-      time: new Date('2020-04-07T03:45:00.000Z'),
-      brokerTime: '2020-04-07 06:45:00.000',
-      open: 1.03297,
-      high: 1.06309,
-      low: 1.02705,
-      close: 1.043,
-      tickVolume: 1435,
-      spread: 17,
-      volume: 345
-    }];
-    marketDataStub.resolves(expected);
-    await client.getHistoricalCandles('accountId', 'vint-hill', 'AUDNZD', '15m', 
-      new Date('2020-04-07T03:45:00.000Z'), 1);
-    let candles = await client.getHistoricalCandles('accountId', 'vint-hill', 'AUDNZD', '15m', 
-      new Date('2020-04-07T03:45:00.000Z'), 1);
-    candles.should.equal(expected);
-    sinon.assert.callCount(requestStub, 3);
-    await clock.tickAsync(610000);
-    await client.getHistoricalCandles('accountId', 'vint-hill', 'AUDNZD', '15m', 
-      new Date('2020-04-07T03:45:00.000Z'), 1);
-    sinon.assert.callCount(requestStub, 5);
-    clock.restore();
-  });
-  
 
 });

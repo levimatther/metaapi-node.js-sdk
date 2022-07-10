@@ -9,14 +9,13 @@ import {NotFoundError} from '../errorHandler';
 export default class HistoricalMarketDataClient extends MetaApiClient {
 
   /**
-   * Constructs historical market data API client instance
+   * Constructs client API client instance
    * @param {HttpClient} httpClient HTTP client
-   * @param {String} token authorization token
-   * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
+   * @param {DomainClient} domainClient domain client
    */
-  constructor(httpClient, token, domain = 'agiliumtrade.agiliumtrade.ai') {
-    super(httpClient, token, domain);
-    this._domain = domain;
+  constructor(httpClient, domainClient) {
+    super(httpClient, domainClient);
+    this._host = 'https://mt-market-data-client-api-v1';
   }
 
   /**
@@ -35,7 +34,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    */
   async getHistoricalCandles(accountId, region, symbol, timeframe, startTime, limit) {
     symbol = encodeURIComponent(symbol);
-    const host = await this._getHost(region);
+    const host = await this._domainClient.getUrl(this._host, region);
     const opts = {
       url: `${host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/` +
         `timeframes/${timeframe}/candles`,
@@ -71,7 +70,7 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
    */
   async getHistoricalTicks(accountId, region, symbol, startTime, offset, limit) {
     symbol = encodeURIComponent(symbol);
-    const host = await this._getHost(region);
+    const host = await this._domainClient.getUrl(this._host, region);
     const opts = {
       url: `${host}/users/current/accounts/${accountId}/historical-market-data/symbols/${symbol}/ticks`,
       method: 'GET',
@@ -89,30 +88,6 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
     ticks = ticks || [];
     ticks.forEach(t => t.time = new Date(t.time));
     return ticks;
-  }
-
-  async _getHost(region) {
-    if(this._urlCache && this._urlCache.lastUpdated > Date.now() - 1000 * 60 * 10) {
-      return this._urlCache.url;
-    }
-
-    const urlSettings = await this._httpClient.request({
-      url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
-      method: 'GET',
-      headers: {
-        'auth-token': this._token
-      },
-      json: true,
-    }, '_getHost');
-
-    const url = `https://mt-market-data-client-api-v1.${region}.${urlSettings.domain}`;
-
-    this._urlCache = {
-      url,
-      lastUpdated: Date.now()
-    };
-
-    return url;
   }
 
 }

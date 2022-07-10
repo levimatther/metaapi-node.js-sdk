@@ -14,6 +14,7 @@ describe('ProvisioningProfileClient', () => {
   let provisioningClient;
   const token = 'header.payload.sign';
   let httpClient = new HttpClient();
+  let domainClient;
   let sandbox;
   let requestStub;
 
@@ -22,7 +23,12 @@ describe('ProvisioningProfileClient', () => {
   });
 
   beforeEach(() => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, token);
+    domainClient = {
+      token,
+      domain: 'agiliumtrade.agiliumtrade.ai',
+      getUrl: () => {}
+    };
+    provisioningClient = new ProvisioningProfileClient(httpClient, domainClient);
     requestStub = sandbox.stub(httpClient, 'request');
   });
 
@@ -61,9 +67,11 @@ describe('ProvisioningProfileClient', () => {
    * @test {MetatraderAccountClient#getProvisioningProfiles}
    */
   it('should not retrieve provisioning profiles from API with account token', async () => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    domainClient.token = 'token';
+    provisioningClient = new ProvisioningProfileClient(httpClient, domainClient);
     try {
       await provisioningClient.getProvisioningProfiles(5, 'active');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke getProvisioningProfiles method, because you have connected with account access token. ' +
@@ -99,9 +107,11 @@ describe('ProvisioningProfileClient', () => {
    * @test {MetatraderAccountClient#getProvisioningProfile}
    */
   it('should not retrieve provisioning profile from API with account token', async () => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    domainClient.token = 'token';
+    provisioningClient = new ProvisioningProfileClient(httpClient, domainClient);
     try {
       await provisioningClient.getProvisioningProfile('id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke getProvisioningProfile method, because you have connected with account access token. ' +
@@ -139,9 +149,11 @@ describe('ProvisioningProfileClient', () => {
    * @test {MetatraderAccountClient#createProvisioningProfile}
    */
   it('should not create provisioning profile via API with account token', async () => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    domainClient.token = 'token';
+    provisioningClient = new ProvisioningProfileClient(httpClient, domainClient);
     try {
       await provisioningClient.createProvisioningProfile({});
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke createProvisioningProfile method, because you have connected with account access token. ' +
@@ -178,9 +190,11 @@ describe('ProvisioningProfileClient', () => {
    * @test {MetatraderAccountClient#uploadProvisioningProfileFile}
    */
   it('should not upload provisioning profile file via API with account token', async () => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    domainClient.token = 'token';
+    provisioningClient = new ProvisioningProfileClient(httpClient, domainClient);
     try {
       await provisioningClient.uploadProvisioningProfileFile('id', 'servers.dat', {});
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke uploadProvisioningProfileFile method, because you have connected with account access' +
@@ -208,9 +222,11 @@ describe('ProvisioningProfileClient', () => {
    * @test {MetatraderAccountClient#deleteProvisioningProfile}
    */
   it('should not delete provisioning profile via API with account token', async () => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    domainClient.token = 'token';
+    provisioningClient = new ProvisioningProfileClient(httpClient, domainClient);
     try {
       await provisioningClient.deleteProvisioningProfile('id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke deleteProvisioningProfile method, because you have connected with account access token. ' +
@@ -241,9 +257,11 @@ describe('ProvisioningProfileClient', () => {
    * @test {MetatraderAccountClient#updateProvisioningProfile}
    */
   it('should not update provisioning profile via API with account token', async () => {
-    provisioningClient = new ProvisioningProfileClient(httpClient, 'token');
+    domainClient.token = 'token';
+    provisioningClient = new ProvisioningProfileClient(httpClient, domainClient);
     try {
       await provisioningClient.updateProvisioningProfile('id', {name: 'new name'});
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke updateProvisioningProfile method, because you have connected with account access token. ' +

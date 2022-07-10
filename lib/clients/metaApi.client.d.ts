@@ -1,4 +1,5 @@
 import HttpClient from "./httpClient";
+import DomainClient from "./domain.client";
 
 /**
  * metaapi.cloud MetaTrader API client
@@ -8,8 +9,7 @@ export default class MetaApiClient {
   /**
    * Constructs MetaTrader API client instance
    * @param {HttpClient} httpClient HTTP client
-   * @param {string} token authorization token
-   * @param {string} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
+   * @param {DomainClient} domainClient domain client
    */
-  constructor(httpClient: HttpClient, token: string, domain?: string);  
+  constructor(httpClient: HttpClient, domainClient: DomainClient);  
 }

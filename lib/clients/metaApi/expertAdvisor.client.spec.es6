@@ -14,6 +14,7 @@ describe('ExpertAdvisorClient', () => {
   let expertAdvisorClient;
   const token = 'header.payload.sign';
   let httpClient = new HttpClient();
+  let domainClient;
   let sandbox;
   let requestStub;
 
@@ -22,7 +23,11 @@ describe('ExpertAdvisorClient', () => {
   });
 
   beforeEach(() => {
-    expertAdvisorClient = new ExpertAdvisorClient(httpClient, token);
+    domainClient = {
+      token,
+      domain: 'agiliumtrade.agiliumtrade.ai'
+    };
+    expertAdvisorClient = new ExpertAdvisorClient(httpClient, domainClient);
     requestStub = sandbox.stub(httpClient, 'request');
   });
 
