@@ -14,6 +14,7 @@ describe('ClientApiClient', () => {
   let clientApiClient;
   const token = 'header.payload.sign';
   let httpClient = new HttpClient();
+  let domainClient;
   let sandbox;
   let requestStub;
   let clock;
@@ -23,8 +24,14 @@ describe('ClientApiClient', () => {
   });
 
   beforeEach(() => {
-    clientApiClient = new ClientApiClient(httpClient, token);
+    domainClient = {
+      token,
+      domain: 'agiliumtrade.agiliumtrade.ai',
+      getUrl: () => {}
+    };
     requestStub = sandbox.stub(httpClient, 'request');
+    sandbox.stub(domainClient, 'getUrl').resolves(clientApiUrl);
+    clientApiClient = new ClientApiClient(httpClient, domainClient);
     clock = sandbox.useFakeTimers({
       shouldAdvanceTime: true,
       now: new Date('2020-10-05T07:00:00.000Z')

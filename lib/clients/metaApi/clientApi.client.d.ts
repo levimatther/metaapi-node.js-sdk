@@ -7,9 +7,10 @@ export default class ClientApiClient extends MetaApiClient {
 
   /**
    * Retrieves hashing ignored field lists
+   * @param {string} region account region
    * @returns {Promise<HashingIgnoredFieldLists>} promise resolving with hashing ignored field lists
    */
-  getHashingIgnoredFieldLists(): Promise<HashingIgnoredFieldLists>;
+  getHashingIgnoredFieldLists(region: string): Promise<HashingIgnoredFieldLists>;
 }
 
 /**

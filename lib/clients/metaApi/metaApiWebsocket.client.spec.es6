@@ -1608,6 +1608,7 @@ describe('MetaApiWebsocketClient', () => {
     it('should only accept packets with own synchronization ids', async () => {
       let listener = {
         onAccountInformationUpdated: () => {},
+        onSynchronizationStarted: () => {}
       };
       sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
       client.addSynchronizationListener('accountId', listener);
@@ -1828,6 +1829,7 @@ describe('MetaApiWebsocketClient', () => {
       let listener = {
         onPositionsReplaced: () => {},
         onPositionsSynchronized: () => {},
+        onSynchronizationStarted: () => {}
       };
       sandbox.stub(listener, 'onPositionsReplaced').resolves();
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
@@ -1860,6 +1862,7 @@ describe('MetaApiWebsocketClient', () => {
       let listener = {
         onPendingOrdersReplaced: () => {},
         onPendingOrdersSynchronized: () => {},
+        onSynchronizationStarted: () => {}
       };
       client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
       sandbox.stub(listener, 'onPendingOrdersReplaced').resolves();

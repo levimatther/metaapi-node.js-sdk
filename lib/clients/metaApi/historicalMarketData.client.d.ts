@@ -1,6 +1,7 @@
 import HttpClient from "../httpClient";
 import MetaApiClient from "../metaApi.client";
 import { MetatraderCandle, MetatraderTick } from "./metaApiWebsocket.client";
+import DomainClient from "../domain.client";
 
 /**
  * metaapi.cloud historical market data API client
@@ -10,10 +11,9 @@ export default class HistoricalMarketDataClient extends MetaApiClient {
   /**
    * Constructs historical market data API client instance
    * @param {HttpClient} httpClient HTTP client
-   * @param {string} token authorization token
-   * @param {string} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
+   * @param {DomainClient} domainClient domain client
    */
-  constructor(httpClient: HttpClient, token: string, domain?: string);
+  constructor(httpClient: HttpClient, domainClient: DomainClient);
   
   /**
    * Returns historical candles for a specific symbol and timeframe from a MetaTrader account.
