@@ -1,3 +1,6 @@
+19.7.0
+  - added copyfactory user log and transaction streaming
+
 19.6.1
   - fixed synchronization of RPC connections
   - fixed synchronization when using account access tokens

@@ -9,6 +9,7 @@ export default class ClientApiClient extends MetaApiClient {
 
   /**
    * Constructs client API client instance
+   * @param {HttpClient} httpClient HTTP client
    * @param {DomainClient} domainClient domain client
    */
   constructor(httpClient, domainClient) {
