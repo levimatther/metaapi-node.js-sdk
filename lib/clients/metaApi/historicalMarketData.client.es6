@@ -9,7 +9,7 @@ import {NotFoundError} from '../errorHandler';
 export default class HistoricalMarketDataClient extends MetaApiClient {
 
   /**
-   * Constructs client API client instance
+   * Constructs historical market data API client instance
    * @param {HttpClient} httpClient HTTP client
    * @param {DomainClient} domainClient domain client
    */
