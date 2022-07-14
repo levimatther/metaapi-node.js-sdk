@@ -9,11 +9,13 @@ const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumt
 /**
  * @test {MetatraderAccountClient}
  */
+// eslint-disable-next-line max-statements
 describe('MetatraderAccountClient', () => {
 
   let accountClient;
   const token = 'header.payload.sign';
   let httpClient = new HttpClient();
+  let domainClient;
   let sandbox;
   let requestStub;
 
@@ -22,7 +24,12 @@ describe('MetatraderAccountClient', () => {
   });
 
   beforeEach(() => {
-    accountClient = new MetatraderAccountClient(httpClient, token);
+    domainClient = {
+      token,
+      domain: 'agiliumtrade.agiliumtrade.ai',
+      getUrl: () => {}
+    };
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     requestStub = sandbox.stub(httpClient, 'request');
   });
 
@@ -69,9 +76,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#getAccounts}
    */
   it('should not retrieve MetaTrader accounts from API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.getAccounts('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke getAccounts method, because you have connected with account access token. ' +
@@ -144,7 +153,8 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#getAccountByToken}
    */
   it('should retrieve MetaTrader account by token from API', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     let expected = {
       _id: 'id',
       login: '50194988',
@@ -171,9 +181,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#createAccount}
    */
   it('should not retrieve MetaTrader account by token via API with api token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, token);
+    domainClient.token = token;
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.getAccountByToken();
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke getAccountByToken method, because you have connected with API access token. ' +
@@ -218,9 +230,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#createAccount}
    */
   it('should not create MetaTrader account via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.createAccount({});
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke createAccount method, because you have connected with account access token. ' +
@@ -258,9 +272,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#createAccountReplica}
    */
   it('should not create MetaTrader account replica via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.createAccountReplica('accountId', {});
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke createAccountReplica method, because you have connected with account access token. ' +
@@ -288,9 +304,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#deployAccount}
    */
   it('should not deploy MetaTrader account via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.deployAccount('id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke deployAccount method, because you have connected with account access token. ' +
@@ -318,9 +336,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#deployAccountReplica}
    */
   it('should not deploy MetaTrader account replica via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.deployAccountReplica('accountId', 'id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke deployAccountReplica method, because you have connected with account access token. ' +
@@ -348,9 +368,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#undeployAccount}
    */
   it('should not undeploy MetaTrader account via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.undeployAccount('id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke undeployAccount method, because you have connected with account access token. ' +
@@ -378,9 +400,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#undeployAccountReplica}
    */
   it('should not undeploy MetaTrader account replica via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.undeployAccountReplica('accountId', 'id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke undeployAccountReplica method, because you have connected with account access token. ' +
@@ -408,9 +432,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#redeployAccount}
    */
   it('should not redeploy MetaTrader account via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.redeployAccount('id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke redeployAccount method, because you have connected with account access token. ' +
@@ -438,9 +464,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#redeployAccountReplica}
    */
   it('should not redeploy MetaTrader account replica via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.redeployAccountReplica('accountId', 'id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke redeployAccountReplica method, because you have connected with account access token. ' +
@@ -468,9 +496,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#deleteAccount}
    */
   it('should not delete MetaTrader account via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.deleteAccount('id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke deleteAccount method, because you have connected with account access token. ' +
@@ -498,9 +528,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#deleteAccountReplica}
    */
   it('should not delete MetaTrader account replica via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.deleteAccountReplica('accountId', 'id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke deleteAccountReplica method, because you have connected with account access token. ' +
@@ -539,9 +571,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#updateAccount}
    */
   it('should not update MetaTrader account via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.updateAccount('id', {});
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke updateAccount method, because you have connected with account access token. ' +
@@ -576,9 +610,11 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#updateAccountReplica}
    */
   it('should not update MetaTrader account replica via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.updateAccountReplica('accountId', 'id', {});
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke updateAccountReplica method, because you have connected with account access token. ' +
@@ -606,9 +642,11 @@ describe('MetatraderAccountClient', () => {
      * @test {MetatraderAccountClient#increaseReliability}
      */
   it('should not increase MetaTrader account reliability via API with account token', async () => {
-    accountClient = new MetatraderAccountClient(httpClient, 'token');
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
       await accountClient.increaseReliability('id');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke increaseReliability method, because you have connected with account access token. ' +

@@ -11,10 +11,18 @@ const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumt
 describe('MetaApiClient', () => {
 
   let apiClient;
+  const token = 'token';
+  const apiToken = 'header.payload.sign';
   let httpClient = new HttpClientMock(() => 'empty');
+  let domainClient;
 
   beforeEach(() => {
-    apiClient = new MetaApiClient(httpClient, 'token');
+    domainClient = {
+      token,
+      domain: 'agiliumtrade.agiliumtrade.ai',
+      getUrl: () => {}
+    };
+    apiClient = new MetaApiClient(httpClient, domainClient);
   });
 
   it('should return account token type', () => {
@@ -22,7 +30,8 @@ describe('MetaApiClient', () => {
   });
 
   it('should return api token type', () => {
-    apiClient = new MetaApiClient(httpClient, 'header.payload.sign');
+    domainClient.token = apiToken;
+    apiClient = new MetaApiClient(httpClient, domainClient);
     apiClient._tokenType.should.equal('api');
   });
 
@@ -31,13 +40,15 @@ describe('MetaApiClient', () => {
   });
 
   it('should check that current token is not account token', () => {
-    apiClient = new MetaApiClient(httpClient, 'header.payload.sign');
+    domainClient.token = apiToken;
+    apiClient = new MetaApiClient(httpClient, domainClient);
     apiClient._isNotAccountToken().should.equal(true);
   });
 
   it('should handle no access error with account token', async () => {
     try {
       await apiClient._handleNoAccessError('methodName');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke methodName method, because you have connected with account access token. ' +
@@ -47,9 +58,11 @@ describe('MetaApiClient', () => {
   });
 
   it('should handle no access error with api token', async () => {
-    apiClient = new MetaApiClient(httpClient, 'header.payload.sign');
+    domainClient.token = apiToken;
+    apiClient = new MetaApiClient(httpClient, domainClient);
     try {
       await apiClient._handleNoAccessError('methodName');
+      sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
         'You can not invoke methodName method, because you have connected with API access token. ' +

@@ -10,12 +10,11 @@ export default class ClientApiClient extends MetaApiClient {
   /**
    * Constructs client API client instance
    * @param {HttpClient} httpClient HTTP client
-   * @param {String} token authorization token
-   * @param {String} domain domain to connect to, default is agiliumtrade.agiliumtrade.ai
+   * @param {DomainClient} domainClient domain client
    */
-  constructor(httpClient, token, domain = 'agiliumtrade.agiliumtrade.ai') {
-    super(httpClient, token, domain);
-    this._host = `https://mt-client-api-v1.${domain}`;
+  constructor(httpClient, domainClient) {
+    super(httpClient, domainClient);
+    this._host = 'https://mt-client-api-v1';
     this._ignoredFieldListsCache = {
       lastUpdated: 0,
       data: null,
@@ -40,9 +39,10 @@ export default class ClientApiClient extends MetaApiClient {
 
   /**
    * Retrieves hashing ignored field lists
+   * @param {String} region account region
    * @returns {Promise<HashingIgnoredFieldLists>} promise resolving with hashing ignored field lists
    */
-  async getHashingIgnoredFieldLists() {
+  async getHashingIgnoredFieldLists(region) {
     if(!this._ignoredFieldListsCache.data || Date.now() - this._ignoredFieldListsCache.lastUpdated > 60 * 60 * 1000) {
       if(this._ignoredFieldListsCache.requestPromise) {
         await this._ignoredFieldListsCache.requestPromise;
@@ -51,8 +51,9 @@ export default class ClientApiClient extends MetaApiClient {
         this._ignoredFieldListsCache.requestPromise = new Promise((res, rej) => {
           resolve = res, reject = rej;
         });
+        const host = await this._domainClient.getUrl(this._host, region);
         const opts = {
-          url: `${this._host}/hashing-ignored-field-lists`,
+          url: `${host}/hashing-ignored-field-lists`,
           method: 'GET',
           json: true,
           headers: {

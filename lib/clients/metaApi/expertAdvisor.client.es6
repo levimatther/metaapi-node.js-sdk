@@ -49,7 +49,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
    */
   getExpertAdvisor(accountId, expertId) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('getExpertAdvisors');
+      return this._handleNoAccessError('getExpertAdvisor');
     }
     const opts = {
       url: `${this._host}/users/current/accounts/${accountId}/expert-advisors/${expertId}`,
@@ -84,7 +84,7 @@ export default class ExpertAdvisorClient extends MetaApiClient {
    */
   updateExpertAdvisor(accountId, expertId, expert) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('getExpertAdvisors');
+      return this._handleNoAccessError('updateExpertAdvisor');
     }
     const opts = {
       url: `${this._host}/users/current/accounts/${accountId}/expert-advisors/${expertId}`,

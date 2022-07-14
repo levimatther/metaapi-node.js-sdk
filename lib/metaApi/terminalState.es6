@@ -96,9 +96,9 @@ export default class TerminalState extends SynchronizationListener {
   // eslint-disable-next-line complexity
   async getHashes(accountType, instanceIndex) {
     let requestedState = this._getState(instanceIndex);
-    const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists();
     // get latest instance number state
     const region = instanceIndex.split(':')[0];
+    const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists(region);
     const instanceNumber = instanceIndex.split(':')[1];
     const instanceNumberStates = Object.keys(this._stateByInstanceIndex)
       .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${region}:${instanceNumber}:`));
