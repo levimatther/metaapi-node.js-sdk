@@ -1,3 +1,6 @@
+19.7.1
+  - improved synchronization stability of accounts on multiple regions
+
 19.7.0
   - added copyfactory user log and transaction streaming
 

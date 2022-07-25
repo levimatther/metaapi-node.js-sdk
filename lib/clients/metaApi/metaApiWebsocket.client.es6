@@ -80,6 +80,7 @@ export default class MetaApiWebsocketClient {
     this._firstConnect = true;
     this._lastRequestsTime = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
+    this._packetOrderer.start();
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
       this._packetLogger.start();
@@ -335,9 +336,6 @@ export default class MetaApiWebsocketClient {
       }
     });
     instance.socket = socketInstance;
-    if (this._socketInstances[region][instanceNumber].length === 1) {
-      this._packetOrderer.start();
-    } 
     socketInstance.on('connect', async () => {
       // eslint-disable-next-line no-console
       this._logger.info('MetaApi websocket client connected to the MetaApi server');
