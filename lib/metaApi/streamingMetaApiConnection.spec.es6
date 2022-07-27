@@ -921,4 +921,32 @@ describe('StreamingMetaApiConnection', () => {
     sinon.assert.calledOnceWithExactly(client.queueEvent, 'accountId', 'test', eventCallable);
   });
 
+  /**
+   * @test {StreamingMetaApiConnection#onReconnected}
+   */
+  it('should clear region states on socket reconnect', async () => {
+    await api.connect();
+    sandbox.stub(client, 'refreshMarketDataSubscriptions').resolves();
+    sandbox.stub(client, 'subscribeToMarketData').resolves();
+    sandbox.stub(client, 'waitSynchronized').resolves();
+    await api.onSynchronizationStarted('new-york:1:ps-mpa-1');
+    await api.onSynchronizationStarted('vint-hill:1:ps-mpa-1');
+    await clock.tickAsync(50);
+    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountIdReplica', 1, []);
+    sinon.assert.calledWith(client.refreshMarketDataSubscriptions, 'accountId', 1, []);
+    api.terminalState.onSymbolPricesUpdated('new-york:1:ps-mpa-1', 
+      [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    api.terminalState.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1', 
+      [{time: new Date(), symbol: 'EURUSD', bid: 1, ask: 1.1}]);
+    await api.subscribeToMarketData('EURUSD', [{type: 'quotes'}], 1);
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 4);
+    await api.onReconnected('new-york', 1);
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 5);
+    await api.onReconnected('vint-hill', 1);
+    await clock.tickAsync(1050);
+    sinon.assert.callCount(client.refreshMarketDataSubscriptions, 5);
+  });
+
 });

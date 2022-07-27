@@ -164,9 +164,11 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   
   /**
    * Invoked when connection to MetaApi websocket API restored after a disconnect
+   * @param {string} region reconnected region
+   * @param {number} instanceNumber reconnected instance number
    * @return {Promise} promise which resolves when connection to MetaApi websocket API restored after a disconnect
    */
-  onReconnected(): Promise<any>;
+  onReconnected(region: string, instanceNumber: number): Promise<any>;
   
   /**
    * Invoked when a stream for an instance index is closed
