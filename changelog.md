@@ -1,3 +1,6 @@
+19.7.2
+  - fixed synchronization after socket client reconnect
+
 19.7.1
   - improved synchronization stability of accounts on multiple regions
 

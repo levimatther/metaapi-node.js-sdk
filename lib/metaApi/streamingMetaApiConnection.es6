@@ -368,7 +368,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   }
 
   /**
-   * Invoked when position synchronization fnished to indicate progress of an initial terminal state synchronization
+   * Invoked when position synchronization finished to indicate progress of an initial terminal state synchronization
    * @param {string} instanceIndex index of an account instance connected
    * @param {String} synchronizationId synchronization request id
    */
@@ -415,13 +415,19 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
 
   /**
    * Invoked when connection to MetaApi websocket API restored after a disconnect
+   * @param {String} region reconnected region
+   * @param {Number} instanceNumber reconnected instance number
    * @return {Promise} promise which resolves when connection to MetaApi websocket API restored after a disconnect
    */
-  async onReconnected() {
-    this._stateByInstanceIndex = {};
-    this._refreshMarketDataSubscriptionSessions = {};
-    Object.values(this._refreshMarketDataSubscriptionTimeouts).forEach(timeout => clearTimeout(timeout));
-    this._refreshMarketDataSubscriptionTimeouts = {};
+  async onReconnected(region, instanceNumber) {
+    const instanceTemplate = `${region}:${instanceNumber}`;
+    Object.keys(this._stateByInstanceIndex)
+      .filter(key => key.startsWith(`${instanceTemplate}:`)).forEach(key => {
+        delete this._stateByInstanceIndex[key];
+      });
+    delete this._refreshMarketDataSubscriptionSessions[instanceTemplate];
+    clearTimeout(this._refreshMarketDataSubscriptionTimeouts[instanceTemplate]);
+    delete this._refreshMarketDataSubscriptionTimeouts[instanceTemplate];
   }
 
   /**

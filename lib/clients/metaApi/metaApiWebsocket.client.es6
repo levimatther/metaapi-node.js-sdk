@@ -2275,7 +2275,7 @@ export default class MetaApiWebsocketClient {
       this._packetOrderer.onReconnected(reconnectAccountIds);
 
       for (let listener of reconnectListeners) {
-        Promise.resolve(listener.listener.onReconnected())
+        Promise.resolve(listener.listener.onReconnected(region, instanceNumber))
           .catch(err => this._logger.error('Failed to notify reconnect listener', err));
       }
     } catch (err) {
