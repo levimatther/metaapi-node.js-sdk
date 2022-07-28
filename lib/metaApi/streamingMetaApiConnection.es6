@@ -317,15 +317,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     state.synchronizationRetryIntervalInSeconds = 1;
     state.synchronized = false;
     this._ensureSynchronized(instanceIndex, key);
-    let indices = [];
-    for (let i = 0; i < replicas; i++) {
-      indices.push(i);
-    }
-    for (let e of Object.entries(this._stateByInstanceIndex)) {
-      if (!indices.includes(this.getInstanceNumber(e[1].instanceIndex))) {
-        delete this._stateByInstanceIndex[e[0]];
-      }
-    }
     this._logger.debug(`${this._account.id}:${instanceIndex}: connected to broker`);
   }
 
