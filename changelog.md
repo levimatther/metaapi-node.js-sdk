@@ -1,3 +1,6 @@
+19.7.3
+  - fixed streaming connection on connected event
+
 19.7.2
   - fixed synchronization after socket client reconnect
 
