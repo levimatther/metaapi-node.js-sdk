@@ -100,9 +100,10 @@ export default class MetaApi {
     const historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     const accountGeneratorHttpClient = new HttpClient(accountGeneratorRequestTimeout, retryOpts);
     const clientApiClient = new ClientApiClient(httpClient, domainClient); 
-    this._metaApiWebsocketClient = new MetaApiWebsocketClient(httpClient, token, {application, domain, requestTimeout,
-      connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts, useSharedClientApi, 
-      region: opts.region, unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
+    this._metaApiWebsocketClient = new MetaApiWebsocketClient(domainClient, token, {application, domain,
+      requestTimeout, connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts,
+      useSharedClientApi, region: opts.region,
+      unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, domainClient));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, clientApiClient, application,
       refreshSubscriptionsOpts);

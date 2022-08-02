@@ -27,17 +27,17 @@ export default class MetaApiWebsocketClient {
 
   /**
    * Constructs MetaApi websocket API client instance
-   * @param {HttpClient} httpClient HTTP client
+   * @param {DomainClient} domainClient domain client
    * @param {String} token authorization token
    * @param {Object} opts websocket client options
    */
   // eslint-disable-next-line complexity,max-statements
-  constructor(httpClient, token, opts) {
+  constructor(domainClient, token, opts) {
     const validator = new OptionsValidator();
     opts = opts || {};
     opts.packetOrderingTimeout = validator.validateNonZero(opts.packetOrderingTimeout, 60, 'packetOrderingTimeout');
     opts.synchronizationThrottler = opts.synchronizationThrottler || {};
-    this._httpClient = httpClient;
+    this._domainClient = domainClient;
     this._application = opts.application || 'MetaApi';
     this._domain = opts.domain || 'agiliumtrade.agiliumtrade.ai';
     this._region = opts.region;
@@ -2293,15 +2293,7 @@ export default class MetaApiWebsocketClient {
       return {url: this._url, isSharedClientApi: true};
     }
 
-    const urlSettings = await this._httpClient.request({
-      url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
-      method: 'GET',
-      headers: {
-        'auth-token': this._token
-      },
-      json: true,
-    }, 'getUrlSettings');
-
+    const urlSettings = await this._domainClient.getSettings();
     const getUrl = (hostname) => 
       `https://${hostname}.${region}-${String.fromCharCode(97 + Number(instanceNumber))}.${urlSettings.domain}`;
 

@@ -6,7 +6,6 @@ import MetaApiWebsocketClient from './metaApiWebsocket.client';
 import Server from 'socket.io';
 import NotConnectedError from './notConnectedError';
 import {InternalError} from '../errorHandler';
-import HttpClient from '../httpClient';
 
 /**
  * @test {MetaApiWebsocketClient}
@@ -23,12 +22,14 @@ describe('MetaApiWebsocketClient', () => {
   let sandbox;
   let activeSynchronizationIdsStub;
   let getActiveInstancesStub;
-  let httpClient = new HttpClient();
   const synchronizationThrottler = {
     activeSynchronizationIds: ['synchronizationId'],
     onDisconnect: () => {},
     updateSynchronizationId: () => {},
     removeSynchronizationId: () => {}
+  };
+  const domainClient = {
+    getSettings: () => {}
   };
   let accountInformation = {
     broker: 'True ECN Trading Ltd',
@@ -48,7 +49,7 @@ describe('MetaApiWebsocketClient', () => {
 
   beforeEach(async () => {
     clock = sinon.useFakeTimers({shouldAdvanceTime: true});
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+    client = new MetaApiWebsocketClient(domainClient, 'token', {application: 'application', 
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true,
       retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
     client.url = 'http://localhost:6784';
@@ -156,7 +157,7 @@ describe('MetaApiWebsocketClient', () => {
     client.close();
     io.close(() => resolve());
     await promise;
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+    client = new MetaApiWebsocketClient(domainClient, 'token', {application: 'application', 
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false,
       connectTimeout: 0.1,
       retryOpts: { retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
@@ -184,15 +185,10 @@ describe('MetaApiWebsocketClient', () => {
    */
   it('should connect to shared server', async () => {
     client.close();
-    sandbox.stub(httpClient, 'request').callsFake(arg => {
-      if(arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
-      'users/current/servers/mt-client-api') {
-        return {
-          domain: 'v3.agiliumlabs.cloud'
-        };
-      }
+    sandbox.stub(domainClient, 'getSettings').resolves({
+      domain: 'v3.agiliumlabs.cloud'
     });
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application',
+    client = new MetaApiWebsocketClient(domainClient, 'token', {application: 'application',
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
     client._socketInstances = {'vint-hill': {0: [{
       connected: true,
@@ -208,17 +204,11 @@ describe('MetaApiWebsocketClient', () => {
    */
   it('should connect to dedicated server', async () => {
     client.close();
-    sandbox.stub(httpClient, 'request').callsFake(arg => {
-      if (arg.url === 'https://mt-provisioning-api-v1.project-stock.agiliumlabs.cloud/' +
-      'users/current/servers/mt-client-api') {
-        return {
-          url: 'http://localhost:8081',
-          hostname: 'mt-client-api-dedicated',
-          domain: 'project-stock.agiliumlabs.cloud'
-        };
-      }
+    sandbox.stub(domainClient, 'getSettings').resolves({
+      hostname: 'mt-client-api-dedicated',
+      domain: 'project-stock.agiliumlabs.cloud'
     });
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+    client = new MetaApiWebsocketClient(domainClient, 'token', {application: 'application', 
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true});
     client._socketInstances = {'vint-hill': {0: [{
       connected: true,
@@ -2906,7 +2896,7 @@ describe('MetaApiWebsocketClient', () => {
     io.close(() => resolve());
     await promise;
     io = new Server(6785, {path: '/ws', pingTimeout: 1000000});
-    client = new MetaApiWebsocketClient(httpClient, 'token', {application: 'application', 
+    client = new MetaApiWebsocketClient(domainClient, 'token', {application: 'application', 
       domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false,
       retryOpts: { retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5},
       eventProcessing: {sequentialProcessing: true}});
