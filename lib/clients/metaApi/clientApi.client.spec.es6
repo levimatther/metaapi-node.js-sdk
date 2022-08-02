@@ -136,34 +136,25 @@ describe('ClientApiClient', () => {
     /**
      * @test {ClientApiClient#getHashingIgnoredFieldLists}
      */
-    it('should return error to promise', async () => {
+    it('should retry request if received error', async () => {
+      let callNumber = 0;
       requestStub.callsFake(async (arg) => {
         await new Promise(res => setTimeout(res, 50));
-        throw new Error('test');
+        callNumber++;
+        if(callNumber < 3) {
+          throw new Error('test');
+        } else {
+          return expected;
+        }
       });
       
-      let responses = [clientApiClient.getHashingIgnoredFieldLists(),
+      let ignoredFields = [clientApiClient.getHashingIgnoredFieldLists(),
         clientApiClient.getHashingIgnoredFieldLists()];
-      try {
-        await responses[0];
-        sinon.assert.fail();
-      } catch (error) {
-        error.message.should.equal('test');
-      }
-      try {
-        await responses[1];
-        sinon.assert.fail();
-      } catch (error) {
-        error.message.should.equal('test');
-      }
-      sinon.assert.calledOnceWithExactly(httpClient.request, {
-        url: `${clientApiUrl}/hashing-ignored-field-lists`,
-        method: 'GET',
-        json: true,
-        headers: {
-          'auth-token': token
-        }
-      }, 'getHashingIgnoredFieldLists');
+      await clock.tickAsync(6000);
+      ignoredFields = [await ignoredFields[0], await ignoredFields[1]];
+      ignoredFields[0].should.equal(expected);
+      ignoredFields[1].should.equal(expected);
+      sinon.assert.callCount(httpClient.request, 3);
     });
 
   });

@@ -33,4 +33,27 @@ export default class DomainClient {
    */
   getUrl(host: string, region: string): Promise<string>;
 
+  /**
+   * Returns domain settings
+   * @returns {DomainSettings} domain settings
+   */
+  getSettings(): Promise<DomainSettings>;
+
+}
+
+/**
+ * Domain settings
+ */
+export declare type DomainSettings = {
+
+  /**
+   * client api host name
+   */
+  hostname: string,
+
+  /**
+   * client api domain for regions
+   */
+  domain: string
+
 }

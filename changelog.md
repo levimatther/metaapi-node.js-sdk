@@ -1,3 +1,6 @@
+19.7.4
+  - fixed caching region data
+
 19.7.3
   - fixed streaming connection on connected event
 

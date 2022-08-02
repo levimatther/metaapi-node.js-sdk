@@ -17,6 +17,7 @@ export default class DomainClient {
     this._token = token;
     this._urlCache = {
       domain: null,
+      hostname: null,
       requestPromise: null,
       lastUpdated: 0
     };
@@ -49,6 +50,22 @@ export default class DomainClient {
     return `${host}.${region}.${this._urlCache.domain}`;
   }
 
+  /**
+   * Domain settings
+   * @typedef {Object} DomainSettings
+   * @property {String} hostname client api host name
+   * @property {String} domain client api domain for regions
+   */
+
+  /**
+   * Returns domain settings
+   * @returns {DomainSettings} domain settings
+   */
+  async getSettings() {
+    await this._updateDomain();
+    return {domain: this._urlCache.domain, hostname: this._urlCache.hostname};
+  }
+
   async _updateDomain() {
     if(!this._urlCache.domain || this._urlCache.lastUpdated < Date.now() - 1000 * 60 * 10) {
       if(this._urlCache.requestPromise) {
@@ -71,6 +88,7 @@ export default class DomainClient {
           const urlSettings = await this._httpClient.request(opts, '_updateDomain');
           this._urlCache = {
             domain: urlSettings.domain,
+            hostname: urlSettings.hostname,
             requestPromise: null,
             lastUpdated: Date.now()
           }; 

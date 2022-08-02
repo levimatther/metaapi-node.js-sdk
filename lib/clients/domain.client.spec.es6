@@ -146,4 +146,23 @@ describe('DomainClient', () => {
     }, '_updateDomain');
   });
 
+  /**
+   * @test {DomainClient#getSettings}
+   */
+  it('should return domain settings', async () => {
+    const settings = await domainClient.getSettings();
+    sinon.assert.match(settings, {
+      hostname: 'mt-client-api-v1',
+      domain: 'agiliumtrade.ai'
+    });
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/servers/mt-client-api',
+      method: 'GET',
+      json: true,
+      headers: {
+        'auth-token': token
+      }
+    }, '_updateDomain');
+  });
+
 });
