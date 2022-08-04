@@ -1,3 +1,6 @@
+19.7.5
+  - fixed caching domain settings
+
 19.7.4
   - fixed caching region data
 

@@ -116,34 +116,25 @@ describe('DomainClient', () => {
   /**
    * @test {DomainClient#getUrl}
    */
-  it('should return error to promise', async () => {
+  it('should retry request if received error', async () => {
+    let callNumber = 0;
     requestStub.callsFake(async (arg) => {
       await new Promise(res => setTimeout(res, 50));
-      throw new Error('test');
+      callNumber++;
+      if(callNumber < 3) {
+        throw new Error('test');
+      } else {
+        return hostData;
+      }
     });
-      
+    
     let responses = [domainClient.getUrl(host, region),
       domainClient.getUrl(host, region)];
-    try {
-      await responses[0];
-      sinon.assert.fail();
-    } catch (error) {
-      error.message.should.equal('test');
-    }
-    try {
-      await responses[1];
-      sinon.assert.fail();
-    } catch (error) {
-      error.message.should.equal('test');
-    }
-    sinon.assert.calledOnceWithExactly(httpClient.request, {
-      url: 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/servers/mt-client-api',
-      method: 'GET',
-      json: true,
-      headers: {
-        'auth-token': token
-      }
-    }, '_updateDomain');
+    await clock.tickAsync(6000);
+    responses = [await responses[0], await responses[1]];
+    responses[0].should.equal(expected);
+    responses[1].should.equal(expected);
+    sinon.assert.callCount(httpClient.request, 3);
   });
 
   /**
