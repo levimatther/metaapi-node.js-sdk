@@ -2327,8 +2327,8 @@ export default class MetaApiWebsocketClient {
         }
         this._logger.info(logMessage);
         return url;
-      } catch (error) {
-        this._logger.error(error);
+      } catch (err) {
+        this._logger.error('Failed to retrieve server URL', err);
         await new Promise(res => setTimeout(res, 1000));
       }
     }

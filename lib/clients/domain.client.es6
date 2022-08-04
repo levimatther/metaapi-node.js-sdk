@@ -1,5 +1,7 @@
 'use strict';
 
+import LoggerManager from '../logger';
+
 /**
  * Connection URL managing client
  */
@@ -21,6 +23,8 @@ export default class DomainClient {
       requestPromise: null,
       lastUpdated: 0
     };
+    this._retryIntervalInSeconds = 1;
+    this._logger = LoggerManager.getLogger('DomainClient');
   }
 
   /**
@@ -75,27 +79,33 @@ export default class DomainClient {
         this._urlCache.requestPromise = new Promise((res, rej) => {
           resolve = res, reject = rej;
         });
-        const opts = {
-          url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
-          method: 'GET',
-          headers: {
-            'auth-token': this._token
-          },
-          json: true,
-        };
-
-        try {
-          const urlSettings = await this._httpClient.request(opts, '_updateDomain');
-          this._urlCache = {
-            domain: urlSettings.domain,
-            hostname: urlSettings.hostname,
-            requestPromise: null,
-            lastUpdated: Date.now()
-          }; 
-          resolve();
-        } catch (error) {
-          reject(error);
-          throw error;
+        let isCacheUpdated = false;
+        while(!isCacheUpdated) {
+          const opts = {
+            url: `https://mt-provisioning-api-v1.${this._domain}/users/current/servers/mt-client-api`,
+            method: 'GET',
+            headers: {
+              'auth-token': this._token
+            },
+            json: true,
+          };
+  
+          try {
+            const urlSettings = await this._httpClient.request(opts, '_updateDomain');
+            this._urlCache = {
+              domain: urlSettings.domain,
+              hostname: urlSettings.hostname,
+              requestPromise: null,
+              lastUpdated: Date.now()
+            }; 
+            resolve();
+            isCacheUpdated = true;
+            this._retryIntervalInSeconds = 1;
+          } catch (err) {
+            this._logger.error('Failed to update domain settings cache', err);
+            this._retryIntervalInSeconds = Math.min(this._retryIntervalInSeconds * 2, 300);
+            await new Promise(res => setTimeout(res, this._retryIntervalInSeconds * 1000));
+          }
         }
       }
     }
