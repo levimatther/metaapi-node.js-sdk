@@ -338,7 +338,7 @@ export default class MetaApiWebsocketClient {
     instance.socket = socketInstance;
     socketInstance.on('connect', async () => {
       // eslint-disable-next-line no-console
-      this._logger.info('MetaApi websocket client connected to the MetaApi server');
+      this._logger.info(`${instanceNumber}: MetaApi websocket client connected to the MetaApi server`);
       instance.reconnectWaitTime = this._socketMinimumReconnectTimeout;
       instance.isReconnecting = false;
       if (!instance.resolved) {
@@ -353,11 +353,12 @@ export default class MetaApiWebsocketClient {
     });
     socketInstance.on('reconnect', async () => {
       instance.isReconnecting = false;
+      this._logger.info(`${instanceNumber}: MetaApi websocket client reconnected`);
       await this._fireReconnected(instanceNumber, instance.id, region);
     });
     socketInstance.on('connect_error', async (err) => {
       // eslint-disable-next-line no-console
-      this._logger.error('MetaApi websocket client connection error', err);
+      this._logger.error(`${instanceNumber}: MetaApi websocket client connection error`, err);
       instance.isReconnecting = false;
       if (!instance.resolved) {
         await this._reconnect(instanceNumber, instance.id, region);
@@ -365,7 +366,7 @@ export default class MetaApiWebsocketClient {
     });
     socketInstance.on('connect_timeout', async (timeout) => {
       // eslint-disable-next-line no-console
-      this._logger.error('MetaApi websocket client connection timeout');
+      this._logger.error(`${instanceNumber}: MetaApi websocket client connection timeout`);
       instance.isReconnecting = false;
       if (!instance.resolved) {
         await this._reconnect(instanceNumber, instance.id, region);
@@ -374,14 +375,14 @@ export default class MetaApiWebsocketClient {
     socketInstance.on('disconnect', async (reason) => {
       instance.synchronizationThrottler.onDisconnect();
       // eslint-disable-next-line no-console
-      this._logger.info('MetaApi websocket client disconnected from the MetaApi ' +
-        'server because of ' + reason);
+      this._logger.info(`${instanceNumber}: MetaApi websocket client disconnected from the MetaApi server because ` +
+        `of ${reason}`);
       instance.isReconnecting = false;
       await this._reconnect(instanceNumber, instance.id, region);
     });
     socketInstance.on('error', async (error) => {
       // eslint-disable-next-line no-console
-      this._logger.error('MetaApi websocket client error', error);
+      this._logger.error(`${instanceNumber}: MetaApi websocket client error`, error);
       instance.isReconnecting = false;
       await this._reconnect(instanceNumber, instance.id, region);
     });
@@ -962,6 +963,7 @@ export default class MetaApiWebsocketClient {
   async synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime,  
     getHashes) {
     if(this._getSocketInstanceByAccount(accountId, instanceIndex) === undefined) {
+      this._logger.debug(`${accountId}:${instanceIndex}: creating socket instance on synchronize`);
       await this._createSocketInstanceByAccount(accountId, instanceIndex);
     }
     const syncThrottler = this._getSocketInstanceByAccount(accountId, instanceIndex)
@@ -1454,11 +1456,13 @@ export default class MetaApiWebsocketClient {
     if (this._socketInstancesByAccounts[instanceNumber][accountId] !== undefined) {
       socketInstanceIndex = this._socketInstancesByAccounts[instanceNumber][accountId];
     } else {
+      this._logger.debug(`${accountId}:${instanceNumber}: creating socket instance on RPC request`);
       await this._createSocketInstanceByAccount(accountId, instanceNumber);
       socketInstanceIndex = this._socketInstancesByAccounts[instanceNumber][accountId];
     }
     const instance = this._socketInstances[region][instanceNumber][socketInstanceIndex];
     if (!instance.connected) {
+      this._logger.debug(`${accountId}:${instanceNumber}: connecting socket instance on RPC request`);
       await this.connect(instanceNumber, region);
     } else if(!this.connected(instanceNumber, socketInstanceIndex, region)) {
       await instance.connectResult;
