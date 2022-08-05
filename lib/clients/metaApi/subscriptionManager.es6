@@ -197,6 +197,7 @@ export default class SubscriptionManager {
     if(this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId] !== undefined && 
       this._websocketClient.connected(instanceNumber, 
         this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId], region)) {
+      this._logger.debug(`${accountId}:${instanceNumber}: scheduling subscribe because of account timeout`);
       this.scheduleSubscribe(accountId, instanceNumber, true);
     }
   }
@@ -209,6 +210,7 @@ export default class SubscriptionManager {
   async onDisconnected(accountId, instanceNumber) {
     await new Promise(res => setTimeout(res, Math.max(Math.random() * 5, 1) * 1000));
     if(this._websocketClient.socketInstancesByAccounts[instanceNumber][accountId] !== undefined) {
+      this._logger.debug(`${accountId}:${instanceNumber}: scheduling subscribe because account disconnected`);
       this.scheduleSubscribe(accountId, instanceNumber, true);
     }
   }
@@ -241,6 +243,7 @@ export default class SubscriptionManager {
             await new Promise(res => setTimeout(res, Math.random() * 5000));
             if(this._awaitingResubscribe[instanceNumber][accountId]) {
               delete this._awaitingResubscribe[instanceNumber][accountId];
+              this._logger.debug(`${accountId}:${instanceNumber}: scheduling subscribe because account reconnected`);
               this.scheduleSubscribe(accountId, instanceNumber);
             }
           }

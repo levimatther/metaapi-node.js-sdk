@@ -1,3 +1,6 @@
+19.7.6
+  - added extra logging to debug connection issues 
+
 19.7.5
   - fixed caching domain settings
 
