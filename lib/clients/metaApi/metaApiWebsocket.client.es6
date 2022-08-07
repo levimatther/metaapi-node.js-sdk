@@ -338,7 +338,7 @@ export default class MetaApiWebsocketClient {
     instance.socket = socketInstance;
     socketInstance.on('connect', async () => {
       // eslint-disable-next-line no-console
-      this._logger.info(`${instanceNumber}: MetaApi websocket client connected to the MetaApi server`);
+      this._logger.info(`${region}:${instanceNumber}: MetaApi websocket client connected to the MetaApi server`);
       instance.reconnectWaitTime = this._socketMinimumReconnectTimeout;
       instance.isReconnecting = false;
       if (!instance.resolved) {
@@ -353,12 +353,12 @@ export default class MetaApiWebsocketClient {
     });
     socketInstance.on('reconnect', async () => {
       instance.isReconnecting = false;
-      this._logger.info(`${instanceNumber}: MetaApi websocket client reconnected`);
+      this._logger.info(`${region}:${instanceNumber}: MetaApi websocket client reconnected`);
       await this._fireReconnected(instanceNumber, instance.id, region);
     });
     socketInstance.on('connect_error', async (err) => {
       // eslint-disable-next-line no-console
-      this._logger.error(`${instanceNumber}: MetaApi websocket client connection error`, err);
+      this._logger.error(`${region}:${instanceNumber}: MetaApi websocket client connection error`, err);
       instance.isReconnecting = false;
       if (!instance.resolved) {
         await this._reconnect(instanceNumber, instance.id, region);
@@ -366,7 +366,7 @@ export default class MetaApiWebsocketClient {
     });
     socketInstance.on('connect_timeout', async (timeout) => {
       // eslint-disable-next-line no-console
-      this._logger.error(`${instanceNumber}: MetaApi websocket client connection timeout`);
+      this._logger.error(`${region}:${instanceNumber}: MetaApi websocket client connection timeout`);
       instance.isReconnecting = false;
       if (!instance.resolved) {
         await this._reconnect(instanceNumber, instance.id, region);
@@ -375,14 +375,14 @@ export default class MetaApiWebsocketClient {
     socketInstance.on('disconnect', async (reason) => {
       instance.synchronizationThrottler.onDisconnect();
       // eslint-disable-next-line no-console
-      this._logger.info(`${instanceNumber}: MetaApi websocket client disconnected from the MetaApi server because ` +
-        `of ${reason}`);
+      this._logger.info(`${region}:${instanceNumber}: MetaApi websocket client disconnected from the ` +
+        `MetaApi server because of ${reason}`);
       instance.isReconnecting = false;
       await this._reconnect(instanceNumber, instance.id, region);
     });
     socketInstance.on('error', async (error) => {
       // eslint-disable-next-line no-console
-      this._logger.error(`${instanceNumber}: MetaApi websocket client error`, error);
+      this._logger.error(`${region}:${instanceNumber}: MetaApi websocket client error`, error);
       instance.isReconnecting = false;
       await this._reconnect(instanceNumber, instance.id, region);
     });
@@ -1798,7 +1798,8 @@ export default class MetaApiWebsocketClient {
         cancelDisconnectTimer();
         this._statusTimers[instanceId] = setTimeout(() => {
           if(isOnlyActiveInstance()) {
-            this._subscriptionManager.onTimeout(data.accountId, instanceNumber);
+            this._subscriptionManager.onTimeout(data.accountId, 0);
+            this._subscriptionManager.onTimeout(data.accountId, 1);
           }
           this.queueEvent(primaryAccountId, `${instanceIndex}:onDisconnected`, () => onDisconnected(true));
           clearTimeout(this._statusTimers[instanceId]);
@@ -1812,7 +1813,8 @@ export default class MetaApiWebsocketClient {
           if(isOnlyActiveInstance()) {
             const onDisconnectedPromises = [];
             if(!isTimeout) {
-              onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, instanceNumber));
+              onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, 0));
+              onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, 1));
             }
             for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
               onDisconnectedPromises.push(this._processEvent(
