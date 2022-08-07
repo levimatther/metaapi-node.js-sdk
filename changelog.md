@@ -1,3 +1,6 @@
+19.7.7
+  - fixed resubscribe on disconnect
+
 19.7.6
   - added extra logging to debug connection issues 
 

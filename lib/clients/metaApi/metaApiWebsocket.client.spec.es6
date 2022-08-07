@@ -2916,9 +2916,13 @@ describe('MetaApiWebsocketClient', () => {
         if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'RPC') {
           server.emit('response', {type: 'response', accountId: data.accountId, 
             requestId: data.requestId, positions: []});
+        } else if (data.type === 'subscribe') {
+          server.emit('response', {type: 'response', accountId: data.accountId, 
+            requestId: data.requestId});
         }
       });
     });
+    await client.subscribe('accountId', 1);
     await client.getPositions('accountId');
     client.addSynchronizationListener('accountId', listener);
     sandbox.stub(client._packetOrderer, 'restoreOrder').callsFake((arg) => {
