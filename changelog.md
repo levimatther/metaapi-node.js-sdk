@@ -1,3 +1,6 @@
+20.0.0
+  - breaking change: updated dependency metaapi.cloud-copyfactory-sdk ^5.10.0 -> ^6.0.0
+
 19.7.8
   - fixed typings
 
