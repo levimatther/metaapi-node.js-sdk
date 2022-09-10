@@ -19,13 +19,32 @@ export default class ConnectionRegistry {
   constructor(metaApiWebsocketClient: MetaApiWebsocketClient, clientApiClient: ClientApiClient, application: string, refreshSubscriptionsOpts: string);
   
   /**
-   * Creates and returns a new account connection if doesnt exist, otherwise returns old
+   * Creates and returns a new account streaming connection if doesnt exist, otherwise returns old
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage
    * @param {Date} [historyStartTime] history start time
    * @return {StreamingMetaApiConnection} streaming metaapi connection
    */
-  connect(account: MetatraderAccount, historyStorage: HistoryStorage, historyStartTime?: Date): StreamingMetaApiConnection;
+  connectStreaming(account: MetatraderAccount, historyStorage: HistoryStorage, historyStartTime?: Date): StreamingMetaApiConnection;
+
+  /**
+   * Removes a streaming connection from registry
+   * @param {MetatraderAccount} account MetaTrader account to remove from registry
+   */
+  removeStreaming(account: MetatraderAccount): void;
+
+  /**
+   * Creates and returns a new account rpc connection if doesnt exist, otherwise returns old
+   * @param {MetatraderAccount} account MetaTrader account id to connect to
+   * @returns {RpcMetaApiConnection} rpc metaapi connection
+   */
+  connectRpc(account: MetatraderAccount): RpcMetaApiConnection;
+
+  /**
+   * Removes an RPC connection from registry
+   * @param {MetatraderAccount} account MetaTrader account to remove from registry
+   */
+  removeRpc(account: MetatraderAccount): void;
   
   /**
    * Removes an account from registry

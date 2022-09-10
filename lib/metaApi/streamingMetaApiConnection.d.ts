@@ -7,7 +7,6 @@ import { MarketDataSubscription, MarketDataUnsubscription } from "../clients/met
 import TerminalState from "./terminalState";
 import ConnectionHealthMonitor from "./connectionHealthMonitor";
 import MetaApiConnection from "./metaApiConnection";
-import SynchronizationListener from "../clients/metaApi/synchronizationListener";
 import ClientApiClient from "../clients/metaApi/clientApi.client";
 
 /**
@@ -100,13 +99,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   subscriptions(symbol: string): Array<MarketDataSubscription>;
   
   /**
-   * Sends client uptime stats to the server.
-   * @param {Object} uptime uptime statistics to send to the server
-   * @returns {Promise} promise which resolves when uptime statistics is submitted
-   */
-  saveUptime(uptime: Object): Promise<any>;
-  
-  /**
    * Returns local copy of terminal state
    * @returns {TerminalState} local copy of terminal state
    */
@@ -117,18 +109,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @returns {HistoryStorage} local history storage
    */
   get historyStorage(): HistoryStorage;
-  
-  /**
-   * Adds synchronization listener
-   * @param {SynchronizationListener} listener synchronization listener to add
-   */
-  addSynchronizationListener(listener: SynchronizationListener): void;
-  
-  /**
-   * Removes synchronization listener for specific account
-   * @param {SynchronizationListener} listener synchronization listener to remove
-   */
-  removeSynchronizationListener(listener: SynchronizationListener): void;
   
   /**
    * Invoked when connection to MetaTrader terminal established
@@ -206,7 +186,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   
   /**
    * Waits until synchronization to MetaTrader terminal is completed
-   * @param {SynchronizationOptions} synchronization options
+   * @param {SynchronizationOptions} opts synchronization options
    * @return {Promise} promise which resolves when synchronization to MetaTrader terminal is completed
    */
   waitSynchronized(opts: SynchronizationOptions): Promise<any>;

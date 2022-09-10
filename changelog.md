@@ -1,3 +1,6 @@
+20.1.0
+  - refactored connection management to unsubscribe only when all connection instances are closed
+
 20.0.0
   - breaking change: updated dependency metaapi.cloud-copyfactory-sdk ^5.10.0 -> ^6.0.0
 

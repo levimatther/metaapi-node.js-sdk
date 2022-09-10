@@ -50,7 +50,10 @@ describe('MetatraderAccountApi', () => {
     subscribe: () => {}
   };
   let connectionRegistry = {
-    connect: () => {},
+    connectStreaming: () => {},
+    removeStreaming: () => {},
+    connectRpc: () => {},
+    removeRpc: () => {},
     remove: () => {}
   };
 
@@ -764,9 +767,9 @@ describe('MetatraderAccountApi', () => {
       lastDealTime: () => new Date('2020-01-02T00:00:00.000Z'),
       loadDataFromDisk: () => ({deals: [], historyOrders: []})
     };
-    sandbox.spy(connectionRegistry, 'connect');
+    sandbox.spy(connectionRegistry, 'connectStreaming');
     let connection = account.getStreamingConnection(storage);
-    sinon.assert.calledWith(connectionRegistry.connect, account, storage);
+    sinon.assert.calledWith(connectionRegistry.connectStreaming, account, storage);
   });
 
   /**
@@ -783,9 +786,9 @@ describe('MetatraderAccountApi', () => {
       lastDealTime: () => new Date('2020-01-02T00:00:00.000Z'),
       loadDataFromDisk: () => ({deals: [], historyOrders: []})
     };
-    sandbox.spy(connectionRegistry, 'connect');
+    sandbox.spy(connectionRegistry, 'connectStreaming');
     let connection = account.getStreamingConnection(storage);
-    sinon.assert.calledWith(connectionRegistry.connect, account, storage);
+    sinon.assert.calledWith(connectionRegistry.connectStreaming, account, storage);
   });
 
   /**
@@ -819,7 +822,7 @@ describe('MetatraderAccountApi', () => {
     metaApiWebsocketClient.region = 'vint-hill';
     getAccountStub.resolves({_id: 'id', region: 'vint-hill'});
     let account = await api.getAccount();
-    sandbox.spy(connectionRegistry, 'connect');
+    sandbox.spy(connectionRegistry, 'connectRpc');
     account.getRPCConnection();
   });
 
@@ -832,7 +835,7 @@ describe('MetatraderAccountApi', () => {
     metaApiWebsocketClient.region = 'vint-hill';
     getAccountStub.resolves({_id: 'id', region: 'vint-hill'});
     let account = await api.getAccount();
-    sandbox.spy(connectionRegistry, 'connect');
+    sandbox.spy(connectionRegistry, 'connectRpc');
     account.getRPCConnection();
   });
 
@@ -845,7 +848,7 @@ describe('MetatraderAccountApi', () => {
     metaApiWebsocketClient.region = 'vint-hill';
     getAccountStub.resolves({_id: 'id', region: 'new-york'});
     let account = await api.getAccount();
-    sandbox.spy(connectionRegistry, 'connect');
+    sandbox.spy(connectionRegistry, 'connectRpc');
     
     try {
       account.getRPCConnection();
