@@ -50,15 +50,19 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     this._stateByInstanceIndex = {};
     this._refreshMarketDataSubscriptionSessions = {};
     this._refreshMarketDataSubscriptionTimeouts = {};
-    this._synchronizationListeners = [];
+    this._openedInstances = [];
     this._logger = LoggerManager.getLogger('MetaApiConnection');
   }
 
   /**
    * Opens the connection. Can only be called the first time, next calls will be ignored.
+   * @param {string} instanceId connection instance id
    * @return {Promise} promise resolving when the connection is opened
    */
-  async connect() {
+  async connect(instanceId) {
+    if(!this._openedInstances.includes(instanceId)) {
+      this._openedInstances.push(instanceId);
+    }
     if (!this._opened) {
       this._logger.trace(`${this._account.id}: Opening connection`);
       this._opened = true;
@@ -261,16 +265,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   }
 
   /**
-   * Sends client uptime stats to the server.
-   * @param {Object} uptime uptime statistics to send to the server
-   * @returns {Promise} promise which resolves when uptime statistics is submitted
-   */
-  saveUptime(uptime) {
-    this._checkIsConnectionActive();
-    return this._websocketClient.saveUptime(this._account.id, uptime);
-  }
-
-  /**
    * Returns local copy of terminal state
    * @returns {TerminalState} local copy of terminal state
    */
@@ -284,24 +278,6 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   get historyStorage() {
     return this._historyStorage;
-  }
-
-  /**
-   * Adds synchronization listener
-   * @param {SynchronizationListener} listener synchronization listener to add
-   */
-  addSynchronizationListener(listener) {
-    this._synchronizationListeners.push(listener);
-    this._websocketClient.addSynchronizationListener(this._account.id, listener);
-  }
-
-  /**
-   * Removes synchronization listener for specific account
-   * @param {SynchronizationListener} listener synchronization listener to remove
-   */
-  removeSynchronizationListener(listener) {
-    this._synchronizationListeners = this._synchronizationListeners.filter(l => l !== listener);
-    this._websocketClient.removeSynchronizationListener(this._account.id, listener);
   }
 
   /**
@@ -503,13 +479,13 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * default
    * @property {Number} [instanceIndex] index of an account instance to ensure synchronization on, default is to wait
    * for the first instance to synchronize
-   * @param {Number} [timeoutInSeconds] wait timeout in seconds, default is 5m
-   * @param {Number} [intervalInMilliseconds] interval between account reloads while waiting for a change, default is 1s
+   * @property {Number} [timeoutInSeconds] wait timeout in seconds, default is 5m
+   * @property {Number} [intervalInMilliseconds] interval between account reloads while waiting for a change, default is 1s
    */
 
   /**
    * Waits until synchronization to MetaTrader terminal is completed
-   * @param {SynchronizationOptions} synchronization options
+   * @param {SynchronizationOptions} opts synchronization options
    * @return {Promise} promise which resolves when synchronization to MetaTrader terminal is completed
    * @throws {TimeoutError} if application failed to synchronize with the teminal within timeout allowed
    */
@@ -563,23 +539,19 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
 
   /**
    * Closes the connection. The instance of the class should no longer be used after this method is invoked.
+   * @param {string} instanceId connection instance id
    */
-  async close() {
-    if (!this._closed) {
+  async close(instanceId) {
+    this._openedInstances = this._openedInstances.filter(id => id !== instanceId);
+    if (!Object.keys(this._openedInstances).length && !this._closed) {
       this._logger.debug(`${this._account.id}: Closing connection`);
       this._stateByInstanceIndex = {};
-      this._connectionRegistry.remove(this._account.id);
+      await this._connectionRegistry.removeStreaming(this._account);
       const accountRegions = this._account.accountRegions;
-      await Promise.all(Object.values(accountRegions).map(replicaId => 
-        this._websocketClient.unsubscribe(replicaId)));
       this._websocketClient.removeSynchronizationListener(this._account.id, this);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
       this._websocketClient.removeSynchronizationListener(this._account.id, this._healthMonitor);
-      for (let listener of this._synchronizationListeners) {
-        this._websocketClient.removeSynchronizationListener(this._account.id, listener);
-      }
-      this._synchronizationListeners = [];
       this._websocketClient.removeReconnectListener(this);
       this._healthMonitor.stop();
       this._refreshMarketDataSubscriptionSessions = {};

@@ -85,8 +85,8 @@ describe('StreamingMetaApiConnection', () => {
   };
 
   let connectionRegistry = {
-    connect: () => {},
-    remove: () => {},
+    connectStreaming: () => {},
+    removeStreaming: () => {},
     application: 'MetaApi'
   };
 
@@ -132,315 +132,6 @@ describe('StreamingMetaApiConnection', () => {
     await api.removeApplication();
     sinon.assert.calledWith(client.removeApplication, 'accountId');
     sinon.assert.calledOnce(api.historyStorage.clear);
-  });
-
-  /**
-   * @test {MetaApiConnection#createMarketBuyOrder}
-   */
-  it('should create market buy order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: 46870472
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createMarketBuyOrder('GBPUSD', 0.07, 0.9, 2.0, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY', symbol: 'GBPUSD',
-      volume: 0.07, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createMarketBuyOrder}
-   */
-  it('should create market buy order with relative SL/TP', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: 46870472
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createMarketBuyOrder('GBPUSD', 0.07, {value: 0.1, units: 'RELATIVE_PRICE'},
-      {value: 2000, units: 'RELATIVE_POINTS'}, {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY', symbol: 'GBPUSD',
-      volume: 0.07, stopLoss: 0.1, stopLossUnits: 'RELATIVE_PRICE', takeProfit: 2000,
-      takeProfitUnits: 'RELATIVE_POINTS', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createMarketSellOrder}
-   */
-  it('should create market sell order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: 46870472
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createMarketSellOrder('GBPUSD', 0.07, 2.0, 0.9, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL', symbol: 'GBPUSD',
-      volume: 0.07, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createLimitBuyOrder}
-   */
-  it('should create limit buy order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: 46870472
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createLimitBuyOrder('GBPUSD', 0.07, 1.0, 0.9, 2.0, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_LIMIT',
-      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createLimitSellOrder}
-   */
-  it('should create limit sell order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: 46870472
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createLimitSellOrder('GBPUSD', 0.07, 1.5, 2.0, 0.9, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_LIMIT',
-      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createStopBuyOrder}
-   */
-  it('should create stop buy order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: 46870472
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createStopBuyOrder('GBPUSD', 0.07, 1.5, 0.9, 2.0, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_STOP',
-      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLoss: 0.9, takeProfit: 2.0, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createStopSellOrder}
-   */
-  it('should create stop sell order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createStopSellOrder('GBPUSD', 0.07, 1.0, 2.0, 0.9, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_STOP',
-      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9, comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createStopLimitBuyOrder}
-   */
-  it('should create stop limit buy order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: 46870472
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createStopLimitBuyOrder('GBPUSD', 0.07, 1.5, 1.4, 0.9, 2.0, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_BUY_STOP_LIMIT',
-      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.5, stopLimitPrice: 1.4, stopLoss: 0.9, takeProfit: 2.0,
-      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#createStopLimitSellOrder}
-   */
-  it('should create stop limit sell order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.createStopLimitSellOrder('GBPUSD', 0.07, 1.0, 1.1, 2.0, 0.9, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_TYPE_SELL_STOP_LIMIT',
-      symbol: 'GBPUSD', volume: 0.07, openPrice: 1.0, stopLimitPrice: 1.1, stopLoss: 2.0, takeProfit: 0.9,
-      comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#modifyPosition}
-   */
-  it('should modify position', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      positionId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.modifyPosition('46870472', 2.0, 0.9);
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_MODIFY',
-      positionId: '46870472', stopLoss: 2.0, takeProfit: 0.9}));
-  });
-
-  /**
-   * @test {MetaApiConnection#closePositionPartially}
-   */
-  it('should close position partially', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      positionId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closePositionPartially('46870472', 0.9, {comment: 'comment',
-      clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_PARTIAL',
-      positionId: '46870472', volume: 0.9, comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#closePosition}
-   */
-  it('should close position', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      positionId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closePosition('46870472', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_ID',
-      positionId: '46870472', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#closeBy}
-   */
-  it('should close position by an opposite one', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      positionId: '46870472',
-      closeByPositionId: '46870482'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closeBy('46870472', '46870482', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITION_CLOSE_BY',
-      positionId: '46870472', closeByPositionId: '46870482', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#closePositionsBySymbol}
-   */
-  it('should close positions by symbol', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      positionId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.closePositionsBySymbol('EURUSD', {comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'});
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'POSITIONS_CLOSE_SYMBOL',
-      symbol: 'EURUSD', comment: 'comment', clientId: 'TE_GBPUSD_7hyINWqAlE'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#modifyOrder}
-   */
-  it('should modify order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.modifyOrder('46870472', 1.0, 2.0, 0.9);
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_MODIFY', orderId: '46870472',
-      openPrice: 1.0, stopLoss: 2.0, takeProfit: 0.9}));
-  });
-
-  /**
-   * @test {MetaApiConnection#cancelOrder}
-   */
-  it('should cancel order', async () => {
-    await api.connect();
-    let tradeResult = {
-      error: 10009,
-      description: 'TRADE_RETCODE_DONE',
-      orderId: '46870472'
-    };
-    sandbox.stub(client, 'trade').resolves(tradeResult);
-    let actual = await api.cancelOrder('46870472');
-    actual.should.match(tradeResult);
-    sinon.assert.calledWith(client.trade, 'accountId', sinon.match({actionType: 'ORDER_CANCEL', orderId: '46870472'}));
-  });
-
-  /**
-   * @test {MetaApiConnection#calculateMargin}
-   */
-  it('should calculate margin', async () => {
-    await api.connect();
-    let margin = {
-      margin: 110
-    };
-    let order = {
-      symbol: 'EURUSD',
-      type: 'ORDER_TYPE_BUY',
-      volume: 0.1,
-      openPrice: 1.1
-    };
-    sandbox.stub(client, 'calculateMargin').resolves(margin);
-    let actual = await api.calculateMargin(order);
-    actual.should.match(margin);
-    sinon.assert.calledWith(client.calculateMargin, 'accountId', undefined, undefined, sinon.match(order));
   });
 
   /**
@@ -613,16 +304,6 @@ describe('StreamingMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#saveUptime}
-   */
-  it('should save uptime stats to the server', async () => {
-    await api.connect();
-    sandbox.stub(client, 'saveUptime').resolves();
-    await api.saveUptime({'1h': 100});
-    sinon.assert.calledWith(client.saveUptime, 'accountId', {'1h': 100});
-  });
-
-  /**
    * @test {MetaApiConnection#terminalState}
    * @test {MetaApiConnection#historyStorage}
    */
@@ -636,32 +317,6 @@ describe('StreamingMetaApiConnection', () => {
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api.terminalState);
     sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', api.historyStorage);
-  });
-
-  /**
-   * @test {MetaApiConnection#addSynchronizationListener}
-   */
-  it('should add synchronization listeners', async () => {
-    sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
-      undefined, connectionRegistry);
-    await api.connect();
-    let listener = {};
-    api.addSynchronizationListener(listener);
-    sinon.assert.calledWith(client.addSynchronizationListener, 'accountId', listener);
-  });
-
-  /**
-   * @test {MetaApiConnection#removeSynchronizationListener}
-   */
-  it('should remove synchronization listeners', async () => {
-    sandbox.stub(client, 'removeSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
-      undefined, connectionRegistry);
-    await api.connect();
-    let listener = {};
-    api.removeSynchronizationListener(listener);
-    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', listener);
   });
 
   /**
@@ -721,19 +376,45 @@ describe('StreamingMetaApiConnection', () => {
    * @test {MetaApiConnection#close}
    */
   it('should unsubscribe from events on close', async () => {
+    let accountData = {id: 'accountId', accountRegions};
     sandbox.stub(client, 'addSynchronizationListener').returns();
     sandbox.stub(client, 'removeSynchronizationListener').returns();
     sandbox.stub(client, 'unsubscribe').resolves();
-    sandbox.stub(connectionRegistry, 'remove').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+    sandbox.stub(connectionRegistry, 'removeStreaming').returns();
+    api = new StreamingMetaApiConnection(client, clientApiClient,  accountData, 
       undefined, connectionRegistry);
     await api.connect();
     await api.close();
-    sinon.assert.calledWith(client.unsubscribe, 'accountId');
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.historyStorage);
-    sinon.assert.calledWith(connectionRegistry.remove, 'accountId');
+    sinon.assert.calledWith(connectionRegistry.removeStreaming, accountData);
+  });
+
+  /**
+   * @test {MetaApiConnection#close}
+   */
+  it('should close connection only if all instances closed', async () => {
+    let accountData = {id: 'accountId', accountRegions};
+    sandbox.stub(client, 'addSynchronizationListener').returns();
+    sandbox.stub(client, 'removeSynchronizationListener').returns();
+    sandbox.stub(client, 'unsubscribe').resolves();
+    sandbox.stub(connectionRegistry, 'removeStreaming').returns();
+    api = new StreamingMetaApiConnection(client, clientApiClient,  accountData, 
+      undefined, connectionRegistry);
+    await api.connect('accountId');
+    await api.connect('accountId');
+    await api.connect('accountId2');
+    await api.connect('accountId3');
+    await api.close('accountId');
+    sinon.assert.notCalled(client.removeSynchronizationListener);
+    await api.close('accountId3');
+    sinon.assert.notCalled(client.removeSynchronizationListener);
+    await api.close('accountId2');
+    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
+    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
+    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.historyStorage);
+    sinon.assert.calledWith(connectionRegistry.removeStreaming, accountData);
   });
 
   describe('waitSynchronized', () => {

@@ -3,6 +3,8 @@
 import should from 'should';
 import sinon from 'sinon';
 import StreamingMetaApiConnection from './streamingMetaApiConnection';
+import StreamingMetaApiConnectionInstance from './streamingMetaApiConnectionInstance';
+import RpcMetaApiConnectionInstance from './rpcMetaApiConnectionInstance';
 import ConnectionRegistry from './connectionRegistry';
 
 /**
@@ -16,13 +18,15 @@ describe('ConnectionRegistry', () => {
     addSynchronizationListener: () => {},
     addReconnectListener: () => {},
     subscribe: () => {},
-    regionsByAccounts: {}
+    regionsByAccounts: {},
+    unsubscribe: () => {}
   };
   let storage = {
     lastHistoryOrderTime: () => new Date('2020-01-01T00:00:00.000Z'),
     lastDealTime: () => new Date('2020-01-02T00:00:00.000Z'),
     loadDataFromDisk: () => ({deals: [], historyOrders: []})
   };
+  let unsubscribeStub;
 
   before(() => {
     sandbox = sinon.createSandbox();
@@ -32,6 +36,7 @@ describe('ConnectionRegistry', () => {
     registry = new ConnectionRegistry(metaApiWebsocketClient);
     sandbox.stub(StreamingMetaApiConnection.prototype, 'initialize').resolves();
     sandbox.stub(StreamingMetaApiConnection.prototype, 'subscribe').resolves();
+    unsubscribeStub = sandbox.stub(metaApiWebsocketClient, 'unsubscribe').resolves();
   });
 
   afterEach(() => {
@@ -39,53 +44,80 @@ describe('ConnectionRegistry', () => {
   });
 
   /**
-   * @test {ConnectionRegistry#connect}
+   * @test {ConnectionRegistry#connectStreaming}
    */
-  it('should connect and add connection to registry', async () => {
+  it('should create streaming connection', async () => {
     let account = {id: 'id', region: 'vint-hill', accountRegions: {'vint-hill': 'id', 'new-york': 'idReplica'}};
-    let connection = registry.connect(account, storage);
+    let connection = registry.connectStreaming(account, storage);
     await connection.connect();
-    (connection instanceof StreamingMetaApiConnection).should.be.true();
-    connection.historyStorage.should.equal(storage);
-    sinon.assert.calledOnce(connection.initialize);
-    sinon.assert.calledOnce(connection.subscribe);
-    sinon.assert.match(registry._connections, sinon.match.has('id', connection));
+    (connection instanceof StreamingMetaApiConnectionInstance).should.be.true();
+    sinon.assert.match(registry._streamingConnections, sinon.match.has('id', connection._metaApiConnection));
   });
 
   /**
-   * @test {ConnectionRegistry#connect}
+   * @test {ConnectionRegistry#removeStreaming}
    */
-  it('should return the same connection on second connect if same account id', async () => {
-    let accounts = [{id: 'id0', region: 'vint-hill', accountRegions: {'vint-hill': 'id0', 'new-york': 'id0Replica'}}, 
-      {id: 'id1', region: 'vint-hill', accountRegions: {'vint-hill': 'id1', 'new-york': 'id1Replica'}}];
-    let connection0 = registry.connect(accounts[0], storage);
-    let connection02 = registry.connect(accounts[0], storage);
-    let connection1 = registry.connect(accounts[1], storage);
-    await connection0.connect();
-    await connection02.connect();
-    await connection1.connect();
-    sinon.assert.called(connection0.initialize);
-    sinon.assert.called(connection0.subscribe);
-    sinon.assert.called(connection1.initialize);
-    sinon.assert.called(connection1.subscribe);
-    sinon.assert.match(registry._connections, sinon.match.has('id0', connection0));
-    sinon.assert.match(registry._connections, sinon.match.has('id1', connection1));
-    sinon.assert.match(Object.is(connection0, connection02), true);
-    sinon.assert.match(Object.is(connection0, connection1), false);
+  it('should disconnect streaming connection', async () => {
+    let account = {id: 'id', region: 'vint-hill', accountRegions: {'vint-hill': 'id', 'new-york': 'idReplica'}};
+    registry.connectStreaming(account, storage);
+    await registry.removeStreaming(account);
+    sinon.assert.calledWith(unsubscribeStub, 'id');
+    sinon.assert.calledWith(unsubscribeStub, 'idReplica');
   });
 
   /**
-   * @test {ConnectionRegistry#remove}
+   * @test {ConnectionRegistry#removeStreaming}
    */
-  it('should remove the account from registry', async () => {
-    let accounts = [{id: 'id0', region: 'vint-hill', accountRegions: {'vint-hill': 'id0', 'new-york': 'id0Replica'}}, 
-      {id: 'id1', region: 'vint-hill', accountRegions: {'vint-hill': 'id1', 'new-york': 'id1Replica'}}];
-    let connection0 = await registry.connect(accounts[0], storage);
-    let connection1 = await registry.connect(accounts[1], storage);
-    sinon.assert.match(registry._connections, sinon.match.has('id0', connection0));
-    sinon.assert.match(registry._connections, sinon.match.has('id1', connection1));
-    registry.remove(accounts[0].id);
-    sinon.assert.match(registry._connections.id0, undefined);
+  it('should not disconnect until both streaming and rpc connections are closed', async () => {
+    let account = {id: 'id', region: 'vint-hill', accountRegions: {'vint-hill': 'id', 'new-york': 'idReplica'}};
+    registry.connectStreaming(account, storage);
+    registry.connectStreaming(account, storage);
+    registry.connectRpc(account);
+    await registry.removeStreaming(account);
+    sinon.assert.notCalled(unsubscribeStub);
+    await registry.removeStreaming(account);
+    sinon.assert.notCalled(unsubscribeStub);
+    await registry.removeRpc(account);
+    sinon.assert.calledWith(unsubscribeStub, 'id');
+    sinon.assert.calledWith(unsubscribeStub, 'idReplica');
+  });
+
+  /**
+   * @test {ConnectionRegistry#connectRpc}
+   */
+  it('should create rpc connection', async () => {
+    let account = {id: 'id', region: 'vint-hill', accountRegions: {'vint-hill': 'id', 'new-york': 'idReplica'}};
+    let connection = registry.connectRpc(account);
+    (connection instanceof RpcMetaApiConnectionInstance).should.be.true();
+    sinon.assert.match(registry._rpcConnections, sinon.match.has('id', connection._metaApiConnection));
+  });
+
+  /**
+   * @test {ConnectionRegistry#removeRpc}
+   */
+  it('should disconnect rpc connection', async () => {
+    let account = {id: 'id', region: 'vint-hill', accountRegions: {'vint-hill': 'id', 'new-york': 'idReplica'}};
+    registry.connectRpc(account, storage);
+    await registry.removeRpc(account);
+    sinon.assert.calledWith(unsubscribeStub, 'id');
+    sinon.assert.calledWith(unsubscribeStub, 'idReplica');
+  });
+
+  /**
+   * @test {ConnectionRegistry#removeRpc}
+   */
+  it('should not disconnect until both rpc and streaming connections are closed', async () => {
+    let account = {id: 'id', region: 'vint-hill', accountRegions: {'vint-hill': 'id', 'new-york': 'idReplica'}};
+    registry.connectRpc(account);
+    registry.connectRpc(account);
+    registry.connectStreaming(account);
+    await registry.removeRpc(account);
+    sinon.assert.notCalled(unsubscribeStub);
+    await registry.removeRpc(account);
+    sinon.assert.notCalled(unsubscribeStub);
+    await registry.removeStreaming(account);
+    sinon.assert.calledWith(unsubscribeStub, 'id');
+    sinon.assert.calledWith(unsubscribeStub, 'idReplica');
   });
 
 });

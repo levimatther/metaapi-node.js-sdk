@@ -440,7 +440,7 @@ export default class MetatraderAccount {
         `Account ${this.id} is not on specified region ${this._metaApiWebsocketClient.region}`
       );
     }
-    return this._connectionRegistry.connect(this, historyStorage, historyStartTime);
+    return this._connectionRegistry.connectStreaming(this, historyStorage, historyStartTime);
   }
 
   /**
@@ -453,7 +453,7 @@ export default class MetatraderAccount {
         `Account ${this.id} is not on specified region ${this._metaApiWebsocketClient.region}`
       );
     }
-    return new RpcMetaApiConnection(this._metaApiWebsocketClient, this);
+    return this._connectionRegistry.connectRpc(this);
   }
 
   /**
