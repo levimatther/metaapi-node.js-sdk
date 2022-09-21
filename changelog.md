@@ -1,3 +1,6 @@
+20.1.1
+  - fix type errors when websocket client clears account cache
+
 20.1.0
   - refactored connection management to unsubscribe only when all connection instances are closed
 

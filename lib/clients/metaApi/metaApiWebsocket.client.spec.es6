@@ -4,8 +4,6 @@ import should from 'should';
 import sinon from 'sinon';
 import MetaApiWebsocketClient from './metaApiWebsocket.client';
 import Server from 'socket.io';
-import NotConnectedError from './notConnectedError';
-import {InternalError} from '../errorHandler';
 
 /**
  * @test {MetaApiWebsocketClient}
@@ -49,9 +47,14 @@ describe('MetaApiWebsocketClient', () => {
 
   beforeEach(async () => {
     clock = sinon.useFakeTimers({shouldAdvanceTime: true});
-    client = new MetaApiWebsocketClient(domainClient, 'token', {application: 'application', 
-      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: true,
-      retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}});
+    client = new MetaApiWebsocketClient(domainClient, 'token', {
+      application: 'application', 
+      domain: 'project-stock.agiliumlabs.cloud',
+      requestTimeout: 1.5,
+      useSharedClientApi: true,
+      disableInternalJobs: true,
+      retryOpts: {retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5}
+    });
     client.url = 'http://localhost:6784';
     client._socketInstances = {'vint-hill': {0: [], 1: []}, 'new-york': {0: []}};
     io = new Server(6784, {path: '/ws', pingTimeout: 1000000});
@@ -219,59 +222,98 @@ describe('MetaApiWebsocketClient', () => {
     should(url).eql('https://mt-client-api-v1.vint-hill-a.project-stock.agiliumlabs.cloud');
   });
 
-  /**
-   * @test {MetaApiWebsocketClient#addAccountCache}
-   */
-  it('should add account cache', async () => {
-    client.addAccountCache('accountId2', {'vint-hill': 'accountId2'});
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    sinon.assert.match(client.accountReplicas.accountId2, {'vint-hill': 'accountId2'});
-    sinon.assert.match(client.accountsByReplicaId.accountId2, 'accountId2');
-    client.addAccountCache('accountId2', {'vint-hill': 'accountId2'});
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    client.removeAccountCache('accountId2');
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    client.removeAccountCache('accountId2');
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    for (let i = 0; i < 5; i++) {
-      await clock.tickAsync(30 * 60 * 1000 + 500);
-    }
-    sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
-    sinon.assert.match(client.accountReplicas.accountId2, undefined);
-    sinon.assert.match(client.accountsByReplicaId.accountId2, undefined);
-  });
+  describe('addAccountCache', () => {
 
-  /**
-   * @test {MetaApiWebsocketClient#addAccountCache}
-   */
-  it('should delay region deletion if a request is made', async () => {
-    server.on('request', data => {
-      if (data.type === 'getAccountInformation' && data.accountId === 'accountId2' &&
-        data.application === 'RPC') {
-        server.emit('response', {
-          type: 'response', accountId: data.accountId, requestId: data.requestId,
-          accountInformation
-        });
+    /**
+     * @test {MetaApiWebsocketClient#addAccountCache}
+     */
+    it('should add account cache', async () => {
+      client.addAccountCache('accountId2', {'vint-hill': 'accountId2'});
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+      sinon.assert.match(client.accountReplicas.accountId2, {'vint-hill': 'accountId2'});
+      sinon.assert.match(client.accountsByReplicaId.accountId2, 'accountId2');
+      client.addAccountCache('accountId2', {'vint-hill': 'accountId2'});
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+      client.removeAccountCache('accountId2');
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+      client.removeAccountCache('accountId2');
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+      for (let i = 0; i < 5; i++) {
+        await clock.tickAsync(30 * 60 * 1000 + 500);
+        client.clearAccountCacheJob();
       }
+      sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
+      sinon.assert.match(client.accountReplicas.accountId2, undefined);
+      sinon.assert.match(client.accountsByReplicaId.accountId2, undefined);
     });
 
-    client.addAccountCache('accountId2', {'vint-hill': 'accountId2'});
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    await client.getAccountInformation('accountId2');
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    await clock.tickAsync(30 * 60 * 1000 + 500);
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    await client.getAccountInformation('accountId2');
-    client.removeAccountCache('accountId2');
-    await clock.tickAsync(30 * 60 * 1000 + 500);
-    await client.getAccountInformation('accountId2');
-    await clock.tickAsync(30 * 60 * 1000 + 500);
-    sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
-    for (let i = 0; i < 5; i++) {
+    /**
+     * @test {MetaApiWebsocketClient#addAccountCache}
+     */
+    it('should delay region deletion if a request is made', async () => {
+      server.on('request', data => {
+        if (data.type === 'getAccountInformation' && data.accountId === 'accountId2' &&
+          data.application === 'RPC') {
+          server.emit('response', {
+            type: 'response', accountId: data.accountId, requestId: data.requestId,
+            accountInformation
+          });
+        }
+      });
+
+      client.addAccountCache('accountId2', {'vint-hill': 'accountId2'});
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+      await client.getAccountInformation('accountId2');
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
       await clock.tickAsync(30 * 60 * 1000 + 500);
-    }
-    sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
-  }).timeout(3000);
+      client.clearAccountCacheJob();
+      
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+      await client.getAccountInformation('accountId2');
+      client.removeAccountCache('accountId2');
+      await clock.tickAsync(30 * 60 * 1000 + 500);
+      client.clearAccountCacheJob();
+      
+      await client.getAccountInformation('accountId2');
+      await clock.tickAsync(30 * 60 * 1000 + 500);
+      client.clearAccountCacheJob();
+      
+      sinon.assert.match(client.getAccountRegion('accountId2'), 'vint-hill');
+      for (let i = 0; i < 5; i++) {
+        await clock.tickAsync(30 * 60 * 1000 + 500);
+        client.clearAccountCacheJob();
+      }
+      sinon.assert.match(client.getAccountRegion('accountId2'), undefined);
+    }).timeout(3000);
+
+    /**
+     * @test {MetaApiWebsocketClient#addAccountCache}
+     */
+    it('should correctly clear account cache including accounts with several replicas', () => {
+      client.addAccountCache('accountId1', {
+        'vint-hill': 'accountId1',
+        'new-york': 'accountId2'
+      });
+      client.removeAccountCache('accountId1');
+
+      clock.tick(1000 * 60 * 60 * 3);
+      client.clearAccountCacheJob();
+      should(client.getAccountRegion('accountId1')).be.undefined();
+      should(client.getAccountRegion('accountId2')).be.undefined();
+    });
+
+    /**
+     * @test {MetaApiWebsocketClient#addAccountCache}
+     */
+    it('should correctly clear account cache added on synchroniation packet', async () => {
+      server.emit('synchronization', {type: 'keepalive', accountId: 'accountId1'});
+      await new Promise(res => setTimeout(res, 25));
+
+      await clock.tickAsync(1000 * 60 * 60 * 3);
+      client.clearAccountCacheJob();
+    });
+
+  });
 
   /**
    * @test {MetaApiWebsocketClient#getAccountInformation}
