@@ -26,10 +26,15 @@ if (typeof window === 'undefined') { // don't import PacketLogger for browser ve
 export default class MetaApiWebsocketClient {
 
   /**
+   * @typedef MetaApiWebsocketClientOptions MetaApi websocket client options
+   * @property {Boolean} [disableInternalJobs] Whether to not run internal interval jobs. Used for tests only
+   */
+
+  /**
    * Constructs MetaApi websocket API client instance
    * @param {DomainClient} domainClient domain client
    * @param {String} token authorization token
-   * @param {Object} opts websocket client options
+   * @param {MetaApiWebsocketClientOptions} opts websocket client options
    */
   // eslint-disable-next-line complexity,max-statements
   constructor(domainClient, token, opts) {
@@ -81,13 +86,14 @@ export default class MetaApiWebsocketClient {
     this._lastRequestsTime = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     this._packetOrderer.start();
-    if(opts.packetLogger && opts.packetLogger.enabled) {
+    if (opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
       this._packetLogger.start();
     }
     this._logger = LoggerManager.getLogger('MetaApiWebsocketClient');
-    this._clearAccountCacheJob = this._clearAccountCacheJob.bind(this);
-    setInterval(this._clearAccountCacheJob, 30 * 60 * 1000);
+    if (!opts.disableInternalJobs) {
+      setInterval(this._clearAccountCacheJob.bind(this), 30 * 60 * 1000);
+    }
   }
 
   /**
@@ -154,6 +160,14 @@ export default class MetaApiWebsocketClient {
    */
   get accountsByReplicaId() {
     return this._accountsByReplicaId;
+  }
+
+  /**
+   * Returns clear account cache job. Used for tests
+   * @return {Function} clear account cache job
+   */
+  get clearAccountCacheJob() {
+    return this._clearAccountCacheJob.bind(this);
   }
 
   /**
@@ -231,7 +245,7 @@ export default class MetaApiWebsocketClient {
     this._accountReplicas[accountId] = replicas;
     Object.keys(replicas).forEach(region => {
       const replicaId = replicas[region];
-      if(!this._regionsByAccounts[replicaId]) {
+      if (!this._regionsByAccounts[replicaId]) {
         this._regionsByAccounts[replicaId] = {
           region,
           connections: 1,
@@ -428,7 +442,7 @@ export default class MetaApiWebsocketClient {
             specifications: data.specifications ? (data.specifications || []).length : undefined})}`);
         return;
       }
-      if(!this._regionsByAccounts[data.accountId]) {
+      if (!this._regionsByAccounts[data.accountId]) {
         this._regionsByAccounts[data.accountId] = {region, connections: 0, lastUsed: Date.now()};
       }
       this._logger.trace(() => `${data.accountId}:${data.instanceIndex}: Sync packet received: ${JSON.stringify({
@@ -2402,11 +2416,11 @@ export default class MetaApiWebsocketClient {
 
   _clearAccountCacheJob() {
     const date = Date.now();
-    Object.keys(this._regionsByAccounts).forEach(accountId => {
-      const data = this._regionsByAccounts[accountId];
-      if(data.connections === 0 && date - data.lastUsed > 2 * 60 * 60 * 1000) {
-        const primaryAccountId = this._accountsByReplicaId[accountId];
-        const replicas = Object.values(this._accountReplicas[primaryAccountId]);
+    Object.keys(this._regionsByAccounts).forEach(replicaId => {
+      const data = this._regionsByAccounts[replicaId];
+      if (data && data.connections === 0 && date - data.lastUsed > 2 * 60 * 60 * 1000) {
+        const primaryAccountId = this._accountsByReplicaId[replicaId];
+        const replicas = Object.values(this._accountReplicas[primaryAccountId] || {});
         replicas.forEach(replica => {
           delete this._accountsByReplicaId[replica];
           delete this._regionsByAccounts[replica];
