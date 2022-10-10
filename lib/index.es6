@@ -6,7 +6,12 @@ import MemoryHistoryStorage from './metaApi/memoryHistoryStorage';
 import SynchronizationListener from './clients/metaApi/synchronizationListener';
 import CopyFactory, {StopoutListener, UserLogListener, TransactionListener} from 'metaapi.cloud-copyfactory-sdk';
 import MetaStats from 'metaapi.cloud-metastats-sdk';
-import RiskManagement, {DrawdownListener} from 'metaapi.cloud-risk-management-sdk';
+import RiskManagement, {
+  TrackerEventListener,
+  PeriodStatisticsListener,
+  EquityChartListener,
+  EquityBalanceListener
+} from './riskManagement';
 
 export default MetaApi;
 
@@ -20,5 +25,8 @@ export {
   TransactionListener,
   MetaStats,
   RiskManagement,
-  DrawdownListener
+  TrackerEventListener,
+  PeriodStatisticsListener,
+  EquityChartListener,
+  EquityBalanceListener
 };
