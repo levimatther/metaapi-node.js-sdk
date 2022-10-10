@@ -17,9 +17,8 @@ Features supported:
 - retrieving tracker events with REST API or streaming
 - retrieving profit and drawdown tracking statistics
 - retrieving equity charts
-- streaming equity chart events
-- streaming period statistics events
-- streaming equity/balance events
+- tracking equity chart and challenge/competition statistics in real time
+- tracking equity and balance changes in real time
 
 Please check Features section of the [https://metaapi.cloud/docs/risk-management/](https://metaapi.cloud/docs/risk-management/) documentation for detailed description of all settings you can make
 
