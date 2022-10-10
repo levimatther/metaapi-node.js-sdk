@@ -1,3 +1,6 @@
+20.2.0
+  - merged risk management sdk into the main project
+
 20.1.1
   - fix type errors when websocket client clears account cache
 

@@ -45,7 +45,7 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "20.1.0",
+  "version": "20.2.0",
   "dependencies": {
     "@log4js-node/log4js-api": "~1.0.2",
     "babel-runtime": "~6.26.0",
@@ -56,7 +56,6 @@
     "idb": "~5.0.4",
     "metaapi.cloud-copyfactory-sdk": "^6.0.0",
     "metaapi.cloud-metastats-sdk": "^3.1.0",
-    "metaapi.cloud-risk-management-sdk": "^1.0.0",
     "moment": "~2.29.1",
     "promise.any": "~2.0.3",
     "randomstring": "~1.1.5",
@@ -84,7 +83,7 @@
     "webpack-cli": "~3.3.12"
   },
   "scripts": {
-    "test": "mocha --exit --require babel-register lib/*/*/*.spec.es6 lib/*/*.spec.es6 lib/*.spec.es6",
+    "test": "mocha --exit --require babel-register lib/*/*/*/*.spec.es6 lib/*/*/*.spec.es6 lib/*/*.spec.es6 lib/*.spec.es6",
     "lint": "eslint --ext es6 ./lib",
     "lint:fix": "eslint --ext es6 ./lib --fix",
     "build": "rm -rf dist; rm -rf es; npx babel lib --out-dir dist --source-maps inline --ignore lib/templates && npx webpack --config webpack.config.js && gulp && copyfiles -u 1 \"lib/**/*.d.ts\" dist && copyfiles -u 1 \"lib/**/*.d.ts\" es",
