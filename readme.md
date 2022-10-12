@@ -69,22 +69,22 @@ console.log(accountAccessToken);
 Alternatively, you can retrieve account access token via web UI on https://app.metaapi.cloud/accounts page (see [this video](https://youtu.be/PKYiDns6_xI)).
 
 ## Table of contents
-1. [MT account management](docs/metaApi/managingAccounts.md)
+1. [MT account management](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/metaApi/managingAccounts.md)
 
-2. [MetaApi RPC API](docs/metaApi/rpcApi.md)
+2. [MetaApi RPC API](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/metaApi/rpcApi.md)
 
-3. [MetaApi real-time streaming API (websocket API)](docs/metaApi/streamingApi.md)
+3. [MetaApi real-time streaming API (websocket API)](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/metaApi/streamingApi.md)
 
-4. [Risk management API](docs/riskManagement.md)
+4. [Risk management API](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/riskManagement.md)
 
-5. [CopyFactory copy trading API](docs/copyTrading.md)
+5. [CopyFactory copy trading API](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/copyTrading.md)
 
-6. [MetaStats trading statistics API](docs/metaStats.md)
+6. [MetaStats trading statistics API](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/metaStats.md)
 
-7. [MetaApi MT manager API](docs/managerApi.md)
+7. [MetaApi MT manager API](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/managerApi.md)
 
-8. [Tracking latencies](docs/trackingLatencies.md)
+8. [Tracking latencies](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/trackingLatencies.md)
 
-9. [Enable log4js logging](docs/logging.md)
+9. [Enable log4js logging](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/logging.md)
 
-10. [Rate limits & quotas](docs/rateLimits.md)
+10. [Rate limits & quotas](https://github.com/agiliumtrade-ai/metaapi-node.js-sdk/blob/master/docs/rateLimits.md)
