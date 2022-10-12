@@ -27,7 +27,7 @@ describe('PeriodStatisticsStreamManager', () => {
   let connection;
   let clock;
   let getPeriodStatisticsStub;
-  let getTrackersStub;
+  let getTrackerStub;
   let syncListener;
   const token = 'token';
   const domain = 'agiliumtrade.agiliumtrade.ai';
@@ -90,20 +90,16 @@ describe('PeriodStatisticsStreamManager', () => {
     };
     equityTrackingClient = {
       getTrackingStatistics: () => {},
-      getTrackers: () => {}
+      getTracker: () => {}
     };
     getPeriodStatisticsStub = sandbox.stub(equityTrackingClient, 'getTrackingStatistics');
-    getTrackersStub = sandbox.stub(equityTrackingClient, 'getTrackers');
-    getTrackersStub.resolves([
-      {name: 'trackerName0', _id: 'tracker0'},
-      {name: 'trackerName1', _id: 'tracker1'},
-      {
-        name: 'trackerName2',
-        _id: 'tracker2',
-        startBrokerTime: '2020-05-11 12:00:00.000',
-        endBrokerTime: '2020-05-12 11:57:59.999'
-      },
-    ]);
+    getTrackerStub = sandbox.stub(equityTrackingClient, 'getTracker');
+    getTrackerStub.resolves({
+      name: 'trackerName2',
+      _id: 'tracker2',
+      startBrokerTime: '2020-05-11 12:00:00.000',
+      endBrokerTime: '2020-05-12 11:57:59.999'
+    });
     periodStatisticsStreamManager = new PeriodStatisticsStreamManager(domainClient, equityTrackingClient, metaApi);
     account = {
       waitDeployed: () => {},
@@ -495,7 +491,7 @@ describe('PeriodStatisticsStreamManager', () => {
    * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
    */
   it('should return error if failed to return trackers', async () => {
-    getTrackersStub.rejects(new TimeoutError());
+    getTrackerStub.rejects(new TimeoutError());
     try {
       await periodStatisticsStreamManager.addPeriodStatisticsListener(listener,
         'accountId', 'tracker1');
@@ -509,7 +505,7 @@ describe('PeriodStatisticsStreamManager', () => {
    * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
    */
   it('should return error if tracker not found', async () => {
-    getTrackersStub.resolves([{name: 'trackerName0', _id: 'tracker0'}]);
+    getTrackerStub.rejects(new NotFoundError());
     try {
       await periodStatisticsStreamManager.addPeriodStatisticsListener(listener,
         'accountId', 'tracker1');
@@ -523,10 +519,7 @@ describe('PeriodStatisticsStreamManager', () => {
    * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
    */
   it('should record if absolute drawdown threshold exceeded', async () => {
-    getTrackersStub.resolves([
-      {name: 'trackerName0', _id: 'tracker0'},
-      {name: 'trackerName1', _id: 'tracker1', absoluteDrawdownThreshold: 500}
-    ]);
+    getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', absoluteDrawdownThreshold: 500});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
@@ -587,10 +580,7 @@ describe('PeriodStatisticsStreamManager', () => {
    * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
    */
   it('should record if relative drawdown threshold exceeded', async () => {
-    getTrackersStub.resolves([
-      {name: 'trackerName0', _id: 'tracker0'},
-      {name: 'trackerName1', _id: 'tracker1', relativeDrawdownThreshold: 0.05}
-    ]);
+    getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', relativeDrawdownThreshold: 0.05});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
@@ -651,10 +641,7 @@ describe('PeriodStatisticsStreamManager', () => {
    * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
    */
   it('should record if absolute profit threshold exceeded', async () => {
-    getTrackersStub.resolves([
-      {name: 'trackerName0', _id: 'tracker0'},
-      {name: 'trackerName1', _id: 'tracker1', absoluteProfitThreshold: 500}
-    ]);
+    getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', absoluteProfitThreshold: 500});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
@@ -715,10 +702,7 @@ describe('PeriodStatisticsStreamManager', () => {
    * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
    */
   it('should record if relative profit threshold exceeded', async () => {
-    getTrackersStub.resolves([
-      {name: 'trackerName0', _id: 'tracker0'},
-      {name: 'trackerName1', _id: 'tracker1', relativeProfitThreshold: 0.05}
-    ]);
+    getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', relativeProfitThreshold: 0.05});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
@@ -779,10 +763,8 @@ describe('PeriodStatisticsStreamManager', () => {
    * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
    */
   it('should not rewrite record exceeded event', async () => {
-    getTrackersStub.resolves([
-      {name: 'trackerName0', _id: 'tracker0'},
-      {name: 'trackerName1', _id: 'tracker1', absoluteDrawdownThreshold: 500, absoluteProfitThreshold: 500}
-    ]);
+    getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1',
+      absoluteDrawdownThreshold: 500, absoluteProfitThreshold: 500});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {

@@ -68,8 +68,8 @@ let trackerId = await riskManagementApi.createTracker('accountId', {
 // retrieve list of trackers
 console.log(await riskManagementApi.getTrackers('accountId'));
 
-// retrieve a tracker by name
-console.log(await riskManagementApi.getTrackerByName('accountId', 'Test tracker'));
+// retrieve a tracker by id
+console.log(await riskManagementApi.getTrackerById('accountId', 'trackerId'));
 
 // update a tracker
 console.log(await riskManagementApi.updateTracker('accountId', trackerId.id, {name: 'Updated name'}));
