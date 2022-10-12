@@ -202,13 +202,8 @@ export default class PeriodStatisticsStreamManager {
     }
 
     const account = await this._metaApi.metatraderAccountApi.getAccount(accountId);
-    const trackers = await equityTrackingClient.getTrackers(accountId);
-    const tracker = trackers.find(t => t._id === trackerId);
-    if(tracker) {
-      cache.trackerData = tracker;
-    } else {
-      throw new NotFoundError(`Tracker ${trackerId} not found`);
-    }
+    const tracker = await equityTrackingClient.getTracker(accountId, trackerId);
+    cache.trackerData = tracker;
     const accountListeners = this.getAccountListeners(accountId);
     accountListeners[listenerId] = listener;
     this._accountsByListenerId[listenerId] = accountId;

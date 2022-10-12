@@ -5,7 +5,7 @@ import EquityChartListener from './equityChartListener';
 import MetaApi from '../../../metaApi/metaApi';
 
 /**
- * metaapi.cloud RiskManagement equity tracking API client (see https://metaapi.cloud/docs/riskManagement/)
+ * metaapi.cloud RiskManagement equity tracking API client (see https://metaapi.cloud/docs/risk-management/)
  */
 export default class EquityTrackingClient {
 
@@ -18,7 +18,7 @@ export default class EquityTrackingClient {
 
   /**
    * Creates a profit/drawdown tracker. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/createTracker/
+   * https://metaapi.cloud/docs/risk-management/restApi/api/createTracker/
    * @param {string} accountId id of the MetaApi account
    * @param {NewTracker} tracker profit/drawdown tracker
    * @return {Promise<TrackerId>} promise resolving with profit/drawdown tracker id
@@ -27,16 +27,24 @@ export default class EquityTrackingClient {
 
   /**
    * Returns trackers defined for an account. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/getTrackers/
+   * https://metaapi.cloud/docs/risk-management/restApi/api/getTrackers/
    * @param {string} accountId id of the MetaApi account
    * @return {Promise<Tracker[]>} promise resolving with trackers
    */
   getTrackers(accountId: string): Promise<Tracker[]>;
 
   /**
-   * Returns profit/drawdown tracker by account and name. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/getTrackerByName/
-   * @param {string} accountId id of the MetaApi account
+   * Returns profit/drawdown tracker by account and id. See
+   * https://metaapi.cloud/docs/risk-management/restApi/api/getTracker/
+   * @param {string} accountId id of the MetaApi account 
+   * @param {string} id tracker id 
+   * @returns {Promise<Tracker>} promise resolving with profit/drawdown tracker found
+   */
+  getTracker(accountId: string, id: string): Promise<Tracker>;
+
+  /**
+   * Returns profit/drawdown tracker by account and name
+   * @param {string} accountId id of the MetaApi account 
    * @param {string} name tracker name
    * @return {Promise<Tracker>} promise resolving with profit/drawdown tracker found
    */
@@ -44,7 +52,7 @@ export default class EquityTrackingClient {
 
   /**
    * Updates profit/drawdown tracker. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/updateTracker/
+   * https://metaapi.cloud/docs/risk-management/restApi/api/updateTracker/
    * @param {string} accountId id of the MetaApi account
    * @param {string} id id of the tracker
    * @param {TrackerUpdate} update tracker update
@@ -54,7 +62,7 @@ export default class EquityTrackingClient {
 
   /**
    * Removes profit/drawdown tracker. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/removeTracker/
+   * https://metaapi.cloud/docs/risk-management/restApi/api/removeTracker/
    * @param {string} accountId id of the MetaApi account
    * @param {string} id id of the tracker
    * @return {Promise} promise resolving when profit/drawdown tracker removed
@@ -63,7 +71,7 @@ export default class EquityTrackingClient {
 
   /**
    * Returns tracker events by broker time range. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/getTrackerEvents/
+   * https://metaapi.cloud/docs/risk-management/restApi/api/getTrackerEvents/
    * @param {string} [startBrokerTime] value of the event time in broker timezone to start loading data from, inclusive,
    * in 'YYYY-MM-DD HH:mm:ss.SSS format
    * @param {string} [endBrokerTime] value of the event time in broker timezone to end loading data at, inclusive,
@@ -95,7 +103,7 @@ export default class EquityTrackingClient {
 
   /**
    * Returns account profit and drawdown tracking statistics by tracker id. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/getTrackingStats/
+   * https://metaapi.cloud/docs/risk-management/restApi/api/getTrackingStats/
    * @param {string} accountId id of MetaAPI account
    * @param {string} trackerId id of the tracker
    * @param {string} [startTime] time to start loading stats from, default is current time. Note that stats is loaded in
@@ -124,7 +132,7 @@ export default class EquityTrackingClient {
 
   /**
    * Returns equity chart by account id. See
-   * https://metaapi.cloud/docs/riskManagement/restApi/api/equityTracking/getEquityChart/
+   * https://metaapi.cloud/docs/risk-management/restApi/api/getEquityChart/
    * @param {string} accountId metaApi account id
    * @param {string} [startTime] starting broker time in YYYY-MM-DD HH:mm:ss format
    * @param {string} [endTime] ending broker time in YYYY-MM-DD HH:mm:ss format

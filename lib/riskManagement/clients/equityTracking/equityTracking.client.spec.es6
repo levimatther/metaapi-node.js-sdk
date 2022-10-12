@@ -67,12 +67,27 @@ describe('EquityTrackingClient', () => {
   });
 
   /**
-   * @test {EquityTrackingClient#getDrawdownTrackerByName}
+   * @test {EquityTrackingClient#getTracker}
+   */
+  it('should retrieve tracker by id', async () => {
+    let expected = {id: 'trackerId', name: 'trackerName'};
+    requestApiStub.resolves(expected);
+
+    let actual = await equityTrackingClient.getTracker('accountId', 'trackerId');
+    actual.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(domainClient.requestApi, {
+      url: '/users/current/accounts/accountId/trackers/trackerId',
+      method: 'GET'
+    });
+  });
+
+  /**
+   * @test {EquityTrackingClient#getTrackerByName}
    */
   it('should retrieve tracker by name', async () => {
     let expected = {name: 'trackerName'};
     requestApiStub.resolves(expected);
-
+  
     let actual = await equityTrackingClient.getTrackerByName('accountId', 'name');
     actual.should.equal(expected);
     sinon.assert.calledOnceWithExactly(domainClient.requestApi, {
@@ -80,7 +95,7 @@ describe('EquityTrackingClient', () => {
       method: 'GET'
     });
   });
-
+  
   /**
    * @test {EquityTrackingClient#updateTracker}
    */
@@ -106,7 +121,7 @@ describe('EquityTrackingClient', () => {
   });
 
   /**
-   * @test {EquityTrackingClient#getDrawdownEvents}
+   * @test {EquityTrackingClient#getTrackerEvents}
    */
   it('should retrieve tracker events', async () => {
     let expected = [{
