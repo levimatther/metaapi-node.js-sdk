@@ -48,7 +48,7 @@ export default class MetaApi {
   get latencyMonitor(): LatencyMonitor;
 
   /**
-   * Closes all clients and connections
+   * Closes all clients and connections and stops all internal jobs
    */
   close(): void;
 }
