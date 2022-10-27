@@ -152,11 +152,12 @@ export default class MetaApi {
   }
 
   /**
-   * Closes all clients and connections
+   * Closes all clients and connections and stops all internal jobs
    */
   close() {
     this._metaApiWebsocketClient.removeLatencyListener(this._latencyMonitor);
     this._metaApiWebsocketClient.close();
+    this._metaApiWebsocketClient.stop();
   }
 
 }

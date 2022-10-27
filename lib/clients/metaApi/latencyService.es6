@@ -1,3 +1,5 @@
+'use strict';
+
 import socketIO from 'socket.io-client';
 import LoggerManager from '../../logger';
 
@@ -22,7 +24,14 @@ export default class LatencyService {
     this._refreshPromisesByRegion = {};
     this._logger = LoggerManager.getLogger('LatencyService');
     this._refreshRegionLatencyJob = this._refreshRegionLatencyJob.bind(this);
-    setInterval(this._refreshRegionLatencyJob, 15 * 60 * 1000);
+    this._refreshRegionLatencyInterval = setInterval(this._refreshRegionLatencyJob, 15 * 60 * 1000);
+  }
+
+  /**
+   * Stops the service
+   */
+  stop() {
+    clearInterval(this._refreshRegionLatencyInterval);
   }
 
   /**

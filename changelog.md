@@ -1,8 +1,11 @@
+20.2.1
+  - fixed stopping internal jobs when closing sdk
+
 20.2.0
   - merged risk management sdk into the main project
 
 20.1.1
-  - fix type errors when websocket client clears account cache
+  - fixed type errors when websocket client clears account cache
 
 20.1.0
   - refactored connection management to unsubscribe only when all connection instances are closed

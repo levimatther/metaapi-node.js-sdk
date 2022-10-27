@@ -14,6 +14,11 @@ import MetaApiWebsocketClient from "./metaApiWebsocket.client"
     constructor(websocketClient: MetaApiWebsocketClient, token: string, connectTimeout: number);
 
     /**
+     * Stops the service
+     */
+    stop(): void;
+
+    /**
      * Returns the list of regions sorted by latency
      * @returns {string[]} list of regions sorted by latency
      */

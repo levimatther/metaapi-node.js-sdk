@@ -126,6 +126,11 @@ export default class MetaApiWebsocketClient {
    * Closes connection to MetaApi server
    */
   close(): void;
+
+  /**
+   * Stops the client
+   */
+  stop(): void;
   
   /**
    * Returns account information for a specified MetaTrader account (see

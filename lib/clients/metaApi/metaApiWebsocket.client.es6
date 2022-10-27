@@ -92,7 +92,7 @@ export default class MetaApiWebsocketClient {
     }
     this._logger = LoggerManager.getLogger('MetaApiWebsocketClient');
     if (!opts.disableInternalJobs) {
-      setInterval(this._clearAccountCacheJob.bind(this), 30 * 60 * 1000);
+      this._clearAccountCacheInterval = setInterval(this._clearAccountCacheJob.bind(this), 30 * 60 * 1000);
     }
   }
 
@@ -502,6 +502,14 @@ export default class MetaApiWebsocketClient {
     this._synchronizationListeners = {};
     this._latencyListeners = [];
     this._packetOrderer.stop();
+  }
+
+  /**
+   * Stops the client
+   */
+  stop() {
+    clearInterval(this._clearAccountCacheInterval);
+    this._latencyService.stop();
   }
 
   /**
