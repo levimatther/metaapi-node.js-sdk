@@ -1,4 +1,4 @@
-20.3.0
+20.2.2
   - fixed typings
   - added tracking tradeDayCount to period statistics stream
 
