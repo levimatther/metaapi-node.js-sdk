@@ -187,7 +187,8 @@ export default class PeriodStatisticsStreamManager {
                 maxRelativeProfit: cache.record.maxRelativeProfit,
                 period: cache.lastPeriod.period,
                 exceededThresholdType: cache.record.exceededThresholdType,
-                thresholdExceeded: cache.record.thresholdExceeded
+                thresholdExceeded: cache.record.thresholdExceeded,
+                tradeDayCount: cache.record.tradeDayCount
               }]);
             }
           }
@@ -195,8 +196,42 @@ export default class PeriodStatisticsStreamManager {
       }
 
       async onDealAdded(instanceIndex, deal) {
+        if(!cache.lastPeriod) {
+          return;
+        }
         if(deal.type === 'DEAL_TYPE_BALANCE') {
           cache.equityAdjustments[deal.id] = deal.profit;
+        }
+        const ignoredDealTypes = ['DEAL_TYPE_BALANCE', 'DEAL_TYPE_CREDIT'];
+        if(!ignoredDealTypes.includes(deal.type)) {
+          const timeDiff = new Date(deal.time).getTime() - new Date(deal.brokerTime).getTime();
+          const startSearchDate = new Date(new Date(cache.lastPeriod.startBrokerTime).getTime() + timeDiff);
+          const deals = connection.historyStorage.getDealsByTimeRange(startSearchDate, new Date(8640000000000000))
+            .filter(dealItem => !ignoredDealTypes.includes(dealItem.type));
+          deals.push(deal);
+          const tradedDays = {};
+          deals.forEach(dealItem => {
+            tradedDays[dealItem.brokerTime.slice(0, 10)] = true;
+          });
+          const tradeDayCount = Object.keys(tradedDays).length;
+          if(cache.record.tradeDayCount !== tradeDayCount) {
+            cache.record.tradeDayCount = tradeDayCount;
+            listener.onPeriodStatisticsUpdated([{
+              startBrokerTime: cache.lastPeriod.startBrokerTime,
+              endBrokerTime: cache.lastPeriod.endBrokerTime,
+              initialBalance: cache.lastPeriod.initialBalance,
+              maxAbsoluteDrawdown: cache.record.maxAbsoluteDrawdown,
+              maxAbsoluteProfit: cache.record.maxAbsoluteProfit,
+              maxDrawdownTime: cache.record.maxDrawdownTime,
+              maxProfitTime: cache.record.maxProfitTime,
+              maxRelativeDrawdown: cache.record.maxRelativeDrawdown,
+              maxRelativeProfit: cache.record.maxRelativeProfit,
+              period: cache.lastPeriod.period,
+              exceededThresholdType: cache.record.exceededThresholdType,
+              thresholdExceeded: cache.record.thresholdExceeded,
+              tradeDayCount: cache.record.tradeDayCount
+            }]);
+          }
         }
       }
     }
@@ -273,7 +308,8 @@ export default class PeriodStatisticsStreamManager {
             maxAbsoluteProfit: lastItem.maxAbsoluteProfit,
             maxRelativeProfit: lastItem.maxRelativeProfit,
             thresholdExceeded: lastItem.thresholdExceeded,
-            exceededThresholdType: lastItem.exceededThresholdType
+            exceededThresholdType: lastItem.exceededThresholdType,
+            tradeDayCount: lastItem.tradeDayCount
           };
           cache.record = cache.lastPeriod;
         }

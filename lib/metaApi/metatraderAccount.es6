@@ -1,7 +1,8 @@
 'use strict';
 
 import TimeoutError from '../clients/timeoutError';
-import RpcMetaApiConnection from './rpcMetaApiConnection';
+import RpcMetaApiConnectionInstance from './rpcMetaApiConnectionInstance';
+import StreamingMetaApiConnectionInstance from './streamingMetaApiConnectionInstance';
 import HistoryDatabase from './historyDatabase/index';
 import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
@@ -432,7 +433,7 @@ export default class MetatraderAccount {
    * Connects to MetaApi. There is only one connection per account. Subsequent calls to this method will return the same connection.
    * @param {HistoryStorage} historyStorage optional history storage
    * @param {Date} [historyStartTime] history start time. Used for tests
-   * @return {StreamingMetaApiConnection} MetaApi connection
+   * @return {StreamingMetaApiConnectionInstance} MetaApi connection instance
    */
   getStreamingConnection(historyStorage, historyStartTime) {
     if(this._metaApiWebsocketClient.region && this._metaApiWebsocketClient.region !== this.region) {
@@ -444,8 +445,8 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Connects to MetaApi via RPC connection.
-   * @returns {RpcMetaApiConnection} MetaApi connection
+   * Connects to MetaApi via RPC connection instance.
+   * @returns {RpcMetaApiConnectionInstance} MetaApi connection instance
    */
   getRPCConnection() {
     if(this._metaApiWebsocketClient.region && this._metaApiWebsocketClient.region !== this.region) {

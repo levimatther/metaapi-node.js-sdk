@@ -543,7 +543,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    */
   async close(instanceId) {
     this._openedInstances = this._openedInstances.filter(id => id !== instanceId);
-    if (!Object.keys(this._openedInstances).length && !this._closed) {
+    if (!this._openedInstances.length && !this._closed) {
       this._logger.debug(`${this._account.id}: Closing connection`);
       this._stateByInstanceIndex = {};
       await this._connectionRegistry.removeStreaming(this._account);

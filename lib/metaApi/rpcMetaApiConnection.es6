@@ -49,7 +49,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    */
   async close(instanceId) {
     this._openedInstances = this._openedInstances.filter(id => id !== instanceId);
-    if (!Object.keys(this._openedInstances).length && !this._closed) {
+    if (!this._openedInstances.length && !this._closed) {
       await this._connectionRegistry.removeRpc(this.account);
       this._websocketClient.removeSynchronizationListener(this.account.id, this);
       this._websocketClient.removeAccountCache(this.account.id);

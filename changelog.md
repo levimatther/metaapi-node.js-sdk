@@ -1,3 +1,7 @@
+20.3.0
+  - fixed typings
+  - added tracking tradeDayCount to period statistics stream
+
 20.2.1
   - fixed stopping internal jobs when closing sdk
 
