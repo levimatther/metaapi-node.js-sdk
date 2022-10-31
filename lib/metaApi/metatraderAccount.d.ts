@@ -5,9 +5,9 @@ import ConnectionRegistry from "./connectionRegistry";
 import ExpertAdvisorClient, { NewExpertAdvisorDto } from "../clients/metaApi/expertAdvisor.client";
 import HistoricalMarketDataClient from "../clients/metaApi/historicalMarketData.client";
 import HistoryStorage from "./historyStorage";
-import RpcMetaApiConnection from "./rpcMetaApiConnection";
+import RpcMetaApiConnectionInstance from "./rpcMetaApiConnectionInstance";
 import ExpertAdvisor from "./expertAdvisor";
-import StreamingMetaApiConnection from "./streamingMetaApiConnection";
+import StreamingMetaApiConnectionInstance from "./streamingMetaApiConnectionInstance";
 import MetatraderAccountReplica from './metatraderAccountReplica';
 
 /**
@@ -274,15 +274,15 @@ export default class MetatraderAccount {
    * Connects to MetaApi. There is only one connection per account. Subsequent calls to this method will return the same connection.
    * @param {HistoryStorage} historyStorage optional history storage
    * @param {Date} [historyStartTime] history start time. Used for tests
-   * @return {StreamingMetaApiConnection} MetaApi connection
+   * @return {StreamingMetaApiConnectionInstance} MetaApi connection instance
    */
-  getStreamingConnection(historyStorage?: HistoryStorage, historyStartTime?: Date): StreamingMetaApiConnection;
+  getStreamingConnection(historyStorage?: HistoryStorage, historyStartTime?: Date): StreamingMetaApiConnectionInstance;
   
   /**
-   * Connects to MetaApi via RPC connection.
-   * @returns {RpcMetaApiConnection} MetaApi connection
+   * Connects to MetaApi via RPC connection instance.
+   * @returns {RpcMetaApiConnectionInstance} MetaApi connection instance
    */
-  getRPCConnection(): RpcMetaApiConnection;
+  getRPCConnection(): RpcMetaApiConnectionInstance;
   
   /**
    * Updates MetaTrader account data

@@ -5,6 +5,7 @@ import PeriodStatisticsListener from './periodStatisticsListener';
 import PeriodStatisticsStreamManager from './periodStatisticsStreamManager';
 import TimeoutError from '../../../clients/timeoutError';
 import { NotFoundError } from '../../../clients/errorHandler';
+import MemoryHistoryStorage from '../../../metaApi/memoryHistoryStorage';
 
 /**
  * @test {PeriodStatisticsStreamManager}
@@ -118,7 +119,8 @@ describe('PeriodStatisticsStreamManager', () => {
         healthStatus: {
           synchronized: true
         }
-      }
+      },
+      historyStorage: new MemoryHistoryStorage()
     };
     getAccountStub = sandbox.stub(metaApi.metatraderAccountApi,
       'getAccount').resolves(account);
@@ -136,7 +138,8 @@ describe('PeriodStatisticsStreamManager', () => {
         maxRelativeProfit: 0.1,
         period: 'day',
         startBrokerTime: '2020-05-11 12:00:00.000',
-        thresholdExceeded: false
+        thresholdExceeded: false,
+        tradeDayCount: 0
       },
       {
         endBrokerTime: '2020-05-11 11:59:59.999',
@@ -149,7 +152,8 @@ describe('PeriodStatisticsStreamManager', () => {
         maxRelativeProfit: 0.1,
         period: 'day',
         startBrokerTime: '2020-05-10 12:00:00.000',
-        thresholdExceeded: false
+        thresholdExceeded: false,
+        tradeDayCount: 0
       }
     ];
     getPeriodStatisticsStub.resolves(results);
@@ -213,7 +217,8 @@ describe('PeriodStatisticsStreamManager', () => {
       maxAbsoluteProfit: 500,
       maxRelativeProfit: 0.1,
       thresholdExceeded: false,
-      exceededThresholdType: undefined
+      exceededThresholdType: undefined,
+      tradeDayCount: 0
     }]);
     sinon.assert.calledTwice(updatedStub);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
@@ -306,7 +311,8 @@ describe('PeriodStatisticsStreamManager', () => {
       maxRelativeProfit: 0.1,
       period: 'day',
       startBrokerTime: '2020-05-11 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     await syncListener.onDealAdded('vint-hill:1:ps-mpa-1', {
       clientId: 'TE_GBPUSD_7hyINWqAlE',
@@ -348,7 +354,8 @@ describe('PeriodStatisticsStreamManager', () => {
       maxRelativeProfit: 0.1,
       period: 'day',
       startBrokerTime: '2020-05-11 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     await clock.tickAsync(1000);
     getPeriodStatisticsStub.resolves([{
@@ -393,7 +400,8 @@ describe('PeriodStatisticsStreamManager', () => {
       maxRelativeProfit: 0.1,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
   });
@@ -420,7 +428,8 @@ describe('PeriodStatisticsStreamManager', () => {
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }, results[0]]);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
@@ -440,7 +449,8 @@ describe('PeriodStatisticsStreamManager', () => {
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
   });
@@ -538,7 +548,8 @@ describe('PeriodStatisticsStreamManager', () => {
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }, results[0]]);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
@@ -564,14 +575,16 @@ describe('PeriodStatisticsStreamManager', () => {
       period: 'day',
       startBrokerTime: '2020-05-11 12:00:00.000',
       exceededThresholdType: 'drawdown',
-      thresholdExceeded: true
+      thresholdExceeded: true,
+      tradeDayCount: 0
     }]);
     sinon.assert.calledWith(updatedStub, [results[0], {
       endBrokerTime: '2020-05-13 11:59:59.999',
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
   });
@@ -599,7 +612,8 @@ describe('PeriodStatisticsStreamManager', () => {
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }, results[0]]);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
@@ -625,14 +639,16 @@ describe('PeriodStatisticsStreamManager', () => {
       period: 'day',
       startBrokerTime: '2020-05-11 12:00:00.000',
       exceededThresholdType: 'drawdown',
-      thresholdExceeded: true
+      thresholdExceeded: true,
+      tradeDayCount: 0
     }]);
     sinon.assert.calledWith(updatedStub, [results[0], {
       endBrokerTime: '2020-05-13 11:59:59.999',
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
   });
@@ -660,7 +676,8 @@ describe('PeriodStatisticsStreamManager', () => {
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }, results[0]]);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
@@ -686,14 +703,16 @@ describe('PeriodStatisticsStreamManager', () => {
       period: 'day',
       startBrokerTime: '2020-05-11 12:00:00.000',
       exceededThresholdType: 'profit',
-      thresholdExceeded: true
+      thresholdExceeded: true,
+      tradeDayCount: 0
     }]);
     sinon.assert.calledWith(updatedStub, [results[0], {
       endBrokerTime: '2020-05-13 11:59:59.999',
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
   });
@@ -721,7 +740,8 @@ describe('PeriodStatisticsStreamManager', () => {
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }, results[0]]);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
@@ -747,14 +767,16 @@ describe('PeriodStatisticsStreamManager', () => {
       period: 'day',
       startBrokerTime: '2020-05-11 12:00:00.000',
       exceededThresholdType: 'profit',
-      thresholdExceeded: true
+      thresholdExceeded: true,
+      tradeDayCount: 0
     }]);
     sinon.assert.calledWith(updatedStub, [results[0], {
       endBrokerTime: '2020-05-13 11:59:59.999',
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
   });
@@ -794,7 +816,8 @@ describe('PeriodStatisticsStreamManager', () => {
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }, results[0]]);
     await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
@@ -820,14 +843,16 @@ describe('PeriodStatisticsStreamManager', () => {
       period: 'day',
       startBrokerTime: '2020-05-11 12:00:00.000',
       exceededThresholdType: 'drawdown',
-      thresholdExceeded: true
+      thresholdExceeded: true,
+      tradeDayCount: 0
     }]);
     sinon.assert.calledWith(updatedStub, [results[0], {
       endBrokerTime: '2020-05-13 11:59:59.999',
       initialBalance: 10000,
       period: 'day',
       startBrokerTime: '2020-05-12 12:00:00.000',
-      thresholdExceeded: false
+      thresholdExceeded: false,
+      tradeDayCount: 0
     }]);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
   });
@@ -851,6 +876,293 @@ describe('PeriodStatisticsStreamManager', () => {
     sinon.assert.calledOnce(disconnectedStub);
     await syncListener.onDealsSynchronized('vint-hill:1:ps-mpa-1');
     sinon.assert.calledTwice(connectedStub);
+  });
+
+  /**
+   * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
+   */
+  it('should send an update event if a new deal arrived', async () => {
+    periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
+    const dealBalance = {
+      id: '200745237',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BALANCE',
+      time: new Date('2022-05-11T13:00:00.000Z'),
+      brokerTime: '2020-05-11 16:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    const deal = {
+      id: '200745237',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BUY',
+      time: new Date('2022-05-11T13:00:00.000Z'),
+      brokerTime: '2020-05-11 16:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    const deal2 = {
+      id: '200745238',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BUY',
+      time: new Date('2022-05-11T14:00:00.000Z'),
+      brokerTime: '2020-05-11 17:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    const deal3 = {
+      id: '200745239',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BUY',
+      time: new Date('2022-05-12T02:00:00.000Z'),
+      brokerTime: '2020-05-12 05:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    await clock.tickAsync(100);
+    await Promise.all([
+      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', dealBalance),
+      connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', dealBalance)
+    ]);
+    sinon.assert.calledOnce(updatedStub);
+    await Promise.all([
+      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal),
+      connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal)
+    ]);
+    sinon.assert.calledTwice(updatedStub);
+    sinon.assert.calledWith(updatedStub, [
+      {
+        startBrokerTime: '2020-05-11 12:00:00.000',
+        endBrokerTime: '2020-05-12 11:59:59.999',
+        initialBalance: 10000,
+        maxAbsoluteDrawdown: 200,
+        maxAbsoluteProfit: 500,
+        maxDrawdownTime: '2020-05-11 14:00:00.000',
+        maxProfitTime: '2020-05-11 14:00:00.000',
+        maxRelativeDrawdown: 0.05,
+        maxRelativeProfit: 0.1,
+        period: 'day',
+        exceededThresholdType: undefined,
+        thresholdExceeded: false,
+        tradeDayCount: 1
+      }
+    ]);
+    await clock.tickAsync(100);
+    await Promise.all([
+      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal2),
+      connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal2)
+    ]);
+    sinon.assert.calledTwice(updatedStub);
+    await Promise.all([
+      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal3),
+      connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal3)
+    ]);
+    sinon.assert.calledThrice(updatedStub);
+    sinon.assert.calledWith(updatedStub, [
+      {
+        startBrokerTime: '2020-05-11 12:00:00.000',
+        endBrokerTime: '2020-05-12 11:59:59.999',
+        initialBalance: 10000,
+        maxAbsoluteDrawdown: 200,
+        maxAbsoluteProfit: 500,
+        maxDrawdownTime: '2020-05-11 14:00:00.000',
+        maxProfitTime: '2020-05-11 14:00:00.000',
+        maxRelativeDrawdown: 0.05,
+        maxRelativeProfit: 0.1,
+        period: 'day',
+        exceededThresholdType: undefined,
+        thresholdExceeded: false,
+        tradeDayCount: 2
+      }
+    ]);
+  });
+
+  /**
+   * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
+   */
+  it('should account for deals already in the database', async () => {
+    periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
+    const deal = {
+      id: '200745237',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BUY',
+      time: new Date('2022-05-11T13:00:00.000Z'),
+      brokerTime: '2020-05-11 16:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    const deal2 = {
+      id: '200745239',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BUY',
+      time: new Date('2022-05-12T02:00:00.000Z'),
+      brokerTime: '2020-05-12 05:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    await clock.tickAsync(100);
+    connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal);
+    sinon.assert.calledOnce(updatedStub);
+    await Promise.all([
+      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal2),
+      connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal2)
+    ]);
+    sinon.assert.calledTwice(updatedStub);
+    sinon.assert.calledWith(updatedStub, [
+      {
+        startBrokerTime: '2020-05-11 12:00:00.000',
+        endBrokerTime: '2020-05-12 11:59:59.999',
+        initialBalance: 10000,
+        maxAbsoluteDrawdown: 200,
+        maxAbsoluteProfit: 500,
+        maxDrawdownTime: '2020-05-11 14:00:00.000',
+        maxProfitTime: '2020-05-11 14:00:00.000',
+        maxRelativeDrawdown: 0.05,
+        maxRelativeProfit: 0.1,
+        period: 'day',
+        exceededThresholdType: undefined,
+        thresholdExceeded: false,
+        tradeDayCount: 2
+      }
+    ]);
+  });
+
+  /**
+   * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
+   */
+  it('should filter deals according to timezone offset', async () => {
+    periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
+    const deal = {
+      id: '200745237',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BUY',
+      time: new Date('2022-05-11T10:00:00.000Z'),
+      brokerTime: '2020-05-11 11:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    const deal2 = {
+      id: '200745239',
+      platform: 'mt5',
+      type: 'DEAL_TYPE_BUY',
+      time: new Date('2022-05-12T02:00:00.000Z'),
+      brokerTime: '2020-05-12 03:00:00.000',
+      commission: -3.5,
+      swap: 0,
+      profit: 0,
+      symbol: 'EURUSD',
+      magic: 0,
+      orderId: '281184743',
+      positionId: '281184743',
+      volume: 1,
+      price: 0.97062,
+      entryType: 'DEAL_ENTRY_IN',
+      reason: 'DEAL_REASON_EXPERT',
+      accountCurrencyExchangeRate: 1,
+      updateSequenceNumber: 1665435250622040
+    };
+    await clock.tickAsync(100);
+    connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal);
+    sinon.assert.calledOnce(updatedStub);
+    await Promise.all([
+      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal2),
+      connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal2)
+    ]);
+    sinon.assert.calledTwice(updatedStub);
+    sinon.assert.calledWith(updatedStub, [
+      {
+        startBrokerTime: '2020-05-11 12:00:00.000',
+        endBrokerTime: '2020-05-12 11:59:59.999',
+        initialBalance: 10000,
+        maxAbsoluteDrawdown: 200,
+        maxAbsoluteProfit: 500,
+        maxDrawdownTime: '2020-05-11 14:00:00.000',
+        maxProfitTime: '2020-05-11 14:00:00.000',
+        maxRelativeDrawdown: 0.05,
+        maxRelativeProfit: 0.1,
+        period: 'day',
+        exceededThresholdType: undefined,
+        thresholdExceeded: false,
+        tradeDayCount: 1
+      }
+    ]);
   });
 
 });
