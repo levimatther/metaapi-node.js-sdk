@@ -205,6 +205,7 @@ export default class EquityChartStreamManager {
           await account.waitDeployed();
           isDeployed = true;  
         } catch (err) {
+          listener.onError(err);
           this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
           await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
           retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
@@ -223,6 +224,7 @@ export default class EquityChartStreamManager {
           await connection.waitSynchronized();
           isSynchronized = true;
         } catch (err) {
+          listener.onError(err);
           this._logger.error(`Error configuring equity chart stream listener for account ${accountId}, retrying`, err);
           await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
           retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
@@ -270,6 +272,7 @@ export default class EquityChartStreamManager {
           cache.record = cache.lastPeriod;
         }
       } catch (err) {
+        listener.onError(err);
         this._logger.error(`Failed initialize equity chart data for account ${accountId}`, err);
         await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
         retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);

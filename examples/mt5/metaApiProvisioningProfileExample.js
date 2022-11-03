@@ -47,7 +47,6 @@ async function testMetaApiSynchronization() {
         password: password,
         server: serverName,
         provisioningProfileId: profile.id,
-        application: 'MetaApi',
         magic: 1000
       });
     } else {

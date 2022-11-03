@@ -1,4 +1,6 @@
 import MetaApiWebsocketClient, { MetatraderAccountInformation, MetatraderCandle, MetatraderDeals, MetatraderHistoryOrders, MetatraderOrder, MetatraderPosition, MetatraderSymbolPrice, MetatraderSymbolSpecification, MetatraderTick, ServerTime } from "../clients/metaApi/metaApiWebsocket.client";
+import MetaApiConnectionInstance from './metaApiConnectionInstance';
+import StreamingMetaApiConnection from './streamingMetaApiConnection';
 
 /**
  * Exposes MetaApi MetaTrader RPC API connection instance to consumers

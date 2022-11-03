@@ -1,3 +1,7 @@
+20.3.0
+  - remove application field from create account method
+  - add onError events events to risk management sdk
+
 20.2.2
   - fixed typings
   - added tracking tradeDayCount to period statistics stream

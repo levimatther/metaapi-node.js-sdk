@@ -17,6 +17,7 @@ describe('EquityChartStreamManager', () => {
   let finishStub;
   let connectedStub;
   let disconnectedStub;
+  let errorStub;
   let listener;
   let sandbox;
   let account;
@@ -54,6 +55,7 @@ describe('EquityChartStreamManager', () => {
     finishStub = sinon.stub();
     connectedStub = sinon.stub();
     disconnectedStub = sinon.stub();
+    errorStub = sinon.stub();
 
     class Listener extends EquityChartListener {
       async onEquityRecordUpdated(equityChartEvent) {
@@ -70,6 +72,10 @@ describe('EquityChartStreamManager', () => {
     
       async onDisconnected(instanceIndex) {
         disconnectedStub(instanceIndex);
+      }
+
+      async onError(error) {
+        errorStub(error);
       }
     }
 
@@ -317,6 +323,7 @@ describe('EquityChartStreamManager', () => {
     await clock.tickAsync(5000);
     equityChartStreamManager.removeEquityChartListener(listenerId);
     sinon.assert.calledWith(callStub, results);
+    sinon.assert.calledTwice(errorStub);
   });
 
   /**
@@ -331,6 +338,7 @@ describe('EquityChartStreamManager', () => {
     await clock.tickAsync(35000);
     equityChartStreamManager.removeEquityChartListener(listenerId);
     sinon.assert.calledWith(callStub, results);
+    sinon.assert.calledTwice(errorStub);
   });
 
   /**

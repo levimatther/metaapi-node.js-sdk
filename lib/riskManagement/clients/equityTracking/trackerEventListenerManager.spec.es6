@@ -15,7 +15,7 @@ describe('TrackerEventListenerManager', () => {
   let sandbox;
   let clock;
   let trackerEventListenerManager;
-  let getEventStub, listener, callStub;
+  let getEventStub, listener, callStub, errorStub;
 
   let expected = [{
     sequenceNumber: 2,
@@ -106,11 +106,16 @@ describe('TrackerEventListenerManager', () => {
       });
 
     callStub = sinon.stub();
+    errorStub = sinon.stub();
 
     class Listener extends TrackerEventListener {
 
       async onTrackerEvent(trackerEvent) {
         callStub(trackerEvent);
+      }
+
+      async onError(error) {
+        errorStub(error);
       }
 
     }
@@ -154,6 +159,8 @@ describe('TrackerEventListenerManager', () => {
    * @test {TrackerEventListenerManager#addTrackerEventListener}
    */
   it('should wait if error returned', async () => {
+    const error = new Error('test');
+    const error2 = new Error('test');
     getEventStub
       .callsFake(async (opts) => {
         await new Promise(res => setTimeout(res, 500));
@@ -172,15 +179,19 @@ describe('TrackerEventListenerManager', () => {
         await new Promise(res => setTimeout(res, 500));
         return expected;
       })
-      .onFirstCall().rejects(new Error('test'))
-      .onSecondCall().rejects(new Error('test'));
+      .onFirstCall().rejects(error)
+      .onSecondCall().rejects(error2);
     const id = trackerEventListenerManager.addTrackerEventListener(listener, 'accountId', 'trackerId', 1);
     await clock.tickAsync(600);
     sinon.assert.callCount(getEventStub, 1);
     sinon.assert.notCalled(callStub);
+    sinon.assert.calledOnce(errorStub);
+    sinon.assert.calledWith(errorStub, error);
     await clock.tickAsync(600);
     sinon.assert.callCount(getEventStub, 2);
     sinon.assert.notCalled(callStub);
+    sinon.assert.calledTwice(errorStub);
+    sinon.assert.calledWith(errorStub, error2);
     await clock.tickAsync(2000);
     sinon.assert.callCount(getEventStub, 3);
     sinon.assert.notCalled(callStub);

@@ -3,6 +3,7 @@ import ClientApiClient from "../clients/metaApi/clientApi.client";
 import HistoryStorage from "./historyStorage";
 import MetatraderAccount from "./metatraderAccount";
 import StreamingMetaApiConnection from "./streamingMetaApiConnection";
+import RpcMetaApiConnection from "./rpcMetaApiConnection";
 
 /**
  * Manages account connections
