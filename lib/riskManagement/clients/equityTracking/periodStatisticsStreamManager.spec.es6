@@ -21,6 +21,7 @@ describe('PeriodStatisticsStreamManager', () => {
   let trackerCompletedStub;
   let connectedStub;
   let disconnectedStub;
+  let errorStub;
   let listener;
   let sandbox;
   let getAccountStub;
@@ -61,6 +62,7 @@ describe('PeriodStatisticsStreamManager', () => {
     trackerCompletedStub = sinon.stub();
     connectedStub = sinon.stub();
     disconnectedStub = sinon.stub();
+    errorStub = sinon.stub();
 
     class Listener extends PeriodStatisticsListener {
       async onPeriodStatisticsUpdated(periodStatisticsEvent) {
@@ -81,7 +83,11 @@ describe('PeriodStatisticsStreamManager', () => {
     
       async onDisconnected(instanceIndex) {
         disconnectedStub(instanceIndex);
-      } 
+      }
+
+      async onError(error) {
+        errorStub(error);
+      }
 
     }
 
@@ -467,6 +473,7 @@ describe('PeriodStatisticsStreamManager', () => {
     await clock.tickAsync(5000);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
     sinon.assert.calledWith(updatedStub, results);
+    sinon.assert.calledTwice(errorStub);
   });
 
   /**
@@ -481,6 +488,7 @@ describe('PeriodStatisticsStreamManager', () => {
     await clock.tickAsync(35000);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
     sinon.assert.calledWith(updatedStub, results);
+    sinon.assert.calledTwice(errorStub);
   });
 
   /**
@@ -492,8 +500,8 @@ describe('PeriodStatisticsStreamManager', () => {
       await periodStatisticsStreamManager.addPeriodStatisticsListener(listener,
         'accountId', 'tracker1');
       sinon.assert.fail();
-    } catch (error) {
-      error.name.should.equal('NotFoundError');
+    } catch (err) {
+      err.name.should.equal('NotFoundError');
     }
   });
 
@@ -506,8 +514,8 @@ describe('PeriodStatisticsStreamManager', () => {
       await periodStatisticsStreamManager.addPeriodStatisticsListener(listener,
         'accountId', 'tracker1');
       sinon.assert.fail();
-    } catch (error) {
-      error.name.should.equal('TimeoutError');
+    } catch (err) {
+      err.name.should.equal('TimeoutError');
     }
   });
 
@@ -520,8 +528,8 @@ describe('PeriodStatisticsStreamManager', () => {
       await periodStatisticsStreamManager.addPeriodStatisticsListener(listener,
         'accountId', 'tracker1');
       sinon.assert.fail();
-    } catch (error) {
-      error.name.should.equal('NotFoundError');
+    } catch (err) {
+      err.name.should.equal('NotFoundError');
     }
   });
 

@@ -13,4 +13,10 @@ export default class TrackerEventListener {
     throw Error('Abstract method onTrackerEvent has no implementation');
   }
 
+  /**
+   * Processes an error event
+   * @param {Error} error error received 
+   */
+  async onError(error) {}
+
 }

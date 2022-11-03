@@ -69,7 +69,8 @@ export default class TrackerEventListenerManager {
         if (this._trackerEventListeners[listenerId] && packets.length) {
           sequenceNumber = packets.slice(-1)[0].sequenceNumber;
         }
-      } catch (error) {
+      } catch (err) {
+        listener.onError(err);
         await new Promise(res => setTimeout(res, throttleTime));
         throttleTime = Math.min(throttleTime * 2, 30000);
       }

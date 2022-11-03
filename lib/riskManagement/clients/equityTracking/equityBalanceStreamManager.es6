@@ -132,6 +132,7 @@ export default class EquityBalanceStreamManager {
           await account.waitDeployed();
           isDeployed = true;  
         } catch (err) {
+          listener.onError(err);
           this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
           await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
           retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
@@ -150,6 +151,7 @@ export default class EquityBalanceStreamManager {
           await connection.waitSynchronized();
           isSynchronized = true;
         } catch (err) {
+          listener.onError(err);
           this._logger.error('Error configuring equity balance stream listener ' +
             `for account ${accountId}, retrying`, err);
           await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 

@@ -11,4 +11,10 @@ export default class TrackerEventListener {
    */
   onTrackerEvent(trackerEvent: TrackerEvent): Promise<void>;
 
+  /**
+   * Processes an error event
+   * @param {Error} error error received 
+   */
+  onError(error: Error): Promise<void>;
+
 }

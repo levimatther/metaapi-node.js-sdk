@@ -23,7 +23,6 @@ try {
     // password can be investor password for read-only access
     password: 'qwerty',
     server: 'ICMarketsSC-Demo',
-    application: 'MetaApi',
     magic: 123456,
     quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
     reliability: 'regular' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)

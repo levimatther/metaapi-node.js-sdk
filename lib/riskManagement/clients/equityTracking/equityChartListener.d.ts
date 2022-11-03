@@ -28,4 +28,10 @@ export default class EquityChartListener {
    */
   onDisconnected(instanceIndex: string): Promise<void>;
 
+  /**
+   * Processes an error event
+   * @param {Error} error error received 
+   */
+  onError(error: Error): Promise<void>;
+
 }

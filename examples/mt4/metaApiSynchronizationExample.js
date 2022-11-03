@@ -23,7 +23,6 @@ async function testMetaApiSynchronization() {
         password: password,
         server: serverName,
         platform: 'mt4',
-        application: 'MetaApi',
         magic: 1000
       });
     } else {

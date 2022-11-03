@@ -258,8 +258,6 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {String} server MetaTrader server which hosts the account
    * @property {String} [platform] platform id (mt4 or mt5)
    * @property {String} [provisioningProfileId] id of the account's provisioning profile
-   * @property {String} application application name to connect the account to. Currently allowed values are MetaApi and
-   * AgiliumTrade
    * @property {Number} magic MetaTrader magic to place trades using. When manualTrades field is set to true,
    * magic value must be 0
    * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false

@@ -4,6 +4,7 @@ import MetaApiWebsocketClient, {
     TrailingStopLoss
 } from "../clients/metaApi/metaApiWebsocket.client";
 import MetatraderAccount from "./metatraderAccount";
+import MetaApiConnection from "./metaApiConnection";
 
 /**
  * Exposes MetaApi MetaTrader API connection instance to consumers

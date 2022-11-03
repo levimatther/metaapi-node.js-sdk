@@ -34,4 +34,10 @@ export default class EquityBalanceListener {
     throw Error('Abstract method onDisconnected has no implementation');
   }
 
+  /**
+   * Processes an error event
+   * @param {Error} error error received 
+   */
+  async onError(error) {}
+
 }

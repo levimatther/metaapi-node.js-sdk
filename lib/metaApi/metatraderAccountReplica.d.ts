@@ -1,4 +1,4 @@
-import MetatraderAccountClient, { MetatraderAccountReplica, MetatraderAccountReplicaDto, UpdatedMetatraderAccountReplicaDto } from "../clients/metaApi/metatraderAccount.client";
+import MetatraderAccountClient, { MetatraderAccountReplicaDto, UpdatedMetatraderAccountReplicaDto } from "../clients/metaApi/metatraderAccount.client";
 import MetatraderAccount from "./metatraderAccount";
 
 /**
