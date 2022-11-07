@@ -12,13 +12,12 @@ maintenance costs and time thanks to high-quality API, open-source SDKs and conv
 
 Features supported:
 
-- tracking equity API
-- manage arbitrary number of trackers with different periods
-- retrieving tracker events with REST API or streaming
-- retrieving profit and drawdown tracking statistics
-- retrieving equity charts
+- fine-granular equity tracking
+- configuring and executing trading challenges and competitions consisting from multiple drawdown and profit target criteria
+- receiving notifications about failed challenges in real time
 - tracking equity chart and challenge/competition statistics in real time
 - tracking equity and balance changes in real time
+- tracking number of days with trades during a challenge
 
 Please check Features section of the [https://metaapi.cloud/docs/risk-management/](https://metaapi.cloud/docs/risk-management/) documentation for detailed description of all settings you can make
 
