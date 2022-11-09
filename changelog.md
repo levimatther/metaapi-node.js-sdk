@@ -1,3 +1,6 @@
+20.3.1
+  - update risk management feature list
+
 20.3.0
   - remove application field from create account method
   - add onError events events to risk management sdk
