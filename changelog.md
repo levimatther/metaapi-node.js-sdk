@@ -1,5 +1,6 @@
-20.3.1
+20.4.0
   - update risk management feature list
+  - it is now possible to prevent subscribeToMarketData from waiting for a quote to arrive  
 
 20.3.0
   - remove application field from create account method

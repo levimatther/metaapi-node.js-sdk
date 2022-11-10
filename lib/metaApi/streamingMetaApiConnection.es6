@@ -145,9 +145,11 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
    * note that this feature is not fully implemented on server-side yet
    * @param {number} [timeoutInSeconds] timeout to wait for prices in seconds, default is 30
+   * @param {boolean} [waitForQuote] if set to false, the method will resolve without waiting for the first quote to
+   * arrive. Default is to wait for quote if quotes subscription is requested.
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  async subscribeToMarketData(symbol, subscriptions, timeoutInSeconds) {
+  async subscribeToMarketData(symbol, subscriptions, timeoutInSeconds, waitForQuote = true) {
     this._checkIsConnectionActive();
     if(!this._terminalState.specification(symbol)){
       throw new ValidationError(`Cannot subscribe to market data for symbol ${symbol} because ` +
@@ -172,7 +174,9 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       }
       await this._websocketClient.subscribeToMarketData(this._account.id, symbol, subscriptions,
         this._account.reliability);
-      return this.terminalState.waitForPrice(symbol, timeoutInSeconds);
+      if (waitForQuote !== false && subscriptions.find(s => s.type === 'quotes')) {
+        return this.terminalState.waitForPrice(symbol, timeoutInSeconds);
+      }
     }
   }
 

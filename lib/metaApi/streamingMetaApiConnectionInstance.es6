@@ -54,11 +54,13 @@ export default class StreamingMetaApiConnectionInstance extends MetaApiConnectio
    * @param {Array<MarketDataSubscription>} subscriptions array of market data subscription to create or update. Please
    * note that this feature is not fully implemented on server-side yet
    * @param {number} [timeoutInSeconds] timeout to wait for prices in seconds, default is 30
+   * @param {boolean} [waitForQuote] if set to false, the method will resolve without waiting for the first quote to
+   * arrive. Default is to wait for quote if quotes subscription is requested.
    * @returns {Promise} promise which resolves when subscription request was processed
    */
-  async subscribeToMarketData(symbol, subscriptions, timeoutInSeconds) {
+  async subscribeToMarketData(symbol, subscriptions, timeoutInSeconds, waitForQuote = true) {
     this._checkIsConnectionActive();
-    return this._metaApiConnection.subscribeToMarketData(symbol, subscriptions, timeoutInSeconds);
+    return this._metaApiConnection.subscribeToMarketData(symbol, subscriptions, timeoutInSeconds, waitForQuote);
   }
 
   /**
