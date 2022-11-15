@@ -49,4 +49,12 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @return {Promise} promise which resolves when synchronization to RPC application is completed
    */
   waitSynchronized(timeoutInSeconds?: number): Promise<any>;
+
+  /**
+   * Invoked when connection to MetaApi websocket API restored after a disconnect
+   * @param {string} region reconnected region
+   * @param {number} instanceNumber reconnected instance number
+   * @return {Promise} promise which resolves when connection to MetaApi websocket API restored after a disconnect
+   */
+  onReconnected(region: string, instanceNumber: number): Promise<any>;
 }

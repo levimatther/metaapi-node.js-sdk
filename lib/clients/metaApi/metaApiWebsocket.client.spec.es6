@@ -97,6 +97,7 @@ describe('MetaApiWebsocketClient', () => {
     sandbox.stub(client._latencyService, 'onDisconnected').returns();
     sandbox.stub(client._latencyService, 'onUnsubscribe').returns();
     sandbox.stub(client._latencyService, 'onDealsSynchronized').returns();
+    sandbox.stub(client._latencyService, 'waitConnectedInstance').resolves('accountId:vint-hill:0:ps-mpa-1');
     getActiveInstancesStub = sandbox.stub(client._latencyService, 'getActiveAccountInstances').returns([]);
   });
 
@@ -178,6 +179,95 @@ describe('MetaApiWebsocketClient', () => {
         });
       });
     })();
+    client._regionsByAccounts.accountId = {region: 'vint-hill', connections: 1};
+    client._accountsByReplicaId.accountId = 'accountId';
+    client._accountReplicas.accountId = {
+      'vint-hill': 'accountId'
+    };
+    client._connectedHosts = {
+      'accountId:vint-hill:0:ps-mpa-1': 'ps-mpa-1'
+    };
+    sandbox.stub(client._latencyService, 'waitConnectedInstance').resolves('accountId:vint-hill:0:ps-mpa-1');
+    let actual = await client.getPositions('accountId');
+    actual.should.match(positions);
+    io.close();
+  });
+
+  /**
+   * @test {MetaApiWebsocketClient#connect}
+   */
+  it('should wait for connected instance before sending requests', async () => {
+    let positions = [{
+      id: '46214692',
+      type: 'POSITION_TYPE_BUY',
+      symbol: 'GBPUSD',
+      magic: 1000,
+      time: new Date('2020-04-15T02:45:06.521Z'),
+      updateTime: new Date('2020-04-15T02:45:06.521Z'),
+      openPrice: 1.26101,
+      currentPrice: 1.24883,
+      currentTickValue: 1,
+      volume: 0.07,
+      swap: 0,
+      profit: -85.25999999999966,
+      commission: -0.25,
+      clientId: 'TE_GBPUSD_7hyINWqAlE',
+      stopLoss: 1.17721,
+      unrealizedProfit: -85.25999999999901,
+      realizedProfit: -6.536993168992922e-13
+    }];
+    let resolve;
+    let promise = new Promise(res => resolve = res);
+    client.close();
+    io.close(() => resolve());
+    await promise;
+    io = new Server(6785, {path: '/ws', pingTimeout: 1000000});
+    client = new MetaApiWebsocketClient(domainClient, 'token', {application: 'application', 
+      domain: 'project-stock.agiliumlabs.cloud', requestTimeout: 1.5, useSharedClientApi: false,
+      retryOpts: { retries: 3, minDelayInSeconds: 0.1, maxDelayInSeconds: 0.5},
+      eventProcessing: {sequentialProcessing: true}});
+    client.url = 'http://localhost:6785';
+    client.addAccountCache('accountId', {'vint-hill': 'accountId'});
+    sandbox.stub(client._subscriptionManager, 'isSubscriptionActive').returns(true);
+    io.on('connect', socket => {
+      server = socket;
+      if (socket.request._query['auth-token'] !== 'token') {
+        socket.emit({error: 'UnauthorizedError', message: 'Authorization token invalid'});
+        socket.close();
+      }
+      server.on('request', data => {
+        if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'RPC') {
+          server.emit('response', {type: 'response', accountId: data.accountId, 
+            requestId: data.requestId, positions});
+        } else if (data.type === 'subscribe') {
+          server.emit('response', {type: 'response', accountId: data.accountId, 
+            requestId: data.requestId});
+        }
+      });
+    });
+    client.url = 'http://localhost:6785';
+    client._regionsByAccounts.accountId = {region: 'vint-hill', connections: 1};
+    client._regionsByAccounts.accountIdReplica = {region: 'new-york', connections: 1};
+    client._accountsByReplicaId.accountId = 'accountId';
+    client._accountReplicas.accountId = {
+      'vint-hill': 'accountId',
+    };
+    client._connectedHosts = {
+      'accountId:vint-hill:0:ps-mpa-1': 'ps-mpa-1'
+    };
+    server.on('request', data => {
+      if (data.type === 'getPositions' && data.accountId === 'accountId' && data.application === 'RPC') {
+        server.emit('response', {type: 'response', accountId: data.accountId, 
+          requestId: data.requestId, positions});
+      }
+    });
+    sandbox.stub(client._latencyService, 'onConnected').returns();
+    sandbox.stub(client._latencyService, 'onDisconnected').returns();
+    sandbox.stub(client._latencyService, 'onUnsubscribe').returns();
+    sandbox.stub(client._latencyService, 'waitConnectedInstance').callsFake(async () => {
+      await new Promise(res => setTimeout(res, 50));
+      return 'accountId:vint-hill:0:ps-mpa-1';
+    });
     let actual = await client.getPositions('accountId');
     actual.should.match(positions);
     io.close();
@@ -2964,6 +3054,7 @@ describe('MetaApiWebsocketClient', () => {
         }
       });
     });
+    sandbox.stub(client._latencyService, 'waitConnectedInstance').resolves('accountId:vint-hill:0:ps-mpa-1');
     await client.subscribe('accountId', 1);
     await client.getPositions('accountId');
     client.addSynchronizationListener('accountId', listener);

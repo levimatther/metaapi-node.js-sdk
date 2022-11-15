@@ -188,4 +188,47 @@ describe('LatencyService', () => {
       ['accountId:vint-hill:0:ps-mpa-1']);
   });
 
+  /**
+   * @test {LatencyService#waitConnectedInstance}
+   */
+  describe('waitConnectedInstance', () => {
+
+    /**
+     * @test {LatencyService#waitConnectedInstance}
+     */
+    it('should create a promise and wait for connected instance', async () => {
+      (async () => {
+        await new Promise(res => setTimeout(res, 50));
+        await service.onConnected('accountId:vint-hill:0:ps-mpa-1');
+      })();
+      const instanceId = await service.waitConnectedInstance('accountId');
+      sinon.assert.match(instanceId, 'accountId:vint-hill:0:ps-mpa-1');
+    });
+  
+    /**
+     * @test {LatencyService#waitConnectedInstance}
+     */
+    it('should wait for existing promise', async () => {
+      (async () => {
+        await new Promise(res => setTimeout(res, 100));
+        await service.onConnected('accountId:vint-hill:0:ps-mpa-1');
+      })();
+      const instanceId = service.waitConnectedInstance('accountId');
+      await new Promise(res => setTimeout(res, 50));
+      const instanceId2 = await service.waitConnectedInstance('accountId');
+      sinon.assert.match(await instanceId, instanceId2);
+      sinon.assert.match(instanceId2, 'accountId:vint-hill:0:ps-mpa-1');
+    });
+
+    /**
+     * @test {LatencyService#waitConnectedInstance}
+     */
+    it('should return instance id immediately if exists', async () => {
+      await service.onConnected('accountId:vint-hill:0:ps-mpa-1');
+      const instanceId = await service.waitConnectedInstance('accountId');
+      sinon.assert.match(instanceId, 'accountId:vint-hill:0:ps-mpa-1');
+    });
+    
+  });
+
 });

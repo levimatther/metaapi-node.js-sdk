@@ -57,6 +57,7 @@ export default class DomainClient {
         throw err;
       } else {
         if (this._regionCache.length === this._regionIndex + 1) {
+          this._regionIndex = 0;
           throw err;
         } else {
           this._regionIndex++;
