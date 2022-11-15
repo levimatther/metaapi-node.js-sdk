@@ -20,6 +20,8 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
     this._websocketClient.addSynchronizationListener(account.id, this);
     this._stateByInstanceIndex = {};
     this._openedInstances = [];
+    Object.values(account.accountRegions)
+      .forEach(replicaId => this._websocketClient.addReconnectListener(this, replicaId));
     this._logger = LoggerManager.getLogger('MetaApiConnection');
   }
 
@@ -53,6 +55,7 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
       await this._connectionRegistry.removeRpc(this.account);
       this._websocketClient.removeSynchronizationListener(this.account.id, this);
       this._websocketClient.removeAccountCache(this.account.id);
+      this._websocketClient.removeReconnectListener(this);
       this._closed = true;
     }
   }
@@ -126,6 +129,20 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
         }
       }
     }
+  }
+
+  /**
+   * Invoked when connection to MetaApi websocket API restored after a disconnect
+   * @param {String} region reconnected region
+   * @param {Number} instanceNumber reconnected instance number
+   * @return {Promise} promise which resolves when connection to MetaApi websocket API restored after a disconnect
+   */
+  async onReconnected(region, instanceNumber) {
+    const instanceTemplate = `${region}:${instanceNumber}`;
+    Object.keys(this._stateByInstanceIndex)
+      .filter(key => key.startsWith(`${instanceTemplate}:`)).forEach(key => {
+        delete this._stateByInstanceIndex[key];
+      });
   }
 
   _getState(instanceIndex) {

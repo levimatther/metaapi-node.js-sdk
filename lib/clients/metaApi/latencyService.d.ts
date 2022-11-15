@@ -3,7 +3,7 @@ import MetaApiWebsocketClient from "./metaApiWebsocket.client"
 /**
  * Service for managing account replicas based on region latency
  */
- export default class LatencyService {
+export default class LatencyService {
 
     /**
      * Constructs latency service instance
@@ -61,5 +61,12 @@ import MetaApiWebsocketClient from "./metaApiWebsocket.client"
      * @returns {string[]} list of synchronized account instances
      */
     getSynchronizedAccountInstances(accountId: string): string[];
+
+    /**
+     * Waits for connected instance
+     * @param {String} accountId account id 
+     * @returns {String} instance id
+     */
+    waitConnectedInstance(accountId: string): Promise<string>;
 
 }

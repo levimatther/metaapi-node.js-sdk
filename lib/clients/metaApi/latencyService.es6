@@ -22,6 +22,7 @@ export default class LatencyService {
     this._connectedInstancesCache = {};
     this._synchronizedInstancesCache = {};
     this._refreshPromisesByRegion = {};
+    this._waitConnectPromises = {};
     this._logger = LoggerManager.getLogger('LatencyService');
     this._refreshRegionLatencyJob = this._refreshRegionLatencyJob.bind(this);
     this._refreshRegionLatencyInterval = setInterval(this._refreshRegionLatencyJob, 15 * 60 * 1000);
@@ -103,6 +104,10 @@ export default class LatencyService {
           this._websocketClient.unsubscribeAccountRegion(accountId, regionItem);
         });
       }
+      if(this._waitConnectPromises[accountId]) {
+        this._waitConnectPromises[accountId].resolve();
+        delete this._waitConnectPromises[accountId];
+      }
     } catch (err) {
       this._logger.error(`Failed to process onConnected event for instance ${instanceId}`, err);
     }
@@ -151,6 +156,27 @@ export default class LatencyService {
    */
   getSynchronizedAccountInstances(accountId) {
     return this._getAccountInstances(accountId).filter(instance => this._synchronizedInstancesCache[instance]);
+  }
+
+  /**
+   * Waits for connected instance
+   * @param {String} accountId account id 
+   * @returns {String} instance id
+   */
+  async waitConnectedInstance(accountId) {
+    let instances = this.getActiveAccountInstances(accountId);
+    if (!instances.length) {
+      if (!this._waitConnectPromises[accountId]) {
+        let resolve;
+        let promise = new Promise((res, rej) => {
+          resolve = res;
+        });
+        this._waitConnectPromises[accountId] = {promise, resolve};
+      }
+      await this._waitConnectPromises[accountId].promise;
+      instances = this.getActiveAccountInstances(accountId);
+    }
+    return instances[0];
   }
 
   _getAccountInstances(accountId) {

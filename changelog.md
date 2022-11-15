@@ -1,3 +1,8 @@
+20.5.0
+  - improved reliability of rpc connection
+  - added rolling over to the first region if requests on all regions failed in risk management SDK
+  - improved docs for risk management sdk
+
 20.4.0
   - update risk management feature list
   - it is now possible to prevent subscribeToMarketData from waiting for a quote to arrive  

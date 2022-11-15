@@ -1447,8 +1447,11 @@ export default class MetaApiWebsocketClient {
   async rpcRequest(accountId, request, timeoutInSeconds) {
     const ignoredRequestTypes = ['subscribe', 'synchronize', 'refreshMarketDataSubscriptions', 'unsubscribe'];
     const primaryAccountId = this._accountsByReplicaId[accountId];
-    const connectedInstance = this._latencyService.getActiveAccountInstances(primaryAccountId)[0];
-    if(!ignoredRequestTypes.includes(request.type) && connectedInstance) {
+    let connectedInstance = this._latencyService.getActiveAccountInstances(primaryAccountId)[0];
+    if(!ignoredRequestTypes.includes(request.type)) {
+      if (!connectedInstance){
+        connectedInstance = await this._latencyService.waitConnectedInstance(accountId);
+      }
       const activeRegion = connectedInstance.split(':')[1];
       accountId = this._accountReplicas[primaryAccountId][activeRegion];
     }

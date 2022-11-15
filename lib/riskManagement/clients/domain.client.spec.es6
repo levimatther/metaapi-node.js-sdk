@@ -215,6 +215,39 @@ describe('DomainClient', () => {
         }
       });
 
+      /**
+       * @test {DomainClient#requestApi}
+       */
+      it('should roll over to the first region if all regions failed', async () => {
+        requestStub.withArgs({
+          url: 'https://risk-management-api-v1.vint-hill.agiliumtrade.agiliumtrade.ai/some/rest/api',
+          method: 'GET',
+          headers: {'auth-token': token},
+          json: true
+        }).throws(new InternalError('test'));
+        requestStub.withArgs({
+          url: 'https://risk-management-api-v1.us-west.agiliumtrade.agiliumtrade.ai/some/rest/api',
+          method: 'GET',
+          headers: {'auth-token': token},
+          json: true
+        }).throws(new InternalError('test'));
+
+        try {
+          await domainClient.requestApi(opts);
+          throw new Error('InternalError expected');
+        } catch (error) {
+          error.name.should.equal('InternalError');
+        }
+        requestStub.withArgs({
+          url: 'https://risk-management-api-v1.vint-hill.agiliumtrade.agiliumtrade.ai/some/rest/api',
+          method: 'GET',
+          headers: {'auth-token': token},
+          json: true
+        }).resolves(expected);
+        const response = await domainClient.requestApi(opts);
+        sinon.assert.match(response, expected);
+      });
+
     });
 
   });

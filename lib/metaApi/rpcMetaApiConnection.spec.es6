@@ -7,7 +7,7 @@ import NotSynchronizedError from '../clients/metaApi/notSynchronizedError';
 import TimeoutError from '../clients/timeoutError';
 
 /**
- * @test {MetaApiConnection}
+ * @test {RpcMetaApiConnection}
  */
 // eslint-disable-next-line max-statements
 describe('RpcMetaApiConnection', () => {
@@ -27,7 +27,9 @@ describe('RpcMetaApiConnection', () => {
     calculateMargin: () => {},
     waitSynchronized: () => {},
     addAccountCache: () => {},
-    removeAccountCache: () => {}
+    removeAccountCache: () => {},
+    addReconnectListener: () => {},
+    removeReconnectListener: () => {}
   };
 
   let accountRegions = {
@@ -63,7 +65,7 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#connect}
+   * @test {RpcMetaApiConnection#connect}
    */
   it('should connect rpc connection', async () => {
     sandbox.stub(client, 'addAccountCache').returns();
@@ -77,10 +79,11 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#close}
+   * @test {RpcMetaApiConnection#close}
    */
   it('should close connection only if all instances closed', async () => {
     sandbox.stub(client, 'removeAccountCache').returns();
+    sandbox.stub(client, 'removeReconnectListener').returns();
     sandbox.stub(connectionRegistry, 'removeRpc').resolves();
     await api.connect('accountId');
     await api.connect('accountId');
@@ -92,11 +95,12 @@ describe('RpcMetaApiConnection', () => {
     sinon.assert.notCalled(client.removeAccountCache);
     await api.close('accountId2');
     sinon.assert.calledWith(client.removeAccountCache, 'accountId');
+    sinon.assert.calledWith(client.removeReconnectListener, api);
     sinon.assert.calledWith(connectionRegistry.removeRpc, account);
   });
 
   /**
-   * @test {MetaApiConnection#onConnected}
+   * @test {RpcMetaApiConnection#onConnected}
    */
   it('should process onConnected event', async () => {
     await api.onConnected('vint-hill:1:ps-mpa-1', 1);
@@ -104,7 +108,7 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#onDisconnected}
+   * @test {RpcMetaApiConnection#onDisconnected}
    */
   it('should process onDisconnected event', async () => {
     await api.onConnected('vint-hill:1:ps-mpa-1', 1);
@@ -117,7 +121,7 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#onStreamClosed}
+   * @test {RpcMetaApiConnection#onStreamClosed}
    */
   it('should process onStreamClosed event', async () => {
     await api.onConnected('vint-hill:1:ps-mpa-1', 1);
@@ -130,7 +134,7 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#waitSynchronized}
+   * @test {RpcMetaApiConnection#waitSynchronized}
    */
   it('should wait until RPC application is synchronized', async () => {
     await api.connect();
@@ -146,7 +150,7 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#waitSynchronized}
+   * @test {RpcMetaApiConnection#waitSynchronized}
    */
   it('should time out waiting for synchronization', async () => {
     await api.connect();
@@ -169,7 +173,7 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
-   * @test {MetaApiConnection#waitSynchronized}
+   * @test {RpcMetaApiConnection#waitSynchronized}
    */
   it('should time out waiting for synchronization if no connected event has arrived', async () => {
     await api.connect();
@@ -181,6 +185,20 @@ describe('RpcMetaApiConnection', () => {
     } catch (err) {
       err.name.should.equal('TimeoutError');
     }
+  });
+
+  /**
+   * @test {RpcMetaApiConnection#onReconnected}
+   */
+  it('should clear region states on socket reconnect', async () => {
+    await api.connect();
+    await api.onConnected('new-york:1:ps-mpa-1', 2);
+    await api.onConnected('vint-hill:1:ps-mpa-1', 2);
+    sinon.assert.match(api.isSynchronized(), true);
+    await api.onReconnected('vint-hill', 1);
+    sinon.assert.match(api.isSynchronized(), true);
+    await api.onReconnected('new-york', 1);
+    sinon.assert.match(api.isSynchronized(), false);
   });
 
 });
