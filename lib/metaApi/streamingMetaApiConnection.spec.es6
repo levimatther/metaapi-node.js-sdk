@@ -593,16 +593,6 @@ describe('StreamingMetaApiConnection', () => {
   });
 
   /**
-   * @test {StreamingMetaApiConnection#queueEvent}
-   */
-  it('should queue events', () => {
-    sandbox.stub(client, 'queueEvent').returns();
-    let eventCallable = () => {};
-    api.queueEvent('test', eventCallable);
-    sinon.assert.calledOnceWithExactly(client.queueEvent, 'accountId', 'test', eventCallable);
-  });
-
-  /**
    * @test {StreamingMetaApiConnection#onReconnected}
    */
   it('should clear region states on socket reconnect', async () => {
