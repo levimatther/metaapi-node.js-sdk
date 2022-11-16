@@ -105,6 +105,18 @@ export default class StreamingMetaApiConnectionInstance extends MetaApiConnectio
   waitSynchronized(opts: SynchronizationOptions): Promise<any>;
 
   /**
+   * Queues an event for processing among other synchronization events within same account
+   * @param {String} name event label name
+   * @param {Function} callable async or regular function to execute
+   */
+  queueEvent(name: string, callable: Function): void;
+
+  /**
+   * Closes the connection. The instance of the class should no longer be used after this method is invoked.
+   */
+  close(): Promise<void>;
+
+  /**
    * Returns synchronization status
    * @return {boolean} synchronization status
    */

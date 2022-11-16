@@ -12,7 +12,7 @@ import ConnectionHealthMonitor from './connectionHealthMonitor';
  * @test {MetaApiConnection}
  */
 // eslint-disable-next-line max-statements
-describe('StreamingMetaApiConnection', () => {
+describe('StreamingMetaApiConnectionInstance', () => {
   let sandbox;
   let api;
   let account;
@@ -584,6 +584,16 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should return health monitor', async () => {
     api.healthMonitor.should.equal(healthMonitor);
+  });
+
+  /**
+   * @test {MetaApiConnection#queueEvent}
+   */
+  it('should queue events', () => {
+    sandbox.stub(client, 'queueEvent').returns();
+    let eventCallable = () => {};
+    api.queueEvent('test', eventCallable);
+    sinon.assert.calledOnceWithExactly(client.queueEvent, 'accountId', 'test', eventCallable);
   });
 
 });
