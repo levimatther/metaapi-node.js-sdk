@@ -1158,23 +1158,14 @@ describe('MetaApiWebsocketClient', () => {
     /**
      * @test {MetaApiWebsocketClient#unsubscribe}
      */
-    it('should ignore not found exception on unsubscribe', async () => {
+    it('should not throw errors on unsubscribe', async () => {
       server.on('request', data => {
         server.emit('processingError', {
           id: 1, error: 'ValidationError', message: 'Validation failed',
           details: [{parameter: 'volume', message: 'Required value.'}], requestId: data.requestId
         });
       });
-      try {
-        await client.unsubscribe('accountId');
-        throw new Error('ValidationError extected');
-      } catch (err) {
-        err.name.should.equal('ValidationError');
-        err.details.should.match([{
-          parameter: 'volume',
-          message: 'Required value.'
-        }]);
-      }
+      await client.unsubscribe('accountId');
       server.removeAllListeners('request');
       server.on('request', data => {
         server.emit('processingError', {
