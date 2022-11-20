@@ -1,3 +1,6 @@
+20.5.1
+  - do not throw errors if failed to unsubscribe properly
+
 20.5.0
   - improved reliability of rpc connection
   - added rolling over to the first region if requests on all regions failed in risk management SDK

@@ -1171,18 +1171,18 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when socket unsubscribed
    */
   async unsubscribe(accountId) {
-    try {
-      const region = this.getAccountRegion(accountId);
-      this._latencyService.onUnsubscribe(accountId);
-      await Promise.all(Object.keys(this._socketInstances[region]).map(async instanceNumber => {
+    const region = this.getAccountRegion(accountId);
+    this._latencyService.onUnsubscribe(accountId);
+    await Promise.all(Object.keys(this._socketInstances[region]).map(async instanceNumber => {
+      try {
         await this._subscriptionManager.unsubscribe(accountId, Number(instanceNumber));
         delete this._socketInstancesByAccounts[instanceNumber][accountId];
-      }));
-    } catch (err) {
-      if (!(['TimeoutError', 'NotFoundError'].includes(err.name))) {
-        throw err;
+      } catch (err) {
+        if (!(['TimeoutError', 'NotFoundError'].includes(err.name))) {
+          this._logger.warn(`${accountId}:${instanceNumber}: failed to unsubscribe`, err);
+        }
       }
-    }
+    }));
   }
 
   /**
