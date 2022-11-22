@@ -45,7 +45,7 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "20.5.1",
+  "version": "20.6.0",
   "dependencies": {
     "@log4js-node/log4js-api": "~1.0.2",
     "babel-runtime": "~6.26.0",
@@ -79,8 +79,13 @@
     "should": "~13.2.3",
     "sinon": "~9.0.2",
     "socket.io": "~2.4.0",
-    "webpack": "~4.44.0",
-    "webpack-cli": "~3.3.12"
+    "webpack": "~4.46",
+    "webpack-cli": "~4.10.0"
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
   },
   "scripts": {
     "test": "mocha --exit --require babel-register lib/*/*/*/*.spec.es6 lib/*/*/*.spec.es6 lib/*/*.spec.es6 lib/*.spec.es6",
