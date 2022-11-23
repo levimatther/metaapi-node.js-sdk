@@ -15,6 +15,10 @@ class ExampleTrackerEventListener extends TrackerEventListener {
   async onTrackerEvent(trackerEvent) {
     console.log('tracker event received', JSON.stringify(trackerEvent));
   }
+
+  async onError(error) {
+    console.log('error event received', error);
+  }
 }
 
 async function main() {
