@@ -31,6 +31,10 @@ class ExamplePeriodStatisticsListener extends PeriodStatisticsListener {
   async onDisconnected() {
     console.log('on disconnected event received');
   }
+
+  async onError(error) {
+    console.log('error event received', error);
+  }
 }
 
 async function main() {

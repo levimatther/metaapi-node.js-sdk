@@ -1,3 +1,6 @@
+20.7.0
+  - add browser examples for risk management sdk
+
 20.6.0
   - do not throw errors if failed to unsubscribe properly
   - added webpack exports for MetaApi non default classes
