@@ -7,6 +7,7 @@ import MetatraderAccount from './metatraderAccount';
 import {NotFoundError} from '../clients/errorHandler';
 import HistoryDatabase from './historyDatabase/index';
 import ExpertAdvisor from './expertAdvisor';
+import MetatraderAccountReplica from './metatraderAccountReplica.es6';
 
 /**
  * @test {MetatraderAccountApi}
@@ -29,8 +30,11 @@ describe('MetatraderAccountApi', () => {
     redeployAccount: () => {},
     updateAccount: () => {},
     increaseReliability: () => {},
+    enableRiskManagementApi: () => {},
+    enableMetastatsHourlyTarification: () => {},
     createAccountReplica: () => {},
     getAccountReplica: () => {},
+    getAccountReplicas: () => {},
     deployAccountReplica: () => {},
     undeployAccountReplica: () => {},
     redeployAccountReplica: () => {},
@@ -92,10 +96,39 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
       type: 'cloud',
+      quoteStreamingIntervalInSeconds: 2.5,
+      symbol: 'symbol',
+      reliability: 'high',
+      tags: ['tags'],
+      metadata: 'metadata',
+      resourceSlots: 1,
+      copyFactoryResourceSlots: 1,
+      region: 'region',
+      manualTrades: false,
+      slippage: 30,
+      version: 4,
+      hash: 12345,
+      baseCurrency: 'USD',
+      copyFactoryRoles: ['PROVIDER'],
+      riskManagementApiEnabled: false,
+      metastatsHourlyTarificationEnabled: false,
+      connections: [{
+        region: 'region',
+        zone: 'zone',
+        application: 'application'
+      }],
+      primaryReplica: true,
+      userId: 'userId',
+      primaryAccountId: 'primaryId',
+      accountReplicas: [{
+        _id: 'replica0'
+      },
+      {
+        _id: 'replica1'
+      }],
       accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
     });
     let account = await api.getAccount('id');
@@ -105,10 +138,34 @@ describe('MetatraderAccountApi', () => {
     account.server.should.equal('ICMarketsSC-Demo');
     account.provisioningProfileId.should.equal('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
     account.magic.should.equal(123456);
-    account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
     account.type.should.equal('cloud');
+    account.quoteStreamingIntervalInSeconds.should.equal(2.5);
+    account.symbol.should.equal('symbol');
+    account.reliability.should.equal('high');
+    account.tags.should.deepEqual(['tags']);
+    account.metadata.should.equal('metadata');
+    account.resourceSlots.should.equal(1);
+    account.copyFactoryResourceSlots.should.equal(1);
+    account.region.should.equal('region');
+    account.manualTrades.should.equal(false);
+    account.slippage.should.equal(30);
+    account.version.should.equal(4);
+    account.hash.should.equal(12345);
+    account.baseCurrency.should.equal('USD');
+    account.copyFactoryRoles.should.deepEqual(['PROVIDER']);
+    account.riskManagementApiEnabled.should.equal(false);
+    account.metastatsHourlyTarificationEnabled.should.equal(false);
+    account.connections.should.deepEqual([{
+      region: 'region',
+      zone: 'zone',
+      application: 'application'
+    }]);
+    account.primaryReplica.should.equal(true);
+    account.userId.should.equal('userId');
+    account.primaryAccountId.should.equal('primaryId');
+    account.replicas.forEach((replica, id) => replica._data.should.deepEqual({_id: `replica${id}`}));
     account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
     sinon.assert.calledWith(client.getAccount, 'id');
@@ -125,10 +182,38 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
       type: 'cloud',
+      quoteStreamingIntervalInSeconds: 2.5,
+      symbol: 'symbol',
+      reliability: 'high',
+      tags: ['tags'],
+      metadata: 'metadata',
+      resourceSlots: 1,
+      copyFactoryResourceSlots: 1,
+      region: 'region',
+      manualTrades: false,
+      slippage: 30,
+      version: 4,
+      hash: 12345,
+      baseCurrency: 'USD',
+      copyFactoryRoles: ['PROVIDER'],
+      riskManagementApiEnabled: false,
+      metastatsHourlyTarificationEnabled: false,
+      connections: [{
+        region: 'region',
+        zone: 'zone',
+        application: 'application'
+      }],
+      primaryReplica: true,
+      userId: 'userId',
+      accountReplicas: [{
+        _id: 'replica0'
+      },
+      {
+        _id: 'replica1'
+      }],
       accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
     });
     let account = await api.getAccountByToken();
@@ -138,10 +223,33 @@ describe('MetatraderAccountApi', () => {
     account.server.should.equal('ICMarketsSC-Demo');
     account.provisioningProfileId.should.equal('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
     account.magic.should.equal(123456);
-    account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
     account.type.should.equal('cloud');
+    account.quoteStreamingIntervalInSeconds.should.equal(2.5);
+    account.symbol.should.equal('symbol');
+    account.reliability.should.equal('high');
+    account.tags.should.deepEqual(['tags']);
+    account.metadata.should.equal('metadata');
+    account.resourceSlots.should.equal(1);
+    account.copyFactoryResourceSlots.should.equal(1);
+    account.region.should.equal('region');
+    account.manualTrades.should.equal(false);
+    account.slippage.should.equal(30);
+    account.version.should.equal(4);
+    account.hash.should.equal(12345);
+    account.baseCurrency.should.equal('USD');
+    account.copyFactoryRoles.should.deepEqual(['PROVIDER']);
+    account.riskManagementApiEnabled.should.equal(false);
+    account.metastatsHourlyTarificationEnabled.should.equal(false);
+    account.connections.should.deepEqual([{
+      region: 'region',
+      zone: 'zone',
+      application: 'application'
+    }]);
+    account.primaryReplica.should.equal(true);
+    account.userId.should.equal('userId');
+    account.replicas.forEach((replica, id) => replica._data.should.deepEqual({_id: `replica${id}`}));
     account.accessToken.should.equal('2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA');
     (account instanceof MetatraderAccount).should.be.true();
     sinon.assert.calledWith(client.getAccountByToken);
@@ -159,7 +267,6 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      application: 'MetaApi',
       connectionStatus: 'DISCONNECTED',
       state: 'DEPLOYED',
       type: 'cloud',
@@ -172,7 +279,6 @@ describe('MetatraderAccountApi', () => {
       server: 'ICMarketsSC-Demo',
       provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
       magic: 123456,
-      application: 'MetaApi',
       type: 'cloud',
       accessToken: 'NyV5no9TMffJyUts2FjI80wly0so3rVCz4xOqiDx'
     };
@@ -183,7 +289,6 @@ describe('MetatraderAccountApi', () => {
     account.server.should.equal('ICMarketsSC-Demo');
     account.provisioningProfileId.should.equal('f9ce1f12-e720-4b9a-9477-c2d4cb25f076');
     account.magic.should.equal(123456);
-    account.application.should.equal('MetaApi');
     account.connectionStatus.should.equal('DISCONNECTED');
     account.state.should.equal('DEPLOYED');
     account.type.should.equal('cloud');
@@ -423,6 +528,84 @@ describe('MetatraderAccountApi', () => {
     await account.increaseReliability();
     account.reliability.should.equal('high');
     sinon.assert.calledWith(client.increaseReliability, 'id');
+    sinon.assert.calledWith(client.getAccount, 'id');
+    sinon.assert.calledTwice(client.getAccount);
+  });
+
+  /**
+   * @test {MetatraderAccount#enableRiskManagementApi}
+   */
+  it('should enable account risk management api', async () => {
+    getAccountStub
+      .onFirstCall().resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'DISCONNECTED',
+        state: 'DEPLOYED',
+        type: 'cloud'
+      })
+      .onSecondCall().resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'UNDEPLOYING',
+        type: 'cloud',
+        riskManagementApiEnabled: true
+      });
+    sandbox.stub(client, 'enableRiskManagementApi').resolves();
+    let account = await api.getAccount('id');
+    await account.enableRiskManagementApi();
+    account.riskManagementApiEnabled.should.be.true();
+    sinon.assert.calledWith(client.enableRiskManagementApi, 'id');
+    sinon.assert.calledWith(client.getAccount, 'id');
+    sinon.assert.calledTwice(client.getAccount);
+  });
+
+  /**
+   * @test {MetatraderAccount#enableMetastatsHourlyTarification}
+   */
+  it('should enable account MetaStats hourly tarification', async () => {
+    getAccountStub
+      .onFirstCall().resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'DISCONNECTED',
+        state: 'DEPLOYED',
+        type: 'cloud'
+      })
+      .onSecondCall().resolves({
+        _id: 'id',
+        login: '50194988',
+        name: 'mt5a',
+        server: 'ICMarketsSC-Demo',
+        provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+        magic: 123456,
+        application: 'MetaApi',
+        connectionStatus: 'CONNECTED',
+        state: 'UNDEPLOYING',
+        type: 'cloud',
+        metastatsHourlyTarificationEnabled: true
+      });
+    sandbox.stub(client, 'enableMetastatsHourlyTarification').resolves();
+    let account = await api.getAccount('id');
+    await account.enableMetastatsHourlyTarification();
+    account.metastatsHourlyTarificationEnabled.should.be.true();
+    sinon.assert.calledWith(client.enableMetastatsHourlyTarification, 'id');
     sinon.assert.calledWith(client.getAccount, 'id');
     sinon.assert.calledTwice(client.getAccount);
   });
@@ -1220,6 +1403,112 @@ describe('MetatraderAccountApi', () => {
       });
       sinon.assert.calledWith(client.getAccount, 'id');
       sinon.assert.calledTwice(client.getAccount);
+    });
+
+    /**
+     * @test {MetatraderAccount#getAccountReplica}
+     */
+    it('should retrieve MT account replica by id', async () => {
+      sandbox.stub(client, 'getAccountReplica').resolves({
+        _id: 'id',
+        state: 'DEPLOYED',
+        magic: 123456,
+        connectionStatus: 'DISCONNECTED',
+        quoteStreamingIntervalInSeconds: 2.5,
+        symbol: 'symbol',
+        reliability: 'high',
+        tags: ['tags'],
+        metadata: 'metadata',
+        resourceSlots: 1,
+        copyFactoryResourceSlots: 1,
+        region: 'region',
+        primaryAccount: {
+          _id: 'id',
+          primaryReplica: true
+        }
+      });
+      let replica = await api.getAccountReplica();
+      replica.id.should.equal('id');
+      replica.magic.should.equal(123456);
+      replica.connectionStatus.should.equal('DISCONNECTED');
+      replica.state.should.equal('DEPLOYED');
+      replica.quoteStreamingIntervalInSeconds.should.equal(2.5);
+      replica.symbol.should.equal('symbol');
+      replica.reliability.should.equal('high');
+      replica.tags.should.deepEqual(['tags']);
+      replica.metadata.should.equal('metadata');
+      replica.resourceSlots.should.equal(1);
+      replica.copyFactoryResourceSlots.should.equal(1);
+      replica.region.should.equal('region');
+      replica.primaryAccountFromDto.should.deepEqual({
+        _id: 'id',
+        primaryReplica: true
+      });
+      (replica instanceof MetatraderAccountReplica).should.be.true();
+      sinon.assert.calledWith(client.getAccountReplica);
+    });
+
+    /**
+     * @test {MetatraderAccount#getAccountReplicas}
+     */
+    it('should retrieve MT account replicas', async () => {
+      sandbox.stub(client, 'getAccountReplicas').resolves([{
+        _id: 'id0',
+        state: 'DEPLOYED',
+        magic: 123456,
+        connectionStatus: 'DISCONNECTED',
+        quoteStreamingIntervalInSeconds: 2.5,
+        symbol: 'symbol',
+        reliability: 'high',
+        tags: ['tags'],
+        metadata: 'metadata',
+        resourceSlots: 1,
+        copyFactoryResourceSlots: 1,
+        region: 'region',
+        primaryAccount: {
+          _id: 'id',
+          primaryReplica: true
+        }
+      },
+      {
+        _id: 'id1',
+        state: 'DEPLOYED',
+        magic: 123456,
+        connectionStatus: 'DISCONNECTED',
+        quoteStreamingIntervalInSeconds: 2.5,
+        symbol: 'symbol',
+        reliability: 'high',
+        tags: ['tags'],
+        metadata: 'metadata',
+        resourceSlots: 1,
+        copyFactoryResourceSlots: 1,
+        region: 'region',
+        primaryAccount: {
+          _id: 'id',
+          primaryReplica: true
+        }
+      }]);
+      let replicas = await api.getAccountReplicas();
+      replicas.forEach((replica, id) => {
+        replica.id.should.equal(`id${id}`);
+        replica.magic.should.equal(123456);
+        replica.connectionStatus.should.equal('DISCONNECTED');
+        replica.state.should.equal('DEPLOYED');
+        replica.quoteStreamingIntervalInSeconds.should.equal(2.5);
+        replica.symbol.should.equal('symbol');
+        replica.reliability.should.equal('high');
+        replica.tags.should.deepEqual(['tags']);
+        replica.metadata.should.equal('metadata');
+        replica.resourceSlots.should.equal(1);
+        replica.copyFactoryResourceSlots.should.equal(1);
+        replica.region.should.equal('region');
+        replica.primaryAccountFromDto.should.deepEqual({
+          _id: 'id',
+          primaryReplica: true
+        });
+        (replica instanceof MetatraderAccountReplica).should.be.true();
+      });
+      sinon.assert.calledWith(client.getAccountReplicas);
     });
 
     /**

@@ -150,6 +150,49 @@ describe('MetatraderAccountClient', () => {
   });
 
   /**
+   * @test {MetatraderAccountClient#getAccountReplicas}
+   */
+  it('should retrieve MetaTrader account replicas from API', async () => {
+    let expected = [{
+      _id: 'idReplica',
+      login: '50194988',
+      name: 'mt5a',
+      server: 'ICMarketsSC-Demo',
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+      magic: 123456,
+      application: 'MetaApi',
+      connectionStatus: 'DISCONNECTED',
+      state: 'DEPLOYED',
+      type: 'cloud',
+      tags: ['tag1', 'tag2']
+    },
+    {
+      _id: 'idReplica2',
+      login: '50194988',
+      name: 'mt5a',
+      server: 'ICMarketsSC-Demo',
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+      magic: 123456,
+      application: 'MetaApi',
+      connectionStatus: 'DISCONNECTED',
+      state: 'DEPLOYED',
+      type: 'cloud',
+      tags: ['tag1', 'tag2']
+    }];
+    requestStub.resolves(expected);
+    let account = await accountClient.getAccountReplicas('id', 'idReplica');
+    account.should.equal(expected);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/replicas`,
+      method: 'GET',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    }, 'getAccountReplicas');
+  });
+
+  /**
    * @test {MetatraderAccountClient#getAccountByToken}
    */
   it('should retrieve MetaTrader account by token from API', async () => {
@@ -651,6 +694,70 @@ describe('MetatraderAccountClient', () => {
       error.message.should.equal(
         'You can not invoke increaseReliability method, because you have connected with account access token. ' +
           'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {MetatraderAccountClient#enableRiskManagementApi}
+   */
+  it('should enable risk management API via API', async () => {
+    await accountClient.enableRiskManagementApi('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/enable-risk-management-api`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    }, 'enableRiskManagementApi');
+  });
+  
+  /**
+     * @test {MetatraderAccountClient#enableRiskManagementApi}
+     */
+  it('should not enable risk management API via API with account token', async () => {
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
+    try {
+      await accountClient.enableRiskManagementApi('id');
+      sinon.assert.fail();
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke enableRiskManagementApi method, because you have connected with account access token. ' +
+          'Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
+      );
+    }
+  });
+
+  /**
+   * @test {MetatraderAccountClient#enableMetastatsHourlyTarification}
+   */
+  it('should enable MetaStats hourly tarification via API', async () => {
+    await accountClient.enableMetastatsHourlyTarification('id');
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/enable-metastats-hourly-tarification`,
+      method: 'POST',
+      headers: {
+        'auth-token': token
+      },
+      json: true,
+    }, 'enableMetastatsHourlyTarification');
+  });
+  
+  /**
+     * @test {MetatraderAccountClient#enableMetastatsHourlyTarification}
+     */
+  it('should not enable MetaStats hourly tarification via API with account token', async () => {
+    domainClient.token = 'token';
+    accountClient = new MetatraderAccountClient(httpClient, domainClient);
+    try {
+      await accountClient.enableMetastatsHourlyTarification('id');
+      sinon.assert.fail();
+    } catch (error) {
+      error.message.should.equal(
+        'You can not invoke enableMetastatsHourlyTarification method, because you have connected with account ' +
+          'access token. Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
   });

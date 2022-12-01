@@ -1,4 +1,5 @@
 import TimeoutError from '../clients/timeoutError';
+import {Reliability, State, ConnectionStatus} from '../clients/metaApi/metatraderAccount.client';
 
 /**
  * Implements a MetaTrader account replica entity
@@ -19,35 +20,68 @@ export default class MetatraderAccountReplica {
 
   /**
    * Returns account replica id
-   * @return {String} account replica id
+   * @return {string} unique account replica id
    */
   get id() {
     return this._data._id;
   }
 
   /**
-   * Returns MetaTrader magic to place trades using
-   * @return {Number} MetaTrader magic to place trades using
-   */
-  get magic() {
-    return this._data.magic;
-  }
-
-  /**
-   * Returns account replica deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED, DELETING
-   * @return {String} account replica deployment state
+   * Returns current account replica state. One of CREATED, DEPLOYING, DEPLOYED, DEPLOY_FAILED, UNDEPLOYING,
+   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED
+   * @return {State} current account replica state
    */
   get state() {
     return this._data.state;
   }
+
+  /**
+   * Returns MetaTrader magic to place trades using
+   * @return {number} MetaTrader magic to place trades using
+   */
+  get magic() {
+    return this._data.magic;
+  }
   
   /**
    * Returns terminal & broker connection status, one of CONNECTED, DISCONNECTED, DISCONNECTED_FROM_BROKER
-   * @return {String} terminal & broker connection status
+   * @return {ConnectionStatus} terminal & broker connection status
    */
   get connectionStatus() {
     return this._data.connectionStatus;
   }
+
+  /**
+   * Returns quote streaming interval in seconds 
+   * @return {number} quote streaming interval in seconds
+   */
+  get quoteStreamingIntervalInSeconds() {
+    return this._data.quoteStreamingIntervalInSeconds;
+  }
+
+  /**
+   * Returns symbol provided by broker 
+   * @return {string} any symbol provided by broker
+   */
+  get symbol() {
+    return this._data.symbol;
+  }
+
+  /**
+   * Returns reliability value. Possible values are regular and high
+   * @return {Reliability} account replica reliability value
+   */
+  get reliability() {
+    return this._data.reliability;
+  }
+
+  /**
+   * Returns user-defined account replica tags
+   * @return {Array<string>} user-defined account replica tags
+   */
+  get tags() {
+    return this._data.tags;
+  }  
 
   /**
    * Returns extra information which can be stored together with your account replica
@@ -58,20 +92,12 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Returns user-defined account replica tags
-   * @return {Array<string>} user-defined account replica tags
-   */
-  get tags() {
-    return this._data.tags;
-  }
-
-  /**
    * Returns number of resource slots to allocate to account replica. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CopyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
-   * is billed as 2 standard resource slots.  Default is 1.
+   * is billed as 2 standard resource slots.
    * @return {number} number of resource slots to allocate to account replica
    */
   get resourceSlots() {
@@ -84,19 +110,10 @@ export default class MetatraderAccountReplica {
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account replica to CopyFactory 2 by specifying copyFactoryRoles field.
-   * Default is 1.
    * @return {number} number of CopyFactory 2 resource slots to allocate to account replica
    */
   get copyFactoryResourceSlots() {
     return this._data.copyFactoryResourceSlots;
-  }
-
-  /**
-   * Returns reliability value. Possible values are regular and high
-   * @return {string} account replica reliability value
-   */
-  get reliability() {
-    return this._data.reliability;
   }
 
   /**
@@ -105,6 +122,14 @@ export default class MetatraderAccountReplica {
      */
   get region() {
     return this._data.region;
+  }
+
+  /**
+   * Returns primary MetaTrader account of the replica from DTO
+   * @return {MetatraderAccount} primary MetaTrader account of the replica from DTO
+   */
+  get primaryAccountFromDto() {
+    return this._data.primaryAccount;
   }
 
   /**
@@ -181,8 +206,8 @@ export default class MetatraderAccountReplica {
 
   /**
    * Waits until API server has finished deployment and account replica reached the DEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account replica is deployed
    * @throws {TimeoutError} if account replica has not reached the DEPLOYED state within timeout allowed
    */
@@ -200,8 +225,8 @@ export default class MetatraderAccountReplica {
 
   /**
    * Waits until API server has finished undeployment and account replica reached the UNDEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account replica is deployed
    * @throws {TimeoutError} if account replica has not reached the UNDEPLOYED state within timeout allowed
    */
@@ -219,8 +244,8 @@ export default class MetatraderAccountReplica {
 
   /**
    * Waits until account replica has been deleted
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account replica is deleted
    * @throws {TimeoutError} if account replica was not deleted within timeout allowed
    */
@@ -239,8 +264,8 @@ export default class MetatraderAccountReplica {
 
   /**
    * Waits until API server has connected to the terminal and terminal has connected to the broker
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account replica reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when API server is connected to the broker
    * @throws {TimeoutError} if account replica has not connected to the broker within timeout allowed
    */

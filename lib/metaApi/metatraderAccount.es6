@@ -7,6 +7,8 @@ import HistoryDatabase from './historyDatabase/index';
 import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
 import MetatraderAccountReplica from './metatraderAccountReplica';
+//eslint-disable-next-line max-len
+import {Reliability, State, Version, ConnectionStatus, CopyFactoryRoles, Type, AccountConnection} from '../clients/metaApi/metatraderAccount.client';
 
 /**
  * Implements a MetaTrader account entity
@@ -37,100 +39,68 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns account id
-   * @return {String} account id
+   * Returns unique account id
+   * @return {string} unique account id
    */
   get id() {
     return this._data._id;
   }
 
   /**
-   * Returns account name
-   * @return {String} account name
-   */
-  get name() {
-    return this._data.name;
-  }
-
-  /**
-   * Returns account type. Possible values are cloud, cloud-g1, cloud-g2 and self-hosted.
-   * @return {String} account type
-   */
-  get type() {
-    return this._data.type;
-  }
-
-  /**
-   * Returns account login
-   * @return {String} account login
-   */
-  get login() {
-    return this._data.login;
-  }
-
-  /**
-   * Returns MetaTrader server which hosts the account
-   * @return {String} MetaTrader server which hosts the account
-   */
-  get server() {
-    return this._data.server;
-  }
-
-  /**
-   * Returns id of the account's provisioning profile
-   * @return {String} id of the account's provisioning profile
-   */
-  get provisioningProfileId() {
-    return this._data.provisioningProfileId;
-  }
-
-  /**
-   * Returns application name to connect the account to. Currently allowed values are MetaApi and AgiliumTrade
-   * @return {String} application name to connect the account to
-   */
-  get application() {
-    return this._data.application;
-  }
-
-  /**
-   * Returns MetaTrader magic to place trades using
-   * @return {Number} MetaTrader magic to place trades using
-   */
-  get magic() {
-    return this._data.magic;
-  }
-
-  /**
-   * Returns account deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED, DELETING
-   * @return {String} account deployment state
+   * Returns current account state. One of CREATED, DEPLOYING, DEPLOYED, DEPLOY_FAILED, UNDEPLOYING,
+   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED
+   * @return {State} current account state
    */
   get state() {
     return this._data.state;
   }
 
   /**
-   * Returns terminal & broker connection status, one of CONNECTED, DISCONNECTED, DISCONNECTED_FROM_BROKER
-   * @return {String} terminal & broker connection status
+   * Returns MetaTrader magic to place trades using
+   * @return {number} MetaTrader magic to place trades using
    */
-  get connectionStatus() {
+  get magic() {
+    return this._data.magic;
+  }
+
+  /**
+   * Returns terminal & broker connection status, one of CONNECTED, DISCONNECTED, DISCONNECTED_FROM_BROKER
+   * @return {ConnectionStatus} terminal & broker connection status
+   */
+  get connectionStatus()  {
     return this._data.connectionStatus;
   }
-
+  
   /**
-   * Returns authorization access token to be used for accessing single account data.
-   * Intended to be used in browser API.
-   * @return {String} authorization token
+   * Returns quote streaming interval in seconds 
+   * @return {number} quote streaming interval in seconds
    */
-  get accessToken() {
-    return this._data.accessToken;
+  get quoteStreamingIntervalInSeconds() {
+    return this._data.quoteStreamingIntervalInSeconds;
   }
-
+  
   /**
-   * Returns flag indicating if trades should be placed as manual trades on this account
-   * @return {Boolean} flag indicating if trades should be placed as manual trades on this account
+   * Returns symbol provided by broker 
+   * @return {string} any symbol provided by broker
    */
-  get manualTrades() {
-    return !!this._data.manualTrades;
+  get symbol() {
+    return this._data.symbol;
+  }
+  
+  /**
+   * Returns reliability value. Possible values are regular and high
+   * @return {Reliability} account reliability value
+   */
+  get reliability() {
+    return this._data.reliability;
+  }
+  
+  /**
+   * Returns user-defined account tags
+   * @return {Array<string>} user-defined account tags
+   */
+  get tags() {
+    return this._data.tags;
   }
 
   /**
@@ -142,28 +112,12 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns user-defined account tags
-   * @return {Array<string>} user-defined account tags
-   */
-  get tags() {
-    return this._data.tags;
-  }
-
-  /**
-   * Returns account roles for CopyFactory2 application
-   * @return {Array<string>} account roles for CopyFactory2 application
-   */
-  get copyFactoryRoles() {
-    return this._data.copyFactoryRoles;
-  }
-
-  /**
    * Returns number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
-   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * accounts copying the same strategy via CopyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
-   * is billed as 2 standard resource slots.  Default is 1.
+   * is billed as 2 standard resource slots.
    * @return {number} number of resource slots to allocate to account
    */
   get resourceSlots() {
@@ -176,7 +130,6 @@ export default class MetatraderAccount {
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
-   * Default is 1.
    * @return {number} number of CopyFactory 2 resource slots to allocate to account
    */
   get copyFactoryResourceSlots() {
@@ -184,7 +137,87 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns 3-character ISO currency code of the account base currency. Default value is USD. The setting is to be used
+   * Returns account region
+   * @return {string} account region value
+   */
+  get region() {
+    return this._data.region;
+  }
+
+  /**
+   * Returns human-readable account name
+   * @return {string} human-readable account name
+   */
+  get name() {
+    return this._data.name;
+  }
+  
+  /**
+   * Returns flag indicating if trades should be placed as manual trades on this account
+   * @return {boolean} flag indicating if trades should be placed as manual trades on this account
+   */
+  get manualTrades() {
+    return this._data.manualTrades;
+  }
+
+  /**
+   * Returns default trade slippage in points
+   * @return {number} default trade slippage in points
+   */
+  get slippage() {
+    return this._data.slippage;
+  }
+  
+  /**
+   * Returns id of the account's provisioning profile
+   * @return {string} id of the account's provisioning profile
+   */
+  get provisioningProfileId() {
+    return this._data.provisioningProfileId;
+  }
+  
+  /**
+   * Returns MetaTrader account login
+   * @return {string} MetaTrader account number
+   */
+  get login() {
+    return this._data.login;
+  }
+  
+  /**
+   * Returns MetaTrader server name to connect to
+   * @return {string} MetaTrader server name to connect to
+   */
+  get server() {
+    return this._data.server;
+  }
+
+  /**
+   * Returns account type. Possible values are cloud-g1, cloud-g2
+   * @return {Type} account type
+   */
+  get type() {
+    return this._data.type;
+  }
+
+  /**
+   * Returns MT version. Possible values are 4 and 5
+   * @return {Version} MT version
+   */
+  get version() {
+    return this._data.version;
+  }
+
+  /**
+   * Returns hash-code of the account
+   * @return {number} hash-code of the account
+   */
+  get hash() {
+    return this._data.hash;
+  }
+
+  /**
+   * Returns 3-character ISO currency code of the account base currency. The setting is to be used
    * for copy trading accounts which use national currencies only, such as some Brazilian brokers. You should not alter
    * this setting unless you understand what you are doing.
    * @return {number} 3-character ISO currency code of the account base currency
@@ -194,29 +227,38 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns reliability value. Possible values are regular and high
-   * @return {String} account reliability value
+   * Returns account roles for CopyFactory2 application. Possible values are `PROVIDER` and `SUBSCRIBER`
+   * @return {Array<CopyFactoryRoles>} account roles for CopyFactory2 application
    */
-  get reliability() {
-    return this._data.reliability;
+  get copyFactoryRoles() {
+    return this._data.copyFactoryRoles;
+  }
+  
+  /**
+   * Returns flag indicating that risk management API is enabled on account
+   * @return {boolean} flag indicating that risk management API is enabled on account
+   */
+  get riskManagementApiEnabled() {
+    return this._data.riskManagementApiEnabled;
   }
 
   /**
-   * Returns version value. Possible values are 4 and 5
-   * @return {String} account version value
+   * Returns flag indicating that MetaStats hourly tarification is enabled on account
+   * @return {boolean} flag indicating that MetaStats hourly tarification is enabled on account
    */
-  get version() {
-    return this._data.version;
+  get metastatsHourlyTarificationEnabled() {
+    return this._data.metastatsHourlyTarificationEnabled;
   }
-
+    
   /**
-   * Returns account region
-   * @return {String} account region value
+   * Returns authorization access token to be used for accessing single account data.
+   * Intended to be used in browser API.
+   * @return {string} authorization token
    */
-  get region() {
-    return this._data.region;
+  get accessToken() {
+    return this._data.accessToken;
   }
-
+  
   /**
    * Returns active account connections
    * @return {Array<AccountConnection>} active account connections
@@ -226,19 +268,35 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns flag indicating that risk management API is enabled on account. Default is false.
-   * @return {boolean} flag indicating that risk management API is enabled on account
+   * Returns flag indicating that account is primary
+   * @return {string} flag indicating that account is primary
    */
-  get riskManagementApiEnabled() {
-    return this._data.riskManagementApiEnabled;
+  get primaryReplica() {
+    return this._data.primaryReplica;
   }
 
   /**
    * Returns user id
-   * @return {String} user id
+   * @return {string} user id
    */
   get userId() {
     return this._data.userId;
+  }
+
+  /**
+   * Returns primary account id
+   * @return {string} primary account id
+   */
+  get primaryAccountId() {
+    return this._data.primaryAccountId;
+  }
+
+  /**
+   * Returns account replicas from DTO
+   * @return {MetatraderAccountReplica[]} account replicas from DTO
+   */
+  get accountReplicas() {
+    return this._data.accountReplicas;
   }
 
   /**
@@ -343,9 +401,27 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Enable risk management API for an account. The account will be temporary stopped to perform this action
+   * @returns {Promise} promise resolving when account risk management is enabled
+   */
+  async enableRiskManagementApi() {
+    await this._metatraderAccountClient.enableRiskManagementApi(this.id);
+    await this.reload();
+  }
+
+  /**
+   * Enable MetaStats hourly tarification for an account. The account will be temporary stopped to perform this action
+   * @returns {Promise} promise resolving when account MetaStats hourly tarification is enabled
+   */
+  async enableMetastatsHourlyTarification() {
+    await this._metatraderAccountClient.enableMetastatsHourlyTarification(this.id);
+    await this.reload();
+  }
+
+  /**
    * Waits until API server has finished deployment and account reached the DEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
    * @throws {TimeoutError} if account have not reached the DEPLOYED state within timeout allowed
    */
@@ -363,8 +439,8 @@ export default class MetatraderAccount {
 
   /**
    * Waits until API server has finished undeployment and account reached the UNDEPLOYED state
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deployed
    * @throws {TimeoutError} if account have not reached the UNDEPLOYED state within timeout allowed
    */
@@ -382,8 +458,8 @@ export default class MetatraderAccount {
 
   /**
    * Waits until account has been deleted
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when account is deleted
    * @throws {TimeoutError} if account was not deleted within timeout allowed
    */
@@ -407,8 +483,8 @@ export default class MetatraderAccount {
 
   /**
    * Waits until API server has connected to the terminal and terminal has connected to the broker
-   * @param {Number} timeoutInSeconds wait timeout in seconds, default is 5m
-   * @param {Number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
+   * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m
+   * @param {number} intervalInMilliseconds interval between account reloads while waiting for a change, default is 1s
    * @return {Promise} promise which resolves when API server is connected to the broker
    * @throws {TimeoutError} if account have not connected to the broker within timeout allowed
    */
@@ -501,7 +577,7 @@ export default class MetatraderAccount {
 
   /**
    * Creates an expert advisor
-   * @param {String} expertId expert advisor id
+   * @param {string} expertId expert advisor id
    * @param {NewExpertAdvisorDto} expert expert advisor data
    * @returns {Promise<ExpertAdvisor>} promise resolving with expert advisor entity
    */

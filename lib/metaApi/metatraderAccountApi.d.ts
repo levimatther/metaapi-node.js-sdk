@@ -37,6 +37,21 @@ export default class MetatraderAccountApi {
   getAccount(accountId: string): Promise<MetatraderAccount>;
   
   /**
+   * Retrieves a MetaTrader account replcia by id
+   * @param {string} accountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id
+   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account replica
+   */
+  async getAccountReplica(accountId: string, replicaId: string): Promise<MetatraderAccount>;
+
+  /**
+   * Retrieves a MetaTrader account replicas
+   * @param {string} accountId MetaTrader account id
+   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account replicas
+   */
+  async getAccountReplicas(accountId: string): Promise<MetatraderAccount>;
+
+  /**
    * Retrieves a MetaTrader account by token
    * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
    */

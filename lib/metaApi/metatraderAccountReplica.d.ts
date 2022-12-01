@@ -1,5 +1,6 @@
 import MetatraderAccountClient, { MetatraderAccountReplicaDto, UpdatedMetatraderAccountReplicaDto } from "../clients/metaApi/metatraderAccount.client";
 import MetatraderAccount from "./metatraderAccount";
+import {Reliability, State, ConnectionStatus} from '../clients/metaApi/metatraderAccount.client'
 
 /**
  * Implements a MetaTrader account entity
@@ -16,33 +17,46 @@ export default class MetatraderAccountReplica {
   
   /**
    * Returns account replica id
-   * @return {string} account replica id
+   * @return {string} unique account replica id
    */
   get id(): string;
+
+  /**
+   * Returns current account replica state. One of CREATED, DEPLOYING, DEPLOYED, DEPLOY_FAILED, UNDEPLOYING,
+   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED
+   * @return {State} current account replica state
+   */
+  get state(): State;
 
   /**
    * Returns MetaTrader magic to place trades using
    * @return {number} MetaTrader magic to place trades using
    */
   get magic(): number;
-  
-  /**
-   * Returns account replica deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED, DELETING
-   * @return {string} account replica deployment state
-   */
-  get state(): string;
 
   /**
    * Returns terminal & broker connection status, one of CONNECTED, DISCONNECTED, DISCONNECTED_FROM_BROKER
-   * @return {string} terminal & broker connection status
+   * @return {ConnectionStatus} terminal & broker connection status
    */
-  get connectionStatus(): string;
+  get connectionStatus(): ConnectionStatus;
   
   /**
-   * Returns extra information which can be stored together with your account replica
-   * @return {Object} extra information which can be stored together with your account replica
+   * Returns quote streaming interval in seconds 
+   * @return {number} quote streaming interval in seconds
    */
-  get metadata(): Object;
+  get quoteStreamingIntervalInSeconds(): number;
+  
+  /**
+   * Returns symbol provided by broker 
+   * @return {string} any symbol provided by broker
+   */
+  get symbol(): string;
+  
+  /**
+   * Returns reliability value. Possible values are regular and high
+   * @return {Reliability} account replica reliability value
+   */
+  get reliability(): Reliability;
   
   /**
    * Returns user-defined account replica tags
@@ -51,12 +65,18 @@ export default class MetatraderAccountReplica {
   get tags(): Array<string>;
 
   /**
+   * Returns extra information which can be stored together with your account replica
+   * @return {Object} extra information which can be stored together with your account replica
+   */
+  get metadata(): Object;
+
+   /**
    * Returns number of resource slots to allocate to account replica. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CopyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
-   * is billed as 2 standard resource slots.  Default is 1.
+   * is billed as 2 standard resource slots.
    * @return {number} number of resource slots to allocate to account replica
    */
   get resourceSlots(): number;
@@ -67,22 +87,21 @@ export default class MetatraderAccountReplica {
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account replica to CopyFactory 2 by specifying copyFactoryRoles field.
-   * Default is 1.
    * @return {number} number of CopyFactory 2 resource slots to allocate to account replica
    */
   get copyFactoryResourceSlots(): number;
-  
-  /**
-   * Returns reliability value. Possible values are regular and high
-   * @return {string} account replica reliability value
-   */
-  get reliability(): string;
 
   /**
    * Returns account replica region
    * @return {string} account replica region value
    */
   get region(): string;
+
+  /**
+   * Returns primary MetaTrader account of the replica from DTO
+   * @return {MetatraderAccount} primary MetaTrader account of the replica from DTO
+   */
+  get primaryAccountFromDto(): MetatraderAccount;
 
   /**
    * Returns primary MetaTrader account of the replica
