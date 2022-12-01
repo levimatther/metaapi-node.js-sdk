@@ -1,6 +1,7 @@
 'use strict';
 
 import MetatraderAccount from './metatraderAccount';
+import MetatraderAccountReplica from './metatraderAccountReplica.es6';
 
 /**
  * Exposes MetaTrader account API logic to the consumers
@@ -42,13 +43,39 @@ export default class MetatraderAccountApi {
 
   /**
    * Retrieves a MetaTrader account by id
-   * @param {String} accountId MetaTrader account id
+   * @param {string} accountId MetaTrader account id
    * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
    */
   async getAccount(accountId) {
     let account = await this._metatraderAccountClient.getAccount(accountId);
     return new MetatraderAccount(account, this._metatraderAccountClient, this._metaApiWebsocketClient, 
       this._connectionRegistry,  this._expertAdvisorClient, this._historicalMarketDataClient, this._application);
+  }
+
+  /**
+   * Retrieves a MetaTrader account replcia by id
+   * @param {string} accountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id
+   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account replica
+   */
+  async getAccountReplica(accountId, replicaId) {
+    let account = await this._metatraderAccountClient.getAccount(accountId);
+    let replica = await this._metatraderAccountClient.getAccountReplica(accountId, replicaId);
+    return new MetatraderAccountReplica(replica, account, this._metatraderAccountClient);
+  }
+
+  /**
+   * Retrieves a MetaTrader account replicas
+   * @param {string} accountId MetaTrader account id
+   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account replicas
+   */
+  async getAccountReplicas(accountId) {
+    let account = await this._metatraderAccountClient.getAccount(accountId);
+    let replicas = await this._metatraderAccountClient.getAccountReplicas(accountId);
+    if (replicas.items) {
+      replicas = replicas.items;
+    }
+    return replicas.map(replica => new MetatraderAccountReplica(replica, account, this._metatraderAccountClient));
   }
 
   /**

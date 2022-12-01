@@ -1,3 +1,6 @@
+20.8.0
+  - fix account and replica models and methods to fit rest api
+
 20.7.0
   - add browser examples for risk management sdk
 

@@ -9,6 +9,7 @@ import RpcMetaApiConnectionInstance from "./rpcMetaApiConnectionInstance";
 import ExpertAdvisor from "./expertAdvisor";
 import StreamingMetaApiConnectionInstance from "./streamingMetaApiConnectionInstance";
 import MetatraderAccountReplica from './metatraderAccountReplica';
+import {Reliability, State, Version, ConnectionStatus, CopyFactoryRoles, Type, AccountConnection} from '../clients/metaApi/metatraderAccount.client'
 
 /**
  * Implements a MetaTrader account entity
@@ -29,137 +30,80 @@ export default class MetatraderAccount {
     historicalMarketDataClient: HistoricalMarketDataClient, application: string);
   
   /**
-   * Returns account id
-   * @return {string} account id
+   * Returns unique account id
+   * @return {string} unique account id
    */
   get id(): string;
-  
+
   /**
-   * Returns account name
-   * @return {string} account name
+   * Returns current account state. One of CREATED, DEPLOYING, DEPLOYED, DEPLOY_FAILED, UNDEPLOYING,
+   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED
+   * @return {State} current account state
    */
-  get name(): string;
-  
-  /**
-   * Returns account type. Possible values are cloud, cloud-g1, cloud-g2 and self-hosted.
-   * @return {string} account type
-   */
-  get type(): string;
-  
-  /**
-   * Returns account login
-   * @return {string} account login
-   */
-  get login(): string;
-  
-  /**
-   * Returns MetaTrader server which hosts the account
-   * @return {string} MetaTrader server which hosts the account
-   */
-  get server(): string;
-  
-  /**
-   * Returns id of the account's provisioning profile
-   * @return {string} id of the account's provisioning profile
-   */
-  get provisioningProfileId(): string;
-  
-  /**
-   * Returns application name to connect the account to. Currently allowed values are MetaApi and AgiliumTrade
-   * @return {string} application name to connect the account to
-   */
-  get application(): string;
-  
+  get state(): State;
+
   /**
    * Returns MetaTrader magic to place trades using
    * @return {number} MetaTrader magic to place trades using
    */
   get magic(): number;
-  
-  /**
-   * Returns account deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED, DELETING
-   * @return {string} account deployment state
-   */
-  get state(): string;
-  
+
   /**
    * Returns terminal & broker connection status, one of CONNECTED, DISCONNECTED, DISCONNECTED_FROM_BROKER
-   * @return {string} terminal & broker connection status
+   * @return {ConnectionStatus} terminal & broker connection status
    */
-  get connectionStatus(): string;
+  get connectionStatus(): ConnectionStatus;
   
   /**
-   * Returns authorization access token to be used for accessing single account data.
-   * Intended to be used in browser API.
-   * @return {string} authorization token
+   * Returns quote streaming interval in seconds 
+   * @return {number} quote streaming interval in seconds
    */
-  get accessToken(): string;
+  get quoteStreamingIntervalInSeconds(): number;
   
   /**
-   * Returns flag indicating if trades should be placed as manual trades on this account
-   * @return {boolean} flag indicating if trades should be placed as manual trades on this account
+   * Returns symbol provided by broker 
+   * @return {string} any symbol provided by broker
    */
-  get manualTrades(): boolean;
+  get symbol(): string;
   
   /**
-   * Returns extra information which can be stored together with your account
-   * @return {Object} extra information which can be stored together with your account
+   * Returns reliability value. Possible values are regular and high
+   * @return {Reliability} account reliability value
    */
-  get metadata(): Object;
+  get reliability(): Reliability;
   
   /**
    * Returns user-defined account tags
    * @return {Array<string>} user-defined account tags
    */
   get tags(): Array<string>;
-  
+
   /**
-   * Returns account roles for CopyFactory2 application
-   * @return {Array<string>} account roles for CopyFactory2 application
+   * Returns extra information which can be stored together with your account
+   * @return {Object} extra information which can be stored together with your account
    */
-  get copyFactoryRoles(): Array<string>;
-  
-  /**
+  get metadata(): Object;
+
+   /**
    * Returns number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
-   * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
+   * accounts copying the same strategy via CopyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
-   * is billed as 2 standard resource slots.  Default is 1.
+   * is billed as 2 standard resource slots.
    * @return {number} number of resource slots to allocate to account
    */
   get resourceSlots(): number;
-  
+
   /**
    * Returns the number of CopyFactory 2 resource slots to allocate to account.
    * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
-   * Default is 1.
    * @return {number} number of CopyFactory 2 resource slots to allocate to account
    */
   get copyFactoryResourceSlots(): number;
-  
-  /**
-   * Returns 3-character ISO currency code of the account base currency. Default value is USD. The setting is to be used
-   * for copy trading accounts which use national currencies only, such as some Brazilian brokers. You should not alter
-   * this setting unless you understand what you are doing.
-   * @return {number} 3-character ISO currency code of the account base currency
-   */
-  get baseCurrency(): number;
-  
-  /**
-   * Returns reliability value. Possible values are regular and high
-   * @return {string} account reliability value
-   */
-  get reliability(): string;
-  
-  /**
-   * Returns version value. Possible values are 4 and 5
-   * @return {string} account version value
-   */
-  get version(): string;
 
   /**
    * Returns account region
@@ -168,22 +112,121 @@ export default class MetatraderAccount {
   get region(): string;
 
   /**
+   * Returns human-readable account name
+   * @return {string} human-readable account name
+   */
+  get name(): string;
+  
+  /**
+   * Returns flag indicating if trades should be placed as manual trades on this account
+   * @return {boolean} flag indicating if trades should be placed as manual trades on this account
+   */
+  get manualTrades(): boolean;
+
+  /**
+   * Returns default trade slippage in points
+   * @return {number} default trade slippage in points
+   */
+  get slippage(): number;
+  
+  /**
+   * Returns id of the account's provisioning profile
+   * @return {string} id of the account's provisioning profile
+   */
+  get provisioningProfileId(): string;
+  
+  /**
+   * Returns MetaTrader account login
+   * @return {string} MetaTrader account number
+   */
+  get login(): string;
+  
+  /**
+   * Returns MetaTrader server name to connect to
+   * @return {string} MetaTrader server name to connect to
+   */
+  get server(): string;
+
+  /**
+   * Returns account type. Possible values are cloud-g1, cloud-g2
+   * @return {Type} account type
+   */
+  get type(): Type;
+
+  /**
+   * Returns MT version. Possible values are 4 and 5
+   * @return {Version} MT version
+   */
+  get version(): Version;
+
+  /**
+   * Returns hash-code of the account
+   * @return {number} hash-code of the account
+   */
+  get hash(): number;
+
+  /**
+   * Returns 3-character ISO currency code of the account base currency. The setting is to be used
+   * for copy trading accounts which use national currencies only, such as some Brazilian brokers. You should not alter
+   * this setting unless you understand what you are doing.
+   * @return {number} 3-character ISO currency code of the account base currency
+   */
+  get baseCurrency(): number;
+
+  /**
+   * Returns account roles for CopyFactory2 application. Possible values are `PROVIDER` and `SUBSCRIBER`
+   * @return {Array<CopyFactoryRoles>} account roles for CopyFactory2 application
+   */
+  get copyFactoryRoles(): Array<CopyFactoryRoles>;
+  
+  /**
+   * Returns flag indicating that risk management API is enabled on account
+   * @return {boolean} flag indicating that risk management API is enabled on account
+   */
+  get riskManagementApiEnabled(): boolean;
+
+  /**
+   * Returns flag indicating that MetaStats hourly tarification is enabled on account
+   * @return {boolean} flag indicating that MetaStats hourly tarification is enabled on account
+   */
+  get metastatsHourlyTarificationEnabled(): boolean;
+    
+  /**
+   * Returns authorization access token to be used for accessing single account data.
+   * Intended to be used in browser API.
+   * @return {string} authorization token
+   */
+  get accessToken(): string;
+  
+  /**
    * Returns active account connections
    * @return {Array<AccountConnection>} active account connections
    */
   get connections(): Array<AccountConnection>;
 
   /**
-   * Returns flag indicating that risk management API is enabled on account. Default is false.
-   * @return {boolean} flag indicating that risk management API is enabled on account
+   * Returns flag indicating that account is primary
+   * @return {string} flag indicating that account is primary
    */
-  get riskManagementApiEnabled(): boolean;
+  get primaryReplica(): string;
 
   /**
    * Returns user id
    * @return {string} user id
    */
   get userId(): string;
+
+  /**
+   * Returns primary account id
+   * @return {string} primary account id
+   */
+  get primaryAccountId(): string
+
+  /**
+   * Returns account replicas from DTO
+   * @return {MetatraderAccountReplica[]} account replicas from DTO
+   */
+  get accountReplicas(): MetatraderAccountReplica[];
 
   /**
    * Returns account replica list
@@ -238,6 +281,18 @@ export default class MetatraderAccount {
    */
   increaseReliability(): Promise<any>;
   
+  /**
+   * Enable risk management API for an account. The account will be temporary stopped to perform this action
+   * @returns {Promise} promise resolving when account risk management is enabled
+   */
+  enableRiskManagementApi(): Promise<any>;
+
+  /**
+   * Enable MetaStats hourly tarification for an account. The account will be temporary stopped to perform this action
+   * @returns {Promise} promise resolving when account MetaStats hourly tarification is enabled
+   */
+  enableMetastatsHourlyTarification(): Promise<any>;
+
   /**
    * Waits until API server has finished deployment and account reached the DEPLOYED state
    * @param {number} timeoutInSeconds wait timeout in seconds, default is 5m

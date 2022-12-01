@@ -8,128 +8,96 @@ import MetaApiClient from '../metaApi.client';
 export default class MetatraderAccountClient extends MetaApiClient {
 
   /**
-   * Extension model
-   * @typedef Extension
-   * @property {String} id extension id
-   * @property {Object} configuration extension configuration
-   */
-
-  /**
    * Metatrader account replica model
    * @typedef {Object} MetatraderAccountReplicaDto
-   * @property {String} _id account unique identifier
-   * @property {String} name MetaTrader account human-readable name in the MetaApi app
-   * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. Cloud and cloud-g2 are
-   * aliases.
-   * @property {String} login MetaTrader account number
-   * @property {String} server MetaTrader server which hosts the account
-   * @property {Version} version MT version
-   * @property {String} [provisioningProfileId] id of the account's provisioning profile
-   * @property {String} application application name to connect the account to. Currently allowed values are MetaApi
-   * and AgiliumTrade
-   * @property {Number} magic MetaTrader magic to place trades using
-   * @property {String} state account deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED,
-   * DELETING
-   * @property {String} connectionStatus terminal & broker connection status, one of CONNECTED, DISCONNECTED,
-   * DISCONNECTED_FROM_BROKER
-   * @property {String} accessToken authorization token to be used for accessing single account data.
-   * Intended to be used in browser API.
-   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false.
-   * Supported on G2 only
-   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
-   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
-   * only for G2
-   * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Object} [metadata] extra information which can be stored together with your account
-   * @property {String} [reliability] used to increase the reliability of the account. Allowed values are regular and
-   * high. Default is regular
-   * @property {String} [baseCurrency] 3-character ISO currency code of the account base currency. Default value is USD.
-   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
-   * brokers. You should not alter this setting unless you understand what you are doing.
-   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
-   * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {string} _id Unique account replica id
+   * @property {State} state Current account replica state
+   * @property {number} magic Magic value the trades should be performed using
+   * @property {ConnectionStatus} connectionStatus Connection status of the MetaTrader terminal to the application
+   * @property {string} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to 
+   * receive quotes on each tick. Intervals less than 2.5 seconds are supported only for G2
+   * @property {string} [symbol] Any symbol provided by broker (required for G1 only)
+   * @property {Reliability} reliability Used to increase the reliability of the account replica. High is a recommended value
+   * for production environment
+   * @property {Array<string>} tags User-defined account replica tags
+   * @property {Object} [metadata] Extra information which can be stored together with your account replica. 
+   * Total length of this field after serializing it to JSON is limited to 1024 characters
+   * @property {number} resourceSlots Number of resource slots to allocate to account replica. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
-   * is billed as 2 standard resource slots.  Default is 1.
-   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
+   * is billed as 2 standard resource slots.
+   * @property {number} copyFactoryResourceSlots Number of CopyFactory 2 resource slots to allocate to account replica.
    * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
-   * Default is 1.
-   * @property {String} [symbol] any symbol provided by broker (required for G1 only) 
-   * @property {String} region region id to deploy account at. One of returned by the /users/current/regions endpoint
-   * @property {Number} [slippage] default trade slippage in points. Should be greater or equal to zero. If not
-   * specified, system internal setting will be used which we believe is reasonable for most cases
+   * @property {string} region Region id to deploy account replica at. One of returned by the /users/current/regions endpoint
+   * @property {MetatraderAccountDto} primaryAccount Primary account
    */
 
   /**
    * MetaTrader account model
    * @typedef {Object} MetatraderAccountDto
-   * @property {String} _id account unique identifier
-   * @property {String} userId user id
-   * @property {String} name MetaTrader account human-readable name in the MetaApi app
-   * @property {String} type account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. Cloud and cloud-g2 are
-   * aliases.
-   * @property {String} login MetaTrader account number
-   * @property {String} server MetaTrader server which hosts the account
-   * @property {Version} version MT version
-   * @property {String} [provisioningProfileId] id of the account's provisioning profile
-   * @property {String} application application name to connect the account to. Currently allowed values are MetaApi
-   * and AgiliumTrade
-   * @property {Number} magic MetaTrader magic to place trades using
-   * @property {String} state account deployment state. One of CREATED, DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED,
-   * DELETING
-   * @property {String} connectionStatus terminal & broker connection status, one of CONNECTED, DISCONNECTED,
-   * DISCONNECTED_FROM_BROKER
-   * @property {String} accessToken authorization token to be used for accessing single account data.
-   * Intended to be used in browser API.
-   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false.
-   * Supported on G2 only
-   * @property {Number} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to
-   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
-   * only for G2
-   * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Object} [metadata] extra information which can be stored together with your account
-   * @property {String} reliability used to increase the reliability of the account. Allowed values are regular and
-   * high. Default is regular
-   * @property {String} [baseCurrency] 3-character ISO currency code of the account base currency. Default value is USD.
-   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
-   * brokers. You should not alter this setting unless you understand what you are doing.
-   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
-   * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {string} _id Unique account id
+   * @property {State} state Current account state
+   * @property {number} magic Magic value the trades should be performed using
+   * @property {ConnectionStatus} connectionStatus Connection status of the MetaTrader terminal to the application
+   * @property {string} quoteStreamingIntervalInSeconds Quote streaming interval in seconds. Set to 0 in order to 
+   * receive quotes on each tick. Intervals less than 2.5 seconds are supported only for G2
+   * @property {string} [symbol] Any symbol provided by broker (required for G1 only)
+   * @property {Reliability} reliability Used to increase the reliability of the account. High is a recommended value
+   * for production environment
+   * @property {Array<string>} tags User-defined account tags
+   * @property {Object} [metadata] Extra information which can be stored together with your account. 
+   * Total length of this field after serializing it to JSON is limited to 1024 characters
+   * @property {number} resourceSlots Number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
    * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
-   * is billed as 2 standard resource slots.  Default is 1.
-   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
+   * is billed as 2 standard resource slots.
+   * @property {number} copyFactoryResourceSlots Number of CopyFactory 2 resource slots to allocate to account.
    * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
-   * Default is 1.
-   * @property {String} [symbol] any symbol provided by broker (required for G1 only) 
-   * @property {String} region region id to deploy account at. One of returned by the /users/current/regions endpoint
-   * @property {Number} [slippage] default trade slippage in points. Should be greater or equal to zero. If not
+   * @property {string} region Region id to deploy account at. One of returned by the /users/current/regions endpoint
+   * @property {string} name Human-readable account name
+   * @property {boolean} manualTrades Flag indicating if trades should be placed as manual trades. Supported on G2 only
+   * @property {number} [slippage] Default trade slippage in points. Should be greater or equal to zero. If not
    * specified, system internal setting will be used which we believe is reasonable for most cases
-   * @property {Boolean} [primaryReplica] flag indicating that account is primary
-   * @property {Boolean} [riskManagementApiEnabled] flag indicating that risk management API should be enabled on
-   * account. Default is false
-   * @property {Array<MetatraderAccountReplicaDto>} [accountReplicas] MetaTrader account replicas
-   * @property {Array<AccountConnection>} connections active account connections
+   * @property {string} [provisioningProfileId] Id of the provisioning profile that was used as the basis for 
+   * creating this account
+   * @property {string} login MetaTrader account number
+   * @property {string} server MetaTrader server name to connect to 
+   * @property {Type} type Account type. Executing accounts as cloud-g2 is faster and cheaper
+   * @property {Version} version MetaTrader version
+   * @property {number} hash Hash-code of the account
+   * @property {string} baseCurrency 3-character ISO currency code of the account base currency.
+   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
+   * brokers. You should not alter this setting unless you understand what you are doing.
+   * @property {Array<CopyFactoryRoles>} copyFactoryRoles Account roles for CopyFactory2 application
+   * @property {boolean} riskManagementApiEnabled Flag indicating that risk management API is enabled on
+   * account
+   * @property {boolean} metastatsHourlyTarificationEnabled Flag indicating that MetaStats hourly tarification
+   * is enabled on account
+   * @property {string} accessToken Authorization token to be used for accessing single account data.
+   * Intended to be used in browser API.
+   * @property {Array<AccountConnection>} connections Active account connections
+   * @property {boolean} primaryReplica Flag indicating that account is primary
+   * @property {string} userId User id
+   * @property {string} [primaryAccountId] Primary account id. Only replicas can have this field
+   * @property {Array<MetatraderAccountReplicaDto>} accountReplicas MetaTrader account replicas
    */
 
   /**
    * Account connection
    * @typedef {Object} AccountConnection
-   * @property {string} region region the account is connected at
-   * @property {string} zone availability zone the account is connected at
-   * @property {string} application application the account is connected to, one of `MetaApi`, `CopyFactory subscriber`,
+   * @property {string} region Region the account is connected at
+   * @property {string} zone Availability zone the account is connected at
+   * @property {string} application Application the account is connected to, one of `MetaApi`, `CopyFactory subscriber`,
    * `CopyFactory provider`, `CopyFactory history import`, `Risk management`
    */
 
@@ -139,8 +107,13 @@ export default class MetatraderAccountClient extends MetaApiClient {
    */
 
   /**
+   * MT platform
+   * @typedef {'mt4' | 'mt5'} Platform
+   */
+
+  /**
    * Account type
-   * @typedef {'cloud' | 'self-hosted'} Type
+   * @typedef {'cloud-g1' | 'cloud-g2'} Type
    */
 
   /**
@@ -155,16 +128,26 @@ export default class MetatraderAccountClient extends MetaApiClient {
    */
 
   /**
+   * Account reliability
+   * @typedef {'high' | 'regular'} Reliability
+   */
+
+  /**
+   * CopyFactory roles
+   * @typedef {'SUBSCRIBER' | 'PROVIDER'} CopyFactoryRoles
+   */
+
+  /**
    * @typedef {Object} AccountsFilter
-   * @property {Number} [offset] search offset (defaults to 0) (must be greater or equal to 0)
-   * @property {Number} [limit] search limit (defaults to 1000) 
+   * @property {number} [offset] Search offset (defaults to 0) (must be greater or equal to 0)
+   * @property {number} [limit] Search limit (defaults to 1000) 
    * (must be greater or equal to 1 and less or equal to 1000)
    * @property {Array<Version> | Version} [version] MT version
-   * @property {Array<Type> | Type} [type] account type
-   * @property {Array<State> | State} [state] account state
-   * @property {Array<ConnectionStatus> | ConnectionStatus} [connectionStatus] connection status
-   * @property {String} [query] searches over _id, name, server and login to match query
-   * @property {String} [provisioningProfileId] provisioning profile id
+   * @property {Array<Type> | Type} [type] Account type
+   * @property {Array<State> | State} [state] Account state
+   * @property {Array<ConnectionStatus> | ConnectionStatus} [connectionStatus] Connection status
+   * @property {string} [query] Searches over _id, name, server and login to match query
+   * @property {string} [provisioningProfileId] Provisioning profile id
    */
 
   /**
@@ -192,7 +175,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Retrieves a MetaTrader account by id (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/). Throws
    * an error if account is not found.
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @return {Promise<MetatraderAccountDto>} promise resolving with MetaTrader account found
    */
   getAccount(id) {
@@ -211,8 +194,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * Retrieves a MetaTrader account replica by id (see 
    * https://metaapi.cloud/docs/provisioning/api/accountReplica/readAccountReplica/).
    * Throws an error if account is not found.
-   * @param {String} primaryAccountId MetaTrader account id
-   * @param {String} replicaId MetaTrader account replica id
+   * @param {string} primaryAccountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id
    * @return {Promise<MetatraderAccountReplicaDto>} promise resolving with MetaTrader account replica found
    */
   getAccountReplica(primaryAccountId, replicaId) {
@@ -226,6 +209,26 @@ export default class MetatraderAccountClient extends MetaApiClient {
     };
     return this._httpClient.request(opts, 'getAccountReplica');
   }
+
+  /**
+   * Retrieves a MetaTrader account replicas (see 
+   * https://metaapi.cloud/docs/provisioning/api/accountReplica/readAccountReplicas/).
+   * Throws an error if account is not found.
+   * @param {string} primaryAccountId MetaTrader account id
+   * @return {Promise<Array<MetatraderAccountReplicaDto>>} promise resolving with MetaTrader account replicas found
+   */
+  getAccountReplicas(primaryAccountId) {
+    const opts = {
+      url: `${this._host}/users/current/accounts/${primaryAccountId}/replicas`,
+      method: 'GET',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts, 'getAccountReplicas');
+  }
+
 
   /**
    * Retrieves a MetaTrader account by token (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/).
@@ -248,52 +251,58 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * New MetaTrader account model
    * @typedef {Object} NewMetatraderAccountDto
-   * @property {String} name MetaTrader account human-readable name in the MetaApi app
-   * @property {String} [type] account type, can be cloud, cloud-g1, cloud-g2 or self-hosted. cloud-g2 and cloud are
-   * aliases. When you create MT5 cloud account the type is automatically converted to cloud-g1 because MT5 G2 support
-   * is still experimental. You can still create MT5 G2 account by setting type to cloud-g2.
-   * @property {String} login MetaTrader account number
-   * @property {String} password MetaTrader account password. The password can be either investor password for read-only
-   * access or master password to enable trading features. Required for cloud account
-   * @property {String} server MetaTrader server which hosts the account
-   * @property {String} [platform] platform id (mt4 or mt5)
-   * @property {String} [provisioningProfileId] id of the account's provisioning profile
-   * @property {Number} magic MetaTrader magic to place trades using. When manualTrades field is set to true,
-   * magic value must be 0
-   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false
-   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
-   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
-   * only for G2
-   * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Object} [metadata] extra information which can be stored together with your account
-   * @property {String} [reliability] used to increase the reliability of the account. Allowed values are regular and high.
-   * Default is regular
-   * @property {String} [baseCurrency] 3-character ISO currency code of the account base currency. Default value is USD.
-   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
-   * brokers. You should not alter this setting unless you understand what you are doing.
-   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
-   * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {string} [symbol] Any MetaTrader symbol your broker provides historical market data for. 
+   * This value should be specified for G1 accounts only and only in case your MT account fails to connect to broker.
+   * @property {number} magic Magic value the trades should be performed using.
+   * When manualTrades field is set to true, magic value must be 0
+   * @property {string} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to 
+   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported only for G2
+   * @property {Array<string>} [tags] User-defined account tags
+   * @property {Object} [metadata] Extra information which can be stored together with your account. 
+   * Total length of this field after serializing it to JSON is limited to 1024 characters
+   * @property {Reliability} [reliability] Used to increase the reliability of the account. High is a recommended value 
+   * for production environment. Default value is high
+   * @property {number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
-   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
-   * @property {String} [symbol] any MetaTrader symbol your broker provides historical market data for. This value
-   * should be specified for G1 accounts only and only in case your MT account fails to connect to broker
+   * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
+   * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
+   * is billed as 2 standard resource slots. Default is 1.
    * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
    * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
    * Default is 1.
-   * @property {String} [region] region id to deploy account at. One of returned by the /users/current/regions endpoint
-   * @property {Number} [slippage] default trade slippage in points. Should be greater or equal to zero. If not
+   * @property {string} region Region id to deploy account at. One of returned by the /users/current/regions endpoint
+   * @property {string} name Human-readable account name
+   * @property {boolean} [manualTrades] Flag indicating if trades should be placed as manual trades.
+   * Supported on G2 only. Default is false.
+   * @property {number} [slippage] Default trade slippage in points. Should be greater or equal to zero. If not
    * specified, system internal setting will be used which we believe is reasonable for most cases
+   * @property {string} [provisioningProfileId] Id of the provisioning profile that was used as the basis for creating 
+   * this account. Required for cloud account
+   * @property {string} login MetaTrader account number. Only digits are allowed
+   * @property {string} password MetaTrader account password. The password can be either investor password for read-only
+   * access or master password to enable trading features. Required for cloud account
+   * @property {string} server MetaTrader server name to connect to 
+   * @property {Platform} [platform] MetaTrader platform
+   * @property {Type} [type] Account type. Executing accounts as cloud-g2 is faster and cheaper. 
+   * Default value is cloud-g2
+   * @property {string} [baseCurrency] 3-character ISO currency code of the account base currency. Default value is USD.
+   * The setting is to be used for copy trading accounts which use national currencies only, such as some Brazilian
+   * brokers. You should not alter this setting unless you understand what you are doing.
+   * @property {Array<CopyFactoryRoles>} [copyFactoryRoles] Account roles for CopyFactory2 API
+   * @property {boolean} [riskManagementApiEnabled] Flag indicating that risk management API should be enabled on
+   * account. Default is false
+   * @property {boolean} [metastatsHourlyTarificationEnabled] Flag indicating that MetaStats hourly tarification
+   * should be enabled on account. Default is false
    */
 
   /**
    * MetaTrader account id model
    * @typedef {Object} MetatraderAccountIdDto
-   * @property {String} id MetaTrader account unique identifier
+   * @property {string} id MetaTrader account unique identifier
    */
 
   /**
@@ -324,26 +333,30 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * New MetaTrader account replica model
    * @typedef {Object} NewMetaTraderAccountReplicaDto
-   * @property {String} [symbol] any symbol provided by broker (required for G1 only) 
-   * @property {Number} magic MetaTrader magic to place trades using
-   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
-   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
-   * only for G2
-   * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Object} [metadata] extra information which can be stored together with your account
-   * @property {String} [reliability] used to increase the reliability of the account. Allowed values are regular and high.
-   * Default is regular
-   * @property {Number} [resourceSlots] number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {string} [symbol] Any MetaTrader symbol your broker provides historical market data for. 
+   * This value should be specified for G1 accounts only and only in case your MT account fails to connect to broker.
+   * @property {number} magic Magic value the trades should be performed using.
+   * When manualTrades field is set to true, magic value must be 0
+   * @property {string} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to 
+   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported only for G2
+   * @property {Array<string>} [tags] User-defined account replica tags
+   * @property {Object} [metadata] Extra information which can be stored together with your account replica. 
+   * Total length of this field after serializing it to JSON is limited to 1024 characters
+   * @property {Reliability} [reliability] Used to increase the reliability of the account replica. High is a recommended value 
+   * for production environment. Default value is high
+   * @property {number} [resourceSlots] Number of resource slots to allocate to account replica. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
-   * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
-   * @property {number} [copyFactoryResourceSlots] number of CopyFactory 2 resource slots to allocate to account.
+   * copying latency. Please note that allocating extra resource slots is a paid option. Please note that high
+   * reliability accounts use redundant infrastructure, so that each resource slot for a high reliability account
+   * is billed as 2 standard resource slots. Default is 1.
+   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account replica.
    * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
    * Default is 1.
-   * @property {String} region region id to deploy account at. One of returned by the /users/current/regions endpoint
+   * @property {string} region Region id to deploy account replica at. One of returned by the /users/current/regions endpoint
    */
 
   /**
@@ -352,7 +365,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * connect the terminal to the broker, you can use the connectionStatus field to monitor the current status of the
    * terminal.
    * Method is accessible only with API access token
-   * @param {String} accountId primary MetaTrader account id
+   * @param {string} accountId primary MetaTrader account id
    * @param {NewMetaTraderAccountReplicaDto} replica MetaTrader account to create
    * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id of the MetaTrader account replica created
    */
@@ -375,7 +388,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Starts API server for MetaTrader account. This request will be ignored if the account has already been deployed.
    * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
-   * @param {String} id MetaTrader account id to deploy
+   * @param {string} id MetaTrader account id to deploy
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deployment
    */
   deployAccount(id) {
@@ -396,8 +409,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Starts API server for MetaTrader account replica. This request will be ignored if the replica has already been deployed.
    * (see https://metaapi.cloud/docs/provisioning/api/accountReplica/deployAccountReplica/)
-   * @param {String} primaryAccountId MetaTrader account id
-   * @param {String} replicaId MetaTrader account replica id to deploy
+   * @param {string} primaryAccountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id to deploy
    * @return {Promise} promise resolving when MetaTrader account replica is scheduled for deployment
    */
   deployAccountReplica(primaryAccountId, replicaId) {
@@ -418,7 +431,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Stops API server for a MetaTrader account. Terminal data such as downloaded market history data will be preserved.
    * (see https://metaapi.cloud/docs/provisioning/api/account/undeployAccount/)
-   * @param {String} id MetaTrader account id to undeploy
+   * @param {string} id MetaTrader account id to undeploy
    * @return {Promise} promise resolving when MetaTrader account is scheduled for undeployment
    */
   undeployAccount(id) {
@@ -439,8 +452,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Stops API server for MetaTrader account replica. Terminal data such as downloaded market history data will be preserved.
    * (see https://metaapi.cloud/docs/provisioning/api/accountReplica/undeployAccountReplica/)
-   * @param {String} primaryAccountId MetaTrader account id
-   * @param {String} replicaId MetaTrader account replica id to undeploy
+   * @param {string} primaryAccountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id to undeploy
    * @return {Promise} promise resolving when MetaTrader account replica is scheduled for undeployment
    */
   undeployAccountReplica(primaryAccountId, replicaId) {
@@ -460,8 +473,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
 
   /**
    * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
-   * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
-   * @param {String} id MetaTrader account id to redeploy
+   * (see https://metaapi.cloud/docs/provisioning/api/account/redeployAccount/)
+   * @param {string} id MetaTrader account id to redeploy
    * @return {Promise} promise resolving when MetaTrader account is scheduled for redeployment
    */
   redeployAccount(id) {
@@ -482,8 +495,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
    * (see https://metaapi.cloud/docs/provisioning/api/account/redeployAccountReplica/)
-   * @param {String} primaryAccountId MetaTrader account id
-   * @param {String} replicaId MetaTrader account replica id to redeploy
+   * @param {string} primaryAccountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id to redeploy
    * @return {Promise} promise resolving when MetaTrader account replica is scheduled for redeployment
    */
   redeployAccountReplica(primaryAccountId, replicaId) {
@@ -506,7 +519,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * data history will be deleted as well when you delete the account. (see
    * https://metaapi.cloud/docs/provisioning/api/account/deleteAccount/).
    * Method is accessible only with API access token
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
    */
   deleteAccount(id) {
@@ -529,8 +542,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * data history will be deleted as well when you delete the account. (see
    * https://metaapi.cloud/docs/provisioning/api/account/deleteAccountReplica/).
    * Method is accessible only with API access token
-   * @param {String} primaryAccountId MetaTrader account id
-   * @param {String} replicaId MetaTrader account replica id to delete
+   * @param {string} primaryAccountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id to delete
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
    */
   deleteAccountReplica(primaryAccountId, replicaId) {
@@ -551,31 +564,38 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Updated MetaTrader account data
    * @typedef {Object} MetatraderAccountUpdateDto
-   * @property {String} name MetaTrader account human-readable name in the MetaApi app
-   * @property {String} password MetaTrader account password. The password can be either investor password for read-only
+   * @property {string} name Human-readable account name
+   * @property {string} password MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
-   * @property {String} server MetaTrader server which hosts the account
-   * @property {Number} [magic] MetaTrader magic to place trades using
-   * @property {Boolean} [manualTrades] flag indicating if trades should be placed as manual trades. Default is false
-   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
-   * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
-   * only for G2
+   * @property {string} server MetaTrader server name to connect to
+   * @property {number} [magic] Magic value the trades should be performed using.
+   * When manualTrades field is set to true, magic value must be 0
+   * @property {boolean} [manualTrades] Flag indicating if trades should be placed as manual trades. Supported for G2 only.
+   * Default is false.
+   * @property {number} [slippage] Default trade slippage in points. Should be greater or equal to zero. If not specified,
+   * system internal setting will be used which we believe is reasonable for most cases
+   * @property {number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
+   * receive quotes on each tick. Intervals less than 2.5 seconds are supported only for G2.
+   * Default value is 2.5 seconds
    * @property {Array<string>} [tags] MetaTrader account tags
-   * @property {Array<Extension>} [extensions] API extensions
    * @property {Object} [metadata] extra information which can be stored together with your account
-   * @property {Array<string>} [copyFactoryRoles] Account roles for CopyFactory2 application. Allowed values are
-   * `PROVIDER` and `SUBSCRIBER`
-   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
+   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
+   * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
+   * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
+   * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
+   * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
+   * Default is 1. 
    */
 
   /**
    * Updates existing metatrader account data (see
    * https://metaapi.cloud/docs/provisioning/api/account/updateAccount/).
    * Method is accessible only with API access token
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @param {MetatraderAccountUpdateDto} account updated MetaTrader account
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
@@ -598,17 +618,18 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Updated MetaTrader account replica data
    * @typedef {Object} UpdatedMetatraderAccountReplicaDto
-   * @property {Number} [magic] MetaTrader magic to place trades using
-   * @property {Number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
+   * @property {number} [magic] Magic value the trades should be performed using.
+   * When manualTrades field is set to true, magic value must be 0
+   * @property {number} [quoteStreamingIntervalInSeconds] Quote streaming interval in seconds. Set to 0 in order to
    * receive quotes on each tick. Default value is 2.5 seconds. Intervals less than 2.5 seconds are supported
    * only for G2
    * @property {Array<string>} [tags] MetaTrader account tags
    * @property {Object} [metadata] extra information which can be stored together with your account
-   * @property {Number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
+   * @property {number} [resourceSlots] Number of resource slots to allocate to account. Allocating extra resource slots
    * results in better account performance under load which is useful for some applications. E.g. if you have many
    * accounts copying the same strategy via CooyFactory API, then you can increase resourceSlots to get a lower trade
    * copying latency. Please note that allocating extra resource slots is a paid option. Default is 1
-   * @property {number} [copyFactoryResourceSlots] number of CopyFactory 2 resource slots to allocate to account.
+   * @property {number} [copyFactoryResourceSlots] Number of CopyFactory 2 resource slots to allocate to account.
    * Allocating extra resource slots results in lower trade copying latency. Please note that allocating extra resource
    * slots is a paid option. Please also note that CopyFactory 2 uses redundant infrastructure so that
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
@@ -620,8 +641,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * Updates existing metatrader account replica data (see
    * https://metaapi.cloud/docs/provisioning/api/account/updateAccountReplica/).
    * Method is accessible only with API access token
-   * @param {String} primaryAccountId MetaTrader account id
-   * @param {String} replicaId MetaTrader account replica id
+   * @param {string} primaryAccountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id
    * @param {UpdatedMetatraderAccountReplicaDto} account updated MetaTrader account replica
    * @return {Promise} promise resolving when MetaTrader account replica is updated
    */
@@ -645,7 +666,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * Increases MetaTrader account reliability. The account will be temporary stopped to perform this action. (see
    * https://metaapi.cloud/docs/provisioning/api/account/increaseReliability/).
    * Method is accessible only with API access token
-   * @param {String} id MetaTrader account id
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account reliability is increased
    */
   increaseReliability(id) {
@@ -661,6 +682,52 @@ export default class MetatraderAccountClient extends MetaApiClient {
       json: true
     };
     return this._httpClient.request(opts, 'increaseReliability');
+  }
+
+  /**
+   * Enable risk management API for an account. The account will be temporary stopped to perform this action. 
+   * Note that this is a paid option. (see
+   * https://metaapi.cloud/docs/provisioning/api/account/enableRiskManagementApi/).
+   * Method is accessible only with API access token
+   * @param {string} id account id
+   * @return {Promise} promise resolving when account risk management is enabled
+   */
+  enableRiskManagementApi(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('enableRiskManagementApi');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${id}/enable-risk-management-api`,
+      method: 'POST',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts, 'enableRiskManagementApi');
+  }
+
+  /**
+   * Enable MetaStats hourly tarification for an account. The account will be temporary stopped to perform this action.
+   * Note that this is a paid option. (see
+   * https://metaapi.cloud/docs/provisioning/api/account/enableMetaStatsHourlyTarification/).
+   * Method is accessible only with API access token
+   * @param {string} id account id
+   * @return {Promise} promise resolving when account MetaStats hourly tarification is enabled
+   */
+  enableMetastatsHourlyTarification(id) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('enableMetastatsHourlyTarification');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${id}/enable-metastats-hourly-tarification`,
+      method: 'POST',
+      headers: {
+        'auth-token': this._token
+      },
+      json: true
+    };
+    return this._httpClient.request(opts, 'enableMetastatsHourlyTarification');
   }
 
 }
