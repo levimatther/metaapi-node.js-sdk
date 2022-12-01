@@ -1,3 +1,6 @@
+20.8.1
+  - fix metatraderAccountApi import path
+
 20.8.0
   - fix account and replica models and methods to fit rest api
 
