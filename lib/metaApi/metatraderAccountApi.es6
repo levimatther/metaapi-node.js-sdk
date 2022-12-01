@@ -1,7 +1,7 @@
 'use strict';
 
 import MetatraderAccount from './metatraderAccount';
-import MetatraderAccountReplica from './metatraderAccountReplica.es6';
+import MetatraderAccountReplica from './metatraderAccountReplica';
 
 /**
  * Exposes MetaTrader account API logic to the consumers
