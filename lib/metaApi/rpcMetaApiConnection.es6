@@ -50,13 +50,15 @@ export default class RpcMetaApiConnection extends MetaApiConnection {
    * @param {string} instanceId connection instance id
    */
   async close(instanceId) {
-    this._openedInstances = this._openedInstances.filter(id => id !== instanceId);
-    if (!this._openedInstances.length && !this._closed) {
-      await this._connectionRegistry.removeRpc(this.account);
-      this._websocketClient.removeSynchronizationListener(this.account.id, this);
-      this._websocketClient.removeAccountCache(this.account.id);
-      this._websocketClient.removeReconnectListener(this);
-      this._closed = true;
+    if(this._opened) {
+      this._openedInstances = this._openedInstances.filter(id => id !== instanceId);
+      if (!this._openedInstances.length && !this._closed) {
+        await this._connectionRegistry.removeRpc(this.account);
+        this._websocketClient.removeSynchronizationListener(this.account.id, this);
+        this._websocketClient.removeAccountCache(this.account.id);
+        this._websocketClient.removeReconnectListener(this);
+        this._closed = true;
+      }
     }
   }
 

@@ -537,25 +537,27 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {string} instanceId connection instance id
    */
   async close(instanceId) {
-    this._openedInstances = this._openedInstances.filter(id => id !== instanceId);
-    if (!this._openedInstances.length && !this._closed) {
-      this._logger.debug(`${this._account.id}: Closing connection`);
-      this._stateByInstanceIndex = {};
-      await this._connectionRegistry.removeStreaming(this._account);
-      const accountRegions = this._account.accountRegions;
-      this._websocketClient.removeSynchronizationListener(this._account.id, this);
-      this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
-      this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
-      this._websocketClient.removeSynchronizationListener(this._account.id, this._healthMonitor);
-      this._websocketClient.removeReconnectListener(this);
-      this._healthMonitor.stop();
-      this._refreshMarketDataSubscriptionSessions = {};
-      Object.values(this._refreshMarketDataSubscriptionTimeouts).forEach(timeout => clearTimeout(timeout));
-      this._refreshMarketDataSubscriptionTimeouts = {};
-      Object.values(accountRegions).forEach(replicaId => 
-        this._websocketClient.removeAccountCache(replicaId));
-      this._closed = true;
-      this._logger.trace(`${this._account.id}: Closed connection`);
+    if (this._opened) {
+      this._openedInstances = this._openedInstances.filter(id => id !== instanceId);
+      if (!this._openedInstances.length && !this._closed) {
+        this._logger.debug(`${this._account.id}: Closing connection`);
+        this._stateByInstanceIndex = {};
+        await this._connectionRegistry.removeStreaming(this._account);
+        const accountRegions = this._account.accountRegions;
+        this._websocketClient.removeSynchronizationListener(this._account.id, this);
+        this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
+        this._websocketClient.removeSynchronizationListener(this._account.id, this._historyStorage);
+        this._websocketClient.removeSynchronizationListener(this._account.id, this._healthMonitor);
+        this._websocketClient.removeReconnectListener(this);
+        this._healthMonitor.stop();
+        this._refreshMarketDataSubscriptionSessions = {};
+        Object.values(this._refreshMarketDataSubscriptionTimeouts).forEach(timeout => clearTimeout(timeout));
+        this._refreshMarketDataSubscriptionTimeouts = {};
+        Object.values(accountRegions).forEach(replicaId => 
+          this._websocketClient.removeAccountCache(replicaId));
+        this._closed = true;
+        this._logger.trace(`${this._account.id}: Closed connection`);
+      }
     }
   }
 

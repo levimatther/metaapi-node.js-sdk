@@ -417,6 +417,27 @@ describe('StreamingMetaApiConnection', () => {
     sinon.assert.calledWith(connectionRegistry.removeStreaming, accountData);
   });
 
+  /**
+   * @test {MetaApiConnection#close}
+   */
+  it('should close connection only after it has been opened', async () => {
+    let accountData = {id: 'accountId', accountRegions};
+    sandbox.stub(client, 'addSynchronizationListener').returns();
+    sandbox.stub(client, 'removeSynchronizationListener').returns();
+    sandbox.stub(client, 'unsubscribe').resolves();
+    sandbox.stub(connectionRegistry, 'removeStreaming').returns();
+    api = new StreamingMetaApiConnection(client, clientApiClient,  accountData, 
+      undefined, connectionRegistry);
+    await api.close('accountId');
+    sinon.assert.notCalled(client.removeSynchronizationListener);
+    await api.connect('accountId');
+    await api.close('accountId');
+    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
+    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
+    sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.historyStorage);
+    sinon.assert.calledWith(connectionRegistry.removeStreaming, accountData);
+  });
+
   describe('waitSynchronized', () => {
 
     /**
