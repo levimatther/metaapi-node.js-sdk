@@ -100,6 +100,22 @@ describe('RpcMetaApiConnection', () => {
   });
 
   /**
+   * @test {RpcMetaApiConnection#close}
+   */
+  it('should close connection only after it has been opened', async () => {
+    sandbox.stub(client, 'removeAccountCache').returns();
+    sandbox.stub(client, 'removeReconnectListener').returns();
+    sandbox.stub(connectionRegistry, 'removeRpc').resolves();
+    await api.close('accountId');
+    sinon.assert.notCalled(client.removeAccountCache);
+    await api.connect('accountId');
+    await api.close('accountId');
+    sinon.assert.calledWith(client.removeAccountCache, 'accountId');
+    sinon.assert.calledWith(client.removeReconnectListener, api);
+    sinon.assert.calledWith(connectionRegistry.removeRpc, account);
+  });
+
+  /**
    * @test {RpcMetaApiConnection#onConnected}
    */
   it('should process onConnected event', async () => {

@@ -1,3 +1,6 @@
+20.8.2
+  - fix connection close
+
 20.8.1
   - fix metatraderAccountApi import path
 
