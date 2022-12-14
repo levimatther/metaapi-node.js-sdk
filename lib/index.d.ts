@@ -31,8 +31,8 @@ import MetatraderAccountCredentials from "./metaApi/metatraderAccountCredentials
 import MetatraderAccountGeneratorApi from "./metaApi/metatraderAccountGeneratorApi";
 import ProvisioningProfile from "./metaApi/provisioningProfile";
 import ProvisioningProfileApi from "./metaApi/provisioningProfileApi";
-import RpcMetaApiConnection from "./metaApi/rpcMetaApiConnection";
-import StreamingMetaApiConnection from "./metaApi/streamingMetaApiConnection";
+import RpcMetaApiConnectionInstance from "./metaApi/rpcMetaApiConnectionInstance";
+import StreamingMetaApiConnectionInstance from "./metaApi/streamingMetaApiConnectionInstance";
 import TerminalState from "./metaApi/terminalState";
 
 export default MetaApi;
@@ -51,7 +51,7 @@ export * from './clients/httpClient';
 export * from './metaApi/connectionHealthMonitor';
 export * from './metaApi/metaApi';
 export * from './metaApi/metaApiConnection';
-export * from './metaApi/streamingMetaApiConnection';
+export * from './metaApi/streamingMetaApiConnectionInstance';
 
 export {
   HistoryStorage,
@@ -86,7 +86,7 @@ export {
   MetatraderAccountGeneratorApi,
   ProvisioningProfile,
   ProvisioningProfileApi,
-  RpcMetaApiConnection,
-  StreamingMetaApiConnection,
+  RpcMetaApiConnectionInstance,
+  StreamingMetaApiConnectionInstance,
   TerminalState
 };

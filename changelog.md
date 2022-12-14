@@ -1,3 +1,6 @@
+20.8.3
+  - updated connection type exports
+
 20.8.2
   - fix connection close
 
