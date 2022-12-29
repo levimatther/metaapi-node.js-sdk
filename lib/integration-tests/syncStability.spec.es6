@@ -216,7 +216,8 @@ sequentialProcessing.forEach(param => {
         accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
       });
       api._metaApiWebsocketClient.url = 'http://localhost:6785';
-      sandbox.stub(api._connectionRegistry._clientApiClient, 'getHashingIgnoredFieldLists').resolves({
+      sandbox.stub(api._connectionRegistry._terminalHashManager._clientApiClient,
+        'getHashingIgnoredFieldLists').resolves({
         'g1': {
           'specification': [
             'description',

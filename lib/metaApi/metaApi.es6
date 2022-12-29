@@ -17,6 +17,7 @@ import LatencyMonitor from './latencyMonitor';
 import ExpertAdvisorClient from '../clients/metaApi/expertAdvisor.client';
 import LoggerManager from '../logger';
 import DomainClient from '../clients/domain.client';
+import TerminalHashManager from './terminalHashManager';
 
 /**
  * Request retry options
@@ -100,13 +101,14 @@ export default class MetaApi {
     const historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     const accountGeneratorHttpClient = new HttpClient(accountGeneratorRequestTimeout, retryOpts);
     const clientApiClient = new ClientApiClient(httpClient, domainClient); 
+    const terminalHashManager = new TerminalHashManager(clientApiClient);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(domainClient, token, {application, domain,
       requestTimeout, connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts,
       useSharedClientApi, region: opts.region,
       unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, domainClient));
-    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, clientApiClient, application,
-      refreshSubscriptionsOpts);
+    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, terminalHashManager,
+      application, refreshSubscriptionsOpts);
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, domainClient);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, domainClient),
       this._metaApiWebsocketClient, this._connectionRegistry, 

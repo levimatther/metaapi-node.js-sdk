@@ -70,13 +70,14 @@ export default class SynchronizationListener {
 
   /**
    * Invoked when MetaTrader terminal state synchronization is started
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {Boolean} specificationsUpdated whether specifications are going to be updated during synchronization
-   * @param {Boolean} positionsUpdated whether positions are going to be updated during synchronization
-   * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} specificationsHash specifications hash
+   * @param {string} positionsHash positions hash
+   * @param {string} ordersHash orders hash
+   * @param {string} synchronizationId synchronization id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated) {}
+  async onSynchronizationStarted(instanceIndex, specificationsHash, positionsHash, ordersHash, synchronizationId) {}
 
   /**
    * Invoked when MetaTrader account information is updated

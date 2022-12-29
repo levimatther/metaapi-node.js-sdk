@@ -45,7 +45,7 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "20.8.3",
+  "version": "20.9.0",
   "dependencies": {
     "@log4js-node/log4js-api": "~1.0.2",
     "babel-runtime": "~6.26.0",
@@ -53,6 +53,7 @@
     "crypto-js": "~4.1.1",
     "dotenv": "~8.2.0",
     "fs-extra": "~9.0.1",
+    "fuse.js": "~6.6.2",
     "idb": "~5.0.4",
     "metaapi.cloud-copyfactory-sdk": "^6.0.0",
     "metaapi.cloud-metastats-sdk": "^3.1.0",

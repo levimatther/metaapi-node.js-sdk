@@ -86,13 +86,15 @@ export default class MetaApiWebsocketClient {
     this._lastRequestsTime = {};
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     this._packetOrderer.start();
-    if (opts.packetLogger && opts.packetLogger.enabled) {
+    this._synchronizationHashes = {};
+    if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
       this._packetLogger.start();
     }
     this._logger = LoggerManager.getLogger('MetaApiWebsocketClient');
     if (!opts.disableInternalJobs) {
       this._clearAccountCacheInterval = setInterval(this._clearAccountCacheJob.bind(this), 30 * 60 * 1000);
+      this._clearInactiveSyncDataJob = setInterval(this._clearInactiveSyncDataJob.bind(this), 5 * 60 * 1000);
     }
   }
 
@@ -983,15 +985,17 @@ export default class MetaApiWebsocketClient {
    * @returns {Promise} promise which resolves when synchronization started
    */
   async synchronize(accountId, instanceIndex, host, synchronizationId, startingHistoryOrderTime, startingDealTime,  
-    getHashes) {
+    hashes) {
     if(this._getSocketInstanceByAccount(accountId, instanceIndex) === undefined) {
       this._logger.debug(`${accountId}:${instanceIndex}: creating socket instance on synchronize`);
       await this._createSocketInstanceByAccount(accountId, instanceIndex);
     }
     const syncThrottler = this._getSocketInstanceByAccount(accountId, instanceIndex)
       .synchronizationThrottler;
-    return syncThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, 
-      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host}, getHashes);
+    this._synchronizationHashes[synchronizationId] = hashes;
+    this._synchronizationHashes[synchronizationId].lastUpdated = Date.now();
+    return syncThrottler.scheduleSynchronize(accountId, {requestId: synchronizationId, version: 2,
+      type: 'synchronize', startingHistoryOrderTime, startingDealTime, instanceIndex, host}, hashes);
   }
 
   /**
@@ -1887,18 +1891,27 @@ export default class MetaApiWebsocketClient {
       } else if (data.type === 'synchronizationStarted') {
         const promises = [];
         this._synchronizationFlags[data.synchronizationId] = {
-          accountId: data.accountId,
-          instanceNumber,
-          positionsUpdated: data.positionsUpdated !== undefined ? data.positionsUpdated : true,
-          ordersUpdated: data.ordersUpdated !== undefined ? data.ordersUpdated : true
+          accountId: data.accountId, instanceNumber,
+          specificationsUpdated: data.specificationsHashIndex === undefined,
+          positionsUpdated: data.positionsHashIndex === undefined,
+          ordersUpdated: data.ordersHashIndex === undefined
         };
         this._synchronizationIdByInstance[instanceId] = data.synchronizationId;
+        const specificationsHash = (data.specificationsHashIndex !== undefined) ? 
+          this._synchronizationHashes[data.synchronizationId] && 
+          this._synchronizationHashes[data.synchronizationId]
+            .specificationsHashes[data.specificationsHashIndex] : undefined;
+        const positionsHash = (data.positionsHashIndex !== undefined) ? 
+          this._synchronizationHashes[data.synchronizationId] && 
+          this._synchronizationHashes[data.synchronizationId].positionsHashes[data.positionsHashIndex] : undefined;
+        const ordersHash = (data.ordersHashIndex !== undefined) ? 
+          this._synchronizationHashes[data.synchronizationId] && 
+          this._synchronizationHashes[data.synchronizationId].ordersHashes[data.ordersHashIndex] : undefined;
+        delete this._synchronizationHashes[data.synchronizationId];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           promises.push(this._processEvent(
             () => listener.onSynchronizationStarted(instanceIndex,
-              data.specificationsUpdated !== undefined ? data.specificationsUpdated : true,
-              data.positionsUpdated !== undefined ? data.positionsUpdated : true,
-              data.ordersUpdated !== undefined ? data.ordersUpdated : true, data.synchronizationId),
+              specificationsHash, positionsHash, ordersHash, data.synchronizationId),
             `${primaryAccountId}:${instanceIndex}:onSynchronizationStarted`));
         }
         await Promise.all(promises);
@@ -2295,9 +2308,9 @@ export default class MetaApiWebsocketClient {
       Object.keys(this._synchronizationFlags).forEach(synchronizationId => {
         const accountId = this._synchronizationFlags[synchronizationId].accountId;
         if (this._socketInstancesByAccounts[instanceNumber][accountId] === socketInstanceIndex
-          && this._synchronizationFlags[synchronizationId].instanceNumber === instanceNumber
-          && this._regionsByAccounts[accountId]
-          && this._regionsByAccounts[accountId].region === region) {
+            && this._synchronizationFlags[synchronizationId].instanceNumber === instanceNumber
+            && this._regionsByAccounts[accountId]
+            && this._regionsByAccounts[accountId].region === region) {
           delete this._synchronizationFlags[synchronizationId];
         }
       });
@@ -2437,6 +2450,15 @@ export default class MetaApiWebsocketClient {
           delete this._regionsByAccounts[replica];
         });
         delete this._accountReplicas[primaryAccountId];
+      }
+    });
+  }
+
+  _clearInactiveSyncDataJob() {
+    const date = Date.now();
+    Object.keys(this._synchronizationHashes).keys(synchronizationId => {
+      if(this._synchronizationHashes[synchronizationId].lastUpdated < date - 30 * 60 * 1000) {
+        delete this._synchronizationHashes[synchronizationId];
       }
     });
   }

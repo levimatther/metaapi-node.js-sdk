@@ -57,31 +57,17 @@ describe('StreamingMetaApiConnection', () => {
     queueEvent: () => {}
   };
 
-  let clientApiClient = {
-    getHashingIgnoredFieldLists: () => ({
-      g1: {
-        specification: [
-          'description',
-        ],
-        position: [
-          'time',
-        ],
-        order: [
-          'time',
-        ]
-      },
-      g2: {
-        specification: [
-          'pipSize'
-        ],
-        position: [
-          'comment',
-        ],
-        order: [
-          'comment',
-        ]
-      }
-    })
+  let terminalHashManager = {
+    getSpecificationsByHash: () => {},
+    getPositionsByHash: () => {},
+    getOrdersByHash: () => {},
+    recordSpecifications: () => {},
+    recordOrders: () => {},
+    updateOrders: () => {},
+    getLastUsedOrderHashes: () => {},
+    getLastUsedPositionHashes: () => {},
+    getLastUsedSpecificationHashes: () => {},
+    removeConnectionReferences: () => {}
   };
 
   let connectionRegistry = {
@@ -107,7 +93,7 @@ describe('StreamingMetaApiConnection', () => {
       accountRegions,
       reload: () => {}
     };
-    api = new StreamingMetaApiConnection(client, clientApiClient, account, undefined, connectionRegistry, 0, {
+    api = new StreamingMetaApiConnection(client, terminalHashManager, account, undefined, connectionRegistry, 0, {
       minDelayInSeconds: 1,
       maxDelayInSeconds: 1
     });
@@ -191,7 +177,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should synchronize state with terminal', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId', accountRegions},
+    api = new StreamingMetaApiConnection(client, terminalHashManager, {id: 'accountId', accountRegions},
       undefined, connectionRegistry);
     await api.connect();
     api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
@@ -207,7 +193,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should synchronize state with terminal from specified time', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient, {id: 'accountId', accountRegions}, undefined,
+    api = new StreamingMetaApiConnection(client, terminalHashManager, {id: 'accountId', accountRegions}, undefined,
       connectionRegistry, new Date('2020-10-07T00:00:00.000Z'));
     await api.connect();
     api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
@@ -309,7 +295,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should initialize listeners, terminal state and history storage for accounts with user synch mode', async () => {
     sandbox.stub(client, 'addSynchronizationListener').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+    api = new StreamingMetaApiConnection(client, terminalHashManager,  {id: 'accountId', accountRegions}, 
       undefined, connectionRegistry);
     await api.connect();
     should.exist(api.terminalState);
@@ -325,7 +311,7 @@ describe('StreamingMetaApiConnection', () => {
   it('should sychronize on connection', async () => {
     sandbox.stub(client, 'synchronize').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+    api = new StreamingMetaApiConnection(client, terminalHashManager,  {id: 'accountId', accountRegions}, 
       undefined, connectionRegistry);
     await api.connect();
     api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', {doneTime: new Date('2020-01-01T00:00:00.000Z')});
@@ -344,7 +330,7 @@ describe('StreamingMetaApiConnection', () => {
     stub.onFirstCall().throws(new Error('test error'));
     stub.onSecondCall().resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
-    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions}, 
+    api = new StreamingMetaApiConnection(client, terminalHashManager,  {id: 'accountId', accountRegions}, 
       undefined, connectionRegistry);
     await api.connect();
     await api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', 
@@ -361,7 +347,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should not synchronize if connection is closed', async () => {
     let synchronizeStub = sandbox.stub(client, 'synchronize');
-    api = new StreamingMetaApiConnection(client, clientApiClient,  {id: 'accountId', accountRegions},
+    api = new StreamingMetaApiConnection(client, terminalHashManager,  {id: 'accountId', accountRegions},
       undefined, connectionRegistry);
     await api.connect();
     await api.historyStorage.onHistoryOrderAdded('vint-hill:1:ps-mpa-1', 
@@ -381,14 +367,16 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
     sandbox.stub(client, 'unsubscribe').resolves();
     sandbox.stub(connectionRegistry, 'removeStreaming').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient,  accountData, 
+    api = new StreamingMetaApiConnection(client, terminalHashManager,  accountData, 
       undefined, connectionRegistry);
+    sandbox.stub(api._terminalState, 'close').returns();
     await api.connect();
     await api.close();
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.terminalState);
     sinon.assert.calledWith(client.removeSynchronizationListener, 'accountId', api.historyStorage);
     sinon.assert.calledWith(connectionRegistry.removeStreaming, accountData);
+    sinon.assert.calledOnce(api._terminalState.close);
   });
 
   /**
@@ -400,7 +388,7 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
     sandbox.stub(client, 'unsubscribe').resolves();
     sandbox.stub(connectionRegistry, 'removeStreaming').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient,  accountData, 
+    api = new StreamingMetaApiConnection(client, terminalHashManager,  accountData, 
       undefined, connectionRegistry);
     await api.connect('accountId');
     await api.connect('accountId');
@@ -426,7 +414,7 @@ describe('StreamingMetaApiConnection', () => {
     sandbox.stub(client, 'removeSynchronizationListener').returns();
     sandbox.stub(client, 'unsubscribe').resolves();
     sandbox.stub(connectionRegistry, 'removeStreaming').returns();
-    api = new StreamingMetaApiConnection(client, clientApiClient,  accountData, 
+    api = new StreamingMetaApiConnection(client, terminalHashManager,  accountData, 
       undefined, connectionRegistry);
     await api.close('accountId');
     sinon.assert.notCalled(client.removeSynchronizationListener);

@@ -24,7 +24,8 @@ describe('MetaApiWebsocketClient', () => {
     activeSynchronizationIds: ['synchronizationId'],
     onDisconnect: () => {},
     updateSynchronizationId: () => {},
-    removeSynchronizationId: () => {}
+    removeSynchronizationId: () => {},
+    scheduleSynchronize: () => {}
   };
   const domainClient = {
     getSettings: () => {}
@@ -1762,9 +1763,9 @@ describe('MetaApiWebsocketClient', () => {
       });
       await client.synchronize('accountId', 0, 'ps-mpa-1', 'synchronizationId', new Date('2020-01-01T00:00:00.000Z'),
         new Date('2020-01-02T00:00:00.000Z'), () => ({
-          specificationsMd5: '1111',
-          positionsMd5: '2222',
-          ordersMd5: '3333'
+          specificationsHashes: '1111',
+          positionsHashes: '2222',
+          ordersHashes: '3333'
         }));
       requestReceived.should.be.true();
     });
@@ -1786,13 +1787,18 @@ describe('MetaApiWebsocketClient', () => {
       server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
         accountInformation, instanceIndex: 0, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
       await new Promise(res => setTimeout(res, 100));
-      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1', true, true, true);
+      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1',
+        undefined, undefined, undefined, 'synchronizationId');
       sinon.assert.notCalled(listener.onPositionsSynchronized);
       sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
     });
 
     it('should process synchronization started event with no updates', async () => {
       client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
+      const hashes = {specificationsHashes: ['shash0', 'shash1', 'shash2'],
+        positionsHashes: ['phash0', 'phash1', 'phash2'],
+        ordersHashes: ['ohash0', 'ohash1', 'ohash2']};
+      sandbox.stub(synchronizationThrottler, 'scheduleSynchronize').resolves();
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
@@ -1803,13 +1809,21 @@ describe('MetaApiWebsocketClient', () => {
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
       sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
+      client.synchronize('accountId', 0, 'ps-mpa-1', 'synchronizationId', 
+        new Date('2020-04-15T02:45:06.521Z'), new Date('2020-04-15T02:45:06.521Z'), hashes);
       server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 0,
-        specificationsUpdated: false, positionsUpdated: false, ordersUpdated: false,
+        specificationsHashIndex: 0, positionsHashIndex: 1, ordersHashIndex: 2,
         synchronizationId: 'synchronizationId', host: 'ps-mpa-1'});
       server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
         accountInformation, instanceIndex: 0, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
       await new Promise(res => setTimeout(res, 50));
-      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1', false, false, false);
+      sinon.assert.calledWith(synchronizationThrottler.scheduleSynchronize, 'accountId', {
+        host: 'ps-mpa-1', instanceIndex: 0, requestId: 'synchronizationId',
+        startingDealTime: new Date('2020-04-15T02:45:06.521Z'),
+        startingHistoryOrderTime: new Date('2020-04-15T02:45:06.521Z'),
+        type: 'synchronize', version: 2
+      }, hashes);
+      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1', 'shash0', 'phash1', 'ohash2');
       sinon.assert.calledWith(listener.onPositionsSynchronized, 'vint-hill:0:ps-mpa-1', 'synchronizationId');
       sinon.assert.calledWith(listener.onPendingOrdersSynchronized, 'vint-hill:0:ps-mpa-1', 'synchronizationId');
     });
@@ -1830,6 +1844,9 @@ describe('MetaApiWebsocketClient', () => {
         comment: 'COMMENT2'
       }];
       client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
+      const hashes = {specificationsHashes: ['shash0', 'shash1', 'shash2'],
+        positionsHashes: ['phash0', 'phash1', 'phash2'],
+        ordersHashes: ['ohash0', 'ohash1', 'ohash2']};
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
@@ -1841,13 +1858,15 @@ describe('MetaApiWebsocketClient', () => {
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
       sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
+      client.synchronize('accountId', 0, 'ps-mpa-1', 'synchronizationId', 
+        new Date('2020-04-15T02:45:06.521Z'), new Date('2020-04-15T02:45:06.521Z'), hashes);
       server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 0,
-        synchronizationId: 'synchronizationId', host: 'ps-mpa-1', positionsUpdated: false,
-        ordersUpdated: true});
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1', positionsHashIndex: 1});
       server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
         accountInformation, instanceIndex: 0, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
       await new Promise(res => setTimeout(res, 100));
-      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1', true, false, true);
+      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1', undefined,
+        'phash1', undefined, 'synchronizationId');
       sinon.assert.calledWith(listener.onPositionsSynchronized, 'vint-hill:0:ps-mpa-1', 'synchronizationId');
       sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
       server.emit('synchronization', {type: 'orders', accountId: 'accountId', orders, instanceIndex: 0,
@@ -1878,6 +1897,9 @@ describe('MetaApiWebsocketClient', () => {
       }];
 
       client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
+      const hashes = {specificationsHashes: ['shash0', 'shash1', 'shash2'],
+        positionsHashes: ['phash0', 'phash1', 'phash2'],
+        ordersHashes: ['ohash0', 'ohash1', 'ohash2']};
       let listener = {
         onSynchronizationStarted: () => {},
         onPositionsSynchronized: () => {},
@@ -1889,13 +1911,15 @@ describe('MetaApiWebsocketClient', () => {
       sandbox.stub(listener, 'onPositionsSynchronized').resolves();
       sandbox.stub(listener, 'onPendingOrdersSynchronized').resolves();
       client.addSynchronizationListener('accountId', listener);
+      client.synchronize('accountId', 0, 'ps-mpa-1', 'synchronizationId', 
+        new Date('2020-04-15T02:45:06.521Z'), new Date('2020-04-15T02:45:06.521Z'), hashes);
       server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', instanceIndex: 0,
-        synchronizationId: 'synchronizationId', host: 'ps-mpa-1', positionsUpdated: true,
-        ordersUpdated: false});
+        synchronizationId: 'synchronizationId', host: 'ps-mpa-1', ordersHashIndex: 2});
       server.emit('synchronization', {type: 'accountInformation', accountId: 'accountId', 
         accountInformation, instanceIndex: 0, host: 'ps-mpa-1', synchronizationId: 'synchronizationId'});
       await new Promise(res => setTimeout(res, 100));
-      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1', true, true, false);
+      sinon.assert.calledWith(listener.onSynchronizationStarted, 'vint-hill:0:ps-mpa-1', undefined,
+        undefined, 'ohash2', 'synchronizationId');
       sinon.assert.notCalled(listener.onPositionsSynchronized);
       sinon.assert.notCalled(listener.onPendingOrdersSynchronized);
       server.emit('synchronization', {type: 'positions', accountId: 'accountId', positions, instanceIndex: 0,

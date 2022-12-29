@@ -1,8 +1,9 @@
 'use strict';
 
-import crypto from 'crypto-js';
+import randomstring from 'randomstring';
 import SynchronizationListener from '../clients/metaApi/synchronizationListener';
 import LoggerManager from '../logger';
+import TerminalHashManager from './terminalHashManager';
 
 /**
  * Responsible for storing a local copy of remote terminal state
@@ -11,30 +12,41 @@ export default class TerminalState extends SynchronizationListener {
 
   /**
    * Constructs the instance of terminal state class
-   * @param {string} accountId account id
-   * @param {ClientApiClient} clientApiClient client api client
+   * @param {MetatraderAccount} account mt account
+   * @param {TerminalHashManager} terminalHashManager terminal hash manager
    */
-  constructor(accountId, clientApiClient) {
+  constructor(account, terminalHashManager) {
     super();
-    this._accountId = accountId;
-    this._clientApiClient = clientApiClient;
+    this._id = randomstring.generate(32);
+    this._account = account;
+    this._terminalHashManager = terminalHashManager;
     this._stateByInstanceIndex = {};
     this._waitForPriceResolves = {};
+    this._combinedInstanceIndex = 'combined';
     this._combinedState = {
       accountInformation: undefined,
       positions: [],
       orders: [],
-      specificationsBySymbol: {},
+      specificationsBySymbol: null,
       pricesBySymbol: {},
-      completedOrders: {},
       removedPositions: {},
+      specificationsHash: null,
+      positionsHash: null,
+      ordersHash: null,
       ordersInitialized: false,
       positionsInitialized: false,
       lastUpdateTime: 0,
+      lastStatusTime: 0,
       lastQuoteTime: undefined,
       lastQuoteBrokerTime: undefined
     };
     this._logger = LoggerManager.getLogger('TerminalState');
+    this._checkCombinedStateActivityJob = this._checkCombinedStateActivityJob.bind(this);
+    setInterval(this._checkCombinedStateActivityJob, 5 * 60 * 1000);
+  }
+
+  get id(){
+    return this._id;
   }
 
   /**
@@ -67,7 +79,8 @@ export default class TerminalState extends SynchronizationListener {
    * @returns {Array<MetatraderPosition>} a local copy of MetaTrader positions opened
    */
   get positions() {
-    return this._combinedState.positions;
+    const hash = this._combinedState.positionsHash;
+    return hash ? Object.values(this._terminalHashManager.getPositionsByHash(this._account.id, hash) || {}) : [];
   }
 
   /**
@@ -75,7 +88,8 @@ export default class TerminalState extends SynchronizationListener {
    * @returns {Array<MetatraderOrder>} a local copy of MetaTrader orders opened
    */
   get orders() {
-    return this._combinedState.orders;
+    const hash = this._combinedState.ordersHash;
+    return hash ? Object.values(this._terminalHashManager.getOrdersByHash(this._account.id, hash) || {}) : [];
   }
 
   /**
@@ -84,96 +98,25 @@ export default class TerminalState extends SynchronizationListener {
    * trading terminal
    */
   get specifications() {
-    return Object.values(this._combinedState.specificationsBySymbol);
+    const hash = this._combinedState.specificationsHash;
+    return hash ? Object.values(this._terminalHashManager.getSpecificationsByHash(this._account.server,
+      this._combinedState.specificationsHash) || {}) : [];
   }
 
   /**
    * Returns hashes of terminal state data for incremental synchronization
-   * @param {String} accountType account type
-   * @param {String} instanceIndex index of instance to get hashes of
    * @returns {Promise<Object>} promise resolving with hashes of terminal state data
    */
   // eslint-disable-next-line complexity
-  async getHashes(accountType, instanceIndex) {
-    let requestedState = this._getState(instanceIndex);
-    // get latest instance number state
-    const region = instanceIndex.split(':')[0];
-    const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists(region);
-    const instanceNumber = instanceIndex.split(':')[1];
-    const instanceNumberStates = Object.keys(this._stateByInstanceIndex)
-      .filter(stateInstanceIndex => stateInstanceIndex.startsWith(`${region}:${instanceNumber}:`));
-    instanceNumberStates.sort((a,b) => b.lastSyncUpdateTime - a.lastSyncUpdateTime);
-    const state = this._getState(instanceNumberStates[0]);
-
-    const sortByKey = (obj1, obj2, key) => {
-      if(obj1[key] < obj2[key]) {
-        return -1;
-      }
-      if(obj1[key] > obj2[key]) {
-        return 1;
-      }
-      return 0;
-    };
-    const specifications = JSON.parse(JSON.stringify(Object.values(state.specificationsBySymbol)));
-    specifications.sort((a,b) => sortByKey(a, b, 'symbol'));
-    specifications.forEach(specification => {
-      if(accountType === 'cloud-g1') {
-        hashFields.g1.specification.forEach(field => delete specification[field]);
-      } else if(accountType === 'cloud-g2') {
-        hashFields.g2.specification.forEach(field => delete specification[field]);
-      }
-    });
-    const specificationsHash = specifications.length ? 
-      state.specificationsHash || this._getHash(specifications, accountType, ['digits']) : null;
-    state.specificationsHash = specificationsHash;
-
-    const positions = JSON.parse(JSON.stringify(state.positions));
-    if(accountType === 'cloud-g1') {
-      positions.sort((a,b) => Number(a.id) - Number(b.id));
-    } else {
-      positions.sort((a,b) => sortByKey(a, b, 'id'));
-    }
-    positions.forEach(position => {
-      if(accountType === 'cloud-g1') {
-        hashFields.g1.position.forEach(field => delete position[field]);
-      } else if(accountType === 'cloud-g2') {
-        hashFields.g2.position.forEach(field => delete position[field]);
-      }
-    });
-    const positionsHash = state.positionsInitialized ? 
-      state.positionsHash || this._getHash(positions, accountType, ['magic']) : null;
-    state.positionsHash = positionsHash;
-
-    const orders = JSON.parse(JSON.stringify(state.orders));
-    if(accountType === 'cloud-g1') {
-      orders.sort((a,b) => Number(a.id) - Number(b.id));
-    } else {
-      orders.sort((a,b) => sortByKey(a, b, 'id'));
-    }
-    orders.forEach(order => {
-      if(accountType === 'cloud-g1') {
-        hashFields.g1.order.forEach(field => delete order[field]);
-      } else if(accountType === 'cloud-g2') {
-        hashFields.g2.order.forEach(field => delete order[field]);
-      }
-    });
-    const ordersHash = state.ordersInitialized ? 
-      state.ordersHash || this._getHash(orders, accountType, ['magic']) : null;
-    state.ordersHash = ordersHash;
-
-    if (requestedState !== state) {
-      requestedState.specificationsBySymbol = Object.assign({}, state.specificationsBySymbol || {});
-      requestedState.specificationsHash = specificationsHash;
-      requestedState.positions = (state.positions || []).map(p => Object.assign({}, p));
-      requestedState.positionsHash = positionsHash;
-      requestedState.orders = (state.orders || []).map(o => Object.assign({}, o));
-      requestedState.ordersHash = ordersHash;
-    }
+  getHashes() {
+    const specificationsHashes = this._terminalHashManager.getLastUsedSpecificationHashes(this._account.server);
+    const positionsHashes = this._terminalHashManager.getLastUsedPositionHashes(this._account.id);
+    const ordersHashes = this._terminalHashManager.getLastUsedOrderHashes(this._account.id);
 
     return {
-      specificationsMd5: specificationsHash,
-      positionsMd5: positionsHash,
-      ordersMd5: ordersHash
+      specificationsHashes: specificationsHashes,
+      positionsHashes: positionsHashes,
+      ordersHashes: ordersHashes
     };
   }
 
@@ -184,7 +127,13 @@ export default class TerminalState extends SynchronizationListener {
    * symbol is not found
    */
   specification(symbol) {
-    return this._combinedState.specificationsBySymbol[symbol];
+    if(this._combinedState.specificationsHash) {
+      const state = this._terminalHashManager.getSpecificationsByHash(this._account.server,
+        this._combinedState.specificationsHash);
+      return state[symbol];
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -259,48 +208,54 @@ export default class TerminalState extends SynchronizationListener {
    * @param {Boolean} connected is MetaTrader terminal is connected to broker
    */
   onBrokerConnectionStatusChanged(instanceIndex, connected) {
+    this._combinedState.lastStatusTime = Date.now();
     this._getState(instanceIndex).connectedToBroker = connected;
   }
 
   /**
    * Invoked when MetaTrader terminal state synchronization is started
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {Boolean} specificationsUpdated whether specifications are going to be updated during synchronization
-   * @param {Boolean} positionsUpdated whether positions are going to be updated during synchronization
-   * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} specificationsHash specifications hash
+   * @param {string} positionsHash positions hash
+   * @param {string} ordersHash orders hash
+   * @param {string} synchronizationId synchronization id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated, synchronizationId) {
+  onSynchronizationStarted(instanceIndex, specificationsHash, positionsHash, ordersHash, synchronizationId) {
     const unsynchronizedStates = this._getStateIndicesOfSameInstanceNumber(instanceIndex)
       .filter(stateIndex => !this._stateByInstanceIndex[stateIndex].ordersInitialized);
     unsynchronizedStates.sort((a,b) => b.lastSyncUpdateTime - a.lastSyncUpdateTime);
-    unsynchronizedStates.slice(1).forEach(stateIndex => delete this._stateByInstanceIndex[stateIndex]);
+    unsynchronizedStates.slice(1).forEach(stateIndex => this._removeState(stateIndex));
 
     let state = this._getState(instanceIndex);
     state.lastSyncUpdateTime = Date.now();
     state.accountInformation = undefined;
     state.pricesBySymbol = {};
-    if(positionsUpdated) {
-      state.positions = [];
-      state.removedPositions = {};
+    state.positions = [];
+    state.removedPositions = {};
+    if(!positionsHash) {
       state.positionsInitialized = false;
       state.positionsHash = null;
+    } else {
+      state.positionsHash = positionsHash;
     }
-    if(ordersUpdated) {
-      state.orders = [];
-      state.completedOrders = {};
+    state.orders = [];
+    if(!ordersHash) {
       state.ordersInitialized = false;
       state.ordersHash = null;
+    } else {
+      state.ordersHash = ordersHash;
     }
-    if(specificationsUpdated) {
-      this._logger.trace(() => `${this._accountId}:${instanceIndex}:${synchronizationId}: cleared specifications ` +
+    state.specificationsBySymbol = {};
+    if(!specificationsHash) {
+      this._logger.trace(() => `${this._account.id}:${instanceIndex}:${synchronizationId}: cleared specifications ` +
         'on synchronization start');
-      state.specificationsBySymbol = {};
       state.specificationsHash = null;
     } else {
-      this._logger.trace(() => `${this._accountId}:${instanceIndex}:${synchronizationId}: no need to clear ` +
+      this._logger.trace(() => `${this._account.id}:${instanceIndex}:${synchronizationId}: no need to clear ` +
         `specifications on synchronization start, ${Object.keys(state.specificationsBySymbol || {}).length} ` +
         'specifications reused');
+      state.specificationsHash = specificationsHash;
     }
   }
 
@@ -348,21 +303,17 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderPosition} position updated MetaTrader position
    */
-  onPositionUpdated(instanceIndex, position) {
+  async onPositionUpdated(instanceIndex, position) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    instanceState.positionsHash = null;
 
-    const updatePosition = (state) => {
-      let index = state.positions.findIndex(p => p.id === position.id);
-      if (index !== -1) {
-        state.positions[index] = position;
-      } else if (!state.removedPositions[position.id]) {
-        state.positions.push(position);
-      }
+    const updatePosition = async (state) => {
+      const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
+        instanceIndex, [position], [], state.positionsHash);
+      state.positionsHash = hash;
     };
-    updatePosition(instanceState);
-    updatePosition(this._combinedState);
+    await updatePosition(instanceState);
+    await updatePosition(this._combinedState);
   }
 
   /**
@@ -370,26 +321,17 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} instanceIndex index of an account instance connected
    * @param {String} positionId removed MetaTrader position id
    */
-  onPositionRemoved(instanceIndex, positionId) {
+  async onPositionRemoved(instanceIndex, positionId) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    instanceState.positionsHash = null;
 
-    const removePosition = (state) => {
-      let position = state.positions.find(p => p.id === positionId);
-      if (!position) {
-        for (let e of Object.entries(state.removedPositions)) {
-          if (e[1] + 5 * 60 * 1000 < Date.now()) {
-            delete state.removedPositions[e[0]];
-          }
-        }
-        state.removedPositions[positionId] = Date.now();
-      } else {
-        state.positions = state.positions.filter(p => p.id !== positionId);
-      }
+    const removePosition = async (state, instance) => {
+      const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
+        instance, [], [positionId], state.positionsHash);
+      state.positionsHash = hash;
     };
-    removePosition(instanceState);
-    removePosition(this._combinedState);
+    await removePosition(instanceState, instanceIndex);
+    await removePosition(this._combinedState, this._combinedInstanceIndex);
   }
 
   /**
@@ -412,26 +354,68 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
+  // eslint-disable-next-line complexity
   async onPendingOrdersSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
-    state.completedOrders = {};
     state.positionsInitialized = true;
     state.ordersInitialized = true;
     this._combinedState.accountInformation = state.accountInformation ? Object.assign({}, state.accountInformation) :
       undefined;
-    this._combinedState.positions = (state.positions || []).map(p => Object.assign({}, p));
-    this._combinedState.orders = (state.orders || []).map(o => Object.assign({}, o));
-    this._combinedState.specificationsBySymbol = Object.assign({}, state.specificationsBySymbol);
-    this._logger.trace(() => `${this._accountId}:${instanceIndex}:${synchronizationId}: assigned specifications to ` +
+    if(state.positions.length) {
+      const hash = await this._terminalHashManager.recordPositions(this._account.id,
+        this._account.type, this._id, instanceIndex, state.positions);
+      state.positionsHash = hash;
+      this._combinedState.positions = (state.positions || []).map(p => Object.assign({}, p));
+      this._combinedState.positionsHash = hash;
+    } else if (state.positionsHash) {
+      this._terminalHashManager.removePositionReference(this._account.id, this.id, instanceIndex);
+      this._terminalHashManager.addPositionReference(this._account.id, state.positionsHash,
+        this.id, instanceIndex);
+      this._combinedState.positionsHash = state.positionsHash;
+      this._terminalHashManager.removePositionReference(this._account.id, this.id, this._combinedInstanceIndex);
+      this._terminalHashManager.addPositionReference(this._account.id, state.positionsHash,
+        this.id, this._combinedInstanceIndex);
+    }
+    if(state.orders.length) {
+      const hash = await this._terminalHashManager.recordOrders(this._account.id,
+        this._account.type, this._id, instanceIndex, state.orders);
+      state.ordersHash = hash;
+      this._combinedState.orders = (state.orders || []).map(o => Object.assign({}, o));
+      this._combinedState.ordersHash = hash;
+    } else if (state.ordersHash) {
+      this._terminalHashManager.removeOrderReference(this._account.id, this.id, instanceIndex);
+      this._terminalHashManager.addOrderReference(this._account.id, state.ordersHash,
+        this.id, instanceIndex);
+      this._combinedState.ordersHash = state.ordersHash;
+      this._terminalHashManager.removeOrderReference(this._account.id, this.id, this._combinedInstanceIndex);
+      this._terminalHashManager.addOrderReference(this._account.id, state.ordersHash,
+        this.id, this._combinedInstanceIndex);
+    }
+    this._logger.trace(() => `${this._account.id}:${instanceIndex}:${synchronizationId}: assigned specifications to ` +
       'combined state from ' +
       `${instanceIndex}, ${Object.keys(state.specificationsBySymbol || {}).length} specifications assigned`);
     this._combinedState.positionsInitialized = true;
     this._combinedState.ordersInitialized = true;
-    this._combinedState.completedOrders = {};
-    this._combinedState.removedPositions = {};
+    if(Object.keys(state.specificationsBySymbol).length) {
+      const hash = await this._terminalHashManager.recordSpecifications(this._account.server,
+        this._account.type, this._id, instanceIndex, Object.values(state.specificationsBySymbol));
+      this._combinedState.specificationsHash = hash;
+      state.specificationsHash = hash;
+      state.specificationsBySymbol = null;
+    } else if (state.specificationsHash) {
+      this._terminalHashManager.removeSpecificationReference(this._account.server,
+        this.id, instanceIndex);
+      this._terminalHashManager.addSpecificationReference(this._account.server, state.specificationsHash,
+        this.id, instanceIndex);
+      this._combinedState.specificationsHash = state.specificationsHash;
+      this._terminalHashManager.removeSpecificationReference(this._account.server,
+        this.id, this._combinedInstanceIndex);
+      this._terminalHashManager.addSpecificationReference(this._account.server, state.specificationsHash,
+        this.id, this._combinedInstanceIndex);
+    }
     for(let stateIndex of this._getStateIndicesOfSameInstanceNumber(instanceIndex)) {
       if (!this._stateByInstanceIndex[stateIndex].connected) {
-        delete this._stateByInstanceIndex[stateIndex];
+        this._removeState(stateIndex);
       }
     }
   }
@@ -442,21 +426,17 @@ export default class TerminalState extends SynchronizationListener {
    * @param {MetatraderOrder} order updated MetaTrader pending order
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPendingOrderUpdated(instanceIndex, order) {
+  async onPendingOrderUpdated(instanceIndex, order) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    instanceState.ordersHash = null;
     
-    const updatePendingOrder = (state) => {
-      let index = state.orders.findIndex(o => o.id === order.id);
-      if (index !== -1) {
-        state.orders[index] = order;
-      } else if (!state.completedOrders[order.id]) {
-        state.orders.push(order);
-      }
+    const updatePendingOrder = async (state, instance) => {
+      const hash = await this._terminalHashManager.updateOrders(this._account.id, this._account.type, this._id,
+        instance, [order], [], state.ordersHash);
+      state.ordersHash = hash;
     };
-    updatePendingOrder(instanceState);
-    updatePendingOrder(this._combinedState);
+    await updatePendingOrder(instanceState, instanceIndex);
+    await updatePendingOrder(this._combinedState, this._combinedInstanceIndex);
   }
 
   /**
@@ -465,26 +445,17 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} orderId completed MetaTrader pending order id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPendingOrderCompleted(instanceIndex, orderId) {
+  async onPendingOrderCompleted(instanceIndex, orderId) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    instanceState.ordersHash = null;
 
-    const completeOrder = (state) => {
-      let order = state.orders.find(o => o.id === orderId);
-      if (!order) {
-        for (let e of Object.entries(state.completedOrders)) {
-          if (e[1] + 5 * 60 * 1000 < Date.now()) {
-            delete state.completedOrders[e[0]];
-          }
-        }
-        state.completedOrders[orderId] = Date.now();
-      } else {
-        state.orders = state.orders.filter(o => o.id !== orderId);
-      }
+    const completeOrder = async (state, instance) => {
+      const hash = await this._terminalHashManager.updateOrders(this._account.id, this._account.type, this._id,
+        instance, [], [orderId], state.ordersHash);
+      state.ordersHash = hash;
     };
-    completeOrder(instanceState);
-    completeOrder(this._combinedState);
+    await completeOrder(instanceState, instanceIndex);
+    await completeOrder(this._combinedState, this._combinedInstanceIndex);
   }
 
   /**
@@ -493,22 +464,23 @@ export default class TerminalState extends SynchronizationListener {
    * @param {Array<MetatraderSymbolSpecification>} specifications updated specifications
    * @param {Array<String>} removedSymbols removed symbols
    */
-  onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
+  async onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    instanceState.specificationsHash = null;
-
-    const updateSpecifications = (state) => {
+    if(!instanceState.specificationsHash) {
       for (let specification of specifications) {
-        state.specificationsBySymbol[specification.symbol] = specification;
+        instanceState.specificationsBySymbol[specification.symbol] = specification;
       }
-      for (let symbol of removedSymbols) {
-        delete state.specificationsBySymbol[symbol];
-      }
-    };
-    updateSpecifications(instanceState);
-    updateSpecifications(this._combinedState);
-    this._logger.trace(() => `${this._accountId}:${instanceIndex}: updated ${specifications.length} specifications, ` +
+    } else {
+      const hash = await this._terminalHashManager.updateSpecifications(this._account.server, this._account.type,
+        this._id, instanceIndex, specifications, removedSymbols, instanceState.specificationsHash);
+      instanceState.specificationsHash = hash;
+      const combinedHash = await this._terminalHashManager.updateSpecifications(this._account.server,
+        this._account.type, this._id, this._combinedInstanceIndex, specifications, removedSymbols,
+        this._combinedState.specificationsHash);
+      this._combinedState.specificationsHash = combinedHash;
+    }
+    this._logger.trace(() => `${this._account.id}:${instanceIndex}: updated ${specifications.length} specifications, ` +
       `removed ${removedSymbols.length} specifications. There are ` +
       `${Object.keys(instanceState.specificationsBySymbol || {}).length} specifications after update`);
   }
@@ -544,9 +516,13 @@ export default class TerminalState extends SynchronizationListener {
           state.lastQuoteBrokerTime = price.brokerTime;
         }
         state.pricesBySymbol[price.symbol] = price;
-        let positions = state.positions.filter(p => p.symbol === price.symbol);
-        let otherPositions = state.positions.filter(p => p.symbol !== price.symbol);
-        let orders = state.orders.filter(o => o.symbol === price.symbol);
+        const allPositions = Object.values(this._terminalHashManager.getPositionsByHash(this._account.id, 
+          state.positionsHash) || {});
+        const allOrders = Object.values(this._terminalHashManager.getOrdersByHash(this._account.id, 
+          state.ordersHash) || {});
+        let positions = allPositions.filter(p => p.symbol === price.symbol);
+        let otherPositions = allPositions.filter(p => p.symbol !== price.symbol);
+        let orders = allOrders.filter(o => o.symbol === price.symbol);
         pricesInitialized = true;
         for (let position of otherPositions) {
           let p = state.pricesBySymbol[position.symbol];
@@ -574,14 +550,15 @@ export default class TerminalState extends SynchronizationListener {
         }
       }
       if (priceUpdated && state.accountInformation) {
+        const positions = Object.values(this._terminalHashManager.getPositionsByHash(state.positionsHash) || {});
         if (state.positionsInitialized && pricesInitialized) {
           if (state.accountInformation.platform === 'mt5') {
             state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
-              state.positions.reduce((acc, p) => acc +
+              positions.reduce((acc, p) => acc +
                 Math.round((p.unrealizedProfit || 0) * 100) / 100 + Math.round((p.swap || 0) * 100) / 100, 0);
           } else {
             state.accountInformation.equity = equity !== undefined ? equity : state.accountInformation.balance +
-            state.positions.reduce((acc, p) => acc + Math.round((p.swap || 0) * 100) / 100 +
+            positions.reduce((acc, p) => acc + Math.round((p.swap || 0) * 100) / 100 +
               Math.round((p.commission || 0) * 100) / 100 + Math.round((p.unrealizedProfit || 0) * 100) / 100, 0);
           }
           state.accountInformation.equity = Math.round(state.accountInformation.equity * 100) / 100;
@@ -610,15 +587,61 @@ export default class TerminalState extends SynchronizationListener {
         const instanceState = this._stateByInstanceIndex[stateIndex];
         if(!this._stateByInstanceIndex[instanceIndex].ordersInitialized 
             && this._stateByInstanceIndex[instanceIndex].lastSyncUpdateTime <= instanceState.lastSyncUpdateTime) {
-          delete this._stateByInstanceIndex[instanceIndex];
+          this._removeState(instanceIndex);
           break;
         }
         if(instanceState.connected && instanceState.ordersInitialized) {
-          delete this._stateByInstanceIndex[instanceIndex];
+          this._removeState(instanceIndex);
           break;
         }
       }
     }
+  }
+
+  /**
+   * Removes connection related data from terminal hash manager
+   */
+  close() {
+    Object.keys(this._stateByInstanceIndex).forEach(instanceIndex => {
+      this._removeFromHashManager(instanceIndex);
+    });
+    this._removeFromHashManager(this._combinedInstanceIndex);
+  }
+
+  // resets combined state and removes from hash manager if has been disconnected for a long time
+  _checkCombinedStateActivityJob() {
+    const date = Date.now();
+    if(this._combinedState.lastStatusTime < date - 30 * 60 * 1000) {
+      this._removeFromHashManager(this._combinedInstanceIndex);
+      
+      this._combinedState.accountInformation = undefined;
+      this._combinedState.specificationsBySymbol = null;
+      this._combinedState.pricesBySymbol = {};
+      this._combinedState.specificationsHash = null;
+      
+      this._combinedState.orders = [];
+      this._combinedState.ordersHash = null;
+      
+      this._combinedState.positions = [];
+      this._combinedState.positionsHash = null;
+      
+      this._combinedState.ordersInitialized = false;
+      this._combinedState.positionsInitialized = false;
+      this._combinedState.lastUpdateTime = 0;
+      this._combinedState.lastStatusTime = 0;
+      this._combinedState.lastQuoteTime = undefined;
+      this._combinedState.lastQuoteBrokerTime = undefined;
+    }
+  }
+
+  _removeState(instanceIndex) {
+    delete this._stateByInstanceIndex[instanceIndex];
+    this._removeFromHashManager(instanceIndex);
+  }
+
+  _removeFromHashManager(instanceIndex) {
+    this._terminalHashManager.removeConnectionReferences(this._account.server,
+      this._account.id, this._id, instanceIndex);
   }
 
   _refreshStateUpdateTime(instanceIndex){
@@ -668,7 +691,7 @@ export default class TerminalState extends SynchronizationListener {
   
   _getState(instanceIndex) {
     if (!this._stateByInstanceIndex['' + instanceIndex]) {
-      this._logger.trace(`${this._accountId}:${instanceIndex}: constructed new state`);
+      this._logger.trace(`${this._account.id}:${instanceIndex}: constructed new state`);
       this._stateByInstanceIndex['' + instanceIndex] = this._constructTerminalState(instanceIndex);
     }
     return this._stateByInstanceIndex['' + instanceIndex];
@@ -684,8 +707,6 @@ export default class TerminalState extends SynchronizationListener {
       orders: [],
       specificationsBySymbol: {},
       pricesBySymbol: {},
-      completedOrders: {},
-      removedPositions: {},
       ordersInitialized: false,
       positionsInitialized: false,
       lastUpdateTime: 0,
@@ -698,58 +719,4 @@ export default class TerminalState extends SynchronizationListener {
     };
   }
 
-  _getHash(obj, accountType, integerKeys) {
-    let jsonItem = '';
-    if(accountType === 'cloud-g1') {
-      const stringify = (objFromJson, key) => {
-        if(typeof objFromJson === 'number') {
-          if(integerKeys.includes(key)) {
-            return objFromJson;
-          } else {
-            return objFromJson.toFixed(8);
-          }
-        } else if(Array.isArray(objFromJson)) {
-          return `[${objFromJson.map(item => stringify(item)).join(',')}]`; 
-        } else if (objFromJson === null) {
-          return objFromJson;
-        } else if (typeof objFromJson !== 'object' || objFromJson.getTime){
-          return JSON.stringify(objFromJson);
-        }
-    
-        let props = Object
-          .keys(objFromJson)
-          .map(keyItem => `"${keyItem}":${stringify(objFromJson[keyItem], keyItem)}`)
-          .join(',');
-        return `{${props}}`;
-      };
-    
-      jsonItem = stringify(obj);
-    } else if(accountType === 'cloud-g2') {
-      const stringify = (objFromJson, key) => {
-        if(typeof objFromJson === 'number') {
-          if(integerKeys.includes(key)) {
-            return objFromJson;
-          } else {
-            return parseFloat(objFromJson.toFixed(8));
-          }
-        } else if(Array.isArray(objFromJson)) {
-          return `[${objFromJson.map(item => stringify(item)).join(',')}]`; 
-        } else if (objFromJson === null) {
-          return objFromJson;
-        } else if (typeof objFromJson !== 'object' || objFromJson.getTime){
-          return JSON.stringify(objFromJson);
-        }
-    
-        let props = Object
-          .keys(objFromJson)
-          .map(keyItem => `"${keyItem}":${stringify(objFromJson[keyItem], keyItem)}`)
-          .join(',');
-        return `{${props}}`;
-      };
-
-      jsonItem = stringify(obj);
-    }
-    return crypto.MD5(jsonItem).toString();
-  }
-  
 }

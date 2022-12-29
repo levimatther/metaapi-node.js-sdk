@@ -18,7 +18,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Constructs MetaApi MetaTrader streaming Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
-   * @param {ClientApiClient} clientApiClient client api client
+   * @param {TerminalHashManager} terminalHashManager terminal hash manager
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage. By default an instance of MemoryHistoryStorage
    * will be used.
@@ -26,8 +26,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {Date} [historyStartTime] history start sync time
    * @param {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
    */
-  constructor(websocketClient, clientApiClient, account, historyStorage, connectionRegistry, historyStartTime,
-    refreshSubscriptionsOpts) {
+  constructor(websocketClient, terminalHashManager, account, historyStorage, connectionRegistry,
+    historyStartTime, refreshSubscriptionsOpts) {
     super(websocketClient, account);
     refreshSubscriptionsOpts = refreshSubscriptionsOpts || {};
     const validator = new OptionsValidator();
@@ -37,7 +37,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       'refreshSubscriptionsOpts.maxDelayInSeconds');
     this._connectionRegistry = connectionRegistry;
     this._historyStartTime = historyStartTime;
-    this._terminalState = new TerminalState(this._account.id, clientApiClient);
+    this._terminalState = new TerminalState(account, terminalHashManager, account.server);
     this._historyStorage = historyStorage || new MemoryHistoryStorage();
     this._healthMonitor = new ConnectionHealthMonitor(this);
     this._websocketClient.addSynchronizationListener(account.id, this);
@@ -111,8 +111,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
     const accountId = this._account.accountRegions[region];
     this._logger.debug(`${this._account.id}:${instanceIndex}: initiating synchronization ${synchronizationId}`);
     return this._websocketClient.synchronize(accountId, instance, host, synchronizationId,
-      startingHistoryOrderTime, startingDealTime,
-      async () => await this.terminalState.getHashes(this._account.type, instanceIndex));
+      startingHistoryOrderTime, startingDealTime, this.terminalState.getHashes());
   }
 
   /**
@@ -412,14 +411,14 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
 
   /**
    * Invoked when MetaTrader terminal state synchronization is started
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {Boolean} specificationsUpdated whether specifications are going to be updated during synchronization
-   * @param {Boolean} positionsUpdated whether positions are going to be updated during synchronization
-   * @param {Boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {string} specificationsHash specifications hash
+   * @param {string} positionsHash positions hash
+   * @param {string} ordersHash orders hash
+   * @param {string} synchronizationId synchronization id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onSynchronizationStarted(instanceIndex, specificationsUpdated, positionsUpdated, ordersUpdated,
-    synchronizationId) {
+  async onSynchronizationStarted(instanceIndex, specificationsHash, positionsHash, ordersHash, synchronizationId) {
     this._logger.debug(`${this._account.id}:${instanceIndex}: starting synchronization ${synchronizationId}`);
     const instanceNumber = this.getInstanceNumber(instanceIndex);
     const region = this.getRegion(instanceIndex);
@@ -543,6 +542,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
         this._logger.debug(`${this._account.id}: Closing connection`);
         this._stateByInstanceIndex = {};
         await this._connectionRegistry.removeStreaming(this._account);
+        this._terminalState.close();
         const accountRegions = this._account.accountRegions;
         this._websocketClient.removeSynchronizationListener(this._account.id, this);
         this._websocketClient.removeSynchronizationListener(this._account.id, this._terminalState);
