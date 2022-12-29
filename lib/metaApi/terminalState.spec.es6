@@ -3,93 +3,57 @@
 import should from 'should';
 import sinon from 'sinon';
 import TerminalState from './terminalState';
-import crypto from 'crypto-js';
 
 /**
  * @test {TerminalState}
  */
 describe('TerminalState', () => {
 
-  let state, sandbox;
-  const md5 = (arg) => crypto.MD5(arg).toString();
+  let state, sandbox, account, terminalHashManager, 
+    specificationsStub, positionsStub, ordersStub, clock;
 
   before(() => {
     sandbox = sinon.createSandbox();
   });
 
   beforeEach(() => {
-    const clientApiClient = {
-      getHashingIgnoredFieldLists: () => ({
-        g1: {
-          specification: [
-            'description',
-            'expirationTime',
-            'expirationBrokerTime',
-            'startTime',
-            'startBrokerTime',
-            'pipSize'
-          ],
-          position: [
-            'time',
-            'updateTime',
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'profit',
-            'realizedProfit',
-            'unrealizedProfit',
-            'currentPrice',
-            'currentTickValue',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ],
-          order: [
-            'time',
-            'expirationTime',
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'currentPrice',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ]
-        },
-        g2: {
-          specification: [
-            'pipSize'
-          ],
-          position: [
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'profit',
-            'realizedProfit',
-            'unrealizedProfit',
-            'currentPrice',
-            'currentTickValue',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ],
-          order: [
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'currentPrice',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ]
-        }
-      })
+    clock = sinon.useFakeTimers();
+    account = {
+      server: 'ICMarkets-Demo1',
+      id: 'accountId',
+      type: 'cloud-g1'
     };
-    state = new TerminalState('accountId', clientApiClient);
+    terminalHashManager = {
+      getSpecificationsByHash: () => {},
+      getPositionsByHash: () => {},
+      getOrdersByHash: () => {},
+      recordSpecifications: () => {},
+      recordOrders: () => {},
+      recordPositions: () => {},
+      updateOrders: () => {},
+      updatePositions: () => {},
+      updateSpecifications: () => {},
+      getLastUsedOrderHashes: () => {},
+      getLastUsedPositionHashes: () => {},
+      getLastUsedSpecificationHashes: () => {},
+      removeConnectionReferences: () => {},
+      addSpecificationReference: () => {},
+      removeSpecificationReference: () => {},
+      addPositionReference: () => {},
+      removePositionReference: () => {},
+      addOrderReference: () => {},
+      removeOrderReference: () => {}
+    };
+    positionsStub = sandbox.stub(terminalHashManager, 'getPositionsByHash').returns({1: {id: '1', profit: 10}});
+    ordersStub = sandbox.stub(terminalHashManager, 'getOrdersByHash').returns({1: {id: '1', openPrice: 10}});
+    specificationsStub = sandbox.stub(terminalHashManager, 'getSpecificationsByHash')
+      .returns({EURUSD: {symbol: 'EURUSD', tickSize: 0.00001}});
+    state = new TerminalState(account, terminalHashManager);
   });
 
   afterEach(() => {
     sandbox.restore();
+    clock.restore();
   });
 
   /**
@@ -110,7 +74,6 @@ describe('TerminalState', () => {
    * @test {TerminalState#connectedToBroker}
    */
   it('should return broker connection state', async () => {
-    const clock = sinon.useFakeTimers();
     state.connectedToBroker.should.be.false();
     state.onBrokerConnectionStatusChanged('vint-hill:1:ps-mpa-1', true);
     state.connectedToBroker.should.be.true();
@@ -120,8 +83,17 @@ describe('TerminalState', () => {
     state.onDisconnected('vint-hill:1:ps-mpa-1');
     state.connectedToBroker.should.be.false();
     await clock.tickAsync(65000);
-    clock.restore();
   });
+
+  it('should update combined state last update', async () => {
+    let callStub = sandbox.stub(terminalHashManager, 'removeConnectionReferences').returns();
+    await clock.tickAsync(14 * 60 * 1000);
+    state.onBrokerConnectionStatusChanged('vint-hill:1:ps-mpa-1', true);
+    await clock.tickAsync(21 * 60 * 1000);
+    sinon.assert.notCalled(callStub);
+    await clock.tickAsync(11 * 60 * 1000);
+    sinon.assert.calledWith(callStub, 'ICMarkets-Demo1', 'accountId', state.id, 'combined');
+  }); 
 
   /**
    * @test {TerminalState#onAccountInformationUpdated}
@@ -140,12 +112,9 @@ describe('TerminalState', () => {
    */
   it('should return positions', () => {
     state.positions.length.should.equal(0);
-    state.onPositionUpdated('vint-hill:1:ps-mpa-1', {id: '1', profit: 10});
-    state.onPositionUpdated('vint-hill:1:ps-mpa-1', {id: '2'});
-    state.onPositionUpdated('vint-hill:1:ps-mpa-1', {id: '1', profit: 11});
-    state.onPositionRemoved('vint-hill:1:ps-mpa-1', '2');
+    state._combinedState.positionsHash = 'hash1';
     state.positions.length.should.equal(1);
-    state.positions.should.match([{id: '1', profit: 11}]);
+    state.positions.should.match([{id: '1', profit: 10}]);
   });
 
   /**
@@ -155,13 +124,9 @@ describe('TerminalState', () => {
    */
   it('should return orders', async () => {
     state.orders.length.should.equal(0);
-    await state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', {id: '1', openPrice: 10});
-    await state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', {id: '2'});
-    await state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', {id: '1', openPrice: 11});
-    state.orders.length.should.equal(2);
-    await state.onPendingOrderCompleted('vint-hill:1:ps-mpa-1', '2');
+    state._combinedState.ordersHash = 'hash1';
     state.orders.length.should.equal(1);
-    state.orders.should.match([{id: '1', openPrice: 11}]);
+    state.orders.should.match([{id: '1', openPrice: 10}]);
   });
 
   /**
@@ -171,13 +136,83 @@ describe('TerminalState', () => {
    */
   it('should return specifications', () => {
     state.specifications.length.should.equal(0);
-    state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', 
-      [{symbol: 'EURUSD', tickSize: 0.00001}, {symbol: 'GBPUSD'}], []);
-    state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [{symbol: 'AUDNZD'}, {symbol: 'EURUSD', 
-      tickSize: 0.0001}], ['AUDNZD']);
-    state.specifications.length.should.equal(2);
-    state.specifications.should.match([{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}]);
-    state.specification('EURUSD').should.match({symbol: 'EURUSD', tickSize: 0.0001});
+    state._combinedState.specificationsHash = 'hash1';
+    state.specifications.length.should.equal(1);
+    state.specifications.should.match([{symbol: 'EURUSD', tickSize: 0.00001}]);
+  });
+
+  /**
+   * @test {TerminalState#onPositionsReplaced}
+   * @test {TerminalState#onPositionRemoved}
+   * @test {TerminalState#specification}
+   */
+  it('should update positions', async () => {
+    const positions = [{
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 9,
+      currentTickValue: 0.5,
+      openPrice: 8,
+      profit: 100,
+      volume: 2
+    }];
+    const changedPosition = {
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 9,
+      currentTickValue: 0.5,
+      openPrice: 8,
+      profit: 100,
+      volume: 1
+    };
+    const recordStub = sandbox.stub(terminalHashManager, 'recordPositions').resolves('phash1');
+    const updateStub = sandbox.stub(terminalHashManager, 'updatePositions').resolves('phash2');
+    await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', positions);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', positions);
+    await state.onPositionUpdated('vint-hill:1:ps-mpa-1', changedPosition);
+    sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
+      'vint-hill:1:ps-mpa-1', [changedPosition], [], 'phash1');
+    sinon.assert.calledTwice(updateStub);
+    await state.onPositionRemoved('vint-hill:1:ps-mpa-1', '1');
+    sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
+      'vint-hill:1:ps-mpa-1', [], ['1'], 'phash2');
+    sinon.assert.callCount(updateStub, 4);
+  });
+
+  /**
+   * @test {TerminalState#onPositionsReplaced}
+   * @test {TerminalState#onPositionRemoved}
+   * @test {TerminalState#specification}
+   */
+  it('should update orders', async () => {
+    const orders = [{
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 9
+    }];
+    const changedOrder = {
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 10
+    };
+    const recordStub = sandbox.stub(terminalHashManager, 'recordOrders').resolves('ohash1');
+    const updateStub = sandbox.stub(terminalHashManager, 'updateOrders').resolves('ohash2');
+    await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', orders);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', orders);
+    await state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', changedOrder);
+    sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
+      'vint-hill:1:ps-mpa-1', [changedOrder], [], 'ohash1');
+    sinon.assert.calledTwice(updateStub);
+    await state.onPendingOrderCompleted('vint-hill:1:ps-mpa-1', '1');
+    sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
+      'vint-hill:1:ps-mpa-1', [], ['1'], 'ohash2');
+    sinon.assert.callCount(updateStub, 4);
   });
 
   /**
@@ -216,7 +251,7 @@ describe('TerminalState', () => {
    */
   it('should update account equity and position profit on price update', () => {
     state.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {equity: 1000, balance: 800});
-    state.onPositionsReplaced('vint-hill:1:ps-mpa-1', [{
+    const positions = [{
       id: '1',
       symbol: 'EURUSD',
       type: 'POSITION_TYPE_BUY',
@@ -225,9 +260,7 @@ describe('TerminalState', () => {
       openPrice: 8,
       profit: 100,
       volume: 2
-    }]);
-    state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-    state.onPositionUpdated('vint-hill:1:ps-mpa-1', {
+    }, {
       id: '2',
       symbol: 'AUDUSD',
       type: 'POSITION_TYPE_BUY',
@@ -236,10 +269,13 @@ describe('TerminalState', () => {
       openPrice: 8,
       profit: 100,
       volume: 2
-    });
-    state.onPositionsSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-    state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.01, digits: 5},
-      {symbol: 'AUDUSD', tickSize: 0.01, digits: 5}], []);
+    }];
+    state._combinedState.positionsHash = 'hash1';
+    state._combinedState.specificationsHash = 'hash1';
+    positionsStub.returns({1: positions[0], 2: positions[1]});
+    specificationsStub.returns({EURUSD: {symbol: 'EURUSD', tickSize: 0.01, digits: 5},
+      AUDUSD: {symbol: 'AUDUSD', tickSize: 0.01, digits: 5}});
+    state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
     state.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1', [
       {
         time: new Date(),
@@ -284,19 +320,21 @@ describe('TerminalState', () => {
    * @test {TerminalState#orders}
    */
   it('should update order currentPrice on price update', () => {
-    state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', {
-      id: '1',
-      symbol: 'EURUSD',
-      type: 'ORDER_TYPE_BUY_LIMIT',
-      currentPrice: 9
+    ordersStub.returns({
+      1: {
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        currentPrice: 9
+      },
+      2: {
+        id: '2',
+        symbol: 'AUDUSD',
+        type: 'ORDER_TYPE_SELL_LIMIT',
+        currentPrice: 9
+      }
     });
-    state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', {
-      id: '2',
-      symbol: 'AUDUSD',
-      type: 'ORDER_TYPE_SELL_LIMIT',
-      currentPrice: 9
-    });
-    state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.01}], []);
+    state._combinedState.ordersHash = 'hash1';
     state.onSymbolPricesUpdated('vint-hill:1:ps-mpa-1', [{
       time: new Date(),
       symbol: 'EURUSD',
@@ -323,7 +361,17 @@ describe('TerminalState', () => {
   /**
    * @test {TerminalState#onSynchronizationStarted}
    */
-  it('should reset state on synchronization started event', async () => {
+  // eslint-disable-next-line max-statements
+  it('should process sync started and sync finished event', async () => {
+    const recordSpecificationsStub = sandbox.stub(terminalHashManager, 'recordSpecifications').resolves();
+    const recordOrdersStub = sandbox.stub(terminalHashManager, 'recordOrders').resolves();
+    const recordPositionsStub = sandbox.stub(terminalHashManager, 'recordPositions').resolves();
+    sandbox.stub(terminalHashManager, 'addSpecificationReference').returns();
+    sandbox.stub(terminalHashManager, 'removeSpecificationReference').returns();
+    sandbox.stub(terminalHashManager, 'addPositionReference').returns();
+    sandbox.stub(terminalHashManager, 'removePositionReference').returns();
+    sandbox.stub(terminalHashManager, 'addOrderReference').returns();
+    sandbox.stub(terminalHashManager, 'removeOrderReference').returns();
     const specification = {symbol: 'EURUSD', tickSize: 0.01};
     const positions = [{
       id: '1',
@@ -341,282 +389,99 @@ describe('TerminalState', () => {
       type: 'ORDER_TYPE_BUY_LIMIT',
       currentPrice: 9
     }];
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.notCalled(recordSpecificationsStub);
+    sinon.assert.notCalled(recordOrdersStub);
+    sinon.assert.notCalled(recordPositionsStub);
+    sinon.assert.notCalled(terminalHashManager.addSpecificationReference);
+    sinon.assert.notCalled(terminalHashManager.removeSpecificationReference);
+    sinon.assert.notCalled(terminalHashManager.addPositionReference);
+    sinon.assert.notCalled(terminalHashManager.removePositionReference);
+    sinon.assert.notCalled(terminalHashManager.addOrderReference);
+    sinon.assert.notCalled(terminalHashManager.removeOrderReference);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
     await state.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {'balance': 1000});
     await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [specification], []);
     await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', positions);
     await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', orders);
-    sinon.assert.match(state.accountInformation, {balance: 1000});
-    sinon.assert.match(state.specification('EURUSD'), specification);
-    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', false, false, false);
-    state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-    sinon.assert.match(state.accountInformation, undefined);
-    sinon.assert.match(state.specification('EURUSD'), specification);
-    sinon.assert.match(state.orders, orders);
-    sinon.assert.match(state.positions, positions);
-    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', true, false, false);
-    state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-    sinon.assert.match(state.specification('EURUSD'), undefined);
-    sinon.assert.match(state.orders, orders);
-    sinon.assert.match(state.positions, positions);
-    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', true, false, true);
-    state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-    sinon.assert.match(state.orders, []);
-    sinon.assert.match(state.positions, positions);
-    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', true, true, true);
-    state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-    sinon.assert.match(state.positions, []);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordSpecificationsStub, 'ICMarkets-Demo1', 'cloud-g1',
+      state.id, 'vint-hill:1:ps-mpa-1', [specification]);
+    sinon.assert.calledWith(recordOrdersStub, 'accountId', 'cloud-g1',
+      state.id, 'vint-hill:1:ps-mpa-1', orders);
+    sinon.assert.calledWith(recordPositionsStub, 'accountId', 'cloud-g1',
+      state.id, 'vint-hill:1:ps-mpa-1', positions);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
+    await state.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {'balance': 1000});
+    await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [specification], []);
+    await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', positions);
+    await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', orders);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledTwice(recordSpecificationsStub);
+    sinon.assert.calledTwice(recordOrdersStub);
+    sinon.assert.calledTwice(recordPositionsStub);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', 'shash1', 'phash1', 'ohash1');
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledTwice(recordSpecificationsStub);
+    sinon.assert.calledTwice(recordOrdersStub);
+    sinon.assert.calledTwice(recordPositionsStub);
+    sinon.assert.calledWith(terminalHashManager.addSpecificationReference, 'ICMarkets-Demo1',
+      'shash1', state.id, 'vint-hill:1:ps-mpa-1');
+    sinon.assert.calledWith(terminalHashManager.addSpecificationReference, 'ICMarkets-Demo1',
+      'shash1', state.id, 'combined');
+    sinon.assert.calledWith(terminalHashManager.removeSpecificationReference, 'ICMarkets-Demo1',
+      state.id, 'vint-hill:1:ps-mpa-1');
+    sinon.assert.calledWith(terminalHashManager.removeSpecificationReference, 'ICMarkets-Demo1',
+      state.id, 'combined');
+    sinon.assert.calledWith(terminalHashManager.addPositionReference, 'accountId',
+      'phash1', state.id, 'vint-hill:1:ps-mpa-1');
+    sinon.assert.calledWith(terminalHashManager.addPositionReference, 'accountId',
+      'phash1', state.id, 'combined');
+    sinon.assert.calledWith(terminalHashManager.removePositionReference, 'accountId',
+      state.id, 'vint-hill:1:ps-mpa-1');
+    sinon.assert.calledWith(terminalHashManager.removePositionReference, 'accountId',
+      state.id, 'combined');
+    sinon.assert.calledWith(terminalHashManager.addOrderReference, 'accountId',
+      'ohash1', state.id, 'vint-hill:1:ps-mpa-1');
+    sinon.assert.calledWith(terminalHashManager.addOrderReference, 'accountId',
+      'ohash1', state.id, 'combined');
+    sinon.assert.calledWith(terminalHashManager.removeOrderReference, 'accountId',
+      state.id, 'vint-hill:1:ps-mpa-1');
+    sinon.assert.calledWith(terminalHashManager.removeOrderReference, 'accountId',
+      state.id, 'combined');
+  });
+  
+  /**
+   * @test {TerminalState#specification}
+   */
+  it('should return hashes', async () => {
+    sandbox.stub(terminalHashManager, 'getLastUsedSpecificationHashes').returns(['shash1', 'shash2']);
+    sandbox.stub(terminalHashManager, 'getLastUsedPositionHashes').returns(['phash1', 'phash2']);
+    sandbox.stub(terminalHashManager, 'getLastUsedOrderHashes').returns(['ohash1', 'ohash2']);
+    const hashes = state.getHashes();
+    sinon.assert.match(hashes, {
+      specificationsHashes: ['shash1', 'shash2'],
+      positionsHashes: ['phash1', 'phash2'],
+      ordersHashes: ['ohash1', 'ohash2']
+    });
+    sinon.assert.calledWith(terminalHashManager.getLastUsedSpecificationHashes, 'ICMarkets-Demo1');
+    sinon.assert.calledWith(terminalHashManager.getLastUsedPositionHashes, 'accountId');
+    sinon.assert.calledWith(terminalHashManager.getLastUsedOrderHashes, 'accountId');
   });
 
   /**
-   * @test {TerminalState#getHashes}
+   * @test {TerminalState#specification}
    */
-  describe('hashes', () => {
-
-    let getHashesSpy;
-
-    beforeEach(() => {
-      getHashesSpy = sandbox.spy(state, '_getHash');
-    });
-
-    /**
-     * @test {TerminalState#getHashes}
-     */
-    it('should return hashes for terminal state data for cloud-g1 accounts', async () => {
-      const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01000000},{"symbol":"EURUSD",' +
-      '"tickSize":0.00000100,"contractSize":1.00000000,"maxVolume":30000.00000000,' +
-      '"hedgedMarginUsesLargerLeg":false,"digits":3}]');
-      const positionsHash = md5('[{"id":"46214692","type":"POSITION_TYPE_BUY","symbol":"GBPUSD","magic":1000,' +
-      '"openPrice":1.26101000,"volume":0.07000000,"swap":0.00000000,"commission":-0.25000000,' +
-      '"stopLoss":1.17721000}]');
-      const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
-      '"symbol":"AUDNZD","magic":123456,"platform":"mt5","openPrice":1.03000000,' +
-      '"volume":0.01000000,"currentVolume":0.01000000}]');
-      let hashes = await state.getHashes('cloud-g1', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.match(hashes.specificationsMd5, null);
-      sinon.assert.match(hashes.positionsMd5, null);
-      sinon.assert.match(hashes.ordersMd5, null);
-      await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [
-        {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
-        {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
-          hedgedMarginUsesLargerLeg: false, digits: 3, description: 'Test2'}], []);
-      await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '46214692',
-        type: 'POSITION_TYPE_BUY',
-        symbol: 'GBPUSD',
-        magic: 1000,
-        time: new Date('2020-04-15T02:45:06.521Z'),
-        updateTime: new Date('2020-04-15T02:45:06.521Z'),
-        openPrice: 1.26101,
-        currentPrice: 1.24883,
-        currentTickValue: 1,
-        volume: 0.07,
-        swap: 0,
-        profit: -85.25999999999966,
-        commission: -0.25,
-        clientId: 'TE_GBPUSD_7hyINWqAlE',
-        stopLoss: 1.17721,
-        unrealizedProfit: -85.25999999999901,
-        realizedProfit: -6.536993168992922e-13,
-        updateSequenceNumber: 13246,
-        accountCurrencyExchangeRate: 1,
-        comment: 'test',
-        brokerComment: 'test2',
-      }]);
-      await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '46871284',
-        type: 'ORDER_TYPE_BUY_LIMIT',
-        state: 'ORDER_STATE_PLACED',
-        symbol: 'AUDNZD',
-        magic: 123456,
-        platform: 'mt5',
-        time: '2020-04-20T08:38:58.270Z',
-        openPrice: 1.03,
-        currentPrice: 1.05206,
-        volume: 0.01,
-        currentVolume: 0.01,
-        comment: 'COMMENT2',
-        updateSequenceNumber: 13246,
-        accountCurrencyExchangeRate: 1,
-        brokerComment: 'test2',
-        clientId: 'TE_GBPUSD_7hyINWqAlE',
-      }]);
-      state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-      hashes = await state.getHashes('cloud-g1', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.match(hashes.specificationsMd5, specificationsHash);
-      sinon.assert.match(hashes.positionsMd5, positionsHash);
-      sinon.assert.match(hashes.ordersMd5, ordersHash);
-    });
-
-    /**
-     * @test {TerminalState#getHashes}
-     */
-    it('should return hashes for terminal state data for cloud-g2 accounts', async () => {
-      const specificationsHash = md5('[{"symbol":"AUDNZD","tickSize":0.01,"description":"Test1"},' +
-      '{"symbol":"EURUSD","tickSize":0.000001,"contractSize":1,"maxVolume":30000,' +
-      '"hedgedMarginUsesLargerLeg":false,"digits":3,"description":"Test2"}]');
-      const positionsHash = md5('[{"id":"46214692","type":"POSITION_TYPE_BUY","symbol":"GBPUSD","magic":1000,' +
-      '"time":"2020-04-15T02:45:06.521Z","updateTime":"2020-04-15T02:45:06.521Z","openPrice":1.26101,' + 
-      '"volume":0.07,"swap":0,"commission":-0.25,"stopLoss":1.17721}]');
-      const ordersHash = md5('[{"id":"46871284","type":"ORDER_TYPE_BUY_LIMIT","state":"ORDER_STATE_PLACED",' +
-      '"symbol":"AUDNZD","magic":123456,"platform":"mt5","time":"2020-04-20T08:38:58.270Z","openPrice":1.03,' +
-      '"volume":0.01,"currentVolume":0.01}]');
-      let hashes = await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.match(hashes.specificationsMd5, null);
-      sinon.assert.match(hashes.positionsMd5, null);
-      sinon.assert.match(hashes.ordersMd5, null);
-      await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [
-        {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'},
-        {symbol: 'EURUSD', tickSize: 0.000001, contractSize: 1, maxVolume: 30000,
-          hedgedMarginUsesLargerLeg: false, digits: 3, description: 'Test2'}], []);
-      await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '46214692',
-        type: 'POSITION_TYPE_BUY',
-        symbol: 'GBPUSD',
-        magic: 1000,
-        time: new Date('2020-04-15T02:45:06.521Z'),
-        updateTime: new Date('2020-04-15T02:45:06.521Z'),
-        openPrice: 1.26101,
-        currentPrice: 1.24883,
-        currentTickValue: 1,
-        volume: 0.07,
-        swap: 0,
-        profit: -85.25999999999966,
-        commission: -0.25,
-        clientId: 'TE_GBPUSD_7hyINWqAlE',
-        stopLoss: 1.17721,
-        unrealizedProfit: -85.25999999999901,
-        realizedProfit: -6.536993168992922e-13,
-        updateSequenceNumber: 13246,
-        accountCurrencyExchangeRate: 1,
-        comment: 'test',
-        brokerComment: 'test2',
-      }]);
-      await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '46871284',
-        type: 'ORDER_TYPE_BUY_LIMIT',
-        state: 'ORDER_STATE_PLACED',
-        symbol: 'AUDNZD',
-        magic: 123456,
-        platform: 'mt5',
-        time: '2020-04-20T08:38:58.270Z',
-        openPrice: 1.03,
-        currentPrice: 1.05206,
-        volume: 0.01,
-        currentVolume: 0.01,
-        comment: 'COMMENT2',
-        updateSequenceNumber: 13246,
-        accountCurrencyExchangeRate: 1,
-        brokerComment: 'test2',
-        clientId: 'TE_GBPUSD_7hyINWqAlE',
-      }]);
-      state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-      hashes = await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.match(hashes.specificationsMd5, specificationsHash);
-      sinon.assert.match(hashes.positionsMd5, positionsHash);
-      sinon.assert.match(hashes.ordersMd5, ordersHash);
-    });
-
-    /**
-     * @test {TerminalState#getHashes}
-     */
-    it('should cache specifications hash', async () => {
-      await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [
-        {symbol: 'AUDNZD', tickSize: 0.01, description: 'Test1'}], []);
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.calledOnce(getHashesSpy);
-      await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [
-        {symbol: 'AUDNZD', tickSize: 0.02, description: 'Test1'}], []);
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.calledTwice(getHashesSpy);
-    });
-
-    /**
-     * @test {TerminalState#getHashes}
-     */
-    it('should cache positions hash', async () => {
-      await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '1',
-        symbol: 'EURUSD',
-        type: 'POSITION_TYPE_BUY',
-        currentPrice: 9,
-        currentTickValue: 0.5,
-        openPrice: 8,
-        profit: 100,
-        volume: 2
-      }]);
-      state.onPositionsSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.calledOnce(getHashesSpy);
-      state.onPositionUpdated('vint-hill:1:ps-mpa-1', {
-        id: '1',
-        symbol: 'EURUSD',
-        type: 'POSITION_TYPE_BUY',
-        currentPrice: 9,
-        currentTickValue: 0.5,
-        openPrice: 8,
-        profit: 1000,
-        volume: 2
-      });
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.calledTwice(getHashesSpy);
-      state.onPositionRemoved('vint-hill:1:ps-mpa-1', '1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.calledThrice(getHashesSpy);
-      await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '1',
-        symbol: 'EURUSD',
-        type: 'POSITION_TYPE_BUY',
-        currentPrice: 9,
-        currentTickValue: 0.5,
-        openPrice: 8,
-        profit: 100,
-        volume: 2
-      }]);
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.callCount(getHashesSpy, 4);
-    });
-
-    /**
-     * @test {TerminalState#getHashes}
-     */
-    it('should cache orders hash', async () => {
-      await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '1',
-        symbol: 'EURUSD',
-        type: 'ORDER_TYPE_BUY_LIMIT',
-        currentPrice: 9
-      }]);
-      await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.calledTwice(getHashesSpy);
-      state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', {
-        id: '1',
-        symbol: 'EURUSD',
-        type: 'ORDER_TYPE_BUY_LIMIT',
-        currentPrice: 10
-      });
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.callCount(getHashesSpy, 3);
-      state.onPendingOrderCompleted('vint-hill:1:ps-mpa-1', '1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.callCount(getHashesSpy, 4);
-      await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', [{
-        id: '1',
-        symbol: 'EURUSD',
-        type: 'ORDER_TYPE_BUY_LIMIT',
-        currentPrice: 10
-      }]);
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      await state.getHashes('cloud-g2', 'vint-hill:1:ps-mpa-1');
-      sinon.assert.callCount(getHashesSpy, 5);
-    });
-
+  it('should return specification by symbol', async () => {
+    sandbox.stub(terminalHashManager, 'recordSpecifications').resolves('shash1');
+    const expectedSpec = {symbol: 'EURUSD', tickSize: 0.00001};
+    let specification = state.specification('EURUSD');
+    sinon.assert.match(specification, null);
+    await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [expectedSpec], []);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    specification = state.specification('EURUSD');
+    sinon.assert.match(specification, {symbol: 'EURUSD', tickSize: 0.00001});
   });
 
   /**
@@ -653,6 +518,7 @@ describe('TerminalState', () => {
    * @test {TerminalState#onDisconnected}
    */
   it('should delete state on disconnected if there is another synced state', async () => {
+    sandbox.stub(terminalHashManager, 'removeConnectionReferences').returns();
     await state.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {'balance': 1000});
     await state.onConnected('vint-hill:1:ps-mpa-1');
     await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId2');
@@ -660,6 +526,8 @@ describe('TerminalState', () => {
     await state.onConnected('vint-hill:1:ps-mpa-2');
     await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-2', 'synchronizationId2');
     await state.onStreamClosed('vint-hill:1:ps-mpa-2');
+    sinon.assert.calledWith(terminalHashManager.removeConnectionReferences, 'ICMarkets-Demo1',
+      'accountId', state.id, 'vint-hill:1:ps-mpa-2');
     should(state._stateByInstanceIndex['vint-hill:1:ps-mpa-1']).not.eql(undefined);
     should(state._stateByInstanceIndex['vint-hill:1:ps-mpa-2']).eql(undefined);
   });
@@ -681,11 +549,11 @@ describe('TerminalState', () => {
    * @test {TerminalState#onDisconnected}
    */
   it('should not delete partially synced state on disconnected if there is no fresher state', async () => {
-    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', false, false, false);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', 'shash1', 'phash1', 'ohash1');
     await state.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {'balance': 1000});
     await state.onConnected('vint-hill:1:ps-mpa-1');
-    await new Promise(res => setTimeout(res, 50));
-    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-2', false, false, false);
+    await clock.tickAsync(50);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-2', 'shash1', 'phash1', 'ohash1');
     await state.onAccountInformationUpdated('vint-hill:1:ps-mpa-2', {'balance': 1000});
     await state.onConnected('vint-hill:1:ps-mpa-2');
     await state.onDisconnected('vint-hill:1:ps-mpa-2');

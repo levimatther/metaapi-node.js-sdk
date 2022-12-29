@@ -78,9 +78,9 @@ export default class SynchronizationThrottler {
    * Schedules to send a synchronization request for account
    * @param {string} accountId account id
    * @param {Object} request request to send
-   * @param {Function} getHashes function to get terminal state hashes
+   * @param {Object} hashes terminal state hashes
    */
-  scheduleSynchronize(accountId: string, request: Object, getHashes: Function): Promise<boolean>;
+  scheduleSynchronize(accountId: string, request: Object, hashes: Object): Promise<boolean>;
 }
 
 /**

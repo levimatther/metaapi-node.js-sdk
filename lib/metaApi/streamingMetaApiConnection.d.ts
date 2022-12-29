@@ -8,6 +8,7 @@ import TerminalState from "./terminalState";
 import ConnectionHealthMonitor from "./connectionHealthMonitor";
 import MetaApiConnection from "./metaApiConnection";
 import ClientApiClient from "../clients/metaApi/clientApi.client";
+import TerminalHashManager from "./terminalHashManager";
 
 /**
  * Exposes MetaApi MetaTrader streaming API connection to consumers
@@ -17,7 +18,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Constructs MetaApi MetaTrader streaming Api connection
    * @param {MetaApiWebsocketClient} websocketClient MetaApi websocket client
-   * @param {ClientApiClient} clientApiClient client api client
+   * @param {TerminalHashManager} terminalHashManager terminal hash manager
    * @param {MetatraderAccount} account MetaTrader account id to connect to
    * @param {HistoryStorage} historyStorage terminal history storage. By default an instance of MemoryHistoryStorage
    * will be used.
@@ -25,7 +26,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {Date} [historyStartTime] history start sync time
    * @param {RefreshSubscriptionsOpts} [refreshSubscriptionsOpts] subscriptions refresh options
    */
-  constructor(websocketClient: MetaApiWebsocketClient, clientApiClient: ClientApiClient, account: MetatraderAccount, historyStorage: HistoryStorage, connectionRegistry: ConnectionRegistry,
+  constructor(websocketClient: MetaApiWebsocketClient, terminalHashManager: TerminalHashManager,
+    account: MetatraderAccount, historyStorage: HistoryStorage, connectionRegistry: ConnectionRegistry,
     historyStartTime?: Date, refreshSubscriptionsOpts?: RefreshSubscriptionsOpts);
   
   /**
@@ -160,12 +162,13 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   /**
    * Invoked when MetaTrader terminal state synchronization is started
    * @param {string} instanceIndex index of an account instance connected
-   * @param {boolean} specificationsUpdated whether specifications are going to be updated during synchronization
-   * @param {boolean} positionsUpdated whether positions are going to be updated during synchronization
-   * @param {boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @param {string} specificationsHash specifications hash
+   * @param {string} positionsHash positions hash
+   * @param {string} ordersHash orders hash
+   * @param {string} synchronizationId synchronization id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSynchronizationStarted(instanceIndex: string, specificationsUpdated: boolean, positionsUpdated: boolean, ordersUpdated: boolean): Promise<any>;
+  onSynchronizationStarted(instanceIndex: string, specificationsHash: string, positionsHash: string, ordersHash: string, synchronizationId: string): Promise<any>;
   
   /**
    * Invoked when account region has been unsubscribed

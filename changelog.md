@@ -1,3 +1,7 @@
+20.9.0
+  - added terminal hash manager to improve synchronization performance and memory use
+  - changed SynchronizationListener onSynchronizationStarted method signature
+
 20.8.3
   - updated connection type exports
 

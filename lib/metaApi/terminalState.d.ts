@@ -54,11 +54,9 @@ export default class TerminalState extends SynchronizationListener {
   
   /**
    * Returns hashes of terminal state data for incremental synchronization
-   * @param {string} accountType account type
-   * @param {string} instanceIndex index of instance to get hashes of
    * @returns {Promise<Object>} promise resolving with hashes of terminal state data
    */
-  getHashes(accountType: string, instanceIndex: string): Promise<Object>;
+  getHashes(): Promise<Object>;
   
   /**
    * Returns MetaTrader symbol specification by symbol
@@ -107,16 +105,17 @@ export default class TerminalState extends SynchronizationListener {
    * @param {boolean} connected is MetaTrader terminal is connected to broker
    */
   onBrokerConnectionStatusChanged(instanceIndex: string, connected: boolean): Promise<any>;
-  
+
   /**
    * Invoked when MetaTrader terminal state synchronization is started
    * @param {string} instanceIndex index of an account instance connected
-   * @param {boolean} specificationsUpdated whether specifications are going to be updated during synchronization
-   * @param {boolean} positionsUpdated whether positions are going to be updated during synchronization
-   * @param {boolean} ordersUpdated whether orders are going to be updated during synchronization
+   * @param {string} specificationsHash specifications hash
+   * @param {string} positionsHash positions hash
+   * @param {string} ordersHash orders hash
+   * @param {string} synchronizationId synchronization id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onSynchronizationStarted(instanceIndex: string, specificationsUpdated: boolean, positionsUpdated: boolean, ordersUpdated: boolean): Promise<any>;
+  onSynchronizationStarted(instanceIndex: string, specificationsHash: string, positionsHash: string, ordersHash: string, synchronizationId: string): Promise<any>;
   
   /**
    * Invoked when MetaTrader account information is updated
@@ -212,7 +211,12 @@ export default class TerminalState extends SynchronizationListener {
    * @param {string} instanceIndex index of an account instance connected
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onStreamClosed(instanceIndex: string): Promise<any>;  
+  onStreamClosed(instanceIndex: string): Promise<any>;
+
+  /**
+   * Removes connection related data from terminal hash manager
+   */
+  close(): void;
 }
 
 /**

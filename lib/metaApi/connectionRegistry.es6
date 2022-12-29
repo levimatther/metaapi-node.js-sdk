@@ -16,10 +16,11 @@ export default class ConnectionRegistry {
    * @param {String} application application id
    * @param {String} refreshSubscriptionsOpts subscriptions refresh options
    */
-  constructor(metaApiWebsocketClient, clientApiClient, application = 'MetaApi', refreshSubscriptionsOpts) {
+  constructor(metaApiWebsocketClient, terminalHashManager,
+    application = 'MetaApi', refreshSubscriptionsOpts) {
     refreshSubscriptionsOpts = refreshSubscriptionsOpts || {};
     this._metaApiWebsocketClient = metaApiWebsocketClient;
-    this._clientApiClient = clientApiClient;
+    this._terminalHashManager = terminalHashManager;
     this._application = application;
     this._refreshSubscriptionsOpts = refreshSubscriptionsOpts;
     this._rpcConnections = {};
@@ -36,8 +37,8 @@ export default class ConnectionRegistry {
    */
   connectStreaming(account, historyStorage, historyStartTime) {
     if (!this._streamingConnections[account.id]) {
-      this._streamingConnections[account.id] = new StreamingMetaApiConnection(this._metaApiWebsocketClient, 
-        this._clientApiClient, account, historyStorage, this, historyStartTime, this._refreshSubscriptionsOpts);
+      this._streamingConnections[account.id] = new StreamingMetaApiConnection(this._metaApiWebsocketClient,
+        this._terminalHashManager, account, historyStorage, this, historyStartTime, this._refreshSubscriptionsOpts);
     }
     return new StreamingMetaApiConnectionInstance(this._metaApiWebsocketClient, 
       this._streamingConnections[account.id]);
