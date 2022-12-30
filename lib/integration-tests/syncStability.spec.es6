@@ -97,7 +97,13 @@ class FakeServer {
     socket.emit('synchronization', {type: 'accountInformation', accountId: data.accountId, accountInformation,
       instanceIndex: 0, host});
     socket.emit('synchronization',
-      {type: 'specifications', accountId: data.accountId, specifications: [], instanceIndex: 0, host});
+      {type: 'specifications', accountId: data.accountId, specifications: [{
+        symbol: 'EURUSD',
+        tickSize: 0.00001,
+        minVolume: 0.01,
+        maxVolume: 200,
+        volumeStep: 0.01
+      }], instanceIndex: 0, host});
     socket.emit('synchronization',
       {type: 'positions', accountId: data.accountId, synchronizationId: data.requestId,
         positions: [], instanceIndex: 0, host});
@@ -212,7 +218,7 @@ sequentialProcessing.forEach(param => {
         application: 'MetaApi',
         connectionStatus: 'DISCONNECTED',
         state: 'DEPLOYED',
-        type: 'cloud',
+        type: 'cloud-g1',
         accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
       });
       api._metaApiWebsocketClient.url = 'http://localhost:6785';
@@ -1209,6 +1215,357 @@ sequentialProcessing.forEach(param => {
       sinon.assert.match(connection.terminalState.price('EURUSD').bid, 1.2);
 
     }).timeout(10000);
+
+    describe('Terminal state', () => {
+
+      it('should receive updates for an account', async () => {
+        const positionsUpdate = [{
+          id: '46214692',
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'GBPUSD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.17721,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        },
+        {
+          id: '46214693',
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'EURUSD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.17721,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        }, {
+          id: '46214694',
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'AUDNZD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.17721,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        }];
+        const ordersUpdate = [{
+          id: '46871284',
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'AUDNZD',
+          magic: 123456,
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.01,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }, {
+          id: '46871285',
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'EURUSD',
+          magic: 123456,
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.01,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }, {
+          id: '46871286',
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'BTCUSD',
+          magic: 123456,
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.01,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }];
+        let update = {
+          accountInformation: {
+            broker: 'True ECN Trading Ltd',
+            currency: 'USD',
+            server: 'ICMarketsSC-Demo',
+            balance: 7319.9,
+            equity: 7306.649913200001,
+            margin: 184.1,
+            freeMargin: 7120.22,
+            leverage: 100,
+            marginLevel: 3967.58283542
+          },
+          updatedPositions: positionsUpdate,
+          removedPositionIds: [],
+          updatedOrders: ordersUpdate,
+          completedOrderIds: [],
+          historyOrders: [{
+            clientId: 'TE_GBPUSD_7hyINWqAlE',
+            currentPrice: 1.261,
+            currentVolume: 0,
+            doneTime: new Date('2020-04-15T02:45:06.521Z'),
+            id: '46214692',
+            magic: 1000,
+            platform: 'mt5',
+            positionId: '46214692',
+            state: 'ORDER_STATE_FILLED',
+            symbol: 'GBPUSD',
+            time: new Date('2020-04-15T02:45:06.260Z'),
+            type: 'ORDER_TYPE_BUY',
+            volume: 0.07
+          }],
+          deals: [{
+            clientId: 'TE_GBPUSD_7hyINWqAlE',
+            commission: -0.25,
+            entryType: 'DEAL_ENTRY_IN',
+            id: '33230099',
+            magic: 1000,
+            platform: 'mt5',
+            orderId: '46214692',
+            positionId: '46214692',
+            price: 1.26101,
+            profit: 0,
+            swap: 0,
+            symbol: 'GBPUSD',
+            time: new Date('2020-04-15T02:45:06.521Z'),
+            type: 'DEAL_TYPE_BUY',
+            volume: 0.07
+          }]
+        };
+
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        connection = account.getStreamingConnection();
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId',
+          instanceIndex: 0,
+          host: 'ps-mpa-1'}, update));
+        await clock.tickAsync(5000);
+        sinon.assert.match(connection.terminalState.orders, ordersUpdate);
+        sinon.assert.match(connection.terminalState.positions, positionsUpdate);
+        sinon.assert.match(connection.terminalState.specifications, [{
+          maxVolume: 200,
+          minVolume: 0.01,
+          symbol: 'EURUSD',
+          tickSize: 0.00001,
+          volumeStep: 0.01
+        }]);
+
+        let update2 = {
+          updatedPositions: [
+            {
+              id: '46214693',
+              type: 'POSITION_TYPE_BUY',
+              symbol: 'EURUSD',
+              magic: 1000,
+              time: new Date('2020-04-15T02:45:06.521Z'),
+              updateTime: new Date('2020-04-15T02:45:06.521Z'),
+              openPrice: 1.26101,
+              currentPrice: 1.24883,
+              currentTickValue: 1,
+              volume: 0.07,
+              swap: 0,
+              profit: -85.25999999999966,
+              commission: -0.25,
+              clientId: 'TE_GBPUSD_7hyINWqAlE',
+              stopLoss: 1.18,
+              unrealizedProfit: -85.25999999999901,
+              realizedProfit: -6.536993168992922e-13
+            }, {
+              id: '46214695',
+              type: 'POSITION_TYPE_BUY',
+              symbol: 'BTCUSD',
+              magic: 1000,
+              time: new Date('2020-04-15T02:45:06.521Z'),
+              updateTime: new Date('2020-04-15T02:45:06.521Z'),
+              openPrice: 1.26101,
+              currentPrice: 1.24883,
+              currentTickValue: 1,
+              volume: 0.07,
+              swap: 0,
+              profit: -85.25999999999966,
+              commission: -0.25,
+              clientId: 'TE_GBPUSD_7hyINWqAlE',
+              stopLoss: 1.17721,
+              unrealizedProfit: -85.25999999999901,
+              realizedProfit: -6.536993168992922e-13
+            }],
+          removedPositionIds: ['46214694'],
+          updatedOrders: [{
+            id: '46871285',
+            type: 'ORDER_TYPE_BUY_LIMIT',
+            state: 'ORDER_STATE_PLACED',
+            symbol: 'EURUSD',
+            magic: 123456,
+            platform: 'mt5',
+            time: new Date('2020-04-20T08:38:58.270Z'),
+            openPrice: 1.03,
+            currentPrice: 1.05206,
+            volume: 0.5,
+            currentVolume: 0.01,
+            comment: 'COMMENT2'
+          }, {
+            id: '46871287',
+            type: 'ORDER_TYPE_BUY_LIMIT',
+            state: 'ORDER_STATE_PLACED',
+            symbol: 'XAUUSD',
+            magic: 123456,
+            platform: 'mt5',
+            time: new Date('2020-04-20T08:38:58.270Z'),
+            openPrice: 1.03,
+            currentPrice: 1.05206,
+            volume: 0.01,
+            currentVolume: 0.01,
+            comment: 'COMMENT2'
+          }],
+          completedOrderIds: ['46871286'],
+          specifications: [{
+            maxVolume: 200,
+            minVolume: 0.01,
+            symbol: 'EURUSD',
+            tickSize: 0.01,
+            volumeStep: 0.01
+          }]
+        };
+        server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId',
+          instanceIndex: 0,
+          host: 'ps-mpa-1'}, update2));
+        await clock.tickAsync(5000);
+
+        sinon.assert.match(connection.terminalState.orders, [{
+          id: '46871284',
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'AUDNZD',
+          magic: 123456,
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.01,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }, {
+          id: '46871285',
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'EURUSD',
+          magic: 123456,
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.5,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }, {
+          id: '46871287',
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'XAUUSD',
+          magic: 123456,
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.01,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }]);
+
+        sinon.assert.match(connection.terminalState.positions, [{
+          id: '46214692',
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'GBPUSD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.17721,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        },
+        {
+          id: '46214693',
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'EURUSD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.18,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        }, {
+          id: '46214695',
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'BTCUSD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.17721,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        }]);
+
+      }).timeout(10000);
+
+    });
 
     describe('Region replica support', () => {
 

@@ -2038,7 +2038,18 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onAccountInformationUpdatedPromises);
         }
-        for (let position of (data.updatedPositions || [])) {
+        const updatedPositions = data.updatedPositions || [];
+        const removedPositionIds = data.removedPositionIds || [];
+        if(updatedPositions.length || removedPositionIds.length) {
+          const onPositionsUpdatedPromises = [];
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
+            onPositionsUpdatedPromises.push(this._processEvent(
+              () => listener.onPositionsUpdated(instanceIndex, updatedPositions, removedPositionIds),
+              `${primaryAccountId}:${instanceIndex}:onPositionsUpdated`));
+          }
+          await Promise.all(onPositionsUpdatedPromises);
+        }
+        for (let position of updatedPositions) {
           const onPositionUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPositionUpdatedPromises.push(this._processEvent(
@@ -2047,7 +2058,7 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onPositionUpdatedPromises);
         }
-        for (let positionId of (data.removedPositionIds || [])) {
+        for (let positionId of removedPositionIds) {
           const onPositionRemovedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPositionRemovedPromises.push(this._processEvent(
@@ -2056,7 +2067,18 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onPositionRemovedPromises);
         }
-        for (let order of (data.updatedOrders || [])) {
+        const updatedOrders = data.updatedOrders || [];
+        const completedOrderIds = data.completedOrderIds || [];
+        if(updatedOrders.length || completedOrderIds.length) {
+          const onOrdersUpdatedPromises = [];
+          for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
+            onOrdersUpdatedPromises.push(this._processEvent(
+              () => listener.onPendingOrdersUpdated(instanceIndex, updatedOrders, completedOrderIds),
+              `${primaryAccountId}:${instanceIndex}:onPendingOrdersUpdated`));
+          }
+          await Promise.all(onOrdersUpdatedPromises);
+        }
+        for (let order of updatedOrders) {
           const onPendingOrderUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPendingOrderUpdatedPromises.push(this._processEvent(
@@ -2065,7 +2087,7 @@ export default class MetaApiWebsocketClient {
           }
           await Promise.all(onPendingOrderUpdatedPromises);
         }
-        for (let orderId of (data.completedOrderIds || [])) {
+        for (let orderId of completedOrderIds) {
           const onPendingOrderCompletedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             onPendingOrderCompletedPromises.push(this._processEvent(
