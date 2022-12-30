@@ -151,7 +151,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   async subscribeToMarketData(symbol, subscriptions, timeoutInSeconds, waitForQuote = true) {
     this._checkIsConnectionActive();
     if(!this._terminalState.specification(symbol)){
-      throw new ValidationError(`Cannot subscribe to market data for symbol ${symbol} because ` +
+      throw new ValidationError(`${this._account.id}: Cannot subscribe to market data for symbol ${symbol} because ` +
       'symbol does not exist');
     } else {
       subscriptions = subscriptions || [{type: 'quotes'}];

@@ -516,6 +516,9 @@ export default class TerminalHashManager {
    */
   async updatePositions(accountId, accountType, connectionId,
     instanceIndex, positions, removedPositions, parentHash) {
+    if(!parentHash) {
+      return this.recordPositions(accountId, accountType, connectionId, instanceIndex, positions);
+    }
     const region = instanceIndex.split(':')[0];
     const hashDictionary = {};
     const dataDictionary = {};
@@ -607,6 +610,9 @@ export default class TerminalHashManager {
   // eslint-disable-next-line complexity
   async updateOrders(accountId, accountType, connectionId,
     instanceIndex, orders, completedOrders, parentHash) {
+    if(!parentHash) {
+      return this.recordOrders(accountId, accountType, connectionId, instanceIndex, orders);
+    }
     const region = instanceIndex.split(':')[0];
     const hashDictionary = {};
     const dataDictionary = {};

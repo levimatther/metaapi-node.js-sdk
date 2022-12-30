@@ -299,39 +299,23 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
-   * Invoked when MetaTrader position is updated
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {MetatraderPosition} position updated MetaTrader position
+   * Invoked when MetaTrader positions are updated
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {MetatraderPosition[]} positions updated MetaTrader positions
+   * @param {string[]} removedPositionIds removed position ids
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onPositionUpdated(instanceIndex, position) {
+  async onPositionsUpdated(instanceIndex, positions, removedPositionIds) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
 
-    const updatePosition = async (state) => {
+    const updatePositions = async (state) => {
       const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
-        instanceIndex, [position], [], state.positionsHash);
+        instanceIndex, positions, removedPositionIds, state.positionsHash);
       state.positionsHash = hash;
     };
-    await updatePosition(instanceState);
-    await updatePosition(this._combinedState);
-  }
-
-  /**
-   * Invoked when MetaTrader position is removed
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} positionId removed MetaTrader position id
-   */
-  async onPositionRemoved(instanceIndex, positionId) {
-    let instanceState = this._getState(instanceIndex);
-    this._refreshStateUpdateTime(instanceIndex);
-
-    const removePosition = async (state, instance) => {
-      const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
-        instance, [], [positionId], state.positionsHash);
-      state.positionsHash = hash;
-    };
-    await removePosition(instanceState, instanceIndex);
-    await removePosition(this._combinedState, this._combinedInstanceIndex);
+    await updatePositions(instanceState);
+    await updatePositions(this._combinedState);
   }
 
   /**
@@ -421,41 +405,23 @@ export default class TerminalState extends SynchronizationListener {
   }
 
   /**
-   * Invoked when MetaTrader pending order is updated
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {MetatraderOrder} order updated MetaTrader pending order
+   * Invoked when MetaTrader pending orders are updated or completed
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {MetatraderOrder[]} orders updated MetaTrader pending orders
+   * @param {string[]} completedOrderIds completed MetaTrader pending order ids
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  async onPendingOrderUpdated(instanceIndex, order) {
+  async onPendingOrdersUpdated(instanceIndex, orders, completedOrderIds) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
     
-    const updatePendingOrder = async (state, instance) => {
+    const updatePendingOrders = async (state, instance) => {
       const hash = await this._terminalHashManager.updateOrders(this._account.id, this._account.type, this._id,
-        instance, [order], [], state.ordersHash);
+        instance, orders, completedOrderIds, state.ordersHash);
       state.ordersHash = hash;
     };
-    await updatePendingOrder(instanceState, instanceIndex);
-    await updatePendingOrder(this._combinedState, this._combinedInstanceIndex);
-  }
-
-  /**
-   * Invoked when MetaTrader pending order is completed (executed or canceled)
-   * @param {String} instanceIndex index of an account instance connected
-   * @param {String} orderId completed MetaTrader pending order id
-   * @return {Promise} promise which resolves when the asynchronous event is processed
-   */
-  async onPendingOrderCompleted(instanceIndex, orderId) {
-    let instanceState = this._getState(instanceIndex);
-    this._refreshStateUpdateTime(instanceIndex);
-
-    const completeOrder = async (state, instance) => {
-      const hash = await this._terminalHashManager.updateOrders(this._account.id, this._account.type, this._id,
-        instance, [], [orderId], state.ordersHash);
-      state.ordersHash = hash;
-    };
-    await completeOrder(instanceState, instanceIndex);
-    await completeOrder(this._combinedState, this._combinedInstanceIndex);
+    await updatePendingOrders(instanceState, instanceIndex);
+    await updatePendingOrders(this._combinedState, this._combinedInstanceIndex);
   }
 
   /**

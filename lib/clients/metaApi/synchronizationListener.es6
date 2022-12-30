@@ -105,6 +105,15 @@ export default class SynchronizationListener {
   async onPositionsSynchronized(instanceIndex, synchronizationId) {}
 
   /**
+   * Invoked when MetaTrader positions are updated
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {MetatraderPosition[]} positions updated MetaTrader positions
+   * @param {string[]} removedPositionIds removed position ids
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onPositionsUpdated(instanceIndex, positions, removedPositionIds) {}
+
+  /**
    * Invoked when MetaTrader position is updated
    * @param {String} instanceIndex index of an account instance connected
    * @param {MetatraderPosition} position updated MetaTrader position
@@ -128,6 +137,15 @@ export default class SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   async onPendingOrdersReplaced(instanceIndex, orders) {}
+
+  /**
+   * Invoked when MetaTrader pending orders are updated or completed
+   * @param {string} instanceIndex index of an account instance connected
+   * @param {MetatraderOrder[]} orders updated MetaTrader pending orders
+   * @param {string[]} completedOrderIds completed MetaTrader pending order ids
+   * @return {Promise} promise which resolves when the asynchronous event is processed
+   */
+  async onPendingOrdersUpdated(instanceIndex, orders, completedOrderIds) {}
 
   /**
    * Invoked when MetaTrader pending order is updated

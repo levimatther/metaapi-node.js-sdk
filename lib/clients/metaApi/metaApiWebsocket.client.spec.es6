@@ -2156,16 +2156,20 @@ describe('MetaApiWebsocketClient', () => {
       };
       let listener = {
         onAccountInformationUpdated: () => {},
+        onPositionsUpdated: () => {},
         onPositionUpdated: () => {},
         onPositionRemoved: () => {},
+        onPendingOrdersUpdated: () => {},
         onPendingOrderUpdated: () => {},
         onPendingOrderCompleted: () => {},
         onHistoryOrderAdded: () => {},
         onDealAdded: () => {}
       };
       sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
+      sandbox.stub(listener, 'onPositionsUpdated').resolves();
       sandbox.stub(listener, 'onPositionUpdated').resolves();
       sandbox.stub(listener, 'onPositionRemoved').resolves();
+      sandbox.stub(listener, 'onPendingOrdersUpdated').resolves();
       sandbox.stub(listener, 'onPendingOrderUpdated').resolves();
       sandbox.stub(listener, 'onPendingOrderCompleted').resolves();
       sandbox.stub(listener, 'onHistoryOrderAdded').resolves();
@@ -2175,8 +2179,10 @@ describe('MetaApiWebsocketClient', () => {
         host: 'ps-mpa-1'}, update));
       await new Promise(res => setTimeout(res, 100));
       sinon.assert.calledWith(listener.onAccountInformationUpdated, 'vint-hill:0:ps-mpa-1', update.accountInformation);
+      sinon.assert.calledWith(listener.onPositionsUpdated, 'vint-hill:0:ps-mpa-1', update.updatedPositions);
       sinon.assert.calledWith(listener.onPositionUpdated, 'vint-hill:0:ps-mpa-1', update.updatedPositions[0]);
       sinon.assert.calledWith(listener.onPositionRemoved, 'vint-hill:0:ps-mpa-1', update.removedPositionIds[0]);
+      sinon.assert.calledWith(listener.onPendingOrdersUpdated, 'vint-hill:0:ps-mpa-1', update.updatedOrders);
       sinon.assert.calledWith(listener.onPendingOrderUpdated, 'vint-hill:0:ps-mpa-1', update.updatedOrders[0]);
       sinon.assert.calledWith(listener.onPendingOrderCompleted, 'vint-hill:0:ps-mpa-1', update.completedOrderIds[0]);
       sinon.assert.calledWith(listener.onHistoryOrderAdded, 'vint-hill:0:ps-mpa-1', update.historyOrders[0]);
@@ -2698,10 +2704,6 @@ describe('MetaApiWebsocketClient', () => {
 
   describe('wait for server-side terminal state synchronization', () => {
 
-    afterEach(() => {
-      client.removeAllListeners();
-    });
-
     /**
      * @test {MetaApiWebsocketClient#waitSynchronized}
      */
@@ -2717,6 +2719,7 @@ describe('MetaApiWebsocketClient', () => {
       });
       await client.waitSynchronized('accountId', 0, 'app.*', 10);
       requestReceived.should.be.true();
+      client.removeAllListeners();
     });
 
   });

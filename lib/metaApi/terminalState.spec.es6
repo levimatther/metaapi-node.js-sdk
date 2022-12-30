@@ -172,11 +172,11 @@ describe('TerminalState', () => {
     await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', positions);
     await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
     sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', positions);
-    await state.onPositionUpdated('vint-hill:1:ps-mpa-1', changedPosition);
+    await state.onPositionsUpdated('vint-hill:1:ps-mpa-1', [changedPosition], []);
     sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
       'vint-hill:1:ps-mpa-1', [changedPosition], [], 'phash1');
     sinon.assert.calledTwice(updateStub);
-    await state.onPositionRemoved('vint-hill:1:ps-mpa-1', '1');
+    await state.onPositionsUpdated('vint-hill:1:ps-mpa-1', [], ['1']);
     sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
       'vint-hill:1:ps-mpa-1', [], ['1'], 'phash2');
     sinon.assert.callCount(updateStub, 4);
@@ -205,11 +205,11 @@ describe('TerminalState', () => {
     await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', orders);
     await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
     sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', orders);
-    await state.onPendingOrderUpdated('vint-hill:1:ps-mpa-1', changedOrder);
+    await state.onPendingOrdersUpdated('vint-hill:1:ps-mpa-1', [changedOrder], []);
     sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
       'vint-hill:1:ps-mpa-1', [changedOrder], [], 'ohash1');
     sinon.assert.calledTwice(updateStub);
-    await state.onPendingOrderCompleted('vint-hill:1:ps-mpa-1', '1');
+    await state.onPendingOrdersUpdated('vint-hill:1:ps-mpa-1', [], ['1']);
     sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
       'vint-hill:1:ps-mpa-1', [], ['1'], 'ohash2');
     sinon.assert.callCount(updateStub, 4);
