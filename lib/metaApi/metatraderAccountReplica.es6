@@ -125,6 +125,14 @@ export default class MetatraderAccountReplica {
   }
 
   /**
+   * Returns the time account replica was created at, in ISO format
+   * @returns {string} the time account replica was created at, in ISO format
+   */
+  get createdAt() {
+    return new Date(this._data.createdAt);
+  }
+
+  /**
    * Returns primary MetaTrader account of the replica from DTO
    * @return {MetatraderAccount} primary MetaTrader account of the replica from DTO
    */

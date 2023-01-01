@@ -335,6 +335,11 @@ export declare type MetatraderAccountReplicaDto = {
   region: string,
 
   /**
+   * The time account replica was created at, in ISO format
+   */
+  createdAt: string,
+
+  /**
    * Primary account
    */
   primaryAccount: MetatraderAccountDto
@@ -417,7 +422,12 @@ export declare type MetatraderAccountDto = {
    * Region id to deploy account at. One of returned by the /users/current/regions endpoint
    */
   region: string,
- 
+
+  /**
+   * The time account was created at, in ISO format
+   */
+  createdAt: string,
+
   /**
    * Human-readable account name
    */

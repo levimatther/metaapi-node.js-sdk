@@ -145,6 +145,14 @@ export default class MetatraderAccount {
   }
 
   /**
+   * Returns the time account was created at, in ISO format
+   * @returns {string} the time account was created at, in ISO format
+   */
+  get createdAt() {
+    return new Date(this._data.createdAt);
+  }
+
+  /**
    * Returns human-readable account name
    * @return {string} human-readable account name
    */

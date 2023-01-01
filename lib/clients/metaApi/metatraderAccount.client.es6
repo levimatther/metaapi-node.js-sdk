@@ -34,6 +34,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
    * @property {string} region Region id to deploy account replica at. One of returned by the /users/current/regions endpoint
+   * @property {string} createdAt The time account replica was created at, in ISO format
    * @property {MetatraderAccountDto} primaryAccount Primary account
    */
 
@@ -64,6 +65,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * each CopyFactory resource slot is billed as 2 standard resource slots. You will be billed for CopyFactory 2
    * resource slots only if you have added your account to CopyFactory 2 by specifying copyFactoryRoles field.
    * @property {string} region Region id to deploy account at. One of returned by the /users/current/regions endpoint
+   * @property {string} createdAt The time account was created at, in ISO format
    * @property {string} name Human-readable account name
    * @property {boolean} manualTrades Flag indicating if trades should be placed as manual trades. Supported on G2 only
    * @property {number} [slippage] Default trade slippage in points. Should be greater or equal to zero. If not

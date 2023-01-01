@@ -1,3 +1,6 @@
+20.10.0
+  - added createdAt field to trading account and trading account replica models
+
 20.9.1
   - fixed terminal state updates
 

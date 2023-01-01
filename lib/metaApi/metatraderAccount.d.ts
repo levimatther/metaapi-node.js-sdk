@@ -112,6 +112,12 @@ export default class MetatraderAccount {
   get region(): string;
 
   /**
+   * Returns the time account was created at, in ISO format
+   * @returns {string} the time account was created at, in ISO format
+   */
+  get createdAt(): Date;
+
+  /**
    * Returns human-readable account name
    * @return {string} human-readable account name
    */
