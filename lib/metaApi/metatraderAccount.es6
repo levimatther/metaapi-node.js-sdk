@@ -277,7 +277,7 @@ export default class MetatraderAccount {
 
   /**
    * Returns flag indicating that account is primary
-   * @return {string} flag indicating that account is primary
+   * @return {boolean} flag indicating that account is primary
    */
   get primaryReplica() {
     return this._data.primaryReplica;
