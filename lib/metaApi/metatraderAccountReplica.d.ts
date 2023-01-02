@@ -3,12 +3,12 @@ import MetatraderAccount from "./metatraderAccount";
 import {Reliability, State, ConnectionStatus} from '../clients/metaApi/metatraderAccount.client'
 
 /**
- * Implements a MetaTrader account entity
+ * Implements a MetaTrader account replica entity
  */
 export default class MetatraderAccountReplica {
   
   /**
-   * Constructs a MetaTrader account entity
+   * Constructs a MetaTrader account replica entity
    * @param {MetatraderAccountReplicaDto} data MetaTrader account data
    * @param {MetatraderAccount} primaryAccount primary MetaTrader account
    * @param {MetatraderAccountClient} metatraderAccountClient MetaTrader account REST API client
@@ -116,7 +116,7 @@ export default class MetatraderAccountReplica {
   get primaryAccount(): MetatraderAccount;
 
   /**
-   * Updates replica data
+   * Updates account replica data
    * @param {MetatraderAccountReplicaDto} data MetaTrader account replica data 
    */
   updateData(data: MetatraderAccountReplicaDto): void;
