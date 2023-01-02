@@ -7,7 +7,7 @@ import {Reliability, State, ConnectionStatus} from '../clients/metaApi/metatrade
 export default class MetatraderAccountReplica {
 
   /**
-   * Constructs a MetaTrader account entity
+   * Constructs a MetaTrader account replica entity
    * @param {MetatraderAccountReplicaDto} data MetaTrader account replica data
    * @param {MetatraderAccount} primaryAccount primary MetaTrader account
    * @param {MetatraderAccountClient} metatraderAccountClient MetaTrader account REST API client
@@ -149,7 +149,7 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Updates replica data
+   * Updates account replica data
    * @param {MetatraderAccountReplicaDto} data MetaTrader account replica data 
    */
   updateData(data) {
