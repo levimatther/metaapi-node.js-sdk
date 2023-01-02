@@ -1,4 +1,3 @@
-import MetatraderAccountClient, { AccountConnection } from "../clients/metaApi/metatraderAccount.client";
 import { MetatraderAccountDto } from "../clients/metaApi/metatraderAccount.client";
 import MetaApiWebsocketClient, { MetatraderCandle, MetatraderTick } from "../clients/metaApi/metaApiWebsocket.client";
 import ConnectionRegistry from "./connectionRegistry";
@@ -9,7 +8,7 @@ import RpcMetaApiConnectionInstance from "./rpcMetaApiConnectionInstance";
 import ExpertAdvisor from "./expertAdvisor";
 import StreamingMetaApiConnectionInstance from "./streamingMetaApiConnectionInstance";
 import MetatraderAccountReplica from './metatraderAccountReplica';
-import {Reliability, State, Version, ConnectionStatus, CopyFactoryRoles, Type, AccountConnection} from '../clients/metaApi/metatraderAccount.client'
+import MetatraderAccountClient, {Reliability, State, Version, ConnectionStatus, CopyFactoryRoles, Type, AccountConnection} from '../clients/metaApi/metatraderAccount.client'
 
 /**
  * Implements a MetaTrader account entity
@@ -212,9 +211,9 @@ export default class MetatraderAccount {
 
   /**
    * Returns flag indicating that account is primary
-   * @return {string} flag indicating that account is primary
+   * @return {boolean} flag indicating that account is primary
    */
-  get primaryReplica(): string;
+  get primaryReplica(): boolean;
 
   /**
    * Returns user id
