@@ -1,3 +1,6 @@
+20.10.1
+  - fixed a TypeError in terminal state
+
 20.10.0
   - added createdAt field to trading account and trading account replica models
 
