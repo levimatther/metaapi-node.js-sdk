@@ -85,15 +85,51 @@ describe('TerminalState', () => {
     await clock.tickAsync(65000);
   });
 
-  it('should update combined state last update', async () => {
+  /**
+   * @test {TerminalState#onBrokerConnectionStatus}
+   * @test {TerminalState#connectedToBroker}
+   */
+  it('should clear combined state if account has been disconnected for a long time', async () => {
     let callStub = sandbox.stub(terminalHashManager, 'removeConnectionReferences').returns();
-    await clock.tickAsync(14 * 60 * 1000);
-    state.onBrokerConnectionStatusChanged('vint-hill:1:ps-mpa-1', true);
-    await clock.tickAsync(21 * 60 * 1000);
+    state.onAccountInformationUpdated(1, {balance: 1000});
+    state.onBrokerConnectionStatusChanged('vint-hill:1:ps-mpa-1', false);
+    
+    await clock.tickAsync(29 * 60 * 1000);
+    state.accountInformation.should.deepEqual({balance: 1000});
     sinon.assert.notCalled(callStub);
-    await clock.tickAsync(11 * 60 * 1000);
+
+    await clock.tickAsync(7 * 60 * 1000);
+    should(state.accountInformation).be.undefined();
     sinon.assert.calledWith(callStub, 'ICMarkets-Demo1', 'accountId', state.id, 'combined');
-  }); 
+  });
+
+  /**
+   * @test {TerminalState#onBrokerConnectionStatus}
+   * @test {TerminalState#connectedToBroker}
+   */
+  it('should not clear combined state if connection status changed recently', async () => {
+    let callStub = sandbox.stub(terminalHashManager, 'removeConnectionReferences').returns();
+    state.onBrokerConnectionStatusChanged('vint-hill:1:ps-mpa-1', true);
+    state.onAccountInformationUpdated(1, {balance: 1000});
+
+    await clock.tickAsync(29 * 60 * 1000);
+    state.accountInformation.should.deepEqual({balance: 1000});
+    sinon.assert.notCalled(callStub);
+  });
+
+  /**
+   * @test {TerminalState#onBrokerConnectionStatus}
+   * @test {TerminalState#connectedToBroker}
+   */
+  it('should not clear combined state if account has been connected for a long time', async () => {
+    let callStub = sandbox.stub(terminalHashManager, 'removeConnectionReferences').returns();
+    state.onBrokerConnectionStatusChanged('vint-hill:1:ps-mpa-1', true);
+    state.onAccountInformationUpdated(1, {balance: 1000});
+
+    await clock.tickAsync(60 * 60 * 1000);
+    state.accountInformation.should.deepEqual({balance: 1000});
+    sinon.assert.notCalled(callStub);
+  });
 
   /**
    * @test {TerminalState#onAccountInformationUpdated}

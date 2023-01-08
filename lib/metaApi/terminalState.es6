@@ -380,7 +380,7 @@ export default class TerminalState extends SynchronizationListener {
       `${instanceIndex}, ${Object.keys(state.specificationsBySymbol || {}).length} specifications assigned`);
     this._combinedState.positionsInitialized = true;
     this._combinedState.ordersInitialized = true;
-    if(Object.keys(state.specificationsBySymbol).length) {
+    if (Object.keys(state.specificationsBySymbol || {}).length) {
       const hash = await this._terminalHashManager.recordSpecifications(this._account.server,
         this._account.type, this._id, instanceIndex, Object.values(state.specificationsBySymbol));
       this._combinedState.specificationsHash = hash;
@@ -576,8 +576,7 @@ export default class TerminalState extends SynchronizationListener {
 
   // resets combined state and removes from hash manager if has been disconnected for a long time
   _checkCombinedStateActivityJob() {
-    const date = Date.now();
-    if(this._combinedState.lastStatusTime < date - 30 * 60 * 1000) {
+    if (!this.connectedToBroker && this._combinedState.lastStatusTime < Date.now() - 30 * 60 * 1000) {
       this._removeFromHashManager(this._combinedInstanceIndex);
       
       this._combinedState.accountInformation = undefined;
