@@ -75,7 +75,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
    * @param {Array<MarketDataUnsubscription>} subscriptions array of subscriptions to cancel
    * @returns {Promise} promise which resolves when unsubscription request was processed
    */
-  unsubscribeFromMarketData(symbol: string, subscriptions: MarketDataUnsubscription): Promise<any>;
+  unsubscribeFromMarketData(symbol: string, subscriptions: Array<MarketDataUnsubscription>): Promise<any>;
   
   /**
    * Invoked when subscription downgrade has occurred

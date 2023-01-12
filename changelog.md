@@ -1,3 +1,6 @@
+20.10.2
+  - fixed unsubscribeFromMarketData method type
+
 20.10.1
   - fixed a TypeError in terminal state
 
