@@ -28,7 +28,7 @@ export default class MetatraderAccountApi {
   }
 
   /**
-   * Retrieves MetaTrader accounts
+   * Returns trading accounts belonging to the current user
    * @param {AccountsFilter} accountsFilter optional filter
    * @return {Promise<Array<MetatraderAccount>>} promise resolving with an array of MetaTrader account entities
    */
@@ -42,7 +42,7 @@ export default class MetatraderAccountApi {
   }
 
   /**
-   * Retrieves a MetaTrader account by id
+   * Returns trading account by id
    * @param {string} accountId MetaTrader account id
    * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
    */
@@ -53,10 +53,10 @@ export default class MetatraderAccountApi {
   }
 
   /**
-   * Retrieves a MetaTrader account replcia by id
-   * @param {string} accountId MetaTrader account id
+   * Returns trading account replica by trading account id and replica id
+   * @param {string} accountId MetaTrader primary account id
    * @param {string} replicaId MetaTrader account replica id
-   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account replica
+   * @return {Promise<MetatraderAccountReplica>} promise resolving with MetaTrader account replica found
    */
   async getAccountReplica(accountId, replicaId) {
     let account = await this._metatraderAccountClient.getAccount(accountId);
@@ -65,9 +65,9 @@ export default class MetatraderAccountApi {
   }
 
   /**
-   * Retrieves a MetaTrader account replicas
-   * @param {string} accountId MetaTrader account id
-   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account replicas
+   * Returns replicas for a trading account
+   * @param {string} accountId Primary account id
+   * @return {Promise<Array<MetatraderAccountReplica>>} promise resolving with MetaTrader account replicas found
    */
   async getAccountReplicas(accountId) {
     let account = await this._metatraderAccountClient.getAccount(accountId);
@@ -79,7 +79,7 @@ export default class MetatraderAccountApi {
   }
 
   /**
-   * Retrieves a MetaTrader account by token
+   * Returns trading account by access token
    * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
    */
   async getAccountByToken() {
@@ -89,9 +89,9 @@ export default class MetatraderAccountApi {
   }
 
   /**
-   * Creates a MetaTrader account
+   * Adds a trading account and starts a cloud API server for the trading account
    * @param {NewMetatraderAccountDto} account MetaTrader account data
-   * @return {Promise<MetatraderAccount>} promise resolving with MetaTrader account entity
+   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account created
    */
   async createAccount(account) {
     let id = await this._metatraderAccountClient.createAccount(account);

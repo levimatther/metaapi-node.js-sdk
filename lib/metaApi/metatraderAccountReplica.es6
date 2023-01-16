@@ -157,9 +157,7 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Removes MetaTrader account replica. Cloud account transitions to DELETING state. 
-   * It takes some time for an account to be eventually deleted. Self-hosted 
-   * account is deleted immediately.
+   * Removes a trading account replica and stops the API server serving the replica
    * @return {Promise} promise resolving when account replica is scheduled for deletion
    */
   async remove() {
@@ -174,8 +172,8 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Schedules account replica for deployment. It takes some time for API server to be started and account replica to reach the DEPLOYED
-   * state
+   * Starts API server and trading terminal for trading account replica.
+   * This request will be ignored if the replica is already deployed
    * @returns {Promise} promise resolving when account replica is scheduled for deployment
    */
   async deploy() {
@@ -184,8 +182,8 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Schedules account replica for undeployment. It takes some time for API server to be stopped and account replica to reach the
-   * UNDEPLOYED state
+   * Stops API server and trading terminal for trading account replica.
+   * The request will be ignored if trading account replica is already undeployed
    * @returns {Promise} promise resolving when account replica is scheduled for undeployment
    */
   async undeploy() {
@@ -194,8 +192,7 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Schedules account replica for redeployment. It takes some time for API server to be restarted and account replica to reach the
-   * DEPLOYED state
+   * Redeploys trading account replica. This is equivalent to undeploy immediately followed by deploy.
    * @returns {Promise} promise resolving when account replica is scheduled for redeployment
    */
   async redeploy() {
@@ -204,7 +201,9 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Increases MetaTrader account replica reliability. The account replica will be temporary stopped to perform this action
+   * Increases trading account reliability in order to increase the expected account uptime.
+   * The account will be temporary stopped to perform this action.
+   * Note that increasing reliability is a paid option
    * @returns {Promise} promise resolving when account replica reliability is increased
    */
   async increaseReliability() {
@@ -290,12 +289,12 @@ export default class MetatraderAccountReplica {
   }
 
   /**
-   * Updates MetaTrader account replica data
-   * @param {UpdatedMetatraderAccountReplicaDto} account MetaTrader account replica update
+   * Updates trading account replica
+   * @param {UpdatedMetatraderAccountReplicaDto} metatraderAccount updated account replica information
    * @return {Promise} promise resolving when account replica is updated
    */
-  async update(account) {
-    await this._metatraderAccountClient.updateAccountReplica(this._primaryAccount.id, this.id, account);
+  async update(metatraderAccount) {
+    await this._metatraderAccountClient.updateAccountReplica(this._primaryAccount.id, this.id, metatraderAccount);
     await this._primaryAccount.reload();
   }
 
