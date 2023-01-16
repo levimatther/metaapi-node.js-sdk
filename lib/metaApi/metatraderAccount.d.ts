@@ -1,4 +1,4 @@
-import { MetatraderAccountDto } from "../clients/metaApi/metatraderAccount.client";
+import { MetatraderAccountDto, MetatraderAccountIdDto } from "../clients/metaApi/metatraderAccount.client";
 import MetaApiWebsocketClient, { MetatraderCandle, MetatraderTick } from "../clients/metaApi/metaApiWebsocket.client";
 import ConnectionRegistry from "./connectionRegistry";
 import ExpertAdvisorClient, { NewExpertAdvisorDto } from "../clients/metaApi/expertAdvisor.client";
@@ -252,48 +252,52 @@ export default class MetatraderAccount {
   reload(): Promise<any>;
   
   /**
-   * Removes MetaTrader account. Cloud account transitions to DELETING state. 
-   * It takes some time for an account to be eventually deleted. Self-hosted 
-   * account is deleted immediately.
+   * Removes a trading account and stops the API server serving the account.
+   * The account state such as downloaded market data history will be removed as well when you remove the account.
    * @return {Promise} promise resolving when account is scheduled for deletion
    */
   remove(): Promise<any>;
   
   /**
-   * Schedules account for deployment. It takes some time for API server to be started and account to reach the DEPLOYED
-   * state
+   * Starts API server and trading terminal for trading account.
+   * This request will be ignored if the account is already deployed.
    * @returns {Promise} promise resolving when account is scheduled for deployment
    */
   deploy(): Promise<any>;
   
   /**
-   * Schedules account for undeployment. It takes some time for API server to be stopped and account to reach the
-   * UNDEPLOYED state
+   * Stops API server and trading terminal for trading account.
+   * This request will be ignored if trading account is already undeployed
    * @returns {Promise} promise resolving when account is scheduled for undeployment
    */
   undeploy(): Promise<any>;
   
   /**
-   * Schedules account for redeployment. It takes some time for API server to be restarted and account to reach the
-   * DEPLOYED state
+   * Redeploys trading account. This is equivalent to undeploy immediately followed by deploy
    * @returns {Promise} promise resolving when account is scheduled for redeployment
    */
   redeploy(): Promise<any>;
   
   /**
-   * Increases MetaTrader account reliability. The account will be temporary stopped to perform this action
+   * Increases trading account reliability in order to increase the expected account uptime.
+   * The account will be temporary stopped to perform this action.
+   * Note that increasing reliability is a paid option
    * @returns {Promise} promise resolving when account reliability is increased
    */
   increaseReliability(): Promise<any>;
   
   /**
-   * Enable risk management API for an account. The account will be temporary stopped to perform this action
+   * Enables risk management API for trading account.
+   * The account will be temporary stopped to perform this action.
+   * Note that risk management API is a paid option
    * @returns {Promise} promise resolving when account risk management is enabled
    */
   enableRiskManagementApi(): Promise<any>;
 
   /**
-   * Enable MetaStats hourly tarification for an account. The account will be temporary stopped to perform this action
+   * Enables MetaStats hourly tarification for trading account.
+   * The account will be temporary stopped to perform this action.
+   * Note that this is a paid option
    * @returns {Promise} promise resolving when account MetaStats hourly tarification is enabled
    */
   enableMetastatsHourlyTarification(): Promise<any>;
@@ -345,11 +349,19 @@ export default class MetatraderAccount {
   getRPCConnection(): RpcMetaApiConnectionInstance;
   
   /**
-   * Updates MetaTrader account data
-   * @param {MetatraderAccountUpdateDto} account MetaTrader account update
+   * Creates a trading account replica in a region different from trading account region and starts a cloud API server for it
+   * @param {NewMetaTraderAccountReplicaDto} account MetaTrader account data
+   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account replica created
+   */
+  createReplica(account: NewMetaTraderAccountReplicaDto): Promise<MetatraderAccountIdDto>;
+
+  /**
+   * Updates trading account. 
+   * Please redeploy the trading account in order for updated settings to take effect
+   * @param {MetatraderAccountUpdateDto} account updated account information
    * @return {Promise} promise resolving when account is updated
    */
-  update(account: MetatraderAccountDto): Promise<any>;
+  update(account: MetatraderAccountUpdateDto): Promise<any>;
   
   /**
    * Retrieves expert advisor of current account

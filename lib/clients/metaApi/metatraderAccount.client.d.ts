@@ -4,7 +4,7 @@
 export default class MetatraderAccountClient {
   
   /**
-   * Retrieves MetaTrader accounts owned by user (see https://metaapi.cloud/docs/provisioning/api/account/readAccounts/)
+   * Returns trading accounts belonging to the current user (see https://metaapi.cloud/docs/provisioning/api/account/readAccounts/)
    * Method is accessible only with API access token
    * @param {AccountsFilter} accountsFilter optional filter
    * @return {Promise<Array<MetatraderAccountDto>>} promise resolving with MetaTrader accounts found
@@ -12,139 +12,170 @@ export default class MetatraderAccountClient {
   getAccounts(accountsFilter?: AccountsFilter): Promise<Array<MetatraderAccountDto>>;
   
   /**
-   * Retrieves a MetaTrader account by id (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/). Throws
-   * an error if account is not found.
+   * Returns trading account by id (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/)
+   * Method is accessible only with API access token
    * @param {string} id MetaTrader account id
    * @return {Promise<MetatraderAccountDto>} promise resolving with MetaTrader account found
    */
   getAccount(id: string): Promise<MetatraderAccountDto>;
   
   /**
-   * Retrieves a MetaTrader account by token (see https://metaapi.cloud/docs/provisioning/api/account/readAccount/).
-   * Throws an error if account is not found.
+   * Returns trading account replica by trading account id and replica id (see 
+   * https://metaapi.cloud/docs/provisioning/api/accountReplica/readAccountReplica/)
+   * Method is accessible only with API access token
+   * @param {string} accountId MetaTrader primary account id
+   * @param {string} replicaId MetaTrader account replica id
+   * @return {Promise<MetatraderAccountReplicaDto>} promise resolving with MetaTrader account replica found
+   */
+  getAccountReplica(accountId: string, replicaId: string): Promise<MetatraderAccountReplicaDto>
+
+  /**
+   * Returns replicas for a trading account (see 
+   * https://metaapi.cloud/docs/provisioning/api/accountReplica/readAccountReplicas/)
+   * Method is accessible only with API access token
+   * @param {string} accountId Primary account id
+   * @return {Promise<Array<MetatraderAccountReplicaDto>>} promise resolving with MetaTrader account replicas found
+   */
+  getAccountReplicas(accountId: string): Promise<Array<MetatraderAccountReplicaDto>>
+
+  /**
+   * Returns trading account by access token
+   * (see https://metaapi.cloud/docs/provisioning/api/account/readAccountByAccessToken/)
    * Method is accessible only with account access token
    * @return {Promise<MetatraderAccountDto>} promise resolving with MetaTrader account found
    */
   getAccountByToken(): Promise<MetatraderAccountDto>;
   
   /**
-   * Starts cloud API server for a MetaTrader account using specified provisioning profile (see
-   * https://metaapi.cloud/docs/provisioning/api/account/createAccount/). It takes some time to launch the terminal and
-   * connect the terminal to the broker, you can use the connectionStatus field to monitor the current status of the
-   * terminal.
+   * Adds a trading account and starts a cloud API server for the trading account (see 
+   * https://metaapi.cloud/docs/provisioning/api/account/createAccount/).
+   * It can take some time for the API server and trading terminal to start and connect to broker.
+   * You can use the `connectionStatus` replica field to monitor the current status of the trading account.
    * Method is accessible only with API access token
-   * @param {NewMetatraderAccountDto} account MetaTrader account to create
-   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id of the MetaTrader account created
+   * @param {NewMetatraderAccountDto} account MetaTrader account data
+   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account created
    */
   createAccount(account: NewMetatraderAccountDto): Promise<MetatraderAccountIdDto>;
 
   /**
-   * Starts cloud API server for a MetaTrader account replica using specified primary account (see
-   * https://metaapi.cloud/docs/provisioning/api/accountReplica/createAccountReplica/). It takes some time to launch the terminal and
-   * connect the terminal to the broker, you can use the connectionStatus field to monitor the current status of the
-   * terminal.
+   * Creates a trading account replica in a region different from trading account region and starts a cloud API server for it
+   * (see https://metaapi.cloud/docs/provisioning/api/accountReplica/createAccountReplica/).
+   * It can take some time for the API server and trading terminal to start and connect to broker.
+   * You can use the `connectionStatus` replica field to monitor the current status of the replica.
    * Method is accessible only with API access token
-   * @param {String} accountId primary MetaTrader account id
-   * @param {NewMetaTraderAccountReplicaDto} account MetaTrader account to create
-   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id of the MetaTrader account replica created
+   * @param {string} accountId primary account id
+   * @param {NewMetaTraderAccountReplicaDto} account MetaTrader account data
+   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account replica created
    */
   createAccountReplica(accountId: string, account: NewMetaTraderAccountReplicaDto): Promise<MetatraderAccountIdDto>;
 
   /**
-   * Starts API server for MetaTrader account. This request will be ignored if the account has already been deployed.
+   * Starts API server and trading terminal for trading account.
+   * This request will be ignored if the account is already deployed.
    * (see https://metaapi.cloud/docs/provisioning/api/account/deployAccount/)
-   * @param {string} id MetaTrader account id to deploy
+   * Method is accessible only with API access token
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deployment
    */
   deployAccount(id: string): Promise<any>
 
   /**
-   * Starts API server for MetaTrader account replica. This request will be ignored if the replica has already been deployed.
+   * Starts API server and trading terminal for trading account replica.
+   * This request will be ignored if the replica is already deployed
    * (see https://metaapi.cloud/docs/provisioning/api/accountReplica/deployAccountReplica/)
-   * @param {string} primaryAccountId MetaTrader account id
-   * @param {string} replicaId MetaTrader account replica id to deploy
+   * Method is accessible only with API access token
+   * @param {string} accountId MetaTrader account id
+   * @param {string} replicaId MetaTrader account replica id
    * @return {Promise} promise resolving when MetaTrader account replica is scheduled for deployment
    */
-  deployAccountReplica(primaryAccountId: string, replicaId: string): Promise<any>
+  deployAccountReplica(accountId: string, replicaId: string): Promise<any>
 
   /**
-   * Stops API server for a MetaTrader account. Terminal data such as downloaded market history data will be preserved.
+   * Stops API server and trading terminal for trading account.
+   * This request will be ignored if trading account is already undeployed
    * (see https://metaapi.cloud/docs/provisioning/api/account/undeployAccount/)
-   * @param {string} id MetaTrader account id to undeploy
+   * Method is accessible only with API access token
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account is scheduled for undeployment
    */
   undeployAccount(id: string): Promise<any>
 
   /**
-   * Stops API server for MetaTrader account replica. Terminal data such as downloaded market history data will be preserved.
+   * Stops API server and trading terminal for trading account replica.
+   * The request will be ignored if trading account replica is already undeployed
    * (see https://metaapi.cloud/docs/provisioning/api/accountReplica/undeployAccountReplica/)
-   * @param {string} primaryAccountId MetaTrader account id
-   * @param {string} replicaId MetaTrader account replica id to undeploy
+   * Method is accessible only with API access token
+   * @param {string} accountId MetaTrader primary account id
+   * @param {string} replicaId MetaTrader account replica id
    * @return {Promise} promise resolving when MetaTrader account replica is scheduled for undeployment
    */
   undeployAccountReplica(primaryAccountId: string, replicaId: string): Promise<any>
   
   /**
-   * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
+   * Redeploys trading account. This is equivalent to undeploy immediately followed by deploy
    * (see https://metaapi.cloud/docs/provisioning/api/account/redeployAccount/)
-   * @param {string} id MetaTrader account id to redeploy
+   * Method is accessible only with API access token
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when MetaTrader account is scheduled for redeployment
    */
   redeployAccount(id: string): Promise<any>
 
   /**
-   * Redeploys MetaTrader account. This is equivalent to undeploy immediately followed by deploy.
+   * Redeploys trading account replica. This is equivalent to undeploy immediately followed by deploy.
    * (see https://metaapi.cloud/docs/provisioning/api/account/redeployAccountReplica/)
-   * @param {string} primaryAccountId MetaTrader account id
-   * @param {string} replicaId MetaTrader account replica id to redeploy
+   * Method is accessible only with API access token
+   * @param {string} accountId MetaTrader primary account id
+   * @param {string} replicaId MetaTrader account replica id
    * @return {Promise} promise resolving when MetaTrader account replica is scheduled for redeployment
    */
-  redeployAccountReplica(primaryAccountId: string, replicaId: string): Promise<any>
+  redeployAccountReplica(accountId: string, replicaId: string): Promise<any>
 
   /**
-   * Stops and deletes an API server for a specified MetaTrader account. The terminal state such as downloaded market
-   * data history will be deleted as well when you delete the account. (see
-   * https://metaapi.cloud/docs/provisioning/api/account/deleteAccount/).
+   * Removes a trading account and stops the API server serving the account.
+   * The account state such as downloaded market data history will be removed as well when you remove the account.
+   * (see https://metaapi.cloud/docs/provisioning/api/account/deleteAccount/).
    * Method is accessible only with API access token
-   * @param {string} id MetaTrader account id
+   * @param {string} id Id of the account to be deleted
    * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
    */
   deleteAccount(id: string): Promise<any>
 
   /**
-   * Stops and deletes an API server for a specified MetaTrader account. The terminal state such as downloaded market
-   * data history will be deleted as well when you delete the account. (see
-   * https://metaapi.cloud/docs/provisioning/api/account/deleteAccountReplica/).
+   * Removes a trading account replica and stops the API server serving the replica
+   * (see https://metaapi.cloud/docs/provisioning/api/account/deleteAccountReplica/).
    * Method is accessible only with API access token
-   * @param {string} primaryAccountId MetaTrader account id
-   * @param {string} replicaId MetaTrader account replica id to undeploy
-   * @return {Promise} promise resolving when MetaTrader account is scheduled for deletion
+   * @param {string} accountId primary account id
+   * @param {string} replicaId Id of the account replica to be deleted
+   * @return {Promise} promise resolving when MetaTrader account replica is scheduled for deletion
    */
-  deleteAccountReplica(primaryAccountId: string, replicaId: string): Promise<any>
+  deleteAccountReplica(accountId: string, replicaId: string): Promise<any>
   
   /**
-   * Updates existing metatrader account data (see
-   * https://metaapi.cloud/docs/provisioning/api/account/updateAccount/).
+   * Updates trading account. 
+   * Please redeploy the trading account in order for updated settings to take effect
+   * (see https://metaapi.cloud/docs/provisioning/api/account/updateAccount/).
    * Method is accessible only with API access token
    * @param {string} id MetaTrader account id
-   * @param {MetatraderAccountUpdateDto} account updated MetaTrader account
+   * @param {MetatraderAccountUpdateDto} account updated account information
    * @return {Promise} promise resolving when MetaTrader account is updated
    */
   updateAccount(id: string, account: MetatraderAccountUpdateDto): Promise<any>
 
   /**
-   * Updates existing metatrader account replica data (see
+   * Updates trading account replica (see
    * https://metaapi.cloud/docs/provisioning/api/account/updateAccountReplica/).
    * Method is accessible only with API access token
-   * @param {string} primaryAccountId MetaTrader account id
+   * @param {string} accountId MetaTrader primary account id
    * @param {string} replicaId MetaTrader account replica id
-   * @param {UpdatedMetatraderAccountReplicaDto} account updated MetaTrader account replica
+   * @param {UpdatedMetatraderAccountReplicaDto} metatraderAccount updated account replica information
    * @return {Promise} promise resolving when MetaTrader account replica is updated
    */
-  updateAccountReplica(primaryAccountId: string, replicaId: string, account: UpdatedMetatraderAccountReplicaDto): Promise<any>
+  updateAccountReplica(accountId: string, replicaId: string, metatraderAccount: UpdatedMetatraderAccountReplicaDto): Promise<any>
   
   /**
-   * Increases MetaTrader account reliability. The account will be temporary stopped to perform this action. (see
+   * Increases trading account reliability in order to increase the expected account uptime.
+   * The account will be temporary stopped to perform this action.
+   * Note that increasing reliability is a paid option (see
    * https://metaapi.cloud/docs/provisioning/api/account/increaseReliability/).
    * Method is accessible only with API access token
    * @param {string} id MetaTrader account id
@@ -153,21 +184,23 @@ export default class MetatraderAccountClient {
   increaseReliability(id: string): Promise<any>
 
   /**
-   * Enable risk management API for an account. The account will be temporary stopped to perform this action. 
-   * Note that this is a paid option. (see
+   * Enables risk management API for trading account.
+   * The account will be temporary stopped to perform this action.
+   * Note that risk management API is a paid option (see
    * https://metaapi.cloud/docs/provisioning/api/account/enableRiskManagementApi/).
    * Method is accessible only with API access token
-   * @param {String} id account id
+   * @param {String} id MetaTrader account id
    * @return {Promise} promise resolving when account risk management is enabled
    */
   enableRiskManagementApi(id: string): Promise<any>
 
   /**
-   * Enable MetaStats hourly tarification for an account. The account will be temporary stopped to perform this action.
-   * Note that this is a paid option. (see
+   * Enables MetaStats hourly tarification for trading account.
+   * The account will be temporary stopped to perform this action.
+   * Note that this is a paid option (see
    * https://metaapi.cloud/docs/provisioning/api/account/enableMetaStatsHourlyTarification/).
    * Method is accessible only with API access token
-   * @param {String} id account id
+   * @param {string} id MetaTrader account id
    * @return {Promise} promise resolving when account MetaStats hourly tarification is enabled
    */
   enableMetastatsHourlyTarification(id: string): Promise<any>
@@ -760,14 +793,19 @@ export declare type NewMetaTraderAccountReplicaDto = {
 }
 
 /**
- * MetaTrader account id model
+ * MetaTrader account id and state model
  */
 export declare type MetatraderAccountIdDto = {
 
   /**
    * MetaTrader account unique identifier
    */
-  id: string
+  id: string,
+  
+  /**
+   * State of the account. Possible values are 'UNDEPLOYED', 'DEPLOYED'
+   */
+  state: string
 }
 
 /**

@@ -347,9 +347,8 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Removes MetaTrader account. Cloud account transitions to DELETING state. 
-   * It takes some time for an account to be eventually deleted. Self-hosted 
-   * account is deleted immediately.
+   * Removes a trading account and stops the API server serving the account.
+   * The account state such as downloaded market data history will be removed as well when you remove the account.
    * @return {Promise} promise resolving when account is scheduled for deletion
    */
   async remove() {
@@ -369,8 +368,8 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Schedules account for deployment. It takes some time for API server to be started and account to reach the DEPLOYED
-   * state
+   * Starts API server and trading terminal for trading account.
+   * This request will be ignored if the account is already deployed.
    * @returns {Promise} promise resolving when account is scheduled for deployment
    */
   async deploy() {
@@ -379,8 +378,8 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Schedules account for undeployment. It takes some time for API server to be stopped and account to reach the
-   * UNDEPLOYED state
+   * Stops API server and trading terminal for trading account.
+   * This request will be ignored if trading account is already undeployed
    * @returns {Promise} promise resolving when account is scheduled for undeployment
    */
   async undeploy() {
@@ -390,8 +389,7 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Schedules account for redeployment. It takes some time for API server to be restarted and account to reach the
-   * DEPLOYED state
+   * Redeploys trading account. This is equivalent to undeploy immediately followed by deploy
    * @returns {Promise} promise resolving when account is scheduled for redeployment
    */
   async redeploy() {
@@ -400,7 +398,9 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Increases MetaTrader account reliability. The account will be temporary stopped to perform this action
+   * Increases trading account reliability in order to increase the expected account uptime.
+   * The account will be temporary stopped to perform this action.
+   * Note that increasing reliability is a paid option
    * @returns {Promise} promise resolving when account reliability is increased
    */
   async increaseReliability() {
@@ -409,7 +409,9 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Enable risk management API for an account. The account will be temporary stopped to perform this action
+   * Enables risk management API for trading account.
+   * The account will be temporary stopped to perform this action.
+   * Note that risk management API is a paid option
    * @returns {Promise} promise resolving when account risk management is enabled
    */
   async enableRiskManagementApi() {
@@ -418,7 +420,9 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Enable MetaStats hourly tarification for an account. The account will be temporary stopped to perform this action
+   * Enables MetaStats hourly tarification for trading account.
+   * The account will be temporary stopped to perform this action.
+   * Note that this is a paid option
    * @returns {Promise} promise resolving when account MetaStats hourly tarification is enabled
    */
   async enableMetastatsHourlyTarification() {
@@ -542,8 +546,9 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Updates MetaTrader account data
-   * @param {MetatraderAccountUpdateDto} account MetaTrader account update
+   * Updates trading account. 
+   * Please redeploy the trading account in order for updated settings to take effect
+   * @param {MetatraderAccountUpdateDto} account updated account information
    * @return {Promise} promise resolving when account is updated
    */
   async update(account) {
@@ -552,14 +557,14 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Creates a MetaTrader account replica
-   * @param {NewMetatraderAccountDto} replica MetaTrader account replica data
-   * @return {Promise<MetatraderAccountReplica>} promise resolving with MetaTrader account replica entity
+   * Creates a trading account replica in a region different from trading account region and starts a cloud API server for it
+   * @param {NewMetaTraderAccountDto} account MetaTrader account data
+   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account replica created
    */
-  async createReplica(replica) {
-    await this._metatraderAccountClient.createAccountReplica(this.id, replica);
+  async createReplica(account) {
+    await this._metatraderAccountClient.createAccountReplica(this.id, account);
     await this.reload();
-    return this._replicas.find(r => r.region === replica.region);
+    return this._replicas.find(r => r.region === account.region);
   }
 
   /**
