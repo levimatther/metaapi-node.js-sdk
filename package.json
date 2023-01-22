@@ -45,7 +45,7 @@
     "type": "git",
     "url": "https://github.com/agiliumtrade-ai/metaapi-node.js-sdk.git"
   },
-  "version": "20.10.2",
+  "version": "20.10.3",
   "dependencies": {
     "@log4js-node/log4js-api": "~1.0.2",
     "babel-runtime": "~6.26.0",
@@ -73,9 +73,10 @@
     "copyfiles": "~2.4.1",
     "eslint": "~7.1.0",
     "eslint-plugin-mocha": "~7.0.0",
+    "fake-indexeddb": "~3.1.2",
     "gulp": "~4.0.2",
     "gulp-rename": "~2.0.0",
-    "fake-indexeddb": "~3.1.2",
+    "log4js": "~6.7.1",
     "mocha": "~7.2.0",
     "should": "~13.2.3",
     "sinon": "~9.0.2",

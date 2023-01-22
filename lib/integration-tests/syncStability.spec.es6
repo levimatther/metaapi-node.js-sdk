@@ -3,8 +3,9 @@
 import should from 'should';
 import sinon from 'sinon';
 import Server from 'socket.io';
+import * as helpers from '../helpers/helpers';
 import MetaApi from '../metaApi/metaApi';
-import SynchronizationListener from '../clients/metaApi/synchronizationListener';
+import log4js from 'log4js';
 
 const accountInformation = {
   broker: 'True ECN Trading Ltd',
@@ -60,13 +61,15 @@ const errors = [
 let server, server1;
 
 class FakeServer {
-  constructor(){
+
+  constructor() {
     this.io;
     this.socket;
     this.statusTasks = {};
+    this._sequenceNumbers = {};
   }
 
-  async authenticate(socket, data, host='ps-mpa-0'){
+  async authenticate(socket, data, host='ps-mpa-0') {
     socket.emit('synchronization', {type: 'authenticated', accountId: data.accountId,
       instanceIndex: 0, replicas: 1, host});
   }
@@ -78,24 +81,26 @@ class FakeServer {
     }
   }
 
-  async emitStatus(socket, accountId, host='ps-mpa-0'){
+  async emitStatus(socket, accountId, host='ps-mpa-0') {
     const packet = {connected: true, authenticated: true, instanceIndex: 0, type: 'status',
       healthStatus: {rpcApiHealthy: true}, replicas: 1, host,
       connectionId: accountId, accountId: accountId};
     socket.emit('synchronization', packet);
   }
 
-  async respondAccountInformation(socket, data){
+  async respondAccountInformation(socket, data) {
     await socket.emit('response', {type: 'response', accountId: data.accountId, requestId: data.requestId, 
       accountInformation});
   }
 
-  async syncAccount(socket, data, host='ps-mpa-0'){
+  async syncAccount(socket, data, host='ps-mpa-0') {
+    const snId = `${data.accountId}:0`;
+    this._sequenceNumbers[snId] = this._sequenceNumbers[snId] || 0;
     socket.emit('synchronization', {type: 'synchronizationStarted', accountId: data.accountId, instanceIndex: 0, 
-      synchronizationId: data.requestId, host});
+      synchronizationId: data.requestId, host, sequenceNumber: this._sequenceNumbers[snId]++});
     await new Promise(res => setTimeout(res, 50));
     socket.emit('synchronization', {type: 'accountInformation', accountId: data.accountId, accountInformation,
-      instanceIndex: 0, host});
+      instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     socket.emit('synchronization',
       {type: 'specifications', accountId: data.accountId, specifications: [{
         symbol: 'EURUSD',
@@ -103,19 +108,19 @@ class FakeServer {
         minVolume: 0.01,
         maxVolume: 200,
         volumeStep: 0.01
-      }], instanceIndex: 0, host});
+      }], instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     socket.emit('synchronization',
       {type: 'positions', accountId: data.accountId, synchronizationId: data.requestId,
-        positions: [], instanceIndex: 0, host});
+        positions: [], instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     socket.emit('synchronization',
       {type: 'orders', accountId: data.accountId, synchronizationId: data.requestId,
-        orders: [], instanceIndex: 0, host});
+        orders: [], instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     await new Promise(res => setTimeout(res, 50));
     socket.emit('synchronization', {type: 'orderSynchronizationFinished', accountId: data.accountId,
-      synchronizationId: data.requestId, instanceIndex: 0, host});
+      synchronizationId: data.requestId, instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     await new Promise(res => setTimeout(res, 50));
     socket.emit('synchronization', {type: 'dealSynchronizationFinished', accountId: data.accountId,
-      synchronizationId: data.requestId, instanceIndex: 0, host});
+      synchronizationId: data.requestId, instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
   }
 
   async respond(socket, data){
@@ -157,7 +162,7 @@ class FakeServer {
     });
   }
 
-  disableSync(){
+  disableSync() {
     server.removeAllListeners('request');
     server.on('request', async data => {
       await this.respond(server, data);
@@ -168,7 +173,7 @@ class FakeServer {
     });
   }
 
-  async start(port = 6785){
+  async start(port = 6785) {
     this.io = new Server(port, {path: '/ws', pingTimeout: 1000000});
     this.io.on('connect', socket => {
       if(server) {
@@ -176,7 +181,6 @@ class FakeServer {
       } else {
         server = socket;
       }
-      socket.emit('response', {type: 'response'});
       this.enableSync(socket);
     });
   }
@@ -194,6 +198,8 @@ sequentialProcessing.forEach(param => {
     let api;
 
     before(() => {
+      MetaApi.enableLog4jsLogging();
+      log4js.configure(helpers.assembleLog4jsConfig());
       sandbox = sinon.createSandbox();
       const mockMath = Object.create(global.Math);
       mockMath.random = () => 0.2;
@@ -225,26 +231,14 @@ sequentialProcessing.forEach(param => {
       sandbox.stub(api._connectionRegistry._terminalHashManager._clientApiClient,
         'getHashingIgnoredFieldLists').resolves({
         'g1': {
-          'specification': [
-            'description',
-          ],
-          'position': [
-            'time',
-          ],
-          'order': [
-            'time',
-          ]
+          'specification': ['description'],
+          'position': ['time'],
+          'order': ['time']
         },
         'g2': {
-          'specification': [
-            'pipSize'
-          ],
-          'position': [
-            'comment',
-          ],
-          'order': [
-            'comment'
-          ]
+          'specification': ['pipSize'],
+          'position': ['comment'],
+          'order': ['comment']
         }
       });
       fakeServer = new FakeServer();
@@ -257,9 +251,7 @@ sequentialProcessing.forEach(param => {
       connection._websocketClient.close();
       let resolve;
       let promise = new Promise(res => resolve = res);
-      fakeServer.io.close(() => {
-        resolve();
-      });
+      fakeServer.io.close(() => resolve());
       await promise;
       sandbox.restore();
       clock.restore();

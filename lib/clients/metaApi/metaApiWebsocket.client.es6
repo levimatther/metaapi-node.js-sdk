@@ -1826,7 +1826,7 @@ export default class MetaApiWebsocketClient {
       const resetDisconnectTimer = () => {
         cancelDisconnectTimer();
         this._statusTimers[instanceId] = setTimeout(() => {
-          if(isOnlyActiveInstance()) {
+          if (isOnlyActiveInstance()) {
             this._subscriptionManager.onTimeout(data.accountId, 0);
             this._subscriptionManager.onTimeout(data.accountId, 1);
           }
@@ -1839,31 +1839,27 @@ export default class MetaApiWebsocketClient {
       const onDisconnected = async (isTimeout = false) => { 
         if (this._connectedHosts[instanceId]) {
           this._latencyService.onDisconnected(instanceId);
-          if(isOnlyActiveInstance()) {
-            const onDisconnectedPromises = [];
-            if(!isTimeout) {
-              onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, 0));
-              onDisconnectedPromises.push(this._subscriptionManager.onDisconnected(data.accountId, 1));
-            }
+          if (isOnlyActiveInstance()) {
             for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-              onDisconnectedPromises.push(this._processEvent(
+              await this._processEvent(
                 () => listener.onDisconnected(instanceIndex),
-                `${primaryAccountId}:${instanceIndex}:onDisconnected`));
+                `${primaryAccountId}:${instanceIndex}:onDisconnected`);
             }
-            await Promise.all(onDisconnectedPromises);
           }
-          const onStreamClosedPromises = [];
           this._packetOrderer.onStreamClosed(instanceId);
-          if(socketInstance) {
+          if (socketInstance) {
             socketInstance.synchronizationThrottler.removeIdByParameters(data.accountId, instanceNumber, data.host);
           }
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onStreamClosedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onStreamClosed(instanceIndex),
-              `${primaryAccountId}:${instanceIndex}:onStreamClosed`));
+              `${primaryAccountId}:${instanceIndex}:onStreamClosed`);
           }
-          await Promise.all(onStreamClosedPromises);
           delete this._connectedHosts[instanceId];
+          if (isOnlyActiveInstance() && !isTimeout) {
+            await this._subscriptionManager.onDisconnected(data.accountId, 0);
+            await this._subscriptionManager.onDisconnected(data.accountId, 1);
+          }
         }
       };
       if (data.type === 'authenticated') {
@@ -1871,11 +1867,10 @@ export default class MetaApiWebsocketClient {
         if((!data.sessionId) || socketInstance && (data.sessionId === socketInstance.sessionId)) {
           this._latencyService.onConnected(instanceId);
           this._connectedHosts[instanceId] = data.host;
-          const onConnectedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onConnectedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onConnected(instanceIndex, data.replicas),
-              `${primaryAccountId}:${instanceIndex}:onConnected`));
+              `${primaryAccountId}:${instanceIndex}:onConnected`);
           }
           this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
           if(data.replicas === 1) {
@@ -1883,13 +1878,11 @@ export default class MetaApiWebsocketClient {
           } else {
             this._subscriptionManager.cancelSubscribe(data.accountId + ':' + instanceNumber);
           }
-          await Promise.all(onConnectedPromises);
         }
       } else if (data.type === 'disconnected') {
         cancelDisconnectTimer();
         await onDisconnected();
       } else if (data.type === 'synchronizationStarted') {
-        const promises = [];
         this._synchronizationFlags[data.synchronizationId] = {
           accountId: data.accountId, instanceNumber,
           specificationsUpdated: data.specificationsHashIndex === undefined,
@@ -1909,41 +1902,39 @@ export default class MetaApiWebsocketClient {
           this._synchronizationHashes[data.synchronizationId].ordersHashes[data.ordersHashIndex] : undefined;
         delete this._synchronizationHashes[data.synchronizationId];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-          promises.push(this._processEvent(
-            () => listener.onSynchronizationStarted(instanceIndex,
-              specificationsHash, positionsHash, ordersHash, data.synchronizationId),
-            `${primaryAccountId}:${instanceIndex}:onSynchronizationStarted`));
+          await this._processEvent(
+            () => listener.onSynchronizationStarted(instanceIndex, specificationsHash,
+              positionsHash, ordersHash, data.synchronizationId),
+            `${primaryAccountId}:${instanceIndex}:onSynchronizationStarted`);
         }
-        await Promise.all(promises);
       } else if (data.type === 'accountInformation') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
           return;
         }
         if (data.accountInformation) {
-          const onAccountInformationUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onAccountInformationUpdatedPromises.push(
-              Promise.resolve((async () => {
+            try {
+              await this._processEvent(
+                () => listener.onAccountInformationUpdated(instanceIndex, data.accountInformation),
+                `${primaryAccountId}:${instanceIndex}:onAccountInformationUpdated`, true);
+              // eslint-disable-next-line max-depth
+              if (this._synchronizationFlags[data.synchronizationId] &&
+                !this._synchronizationFlags[data.synchronizationId].positionsUpdated) {
                 await this._processEvent(
-                  () => listener.onAccountInformationUpdated(instanceIndex, data.accountInformation),
-                  `${primaryAccountId}:${instanceIndex}:onAccountInformationUpdated`, true);
-                if(this._synchronizationFlags[data.synchronizationId] && 
-                    !this._synchronizationFlags[data.synchronizationId].positionsUpdated) {
+                  () => listener.onPositionsSynchronized(instanceIndex, data.synchronizationId),
+                  `${primaryAccountId}:${instanceIndex}:onPositionsSynchronized`, true);
+                // eslint-disable-next-line max-depth
+                if (!this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
                   await this._processEvent(
-                    () => listener.onPositionsSynchronized(instanceIndex, data.synchronizationId),
-                    `${primaryAccountId}:${instanceIndex}:onPositionsSynchronized`, true);
-                  if(!this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
-                    await this._processEvent(
-                      () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
-                      `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
-                  }
+                    () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
+                    `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
                 }
-              })())
-                .catch(err => this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
-                  'about accountInformation event', err))
-            );
+              }
+            } catch (err) {
+              this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
+                'about accountInformation event', err);
+            }
           }
-          await Promise.all(onAccountInformationUpdatedPromises);
           if(this._synchronizationFlags[data.synchronizationId] && 
               !this._synchronizationFlags[data.synchronizationId].positionsUpdated && 
               !this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
@@ -1955,34 +1946,29 @@ export default class MetaApiWebsocketClient {
           return;
         }
         for (let deal of (data.deals || [])) {
-          const onDealAddedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onDealAddedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onDealAdded(instanceIndex, deal),
-              `${primaryAccountId}:${instanceIndex}:onDealAdded`));
+              `${primaryAccountId}:${instanceIndex}:onDealAdded`);
           }
-          await Promise.all(onDealAddedPromises);
         }
       } else if (data.type === 'orders') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
           return;
         }
-        const onPendingOrdersReplacedPromises = [];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-          onPendingOrdersReplacedPromises.push(
-            Promise.resolve((async () => {
-              await this._processEvent(
-                () => listener.onPendingOrdersReplaced(instanceIndex, data.orders || []),
-                `${primaryAccountId}:${instanceIndex}:onPendingOrdersReplaced`, true);
-              await this._processEvent(
-                () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
-                `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
-            })())
-              .catch(err => this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
-                'about orders event', err))
-          );
+          try {
+            await this._processEvent(
+              () => listener.onPendingOrdersReplaced(instanceIndex, data.orders || []),
+              `${primaryAccountId}:${instanceIndex}:onPendingOrdersReplaced`, true);
+            await this._processEvent(
+              () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
+              `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
+          } catch (err) {
+            this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
+              'about orders event', err);
+          }
         }
-        await Promise.all(onPendingOrdersReplacedPromises);
         if(this._synchronizationFlags[data.synchronizationId]) {
           delete this._synchronizationFlags[data.synchronizationId];
         }
@@ -1991,139 +1977,115 @@ export default class MetaApiWebsocketClient {
           return;
         }
         for (let historyOrder of (data.historyOrders || [])) {
-          const onHistoryOrderAddedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onHistoryOrderAddedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onHistoryOrderAdded(instanceIndex, historyOrder),
-              `${primaryAccountId}:${instanceIndex}:onHistoryOrderAdded`));
+              `${primaryAccountId}:${instanceIndex}:onHistoryOrderAdded`);
           }
-          await Promise.all(onHistoryOrderAddedPromises);
         }
       } else if (data.type === 'positions') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
           return;
         }
-        const onPositionsReplacedPromises = [];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-          onPositionsReplacedPromises.push(Promise.resolve((async () => {
+          try {
             await this._processEvent(
               () => listener.onPositionsReplaced(instanceIndex, data.positions || []),
               `${primaryAccountId}:${instanceIndex}:onPositionsReplaced`, true);
             await this._processEvent(
               () => listener.onPositionsSynchronized(instanceIndex, data.synchronizationId),
               `${primaryAccountId}:${instanceIndex}:onPositionsSynchronized`, true);
-            if(this._synchronizationFlags[data.synchronizationId] && 
+            if (this._synchronizationFlags[data.synchronizationId] &&
               !this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
               await this._processEvent(
                 () => listener.onPendingOrdersSynchronized(instanceIndex, data.synchronizationId),
                 `${primaryAccountId}:${instanceIndex}:onPendingOrdersSynchronized`, true);
             }
-          })())
-            .catch(err => this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
-              'about positions event', err))
-          );
+          } catch (err) {
+            this._logger.error(`${primaryAccountId}:${instanceIndex}: Failed to notify listener ` +
+              'about positions event', err);
+          }
         }
-        await Promise.all(onPositionsReplacedPromises);
         if(this._synchronizationFlags[data.synchronizationId] && 
           !this._synchronizationFlags[data.synchronizationId].ordersUpdated) {
           delete this._synchronizationFlags[data.synchronizationId];
         }
       } else if (data.type === 'update') {
         if (data.accountInformation) {
-          const onAccountInformationUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onAccountInformationUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onAccountInformationUpdated(instanceIndex, data.accountInformation),
-              `${primaryAccountId}:${instanceIndex}:onAccountInformationUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onAccountInformationUpdated`);
           }
-          await Promise.all(onAccountInformationUpdatedPromises);
         }
         const updatedPositions = data.updatedPositions || [];
         const removedPositionIds = data.removedPositionIds || [];
         if(updatedPositions.length || removedPositionIds.length) {
-          const onPositionsUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onPositionsUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onPositionsUpdated(instanceIndex, updatedPositions, removedPositionIds),
-              `${primaryAccountId}:${instanceIndex}:onPositionsUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onPositionsUpdated`);
           }
-          await Promise.all(onPositionsUpdatedPromises);
         }
         for (let position of updatedPositions) {
-          const onPositionUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onPositionUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onPositionUpdated(instanceIndex, position),
-              `${primaryAccountId}:${instanceIndex}:onPositionUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onPositionUpdated`);
           }
-          await Promise.all(onPositionUpdatedPromises);
         }
         for (let positionId of removedPositionIds) {
-          const onPositionRemovedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onPositionRemovedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onPositionRemoved(instanceIndex, positionId),
-              `${primaryAccountId}:${instanceIndex}:onPositionRemoved`));
+              `${primaryAccountId}:${instanceIndex}:onPositionRemoved`);
           }
-          await Promise.all(onPositionRemovedPromises);
         }
         const updatedOrders = data.updatedOrders || [];
         const completedOrderIds = data.completedOrderIds || [];
         if(updatedOrders.length || completedOrderIds.length) {
-          const onOrdersUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onOrdersUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onPendingOrdersUpdated(instanceIndex, updatedOrders, completedOrderIds),
-              `${primaryAccountId}:${instanceIndex}:onPendingOrdersUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onPendingOrdersUpdated`);
           }
-          await Promise.all(onOrdersUpdatedPromises);
         }
         for (let order of updatedOrders) {
-          const onPendingOrderUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onPendingOrderUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onPendingOrderUpdated(instanceIndex, order),
-              `${primaryAccountId}:${instanceIndex}:onPendingOrderUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onPendingOrderUpdated`);
           }
-          await Promise.all(onPendingOrderUpdatedPromises);
         }
         for (let orderId of completedOrderIds) {
-          const onPendingOrderCompletedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onPendingOrderCompletedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onPendingOrderCompleted(instanceIndex, orderId),
-              `${primaryAccountId}:${instanceIndex}:onPendingOrderCompleted`));
+              `${primaryAccountId}:${instanceIndex}:onPendingOrderCompleted`);
           }
-          await Promise.all(onPendingOrderCompletedPromises);
         }
         for (let historyOrder of (data.historyOrders || [])) {
-          const onHistoryOrderAddedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onHistoryOrderAddedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onHistoryOrderAdded(instanceIndex, historyOrder),
-              `${primaryAccountId}:${instanceIndex}:onHistoryOrderAdded`));
+              `${primaryAccountId}:${instanceIndex}:onHistoryOrderAdded`);
           }
-          await Promise.all(onHistoryOrderAddedPromises);
         }
         for (let deal of (data.deals || [])) {
-          const onDealAddedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onDealAddedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onDealAdded(instanceIndex, deal),
-              `${primaryAccountId}:${instanceIndex}:onDealAdded`));
+              `${primaryAccountId}:${instanceIndex}:onDealAdded`);
           }
-          await Promise.all(onDealAddedPromises);
         }
         if (data.timestamps) {
           data.timestamps.clientProcessingFinished = new Date();
-          const onUpdatePromises = [];
           // eslint-disable-next-line max-depth
           for (let listener of this._latencyListeners || []) {
-            onUpdatePromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onUpdate(data.accountId, data.timestamps),
-              `${primaryAccountId}:${instanceIndex}:onUpdate`));
+              `${primaryAccountId}:${instanceIndex}:onUpdate`);
           }
-          await Promise.all(onUpdatePromises);
         }
       } else if (data.type === 'dealSynchronizationFinished') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
@@ -2131,27 +2093,23 @@ export default class MetaApiWebsocketClient {
           return;
         }
         this._latencyService.onDealsSynchronized(instanceId);
-        const onDealsSynchronizedPromises = [];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           if(socketInstance) {
             socketInstance.synchronizationThrottler.removeSynchronizationId(data.synchronizationId);
           }
-          onDealsSynchronizedPromises.push(this._processEvent(
+          await this._processEvent(
             () => listener.onDealsSynchronized(instanceIndex, data.synchronizationId),
-            `${primaryAccountId}:${instanceIndex}:onDealsSynchronized`));
+            `${primaryAccountId}:${instanceIndex}:onDealsSynchronized`);
         }
-        await Promise.all(onDealsSynchronizedPromises);
       } else if (data.type === 'orderSynchronizationFinished') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
           return;
         }
-        const onHistoryOrdersSynchronizedPromises = [];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-          onHistoryOrdersSynchronizedPromises.push(this._processEvent(
+          await this._processEvent(
             () => listener.onHistoryOrdersSynchronized(instanceIndex, data.synchronizationId),
-            `${primaryAccountId}:${instanceIndex}:onHistoryOrdersSynchronized`));
+            `${primaryAccountId}:${instanceIndex}:onHistoryOrdersSynchronized`);
         }
-        await Promise.all(onHistoryOrdersSynchronizedPromises);
       } else if (data.type === 'status') {
         if (!this._connectedHosts[instanceId]) {
           if(this._statusTimers[instanceId] && data.authenticated && 
@@ -2166,65 +2124,52 @@ export default class MetaApiWebsocketClient {
           }
         } else {
           resetDisconnectTimer();
-          const onBrokerConnectionStatusChangedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onBrokerConnectionStatusChangedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onBrokerConnectionStatusChanged(instanceIndex, !!data.connected),
-              `${primaryAccountId}:${instanceIndex}:onBrokerConnectionStatusChanged`));
+              `${primaryAccountId}:${instanceIndex}:onBrokerConnectionStatusChanged`);
           }
-          await Promise.all(onBrokerConnectionStatusChangedPromises);
           if (data.healthStatus) {
-            const onHealthStatusPromises = [];
             // eslint-disable-next-line max-depth
             for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-              onHealthStatusPromises.push(this._processEvent(
+              await this._processEvent(
                 () => listener.onHealthStatus(instanceIndex, data.healthStatus),
-                `${primaryAccountId}:${instanceIndex}:onHealthStatus`));
+                `${primaryAccountId}:${instanceIndex}:onHealthStatus`);
             }
-            await Promise.all(onHealthStatusPromises);
           }
         }
       } else if (data.type === 'downgradeSubscription') {
-        // eslint-disable-next-line no-console
         this._logger.info(`${primaryAccountId}:${instanceIndex}: Market data subscriptions for symbol ` +
           `${data.symbol} were downgraded by the server due to rate limits. Updated subscriptions: ` +
           `${JSON.stringify(data.updates)}, removed subscriptions: ${JSON.stringify(data.unsubscriptions)}. ` +
           'Please read https://metaapi.cloud/docs/client/rateLimiting/ for more details.');
-        const onSubscriptionDowngradePromises = [];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-          onSubscriptionDowngradePromises.push(this._processEvent(
+          await this._processEvent(
             () => listener.onSubscriptionDowngraded(instanceIndex, data.symbol, data.updates, data.unsubscriptions),
-            `${primaryAccountId}:${instanceIndex}:onSubscriptionDowngraded`));
+            `${primaryAccountId}:${instanceIndex}:onSubscriptionDowngraded`);
         }
-        await Promise.all(onSubscriptionDowngradePromises);
       } else if (data.type === 'specifications') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
           return;
         }
-        const onSymbolSpecificationsUpdatedPromises = [];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-          onSymbolSpecificationsUpdatedPromises.push(this._processEvent(
+          await this._processEvent(
             () => listener.onSymbolSpecificationsUpdated(instanceIndex, data.specifications || [],
-              data.removedSymbols || []), `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationsUpdated`));
+              data.removedSymbols || []), `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationsUpdated`);
         }
-        await Promise.all(onSymbolSpecificationsUpdatedPromises);
         for (let specification of (data.specifications || [])) {
-          const onSymbolSpecificationUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onSymbolSpecificationUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onSymbolSpecificationUpdated(instanceIndex, specification),
-              `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationUpdated`);
           }
-          await Promise.all(onSymbolSpecificationUpdatedPromises);
         }
         for (let removedSymbol of (data.removedSymbols || [])) {
-          const onSymbolSpecificationRemovedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onSymbolSpecificationRemovedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onSymbolSpecificationRemoved(instanceIndex, removedSymbol),
-              `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationRemoved`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolSpecificationRemoved`);
           }
-          await Promise.all(onSymbolSpecificationRemovedPromises);
         }
       } else if (data.type === 'prices') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {
@@ -2234,54 +2179,48 @@ export default class MetaApiWebsocketClient {
         let candles = data.candles || [];
         let ticks = data.ticks || [];
         let books = data.books || [];
-        const onSymbolPricesUpdatedPromises = [];
         for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
           if (prices.length) {
-            onSymbolPricesUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onSymbolPricesUpdated(instanceIndex, prices, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${primaryAccountId}:${instanceIndex}:onSymbolPricesUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolPricesUpdated`);
           }
           if (candles.length) {
-            onSymbolPricesUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onCandlesUpdated(instanceIndex, candles, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${primaryAccountId}:${instanceIndex}:onCandlesUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onCandlesUpdated`);
           }
           if (ticks.length) {
-            onSymbolPricesUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onTicksUpdated(instanceIndex, ticks, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${primaryAccountId}:${instanceIndex}:onTicksUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onTicksUpdated`);
           }
           if (books.length) {
-            onSymbolPricesUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onBooksUpdated(instanceIndex, books, data.equity, data.margin, data.freeMargin,
                 data.marginLevel, data.accountCurrencyExchangeRate),
-              `${primaryAccountId}:${instanceIndex}:onBooksUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onBooksUpdated`);
           }
         }
-        await Promise.all(onSymbolPricesUpdatedPromises);
         for (let price of prices) {
-          const onSymbolPriceUpdatedPromises = [];
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
-            onSymbolPriceUpdatedPromises.push(this._processEvent(
+            await this._processEvent(
               () => listener.onSymbolPriceUpdated(instanceIndex, price),
-              `${primaryAccountId}:${instanceIndex}:onSymbolPriceUpdated`));
+              `${primaryAccountId}:${instanceIndex}:onSymbolPriceUpdated`);
           }
-          await Promise.all(onSymbolPriceUpdatedPromises);
         }
         for (let price of prices) {
           if (price.timestamps) {
             price.timestamps.clientProcessingFinished = new Date();
-            const onSymbolPricePromises = [];
             // eslint-disable-next-line max-depth
             for (let listener of this._latencyListeners || []) {
-              onSymbolPricePromises.push(this._processEvent(
+              await this._processEvent(
                 () => listener.onSymbolPrice(data.accountId, price.symbol, price.timestamps),
-                `${primaryAccountId}:${instanceIndex}:onSymbolPrice`));
+                `${primaryAccountId}:${instanceIndex}:onSymbolPrice`);
             }
-            await Promise.all(onSymbolPricePromises);
           }
         }
       }

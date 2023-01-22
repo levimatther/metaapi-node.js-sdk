@@ -1,3 +1,6 @@
+20.10.3
+  - fix synchronziation listener call order
+
 20.10.2
   - fixed unsubscribeFromMarketData method type
 
