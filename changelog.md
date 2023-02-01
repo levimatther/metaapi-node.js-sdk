@@ -1,3 +1,6 @@
+20.10.4
+  - improved reliability of terminal hash manager
+
 20.10.3
   - fix synchronziation listener call order
 

@@ -139,20 +139,15 @@ export default class TerminalState extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onPositionsSynchronized(instanceIndex: string, synchronizationId: string): Promise<any>;
-  
+
   /**
-   * Invoked when MetaTrader position is updated
+   * Invoked when MetaTrader positions are updated
    * @param {string} instanceIndex index of an account instance connected
-   * @param {MetatraderPosition} position updated MetaTrader position
+   * @param {MetatraderPosition[]} positions updated MetaTrader positions
+   * @param {string[]} removedPositionIds removed position ids
+   * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPositionUpdated(instanceIndex: string, position: MetatraderPosition): Promise<any>;
-  
-  /**
-   * Invoked when MetaTrader position is removed
-   * @param {string} instanceIndex index of an account instance connected
-   * @param {string} positionId removed MetaTrader position id
-   */
-  onPositionRemoved(instanceIndex: string, positionId: string): Promise<any>;
+  onPositionsUpdated(instanceIndex: string, positions: MetatraderPosition[], removedPositionIds: string[]): Promise<any>;
   
   /**
    * Invoked when the orders are replaced as a result of initial terminal state synchronization
@@ -170,22 +165,15 @@ export default class TerminalState extends SynchronizationListener {
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
   onPendingOrdersSynchronized(instanceIndex: string, synchronizationId: string): Promise<any>;
-  
+
   /**
-   * Invoked when MetaTrader pending order is updated
+   * Invoked when MetaTrader pending orders are updated or completed
    * @param {string} instanceIndex index of an account instance connected
-   * @param {MetatraderOrder} order updated MetaTrader pending order
+   * @param {MetatraderOrder[]} orders updated MetaTrader pending orders
+   * @param {string[]} completedOrderIds completed MetaTrader pending order ids
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  onPendingOrderUpdated(instanceIndex: string, order: MetatraderOrder): Promise<any>;
- 
-  /**
-   * Invoked when MetaTrader pending order is completed (executed or canceled)
-   * @param {string} instanceIndex index of an account instance connected
-   * @param {string} orderId completed MetaTrader pending order id
-   * @return {Promise} promise which resolves when the asynchronous event is processed
-   */
-  onPendingOrderCompleted(instanceIndex: string, orderId: string): Promise<any>;
+  onPendingOrdersUpdated(instanceIndex: string, orders: MetatraderOrder[], completedOrderIds: string[]): Promise<any>;
   
   /**
    * Invoked when a symbol specification was updated
