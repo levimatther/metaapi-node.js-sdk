@@ -1,6 +1,13 @@
-import { MarketDataSubscription, MarketDataUnsubscription, MetatraderAccountInformation, MetatraderBook, MetatraderTick, MetatraderCandle, MetatraderSymbolPrice, MetatraderSymbolSpecification, MetatraderDeal, MetatraderOrder, MetatraderPosition } from "./metaApiWebsocket.client"
+import { MetatraderOrder, MetatraderPosition } from "./metaApiWebsocket.client"
+import ClientApiClient from "../clients/metaApi/clientApi.client"
 
 export default class TerminalHashManager {
+
+  /**
+   * Constructs the instance of terminal hash manager class
+   * @param {ClientApiClient} clientApiClient client api client
+   */
+  constructor(clientApiClient: ClientApiClient)
 
   /**
    * Returns specifications data by hash

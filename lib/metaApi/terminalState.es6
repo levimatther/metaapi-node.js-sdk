@@ -283,7 +283,6 @@ export default class TerminalState extends SynchronizationListener {
     let state = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
     state.positions = positions;
-    state.positionsHash = null;
   }
 
   /**
@@ -309,13 +308,13 @@ export default class TerminalState extends SynchronizationListener {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
 
-    const updatePositions = async (state) => {
+    const updatePositions = async (state, instance) => {
       const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
-        instanceIndex, positions, removedPositionIds, state.positionsHash);
+        instance, positions, removedPositionIds, state.positionsHash);
       state.positionsHash = hash;
     };
-    await updatePositions(instanceState);
-    await updatePositions(this._combinedState);
+    await updatePositions(instanceState, instanceIndex);
+    await updatePositions(this._combinedState, this._combinedInstanceIndex);
   }
 
   /**
@@ -327,7 +326,6 @@ export default class TerminalState extends SynchronizationListener {
   onPendingOrdersReplaced(instanceIndex, orders) {
     let state = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    state.ordersHash = null;
     state.orders = orders;
   }
 
@@ -433,7 +431,7 @@ export default class TerminalState extends SynchronizationListener {
   async onSymbolSpecificationsUpdated(instanceIndex, specifications, removedSymbols) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    if(!instanceState.specificationsHash) {
+    if(!instanceState.ordersInitialized) {
       for (let specification of specifications) {
         instanceState.specificationsBySymbol[specification.symbol] = specification;
       }

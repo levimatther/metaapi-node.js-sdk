@@ -236,7 +236,7 @@ describe('TerminalHashManager', () => {
       sinon.assert.match(data1, data2);
     });
 
-    it('should get last used position hashes with fuzzy search', async () => {
+    it('should get last used specifications hashes with fuzzy search', async () => {
       const hash = await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
           {symbol: 'CADUSD', tickSize: 0.001}]);
@@ -314,9 +314,9 @@ describe('TerminalHashManager', () => {
       });
       const hashes = terminalHashManager.getPositionsHashesByHash('accountId', updatedHash);
       sinon.assert.match(hashes, {
-        1: await terminalHashManager._getPositionHash(newPositions[0], 'cloud-g1', 'vint-hill'),
-        2: await terminalHashManager._getPositionHash(positions[1], 'cloud-g1', 'vint-hill'),
-        3: await terminalHashManager._getPositionHash(positions[2], 'cloud-g1', 'vint-hill')
+        1: await terminalHashManager.getItemHash(newPositions[0], 'positions', 'cloud-g1', 'vint-hill'),
+        2: await terminalHashManager.getItemHash(positions[1], 'positions', 'cloud-g1', 'vint-hill'),
+        3: await terminalHashManager.getItemHash(positions[2], 'positions', 'cloud-g1', 'vint-hill')
       });
       const newPositions2 = [{id: '3', volume: 50}];
       const updatedHash2 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
@@ -329,9 +329,9 @@ describe('TerminalHashManager', () => {
       });
       const hashes2 = terminalHashManager.getPositionsHashesByHash('accountId', updatedHash2);
       sinon.assert.match(hashes2, {
-        1: await terminalHashManager._getPositionHash(newPositions[0], 'cloud-g1', 'vint-hill'),
-        2: await terminalHashManager._getPositionHash(positions[1], 'cloud-g1', 'vint-hill'),
-        3: await terminalHashManager._getPositionHash(newPositions2[0], 'cloud-g1', 'vint-hill')
+        1: await terminalHashManager.getItemHash(newPositions[0], 'positions', 'cloud-g1', 'vint-hill'),
+        2: await terminalHashManager.getItemHash(positions[1], 'positions', 'cloud-g1', 'vint-hill'),
+        3: await terminalHashManager.getItemHash(newPositions2[0], 'positions', 'cloud-g1', 'vint-hill')
       });
     });
 
@@ -344,44 +344,36 @@ describe('TerminalHashManager', () => {
       const updatedHash = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], hash);
       const recordedPositions = terminalHashManager.getPositionsByHash('accountId', updatedHash);
-      const removedPositions = terminalHashManager.getRemovedPositionsByHash('accountId', updatedHash);
       sinon.assert.match(recordedPositions, {
         1: positions[0],
         3: positions[2],
         4: positions[3]
       });
-      sinon.assert.match(removedPositions, ['2']);
       await clock.tickAsync(500);
       const updatedHash2 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], updatedHash);
       const recordedPositions2 = terminalHashManager.getPositionsByHash('accountId', updatedHash2);
-      const removedPositions2 = terminalHashManager.getRemovedPositionsByHash('accountId', updatedHash2);
       sinon.assert.match(updatedHash, updatedHash2);
       sinon.assert.match({
         1: positions[0],
         3: positions[2],
         4: positions[3]
       }, recordedPositions2);
-      sinon.assert.match(removedPositions2, ['2']);
       await clock.tickAsync(500);
       const updatedHash3 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3'], updatedHash2);
       const recordedPositions3 = terminalHashManager.getPositionsByHash('accountId', updatedHash3);
-      const removedPositions3 = terminalHashManager.getRemovedPositionsByHash('accountId', updatedHash3);
       sinon.assert.match({
         1: positions[0],
         4: positions[3]
       }, recordedPositions3);
-      sinon.assert.match(removedPositions3, ['2', '3']);
       await clock.tickAsync(500);
       const updatedHash4 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3', '4'], updatedHash3);
       const recordedPositions4 = terminalHashManager.getPositionsByHash('accountId', updatedHash4);
-      const removedPositions4 = terminalHashManager.getRemovedPositionsByHash('accountId', updatedHash4);
       sinon.assert.match({
         1: positions[0]
       }, recordedPositions4);
-      sinon.assert.match(removedPositions4, ['2', '3', '4']);
     });
 
     it('should optimize position trees', async () => {
@@ -396,18 +388,14 @@ describe('TerminalHashManager', () => {
       const updatedHash2 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2', '3'], updatedHash);
       const recordedPositions = terminalHashManager.getPositionsByHash('accountId', updatedHash2);
-      const removedPositions = terminalHashManager.getRemovedPositionsByHash('accountId', updatedHash2);
       sinon.assert.match(recordedPositions, {
         1: positions[0]
       });
-      sinon.assert.match(removedPositions, ['2', '4', '3']);
       await clock.tickAsync(550000);
       const recordedPositions2 = terminalHashManager.getPositionsByHash('accountId', updatedHash2);
-      const removedPositions2 = terminalHashManager.getRemovedPositionsByHash('accountId', updatedHash2);
       sinon.assert.match({
         1: positions[0]
       }, recordedPositions2);
-      sinon.assert.match(removedPositions2, ['2', '3']);
     });
 
     it('should get last used hashes', async () => {
@@ -460,9 +448,9 @@ describe('TerminalHashManager', () => {
       });
       const hashes = terminalHashManager.getOrdersHashesByHash('accountId', updatedHash);
       sinon.assert.match(hashes, {
-        1: await terminalHashManager._getOrderHash(newOrders[0], 'cloud-g1', 'vint-hill'),
-        2: await terminalHashManager._getOrderHash(orders[1], 'cloud-g1', 'vint-hill'),
-        3: await terminalHashManager._getOrderHash(orders[2], 'cloud-g1', 'vint-hill')
+        1: await terminalHashManager.getItemHash(newOrders[0], 'orders', 'cloud-g1', 'vint-hill'),
+        2: await terminalHashManager.getItemHash(orders[1], 'orders', 'cloud-g1', 'vint-hill'),
+        3: await terminalHashManager.getItemHash(orders[2], 'orders', 'cloud-g1', 'vint-hill')
       });
       const newOrders2 = [{id: '3', openPrice: 50}];
       const updatedHash2 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
@@ -475,9 +463,9 @@ describe('TerminalHashManager', () => {
       });
       const hashes2 = terminalHashManager.getOrdersHashesByHash('accountId', updatedHash2);
       sinon.assert.match(hashes2, {
-        1: await terminalHashManager._getOrderHash(newOrders[0], 'cloud-g1', 'vint-hill'),
-        2: await terminalHashManager._getOrderHash(orders[1], 'cloud-g1', 'vint-hill'),
-        3: await terminalHashManager._getOrderHash(newOrders2[0], 'cloud-g1', 'vint-hill')
+        1: await terminalHashManager.getItemHash(newOrders[0], 'orders', 'cloud-g1', 'vint-hill'),
+        2: await terminalHashManager.getItemHash(orders[1], 'orders', 'cloud-g1', 'vint-hill'),
+        3: await terminalHashManager.getItemHash(newOrders2[0], 'orders', 'cloud-g1', 'vint-hill')
       });
     });
 
@@ -490,44 +478,36 @@ describe('TerminalHashManager', () => {
       const updatedHash = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], hash);
       const recordedOrders = terminalHashManager.getOrdersByHash('accountId', updatedHash);
-      const completedOrders = terminalHashManager.getCompletedOrdersByHash('accountId', updatedHash);
       sinon.assert.match(recordedOrders, {
         1: orders[0],
         3: orders[2],
         4: orders[3]
       });
-      sinon.assert.match(completedOrders, ['2']);
       await clock.tickAsync(500);
       const updatedHash2 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], updatedHash);
       const recordedOrders2 = terminalHashManager.getOrdersByHash('accountId', updatedHash2);
-      const completedOrders2 = terminalHashManager.getCompletedOrdersByHash('accountId', updatedHash2);
       sinon.assert.match(updatedHash, updatedHash2);
       sinon.assert.match(recordedOrders2, {
         1: orders[0],
         3: orders[2],
         4: orders[3]
       });
-      sinon.assert.match(completedOrders2, ['2']);
       await clock.tickAsync(500);
       const updatedHash3 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3'], updatedHash2);
       const recordedOrders3 = terminalHashManager.getOrdersByHash('accountId', updatedHash3);
-      const completedOrders3 = terminalHashManager.getCompletedOrdersByHash('accountId', updatedHash3);
       sinon.assert.match(recordedOrders3, {
         1: orders[0],
         4: orders[3]
       });
-      sinon.assert.match(completedOrders3, ['2', '3']);
       await clock.tickAsync(500);
       const updatedHash4 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3', '4'], updatedHash3);
       const recordedOrders4 = terminalHashManager.getOrdersByHash('accountId', updatedHash4);
-      const completedOrders4 = terminalHashManager.getCompletedOrdersByHash('accountId', updatedHash4);
       sinon.assert.match(recordedOrders4, {
         1: orders[0]
       });
-      sinon.assert.match(completedOrders4, ['2', '3', '4']);
     });
 
     it('should optimize order trees', async () => {
@@ -542,18 +522,14 @@ describe('TerminalHashManager', () => {
       const updatedHash2 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2', '3'], updatedHash);
       const recordedOrders = terminalHashManager.getOrdersByHash('accountId', updatedHash2);
-      const completedOrders = terminalHashManager.getCompletedOrdersByHash('accountId', updatedHash2);
       sinon.assert.match(recordedOrders, {
         1: orders[0]
       });
-      sinon.assert.match(completedOrders, ['2', '4', '3']);
       await clock.tickAsync(550000);
       const recordedOrders2 = terminalHashManager.getOrdersByHash('accountId', updatedHash2);
-      const completedOrders2 = terminalHashManager.getCompletedOrdersByHash('accountId', updatedHash2);
       sinon.assert.match(recordedOrders2, {
         1: orders[0]
       });
-      sinon.assert.match(completedOrders2, ['2', '3']);
     });
 
     it('should get last used hashes', async () => {
@@ -747,4 +723,18 @@ describe('TerminalHashManager', () => {
       'vint-hill:1:ps-mpa-1', orders);
     sinon.assert.match(ordersHash, expectedOrdersHash);
   });
+
+  it('should reference to specifications of other instance', async () => {
+    let hash = await terminalHashManager.recordSpecifications('BrokerServer1', 'cloud-g1', 'connection1', 'host',
+      [{symbol: 'EURUSD'}]);
+
+    terminalHashManager.removeSpecificationReference('BrokerServer2', 'connection2', 'vint-hill:1:ps-mpa-1');
+    terminalHashManager.addSpecificationReference('BrokerServer2', hash, 'connection2','vint-hill:1:ps-mpa-1');
+
+    let specifications1 = terminalHashManager.getSpecificationsByHash('BrokerServer1', hash);
+    let specifications2 = terminalHashManager.getSpecificationsByHash('BrokerServer2', hash);
+    specifications1.should.deepEqual({'EURUSD': {symbol: 'EURUSD'}});
+    specifications1.should.equal(specifications2);
+  });
+
 });
