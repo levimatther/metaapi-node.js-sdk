@@ -386,11 +386,19 @@ export declare type EquityChartItem = {
    */
   maxEquity: number,
   /**
-   * last balance value observed on the account 
+   * starting balance value observed during the period 
+   */
+  startBalance: number,
+  /**
+   * starting equity value observed during the period 
+   */
+  startEquity: number,
+  /**
+   * last balance value observed during the period
    */
   lastBalance: number,
   /**
-   * last equity value observed on the account 
+   * last equity value observed during the period
    */
   lastEquity: number
 }

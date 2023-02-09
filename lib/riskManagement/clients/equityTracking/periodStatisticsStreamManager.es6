@@ -48,11 +48,10 @@ export default class PeriodStatisticsStreamManager {
    * @param {PeriodStatisticsListener} listener period statistics event listener
    * @param {String} accountId account id
    * @param {String} trackerId tracker id
-   * @param {Date} startTime date to start tracking from
    * @returns {String} listener id
    */
   // eslint-disable-next-line complexity, max-statements
-  async addPeriodStatisticsListener(listener, accountId, trackerId, startTime) {
+  async addPeriodStatisticsListener(listener, accountId, trackerId) {
     if(!this._periodStatisticsCaches[accountId]) {
       this._periodStatisticsCaches[accountId] = {
         trackerData: {},
@@ -317,7 +316,7 @@ export default class PeriodStatisticsStreamManager {
         }
       } catch (err) {
         listener.onError(err);
-        this._logger.error(`Failed initialize equity chart data for account ${accountId}`, err);
+        this._logger.error(`Failed to initialize tracking statistics data for account ${accountId}`, err);
         await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
         retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
       }

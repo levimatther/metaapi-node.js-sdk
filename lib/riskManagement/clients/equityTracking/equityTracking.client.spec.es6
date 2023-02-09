@@ -192,6 +192,8 @@ describe('EquityTrackingClient', () => {
       averageEquity: 1075,
       minEquity: 50,
       maxEquity: 2100,
+      startBalance: 100,
+      startEquity: 150,
       lastBalance: 500,
       lastEquity: 500
     }];

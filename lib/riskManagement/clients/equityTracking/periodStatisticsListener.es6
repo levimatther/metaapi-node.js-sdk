@@ -7,7 +7,7 @@ export default class PeriodStatisticsListener {
 
   /**
    * Processes period statistics event which occurs when new period statistics data arrives
-   * @param {PeriodStatistics} periodStatisticsEvent period statistics event
+   * @param {PeriodStatistics[]} periodStatisticsEvent period statistics event
    */
   async onPeriodStatisticsUpdated(periodStatisticsEvent) {
     throw Error('Abstract method onPeriodStatisticsUpdated has no implementation');
