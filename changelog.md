@@ -1,3 +1,6 @@
+20.11.0
+  - updated equity chart item model
+
 20.10.4
   - improved reliability of terminal hash manager
 

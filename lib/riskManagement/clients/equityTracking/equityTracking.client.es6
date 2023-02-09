@@ -288,8 +288,10 @@ export default class EquityTrackingClient {
    * @property {Number} averageEquity average equity value during the period
    * @property {Number} minEquity minimum equity value during the period
    * @property {Number} maxEquity maximum equity value during the period
-   * @property {Number} lastBalance last balance value observed on the account 
-   * @property {Number} lastEquity last equity value observed on the account 
+   * @property {Number} startBalance starting balance value observed during the period
+   * @property {Number} startEquity starting equity value observed during the period
+   * @property {Number} lastBalance last balance value observed during the period
+   * @property {Number} lastEquity last equity value observed during the period
    */
 
   /**
