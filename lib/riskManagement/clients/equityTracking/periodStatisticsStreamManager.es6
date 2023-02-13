@@ -27,6 +27,7 @@ export default class PeriodStatisticsStreamManager {
     this._accountSynchronizationFlags = {};
     this._pendingInitalizationResolves = {};
     this._retryIntervalInSeconds = 1;
+    this._fetchInitialDataIntervalId = {};
     this.removePeriodStatisticsListener = this.removePeriodStatisticsListener.bind(this);
     this._logger = LoggerManager.getLogger('PeriodStatisticsStreamManager');
   }
@@ -73,107 +74,167 @@ export default class PeriodStatisticsStreamManager {
     class PeriodStatisticsStreamListener extends SynchronizationListener {
 
       async onDealsSynchronized(instanceIndex, synchronizationId) {
-        if(!synchronizationFlags[accountId]) {
-          synchronizationFlags[accountId] = true;
-          Object.values(getAccountListeners()).forEach(accountListener => {
-            accountListener.onConnected();
-          });
-          if(pendingInitalizationResolves[accountId]) {
-            pendingInitalizationResolves[accountId].forEach(resolve => resolve());
-            delete pendingInitalizationResolves[accountId];
+        try {
+          if(!synchronizationFlags[accountId]) {
+            synchronizationFlags[accountId] = true;
+            Object.values(getAccountListeners()).forEach(accountListener => {
+              accountListener.onConnected();
+            });
+            if(pendingInitalizationResolves[accountId]) {
+              pendingInitalizationResolves[accountId].forEach(resolve => resolve());
+              delete pendingInitalizationResolves[accountId];
+            }
           }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onDealsSynchronized event for ' +
+          `equity chart listener for account ${accountId}`, err);
         }
       }
 
       async onDisconnected(instanceIndex) {
-        if(synchronizationFlags[accountId] && !connection.healthMonitor.healthStatus.synchronized) {
-          synchronizationFlags[accountId] = false;
-          Object.values(getAccountListeners()).forEach(accountListener => {
-            accountListener.onDisconnected();
-          });
+        try {
+          if(synchronizationFlags[accountId] && !connection.healthMonitor.healthStatus.synchronized) {
+            synchronizationFlags[accountId] = false;
+            Object.values(getAccountListeners()).forEach(accountListener => {
+              accountListener.onDisconnected();
+            });
+          }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onDisconnected event for ' +
+          `equity chart listener for account ${accountId}`, err);
         }
       }
 
       // eslint-disable-next-line complexity, max-statements
       async onSymbolPriceUpdated(instanceIndex, price) {
-        if(pendingInitalizationResolves[accountId]) {
-          pendingInitalizationResolves[accountId].forEach(resolve => resolve());
-          delete pendingInitalizationResolves[accountId];
-        }
-
-        if(!cache.lastPeriod) {
-          return;
-        }
-
-        /**
-         * Process brokerTime:
-         * - smaller than tracker startBrokerTime -> ignore
-         * - bigger than tracker endBrokerTime -> send onTrackerCompleted, close connection
-         * - bigger than period endBrokerTime -> send onPeriodStatisticsCompleted
-         * - normal -> compare to previous data, if different -> send onPeriodStatisticsUpdated
-         */
-        const equity = price.equity - Object.values(cache.equityAdjustments)
-          .reduce((a, b) => a + b, 0);
-        const brokerTime = price.brokerTime;
-        if(brokerTime > cache.lastPeriod.endBrokerTime) {
-          listener.onPeriodStatisticsCompleted();
-          cache.equityAdjustments = {};
-          const startBrokerTime = cache.lastPeriod.startBrokerTime;
-          cache.lastPeriod = null;
-          // eslint-disable-next-line no-constant-condition
-          while(true) {
-            let periods = await equityTrackingClient.getTrackingStatistics(accountId, trackerId, undefined, 2);
-            if(periods[0].startBrokerTime === startBrokerTime) {
-              await new Promise(res => setTimeout(res, 10000));
-            } else {
-              cache.lastPeriod = periods[0];
-              listener.onPeriodStatisticsUpdated(periods.reverse());
-              break;
-            }
+        try {
+          if(pendingInitalizationResolves[accountId]) {
+            pendingInitalizationResolves[accountId].forEach(resolve => resolve());
+            delete pendingInitalizationResolves[accountId];
           }
-        } else {
-          if(cache.trackerData.startBrokerTime && brokerTime < cache.trackerData.startBrokerTime) {
+  
+          if(!cache.lastPeriod) {
             return;
           }
-          if(cache.trackerData.endBrokerTime && brokerTime > cache.trackerData.endBrokerTime) {
-            listener.onTrackerCompleted();
+  
+          /**
+           * Process brokerTime:
+           * - smaller than tracker startBrokerTime -> ignore
+           * - bigger than tracker endBrokerTime -> send onTrackerCompleted, close connection
+           * - bigger than period endBrokerTime -> send onPeriodStatisticsCompleted
+           * - normal -> compare to previous data, if different -> send onPeriodStatisticsUpdated
+           */
+          const equity = price.equity - Object.values(cache.equityAdjustments)
+            .reduce((a, b) => a + b, 0);
+          const brokerTime = price.brokerTime;
+          if(brokerTime > cache.lastPeriod.endBrokerTime) {
+            listener.onPeriodStatisticsCompleted();
             cache.equityAdjustments = {};
-            connection.removeSynchronizationListener(this);
-            removePeriodStatisticsListener(listenerId);
-            await connection.close();
+            const startBrokerTime = cache.lastPeriod.startBrokerTime;
+            cache.lastPeriod = null;
+            // eslint-disable-next-line no-constant-condition
+            while(true) {
+              let periods = await equityTrackingClient.getTrackingStatistics(accountId, trackerId, undefined, 2, true);
+              if(periods[0].startBrokerTime === startBrokerTime) {
+                await new Promise(res => setTimeout(res, 10000));
+              } else {
+                cache.lastPeriod = periods[0];
+                listener.onPeriodStatisticsUpdated(periods.reverse());
+                break;
+              }
+            }
+          } else {
+            if(cache.trackerData.startBrokerTime && brokerTime < cache.trackerData.startBrokerTime) {
+              return;
+            }
+            if(cache.trackerData.endBrokerTime && brokerTime > cache.trackerData.endBrokerTime) {
+              listener.onTrackerCompleted();
+              cache.equityAdjustments = {};
+              connection.removeSynchronizationListener(this);
+              removePeriodStatisticsListener(listenerId);
+              await connection.close();
+            }
+            
+            let absoluteDrawdown = Math.max(0, cache.lastPeriod.initialBalance - equity);
+            let relativeDrawdown = absoluteDrawdown / cache.lastPeriod.initialBalance;
+            let absoluteProfit = Math.max(0, equity - cache.lastPeriod.initialBalance);
+            let relativeProfit = absoluteProfit / cache.lastPeriod.initialBalance;
+            const previousRecord = JSON.stringify(cache.record);
+            if(!cache.record.thresholdExceeded) {
+              if(cache.record.maxAbsoluteDrawdown < absoluteDrawdown) {
+                cache.record.maxAbsoluteDrawdown = absoluteDrawdown;
+                cache.record.maxRelativeDrawdown = relativeDrawdown;
+                cache.record.maxDrawdownTime = brokerTime;
+                if((cache.trackerData.relativeDrawdownThreshold && 
+                  cache.trackerData.relativeDrawdownThreshold < relativeDrawdown) || 
+                  (cache.trackerData.absoluteDrawdownThreshold &&
+                    cache.trackerData.absoluteDrawdownThreshold < absoluteDrawdown)) {
+                  cache.record.thresholdExceeded = true;
+                  cache.record.exceededThresholdType = 'drawdown';
+                }
+              }
+              if(cache.record.maxAbsoluteProfit < absoluteProfit) {
+                cache.record.maxAbsoluteProfit = absoluteProfit;
+                cache.record.maxRelativeProfit = relativeProfit;
+                cache.record.maxProfitTime = brokerTime;
+                if((cache.trackerData.relativeProfitThreshold && 
+                  cache.trackerData.relativeProfitThreshold < relativeProfit) ||
+                  (cache.trackerData.absoluteProfitThreshold &&
+                    cache.trackerData.absoluteProfitThreshold < absoluteProfit)) {
+                  cache.record.thresholdExceeded = true;
+                  cache.record.exceededThresholdType = 'profit';
+                }
+              }
+              if(JSON.stringify(cache.record) !== previousRecord) {
+                listener.onPeriodStatisticsUpdated([{
+                  startBrokerTime: cache.lastPeriod.startBrokerTime,
+                  endBrokerTime: cache.lastPeriod.endBrokerTime,
+                  initialBalance: cache.lastPeriod.initialBalance,
+                  maxAbsoluteDrawdown: cache.record.maxAbsoluteDrawdown,
+                  maxAbsoluteProfit: cache.record.maxAbsoluteProfit,
+                  maxDrawdownTime: cache.record.maxDrawdownTime,
+                  maxProfitTime: cache.record.maxProfitTime,
+                  maxRelativeDrawdown: cache.record.maxRelativeDrawdown,
+                  maxRelativeProfit: cache.record.maxRelativeProfit,
+                  period: cache.lastPeriod.period,
+                  exceededThresholdType: cache.record.exceededThresholdType,
+                  thresholdExceeded: cache.record.thresholdExceeded,
+                  tradeDayCount: cache.record.tradeDayCount
+                }]);
+              }
+            }
           }
-          
-          let absoluteDrawdown = Math.max(0, cache.lastPeriod.initialBalance - equity);
-          let relativeDrawdown = absoluteDrawdown / cache.lastPeriod.initialBalance;
-          let absoluteProfit = Math.max(0, equity - cache.lastPeriod.initialBalance);
-          let relativeProfit = absoluteProfit / cache.lastPeriod.initialBalance;
-          const previousRecord = JSON.stringify(cache.record);
-          if(!cache.record.thresholdExceeded) {
-            if(cache.record.maxAbsoluteDrawdown < absoluteDrawdown) {
-              cache.record.maxAbsoluteDrawdown = absoluteDrawdown;
-              cache.record.maxRelativeDrawdown = relativeDrawdown;
-              cache.record.maxDrawdownTime = brokerTime;
-              if((cache.trackerData.relativeDrawdownThreshold && 
-                cache.trackerData.relativeDrawdownThreshold < relativeDrawdown) || 
-                (cache.trackerData.absoluteDrawdownThreshold &&
-                  cache.trackerData.absoluteDrawdownThreshold < absoluteDrawdown)) {
-                cache.record.thresholdExceeded = true;
-                cache.record.exceededThresholdType = 'drawdown';
-              }
-            }
-            if(cache.record.maxAbsoluteProfit < absoluteProfit) {
-              cache.record.maxAbsoluteProfit = absoluteProfit;
-              cache.record.maxRelativeProfit = relativeProfit;
-              cache.record.maxProfitTime = brokerTime;
-              if((cache.trackerData.relativeProfitThreshold && 
-                cache.trackerData.relativeProfitThreshold < relativeProfit) ||
-                (cache.trackerData.absoluteProfitThreshold &&
-                  cache.trackerData.absoluteProfitThreshold < absoluteProfit)) {
-                cache.record.thresholdExceeded = true;
-                cache.record.exceededThresholdType = 'profit';
-              }
-            }
-            if(JSON.stringify(cache.record) !== previousRecord) {
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onSymbolPriceUpdated event for ' +
+          `period statistics listener for account ${accountId}`, err);
+        }
+      }
+
+      async onDealAdded(instanceIndex, deal) {
+        try {
+          if(!cache.lastPeriod) {
+            return;
+          }
+          if(deal.type === 'DEAL_TYPE_BALANCE') {
+            cache.equityAdjustments[deal.id] = deal.profit;
+          }
+          const ignoredDealTypes = ['DEAL_TYPE_BALANCE', 'DEAL_TYPE_CREDIT'];
+          if(!ignoredDealTypes.includes(deal.type)) {
+            const timeDiff = new Date(deal.time).getTime() - new Date(deal.brokerTime).getTime();
+            const startSearchDate = new Date(new Date(cache.lastPeriod.startBrokerTime).getTime() + timeDiff);
+            const deals = connection.historyStorage.getDealsByTimeRange(startSearchDate, new Date(8640000000000000))
+              .filter(dealItem => !ignoredDealTypes.includes(dealItem.type));
+            deals.push(deal);
+            const tradedDays = {};
+            deals.forEach(dealItem => {
+              tradedDays[dealItem.brokerTime.slice(0, 10)] = true;
+            });
+            const tradeDayCount = Object.keys(tradedDays).length;
+            if(cache.record.tradeDayCount !== tradeDayCount) {
+              cache.record.tradeDayCount = tradeDayCount;
               listener.onPeriodStatisticsUpdated([{
                 startBrokerTime: cache.lastPeriod.startBrokerTime,
                 endBrokerTime: cache.lastPeriod.endBrokerTime,
@@ -191,46 +252,10 @@ export default class PeriodStatisticsStreamManager {
               }]);
             }
           }
-        }
-      }
-
-      async onDealAdded(instanceIndex, deal) {
-        if(!cache.lastPeriod) {
-          return;
-        }
-        if(deal.type === 'DEAL_TYPE_BALANCE') {
-          cache.equityAdjustments[deal.id] = deal.profit;
-        }
-        const ignoredDealTypes = ['DEAL_TYPE_BALANCE', 'DEAL_TYPE_CREDIT'];
-        if(!ignoredDealTypes.includes(deal.type)) {
-          const timeDiff = new Date(deal.time).getTime() - new Date(deal.brokerTime).getTime();
-          const startSearchDate = new Date(new Date(cache.lastPeriod.startBrokerTime).getTime() + timeDiff);
-          const deals = connection.historyStorage.getDealsByTimeRange(startSearchDate, new Date(8640000000000000))
-            .filter(dealItem => !ignoredDealTypes.includes(dealItem.type));
-          deals.push(deal);
-          const tradedDays = {};
-          deals.forEach(dealItem => {
-            tradedDays[dealItem.brokerTime.slice(0, 10)] = true;
-          });
-          const tradeDayCount = Object.keys(tradedDays).length;
-          if(cache.record.tradeDayCount !== tradeDayCount) {
-            cache.record.tradeDayCount = tradeDayCount;
-            listener.onPeriodStatisticsUpdated([{
-              startBrokerTime: cache.lastPeriod.startBrokerTime,
-              endBrokerTime: cache.lastPeriod.endBrokerTime,
-              initialBalance: cache.lastPeriod.initialBalance,
-              maxAbsoluteDrawdown: cache.record.maxAbsoluteDrawdown,
-              maxAbsoluteProfit: cache.record.maxAbsoluteProfit,
-              maxDrawdownTime: cache.record.maxDrawdownTime,
-              maxProfitTime: cache.record.maxProfitTime,
-              maxRelativeDrawdown: cache.record.maxRelativeDrawdown,
-              maxRelativeProfit: cache.record.maxRelativeProfit,
-              period: cache.lastPeriod.period,
-              exceededThresholdType: cache.record.exceededThresholdType,
-              thresholdExceeded: cache.record.thresholdExceeded,
-              tradeDayCount: cache.record.tradeDayCount
-            }]);
-          }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onDealAdded event for ' +
+          `period statistics listener for account ${accountId}`, err);
         }
       }
     }
@@ -289,13 +314,18 @@ export default class PeriodStatisticsStreamManager {
         await initializePromise;
       }
     }
-
+    
     let initialData = [];
-    while(!initialData.length) {
+    const fetchInitialData = async () => {
       try {
-        initialData = await equityTrackingClient.getTrackingStatistics(accountId, trackerId);
+        initialData = await equityTrackingClient.getTrackingStatistics(accountId, trackerId,
+          undefined, undefined, true);
         if(initialData.length) {
           const lastItem = initialData[0];
+          if(this._fetchInitialDataIntervalId[listenerId]) {
+            clearInterval(this._fetchInitialDataIntervalId[listenerId]);
+            delete this._fetchInitialDataIntervalId[listenerId];
+          }
           listener.onPeriodStatisticsUpdated(initialData);
           cache.lastPeriod = {
             startBrokerTime: lastItem.startBrokerTime,
@@ -320,7 +350,12 @@ export default class PeriodStatisticsStreamManager {
         await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
         retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
       }
-    }
+    };
+    retryIntervalInSeconds = this._retryIntervalInSeconds;
+    this._fetchInitialDataIntervalId[listenerId] = 
+      setInterval(fetchInitialData, retryIntervalInSeconds * 1000 * 2 * 60);
+    fetchInitialData();
+
     return listenerId;
   }
 
@@ -330,6 +365,10 @@ export default class PeriodStatisticsStreamManager {
    */
   removePeriodStatisticsListener(listenerId) {
     if(this._accountsByListenerId[listenerId]) {
+      if(this._fetchInitialDataIntervalId[listenerId]) {
+        clearInterval(this._fetchInitialDataIntervalId[listenerId]);
+        delete this._fetchInitialDataIntervalId[listenerId];
+      }
       const accountId = this._accountsByListenerId[listenerId];
       delete this._accountsByListenerId[listenerId];
       delete this._accountSynchronizationFlags[accountId];

@@ -485,7 +485,7 @@ describe('PeriodStatisticsStreamManager', () => {
       .onSecondCall().rejects(new TimeoutError())
       .onThirdCall().resolves(results);
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
-    await clock.tickAsync(35000);
+    await clock.tickAsync(400000);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
     sinon.assert.calledWith(updatedStub, results);
     sinon.assert.calledTwice(errorStub);

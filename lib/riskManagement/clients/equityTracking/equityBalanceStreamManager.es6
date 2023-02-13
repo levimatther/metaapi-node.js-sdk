@@ -83,32 +83,50 @@ export default class EquityBalanceStreamManager {
     class EquityBalanceStreamListener extends SynchronizationListener {
 
       async onDealsSynchronized(instanceIndex, synchronizationId) {
-        if(!synchronizationFlags[accountId]) {
-          synchronizationFlags[accountId] = true;
-          Object.values(getAccountListeners()).forEach(accountListener => {
-            accountListener.onConnected();
-          });
-        }
-        if(pendingInitalizationResolves[accountId]) {
-          pendingInitalizationResolves[accountId].forEach(resolve => resolve());
-          delete pendingInitalizationResolves[accountId];
+        try {
+          if(!synchronizationFlags[accountId]) {
+            synchronizationFlags[accountId] = true;
+            Object.values(getAccountListeners()).forEach(accountListener => {
+              accountListener.onConnected();
+            });
+          }
+          if(pendingInitalizationResolves[accountId]) {
+            pendingInitalizationResolves[accountId].forEach(resolve => resolve());
+            delete pendingInitalizationResolves[accountId];
+          }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onDealsSynchronized event for ' +
+          `equity balance listener for account ${accountId}`, err);
         }
       }
 
       async onDisconnected(instanceIndex) {
-        if(synchronizationFlags[accountId] && !connection.healthMonitor.healthStatus.synchronized) {
-          synchronizationFlags[accountId] = false;
-          Object.values(getAccountListeners()).forEach(accountListener => {
-            accountListener.onDisconnected();
-          });
+        try {
+          if(synchronizationFlags[accountId] && !connection.healthMonitor.healthStatus.synchronized) {
+            synchronizationFlags[accountId] = false;
+            Object.values(getAccountListeners()).forEach(accountListener => {
+              accountListener.onDisconnected();
+            });
+          }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onDisconnected event for ' +
+        `equity balance listener for account ${accountId}`, err);
         }
       }
 
       // eslint-disable-next-line complexity, max-statements
       async onSymbolPriceUpdated(instanceIndex, price) {
-        if(pendingInitalizationResolves[accountId]) {
-          pendingInitalizationResolves[accountId].forEach(resolve => resolve());
-          delete pendingInitalizationResolves[accountId];
+        try {
+          if(pendingInitalizationResolves[accountId]) {
+            pendingInitalizationResolves[accountId].forEach(resolve => resolve());
+            delete pendingInitalizationResolves[accountId];
+          }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onSymbolPriceUpdated event for ' +
+            `equity balance listener for account ${accountId}`, err);
         }
         // price data only contains equity
         await processEquityBalanceEvent(price.equity);
