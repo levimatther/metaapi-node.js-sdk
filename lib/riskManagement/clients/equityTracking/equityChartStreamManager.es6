@@ -68,99 +68,75 @@ export default class EquityChartStreamManager {
     class EquityChartStreamListener extends SynchronizationListener {
 
       async onDealsSynchronized(instanceIndex, synchronizationId) {
-        if(!synchronizationFlags[accountId]) {
-          synchronizationFlags[accountId] = true;
-          Object.values(getAccountListeners()).forEach(accountListener => {
-            accountListener.onConnected();
-          });
-        }
-        if(pendingInitalizationResolves[accountId]) {
-          pendingInitalizationResolves[accountId].forEach(resolve => resolve());
-          delete pendingInitalizationResolves[accountId];
+        try {
+          if(!synchronizationFlags[accountId]) {
+            synchronizationFlags[accountId] = true;
+            Object.values(getAccountListeners()).forEach(accountListener => {
+              accountListener.onConnected();
+            });
+          }
+          if(pendingInitalizationResolves[accountId]) {
+            pendingInitalizationResolves[accountId].forEach(resolve => resolve());
+            delete pendingInitalizationResolves[accountId];
+          }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onDealsSynchronized event for ' +
+          `equity chart listener for account ${accountId}`, err);
         }
       }
 
       async onDisconnected(instanceIndex) {
-        if(synchronizationFlags[accountId] && !connection.healthMonitor.healthStatus.synchronized) {
-          synchronizationFlags[accountId] = false;
-          Object.values(getAccountListeners()).forEach(accountListener => {
-            accountListener.onDisconnected();
-          });
+        try {
+          if(synchronizationFlags[accountId] && !connection.healthMonitor.healthStatus.synchronized) {
+            synchronizationFlags[accountId] = false;
+            Object.values(getAccountListeners()).forEach(accountListener => {
+              accountListener.onDisconnected();
+            });
+          }
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onDisconnected event for ' +
+          `equity chart listener for account ${accountId}`, err);
         }
       }
 
       // eslint-disable-next-line complexity, max-statements
       async onSymbolPriceUpdated(instanceIndex, price) {
-        if(pendingInitalizationResolves[accountId]) {
-          pendingInitalizationResolves[accountId].forEach(resolve => resolve());
-          delete pendingInitalizationResolves[accountId];
-        }
-
-        const equity = price.equity;
-        const brokerTime = price.brokerTime;
-        if(!cache.lastPeriod) {
-          return;
-        }
-        if(brokerTime > cache.lastPeriod.endBrokerTime) {
-          Object.values(getAccountListeners()).forEach(accountListener => {
-            accountListener.onEquityRecordCompleted();  
-          });
-          const startBrokerTime = cache.lastPeriod.startBrokerTime;
-          cache.lastPeriod = null;
-          // eslint-disable-next-line no-constant-condition
-          while(true) {
-            let periods = await equityTrackingClient.getEquityChart(accountId, startBrokerTime, undefined, true);
-            if(periods.length < 2) {
-              await new Promise(res => setTimeout(res, 10000));
-            } else {
-              Object.values(getAccountListeners()).forEach(accountListener => {
-                accountListener.onEquityRecordUpdated(periods);
-              });
-              cache.lastPeriod = periods[1];
-              break;
-            }
+        try {
+          if(pendingInitalizationResolves[accountId]) {
+            pendingInitalizationResolves[accountId].forEach(resolve => resolve());
+            delete pendingInitalizationResolves[accountId];
           }
-        } else {
-          const accountInformation = connection.terminalState.accountInformation;
-          if(accountInformation) {
-            const previousInfo = {
-              startBrokerTime: cache.lastPeriod.startBrokerTime,
-              endBrokerTime: cache.lastPeriod.endBrokerTime,
-              averageBalance: cache.record.averageBalance,
-              minBalance: cache.record.minBalance,
-              maxBalance: cache.record.maxBalance,
-              averageEquity: Math.floor(cache.record.averageEquity),
-              minEquity: cache.record.minEquity,
-              maxEquity: cache.record.maxEquity,
-              lastBalance: cache.lastPeriod.lastBalance,
-              lastEquity: cache.lastPeriod.lastEquity
-            };
-            let durationIncrement = new Date(brokerTime).getTime() - new Date(cache.lastPeriod.brokerTime).getTime();
-            cache.lastPeriod.equitySum += durationIncrement * (cache.lastPeriod.equity || accountInformation.equity);
-            cache.lastPeriod.balanceSum += durationIncrement * (cache.lastPeriod.balance || accountInformation.balance);
-            cache.lastPeriod.duration += durationIncrement;
-            cache.lastPeriod.equity = price.equity;
-            cache.lastPeriod.balance = accountInformation.balance;
-            cache.lastPeriod.brokerTime = price.brokerTime;
-            cache.record.duration = cache.lastPeriod.duration;
-            cache.record.balanceSum = cache.lastPeriod.balanceSum;
-            cache.record.equitySum = cache.lastPeriod.equitySum;
-            cache.record.averageEquity = cache.lastPeriod.duration ? 
-              cache.lastPeriod.equitySum / cache.lastPeriod.duration : equity;
-            cache.record.averageBalance = cache.lastPeriod.duration ? 
-              cache.lastPeriod.balanceSum / cache.lastPeriod.duration : accountInformation.balance;
-            cache.record.minEquity = Math.min(cache.record.minEquity, price.equity);
-            cache.record.maxEquity = Math.max(cache.record.maxEquity, price.equity);
-            cache.record.lastEquity = equity;
-            cache.record.minBalance = Math.min(cache.record.minBalance, accountInformation.balance);
-            cache.record.maxBalance = Math.max(cache.record.maxBalance, accountInformation.balance);
-            cache.record.lastBalance = accountInformation.balance;
-            /**
-             * due to calculation inaccuracy, averageEquity will never match the previous value
-             * therefore, floor before comparing
-             */
-            if(cache.lastPeriod.startBrokerTime) {
-              const newInfo = {
+
+          const equity = price.equity;
+          const brokerTime = price.brokerTime;
+          if(!cache.lastPeriod) {
+            return;
+          }
+          if(brokerTime > cache.lastPeriod.endBrokerTime) {
+            Object.values(getAccountListeners()).forEach(accountListener => {
+              accountListener.onEquityRecordCompleted();  
+            });
+            const startBrokerTime = cache.lastPeriod.startBrokerTime;
+            cache.lastPeriod = null;
+            // eslint-disable-next-line no-constant-condition
+            while(true) {
+              let periods = await equityTrackingClient.getEquityChart(accountId, startBrokerTime, undefined, true);
+              if(periods.length < 2) {
+                await new Promise(res => setTimeout(res, 10000));
+              } else {
+                Object.values(getAccountListeners()).forEach(accountListener => {
+                  accountListener.onEquityRecordUpdated(periods);
+                });
+                cache.lastPeriod = periods[1];
+                break;
+              }
+            }
+          } else {
+            const accountInformation = connection.terminalState.accountInformation;
+            if(accountInformation) {
+              const previousInfo = {
                 startBrokerTime: cache.lastPeriod.startBrokerTime,
                 endBrokerTime: cache.lastPeriod.endBrokerTime,
                 averageBalance: cache.record.averageBalance,
@@ -169,26 +145,75 @@ export default class EquityChartStreamManager {
                 averageEquity: Math.floor(cache.record.averageEquity),
                 minEquity: cache.record.minEquity,
                 maxEquity: cache.record.maxEquity,
-                lastBalance: cache.record.lastBalance,
-                lastEquity: cache.record.lastEquity
+                lastBalance: cache.lastPeriod.lastBalance,
+                lastEquity: cache.lastPeriod.lastEquity
               };
-              if(JSON.stringify(previousInfo) !== JSON.stringify(newInfo)) {
-                Object.values(getAccountListeners()).forEach(accountListener => {
-                  accountListener.onEquityRecordUpdated([newInfo]); 
-                });
+              let durationIncrement = new Date(brokerTime).getTime() - new Date(cache.lastPeriod.brokerTime).getTime();
+              cache.lastPeriod.equitySum += durationIncrement * (cache.lastPeriod.equity || accountInformation.equity);
+              cache.lastPeriod.balanceSum += durationIncrement * 
+                (cache.lastPeriod.balance || accountInformation.balance);
+              cache.lastPeriod.duration += durationIncrement;
+              cache.lastPeriod.equity = price.equity;
+              cache.lastPeriod.balance = accountInformation.balance;
+              cache.lastPeriod.brokerTime = price.brokerTime;
+              cache.record.duration = cache.lastPeriod.duration;
+              cache.record.balanceSum = cache.lastPeriod.balanceSum;
+              cache.record.equitySum = cache.lastPeriod.equitySum;
+              cache.record.averageEquity = cache.lastPeriod.duration ? 
+                cache.lastPeriod.equitySum / cache.lastPeriod.duration : equity;
+              cache.record.averageBalance = cache.lastPeriod.duration ? 
+                cache.lastPeriod.balanceSum / cache.lastPeriod.duration : accountInformation.balance;
+              cache.record.minEquity = Math.min(cache.record.minEquity, price.equity);
+              cache.record.maxEquity = Math.max(cache.record.maxEquity, price.equity);
+              cache.record.lastEquity = equity;
+              cache.record.minBalance = Math.min(cache.record.minBalance, accountInformation.balance);
+              cache.record.maxBalance = Math.max(cache.record.maxBalance, accountInformation.balance);
+              cache.record.lastBalance = accountInformation.balance;
+              /**
+             * due to calculation inaccuracy, averageEquity will never match the previous value
+             * therefore, floor before comparing
+             */
+              if(cache.lastPeriod.startBrokerTime) {
+                const newInfo = {
+                  startBrokerTime: cache.lastPeriod.startBrokerTime,
+                  endBrokerTime: cache.lastPeriod.endBrokerTime,
+                  averageBalance: cache.record.averageBalance,
+                  minBalance: cache.record.minBalance,
+                  maxBalance: cache.record.maxBalance,
+                  averageEquity: Math.floor(cache.record.averageEquity),
+                  minEquity: cache.record.minEquity,
+                  maxEquity: cache.record.maxEquity,
+                  lastBalance: cache.record.lastBalance,
+                  lastEquity: cache.record.lastEquity
+                };
+                if(JSON.stringify(previousInfo) !== JSON.stringify(newInfo)) {
+                  Object.values(getAccountListeners()).forEach(accountListener => {
+                    accountListener.onEquityRecordUpdated([newInfo]); 
+                  });
+                }
               }
             }
-          }
+          }     
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onSymbolPriceUpdated event for ' +
+          `equity chart listener for account ${accountId}`, err);
         }
       }
     
       async onAccountInformationUpdated(instanceIndex, accountInformation) {
-        const balance = accountInformation.balance;
-        cache.lastPeriod.balance = balance;
-        cache.lastPeriod.lastBalance = balance;
-        cache.record.lastBalance = balance;
-        cache.record.minBalance = Math.min(cache.record.minBalance, balance);
-        cache.record.maxBalance = Math.max(cache.record.minBalance, balance);
+        try {
+          const balance = accountInformation.balance;
+          cache.lastPeriod.balance = balance;
+          cache.lastPeriod.lastBalance = balance;
+          cache.record.lastBalance = balance;
+          cache.record.minBalance = Math.min(cache.record.minBalance, balance);
+          cache.record.maxBalance = Math.max(cache.record.minBalance, balance);
+        } catch (err) {
+          listener.onError(err);
+          this._logger.error('Error processing onAccountInformationUpdated event for ' +
+          `equity chart listener for account ${accountId}`, err);
+        }
       }
 
     }

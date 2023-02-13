@@ -1,3 +1,7 @@
+20.11.1
+  - fixed getting initial data for period statistics listener
+  - fixed event error processing for risk management listeners
+
 20.11.0
   - updated equity chart item model
 
