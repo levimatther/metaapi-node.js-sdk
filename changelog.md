@@ -1,3 +1,6 @@
+20.11.2
+  - fixed update events during synchronization
+
 20.11.1
   - fixed getting initial data for period statistics listener
   - fixed event error processing for risk management listeners

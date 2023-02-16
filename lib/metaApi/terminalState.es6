@@ -228,6 +228,9 @@ export default class TerminalState extends SynchronizationListener {
     unsynchronizedStates.slice(1).forEach(stateIndex => this._removeState(stateIndex));
 
     let state = this._getState(instanceIndex);
+    state.isSpecificationsExpected = !specificationsHash;
+    state.isPositionsExpected = !positionsHash;
+    state.isOrdersExpected = !ordersHash;
     state.lastSyncUpdateTime = Date.now();
     state.accountInformation = undefined;
     state.pricesBySymbol = {};
@@ -282,7 +285,9 @@ export default class TerminalState extends SynchronizationListener {
   onPositionsReplaced(instanceIndex, positions) {
     let state = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    state.positions = positions;
+    if(state.isPositionsExpected) {
+      state.positions = positions;
+    }
   }
 
   /**
@@ -326,7 +331,9 @@ export default class TerminalState extends SynchronizationListener {
   onPendingOrdersReplaced(instanceIndex, orders) {
     let state = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    state.orders = orders;
+    if(state.isOrdersExpected) {
+      state.orders = orders;
+    }
   }
 
   /**
@@ -336,7 +343,7 @@ export default class TerminalState extends SynchronizationListener {
    * @param {String} synchronizationId synchronization request id
    * @return {Promise} promise which resolves when the asynchronous event is processed
    */
-  // eslint-disable-next-line complexity
+  // eslint-disable-next-line complexity, max-statements
   async onPendingOrdersSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
     state.positionsInitialized = true;
@@ -379,11 +386,18 @@ export default class TerminalState extends SynchronizationListener {
     this._combinedState.positionsInitialized = true;
     this._combinedState.ordersInitialized = true;
     if (Object.keys(state.specificationsBySymbol || {}).length) {
-      const hash = await this._terminalHashManager.recordSpecifications(this._account.server,
-        this._account.type, this._id, instanceIndex, Object.values(state.specificationsBySymbol));
-      this._combinedState.specificationsHash = hash;
-      state.specificationsHash = hash;
-      state.specificationsBySymbol = null;
+      if(state.isSpecificationsExpected) {
+        const hash = await this._terminalHashManager.recordSpecifications(this._account.server,
+          this._account.type, this._id, instanceIndex, Object.values(state.specificationsBySymbol));
+        this._combinedState.specificationsHash = hash;
+        state.specificationsHash = hash;
+        state.specificationsBySymbol = null;
+      } else if(state.specificationsHash) {
+        const hash = await this._terminalHashManager.updateSpecifications(this._account.server,
+          this._account.type, this._id, instanceIndex, Object.values(state.specificationsBySymbol),
+          [], state.specificationsHash);
+        state.specificationsHash = hash;
+      }
     } else if (state.specificationsHash) {
       this._terminalHashManager.removeSpecificationReference(this._account.server,
         this.id, instanceIndex);
@@ -677,6 +691,9 @@ export default class TerminalState extends SynchronizationListener {
       positionsHash: null,
       ordersHash: null,
       specificationsHash: null,
+      isSpecificationsExpected: true,
+      isPositionsExpected: true,
+      isOrdersExpected: true,
       lastQuoteTime: undefined,
       lastQuoteBrokerTime: undefined
     };

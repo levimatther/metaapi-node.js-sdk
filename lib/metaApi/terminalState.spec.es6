@@ -220,8 +220,32 @@ describe('TerminalState', () => {
 
   /**
    * @test {TerminalState#onPositionsReplaced}
-   * @test {TerminalState#onPositionRemoved}
-   * @test {TerminalState#specification}
+   */
+  it('should only record positions if theyre expected', async () => {
+    const positions = [{
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 9,
+      currentTickValue: 0.5,
+      openPrice: 8,
+      profit: 100,
+      volume: 2
+    }];
+    const recordStub = sandbox.stub(terminalHashManager, 'recordPositions').resolves('phash1');
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, 'phash1', undefined);
+    await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', positions);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.notCalled(recordStub);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
+    await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', positions);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', positions);
+  });
+
+  /**
+   * @test {TerminalState#onPendingOrdersReplaced}
+   * @test {TerminalState#onPendingOrdersUpdated}
    */
   it('should update orders', async () => {
     const orders = [{
@@ -249,6 +273,27 @@ describe('TerminalState', () => {
     sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
       'vint-hill:1:ps-mpa-1', [], ['1'], 'ohash2');
     sinon.assert.callCount(updateStub, 4);
+  });
+
+  /**
+   * @test {TerminalState#onPendingOrdersReplaced}
+   */
+  it('should only record orders if theyre expected', async () => {
+    const orders = [{
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 9
+    }];
+    const recordStub = sandbox.stub(terminalHashManager, 'recordOrders').resolves('ohash1');
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, 'ohash1');
+    await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', orders);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.notCalled(recordStub);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
+    await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', orders);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', orders);
   });
 
   /**
@@ -518,6 +563,27 @@ describe('TerminalState', () => {
     await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
     specification = state.specification('EURUSD');
     sinon.assert.match(specification, {symbol: 'EURUSD', tickSize: 0.00001});
+  });
+
+  /**
+   * @test {TerminalState#specification}
+   */
+  it('should update specifications if theyre recorded with existing hash', async () => {
+    const expectedSpec = {symbol: 'EURUSD', tickSize: 0.00001};
+    const expectedSpec2 = {symbol: 'AUDUSD', tickSize: 0.00001};
+    const recordStub = sandbox.stub(terminalHashManager, 'recordSpecifications').resolves('shash1');
+    const updateStub = sandbox.stub(terminalHashManager, 'updateSpecifications').resolves('shash1');
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
+    await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-1', [expectedSpec], []);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordStub, 'ICMarkets-Demo1', 'cloud-g1',
+      state.id, 'vint-hill:1:ps-mpa-1', [expectedSpec]);
+    sinon.assert.notCalled(updateStub);
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-2', 'shash1', undefined, undefined);
+    await state.onSymbolSpecificationsUpdated('vint-hill:1:ps-mpa-2', [expectedSpec2], []);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-2', 'synchronizationId');
+    sinon.assert.calledWith(updateStub, 'ICMarkets-Demo1', 'cloud-g1',
+      state.id, 'vint-hill:1:ps-mpa-2', [expectedSpec2], [], 'shash1');
   });
 
   /**
