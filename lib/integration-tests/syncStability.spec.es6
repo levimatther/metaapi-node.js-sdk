@@ -1364,7 +1364,7 @@ sequentialProcessing.forEach(param => {
         await connection.waitSynchronized({timeoutInSeconds: 10});
         server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId',
           instanceIndex: 0,
-          host: 'ps-mpa-1'}, update));
+          host: 'ps-mpa-0'}, update));
         await clock.tickAsync(5000);
         sinon.assert.match(connection.terminalState.orders, ordersUpdate);
         sinon.assert.match(connection.terminalState.positions, positionsUpdate);
@@ -1454,7 +1454,7 @@ sequentialProcessing.forEach(param => {
         };
         server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId',
           instanceIndex: 0,
-          host: 'ps-mpa-1'}, update2));
+          host: 'ps-mpa-0'}, update2));
         await clock.tickAsync(5000);
 
         sinon.assert.match(connection.terminalState.orders, [{

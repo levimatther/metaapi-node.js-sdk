@@ -243,6 +243,94 @@ describe('TerminalState', () => {
     sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', positions);
   });
 
+  it('should process position update events during sync', async () => {
+    const positions = [{
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 9,
+      currentTickValue: 0.5,
+      openPrice: 8,
+      profit: 100,
+      volume: 2
+    }, {
+      id: '2',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 9,
+      currentTickValue: 0.5,
+      openPrice: 8,
+      profit: 100,
+      volume: 3
+    }, {
+      id: '3',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 11,
+      currentTickValue: 0.5,
+      openPrice: 9,
+      profit: 100,
+      volume: 4
+    }];
+
+    const updatedPositions = [{
+      id: '2',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 9,
+      currentTickValue: 0.5,
+      openPrice: 8,
+      profit: 100,
+      volume: 5
+    }, {
+      id: '4',
+      symbol: 'EURUSD',
+      type: 'POSITION_TYPE_BUY',
+      currentPrice: 9,
+      currentTickValue: 0.5,
+      openPrice: 8,
+      profit: 100,
+      volume: 17
+    }];
+
+    const expectedPositions = [
+      {
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'POSITION_TYPE_BUY',
+        currentPrice: 9,
+        currentTickValue: 0.5,
+        openPrice: 8,
+        profit: 100,
+        volume: 2
+      }, {
+        id: '2',
+        symbol: 'EURUSD',
+        type: 'POSITION_TYPE_BUY',
+        currentPrice: 9,
+        currentTickValue: 0.5,
+        openPrice: 8,
+        profit: 100,
+        volume: 5
+      }, {
+        id: '4',
+        symbol: 'EURUSD',
+        type: 'POSITION_TYPE_BUY',
+        currentPrice: 9,
+        currentTickValue: 0.5,
+        openPrice: 8,
+        profit: 100,
+        volume: 17
+      }
+    ];
+    const recordStub = sandbox.stub(terminalHashManager, 'recordPositions').resolves('phash1');
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
+    await state.onPositionsReplaced('vint-hill:1:ps-mpa-1', positions);
+    await state.onPositionsUpdated('vint-hill:1:ps-mpa-1', updatedPositions, ['3']);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', expectedPositions);
+  });
+
   /**
    * @test {TerminalState#onPendingOrdersReplaced}
    * @test {TerminalState#onPendingOrdersUpdated}
@@ -273,6 +361,62 @@ describe('TerminalState', () => {
     sinon.assert.calledWith(updateStub, 'accountId', 'cloud-g1', state.id,
       'vint-hill:1:ps-mpa-1', [], ['1'], 'ohash2');
     sinon.assert.callCount(updateStub, 4);
+  });
+
+  it('should process order update events during sync', async () => {
+    const orders = [{
+      id: '1',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 9
+    }, {
+      id: '2',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 10
+    }, {
+      id: '3',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 12
+    }];
+
+    const updatedOrders = [{
+      id: '2',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 12
+    }, {
+      id: '4',
+      symbol: 'EURUSD',
+      type: 'ORDER_TYPE_BUY_LIMIT',
+      currentPrice: 16
+    }];
+
+    const expectedOrders = [
+      {
+        id: '1',
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        currentPrice: 9
+      }, {
+        id: '2',
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        currentPrice: 12
+      }, {
+        id: '4',
+        symbol: 'EURUSD',
+        type: 'ORDER_TYPE_BUY_LIMIT',
+        currentPrice: 16
+      }
+    ];
+    const recordStub = sandbox.stub(terminalHashManager, 'recordOrders').resolves('phash1');
+    await state.onSynchronizationStarted('vint-hill:1:ps-mpa-1', undefined, undefined, undefined);
+    await state.onPendingOrdersReplaced('vint-hill:1:ps-mpa-1', orders);
+    await state.onPendingOrdersUpdated('vint-hill:1:ps-mpa-1', updatedOrders, ['3']);
+    await state.onPendingOrdersSynchronized('vint-hill:1:ps-mpa-1', 'synchronizationId');
+    sinon.assert.calledWith(recordStub, 'accountId', 'cloud-g1', state.id, 'vint-hill:1:ps-mpa-1', expectedOrders);
   });
 
   /**

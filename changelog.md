@@ -1,3 +1,6 @@
+20.11.3
+  - fixed position and order update events during synchronization
+
 20.11.2
   - fixed update events during synchronization
 
