@@ -312,14 +312,25 @@ export default class TerminalState extends SynchronizationListener {
   async onPositionsUpdated(instanceIndex, positions, removedPositionIds) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-
-    const updatePositions = async (state, instance) => {
-      const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
-        instance, positions, removedPositionIds, state.positionsHash);
-      state.positionsHash = hash;
-    };
-    await updatePositions(instanceState, instanceIndex);
-    await updatePositions(this._combinedState, this._combinedInstanceIndex);
+    if(instanceState.ordersInitialized) {
+      const updatePositions = async (state, instance) => {
+        const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
+          instance, positions, removedPositionIds, state.positionsHash);
+        state.positionsHash = hash;
+      };
+      await updatePositions(instanceState, instanceIndex);
+      await updatePositions(this._combinedState, this._combinedInstanceIndex);
+    } else {
+      instanceState.positions = instanceState.positions.filter(position => !removedPositionIds.includes(position.id));
+      positions.forEach(position => {
+        let index = instanceState.positions.findIndex(p => p.id === position.id);
+        if (index !== -1) {
+          instanceState.positions[index] = position;
+        } else {
+          instanceState.positions.push(position);
+        }
+      });
+    }
   }
 
   /**
@@ -426,14 +437,25 @@ export default class TerminalState extends SynchronizationListener {
   async onPendingOrdersUpdated(instanceIndex, orders, completedOrderIds) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
-    
-    const updatePendingOrders = async (state, instance) => {
-      const hash = await this._terminalHashManager.updateOrders(this._account.id, this._account.type, this._id,
-        instance, orders, completedOrderIds, state.ordersHash);
-      state.ordersHash = hash;
-    };
-    await updatePendingOrders(instanceState, instanceIndex);
-    await updatePendingOrders(this._combinedState, this._combinedInstanceIndex);
+    if(instanceState.ordersInitialized) {
+      const updatePendingOrders = async (state, instance) => {
+        const hash = await this._terminalHashManager.updateOrders(this._account.id, this._account.type, this._id,
+          instance, orders, completedOrderIds, state.ordersHash);
+        state.ordersHash = hash;
+      };
+      await updatePendingOrders(instanceState, instanceIndex);
+      await updatePendingOrders(this._combinedState, this._combinedInstanceIndex);
+    } else {
+      instanceState.orders = instanceState.orders.filter(order => !completedOrderIds.includes(order.id));
+      orders.forEach(order => {
+        let index = instanceState.orders.findIndex(o => o.id === order.id);
+        if (index !== -1) {
+          instanceState.orders[index] = order;
+        } else {
+          instanceState.orders.push(order);
+        }
+      });
+    }
   }
 
   /**
