@@ -1,3 +1,6 @@
+20.11.4
+  - fix getLogger import
+
 20.11.3
   - fixed position and order update events during synchronization
 
