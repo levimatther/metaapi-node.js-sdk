@@ -1,3 +1,6 @@
+20.11.5
+  - update package info
+
 20.11.4
   - fix getLogger import
 
