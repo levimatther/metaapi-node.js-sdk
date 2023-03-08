@@ -55,6 +55,7 @@ import TerminalHashManager from './terminalHashManager';
  * @property {Number} [unsubscribeThrottlingIntervalInSeconds] a timeout in seconds for throttling repeat unsubscribe
  * requests when synchronization packets still arrive after unsubscription, default is 10 seconds
  * @property {number} [accountGeneratorRequestTimeout] MT account generator API request timeout. Default is 4 minutes
+ * @property {boolean} [keepHashTrees] if set to true, unused data will not be cleared (for use in debugging)
  */
 
 /**
@@ -101,11 +102,12 @@ export default class MetaApi {
     const historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     const accountGeneratorHttpClient = new HttpClient(accountGeneratorRequestTimeout, retryOpts);
     const clientApiClient = new ClientApiClient(httpClient, domainClient); 
-    const terminalHashManager = new TerminalHashManager(clientApiClient);
-    this._metaApiWebsocketClient = new MetaApiWebsocketClient(domainClient, token, {application, domain,
-      requestTimeout, connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts,
-      useSharedClientApi, region: opts.region,
-      unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
+    const terminalHashManager = new TerminalHashManager(clientApiClient, opts.keepHashTrees);
+    this._metaApiWebsocketClient = new MetaApiWebsocketClient(domainClient, token,
+      {application, domain,
+        requestTimeout, connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts,
+        useSharedClientApi, region: opts.region,
+        unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, domainClient));
     this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, terminalHashManager,
       application, refreshSubscriptionsOpts);

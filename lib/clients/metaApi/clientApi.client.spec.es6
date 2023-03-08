@@ -65,9 +65,36 @@ describe('ClientApiClient', () => {
      * @test {ClientApiClient#getHashingIgnoredFieldLists}
      */
     it('should retrieve hashing ignored field lists', async () => {
+      const expected2 = {
+        g1: {
+          specification: ['startTime'],
+          position: ['profit'],
+          order: ['currentPrice']
+        },
+        g2: {
+          specification: ['pipSize'],
+          position: ['comment'],
+          order: ['brokerComment']
+        },
+      };
       requestStub.resolves(expected);
-      let ignoredFields = await clientApiClient.getHashingIgnoredFieldLists();
+      try {
+        clientApiClient.getHashingIgnoredFieldLists('vint-hill');
+        sinon.assert.fail();
+      } catch (error) {
+        sinon.assert.match(error.message, 'Ignored field lists for region vint-hill not found');
+      }
+      try {
+        clientApiClient.getHashingIgnoredFieldLists('combined');
+        sinon.assert.fail();
+      } catch (error) {
+        sinon.assert.match(error.message, 'Ignored field lists not found');
+      }
+      await clientApiClient.refreshIgnoredFieldLists('vint-hill');
+      let ignoredFields = clientApiClient.getHashingIgnoredFieldLists('vint-hill');
       ignoredFields.should.equal(expected);
+      let combinedIgnoredFields = clientApiClient.getHashingIgnoredFieldLists('combined');
+      combinedIgnoredFields.should.equal(expected);
       sinon.assert.calledOnceWithExactly(httpClient.request, {
         url: `${clientApiUrl}/hashing-ignored-field-lists`,
         method: 'GET',
@@ -76,37 +103,45 @@ describe('ClientApiClient', () => {
           'auth-token': token
         }
       }, 'getHashingIgnoredFieldLists');
-    });
-
-    /**
-     * @test {ClientApiClient#getHashingIgnoredFieldLists}
-     */
-    it('should return cached data if requested recently', async () => {
-      requestStub.resolves(expected);
-      let ignoredFields = await clientApiClient.getHashingIgnoredFieldLists();
-      ignoredFields.should.equal(expected);
-      let ignoredFields2 = await clientApiClient.getHashingIgnoredFieldLists();
-      ignoredFields2.should.equal(expected);
-      sinon.assert.calledOnceWithExactly(httpClient.request, {
-        url: `${clientApiUrl}/hashing-ignored-field-lists`,
-        method: 'GET',
-        json: true,
-        headers: {
-          'auth-token': token
-        }
-      }, 'getHashingIgnoredFieldLists');
+      await clientApiClient.refreshIgnoredFieldLists('vint-hill');
+      sinon.assert.calledOnce(httpClient.request);
+      try {
+        clientApiClient.getHashingIgnoredFieldLists('new-york');
+        sinon.assert.fail();
+      } catch (error) {
+        sinon.assert.match(error.message, 'Ignored field lists for region new-york not found');
+      }
+      requestStub.resolves(expected2);
+      await clientApiClient.refreshIgnoredFieldLists('new-york');
+      sinon.assert.calledTwice(httpClient.request);
+      combinedIgnoredFields = clientApiClient.getHashingIgnoredFieldLists('combined');
+      combinedIgnoredFields.should.equal(expected2);
     });
 
     /**
      * @test {ClientApiClient#getHashingIgnoredFieldLists}
      */
     it('should update data when caching time expired', async () => {
+      const expected2 = {
+        g1: {
+          specification: ['description'],
+          position: ['profit'],
+          order: ['expirationTime']
+        },
+        g2: {
+          specification: ['pipSize'],
+          position: ['comment'],
+          order: ['brokerComment']
+        },
+      };
       requestStub.resolves(expected);
-      let ignoredFields = await clientApiClient.getHashingIgnoredFieldLists();
+      await clientApiClient.refreshIgnoredFieldLists('vint-hill');
+      let ignoredFields = clientApiClient.getHashingIgnoredFieldLists('vint-hill');
       ignoredFields.should.equal(expected);
+      requestStub.resolves(expected2);
       await clock.tickAsync(61 * 60 * 1000);
-      let ignoredFields2 = await clientApiClient.getHashingIgnoredFieldLists();
-      ignoredFields2.should.equal(expected);
+      let ignoredFields2 = clientApiClient.getHashingIgnoredFieldLists('vint-hill');
+      ignoredFields2.should.equal(expected2);
       sinon.assert.calledTwice(httpClient.request);
     });
 
@@ -119,10 +154,10 @@ describe('ClientApiClient', () => {
         return expected;
       });
       
-      let ignoredFields = await Promise.all([clientApiClient.getHashingIgnoredFieldLists(),
-        clientApiClient.getHashingIgnoredFieldLists()]);
-      ignoredFields[0].should.equal(expected);
-      ignoredFields[1].should.equal(expected);
+      await Promise.all([clientApiClient.refreshIgnoredFieldLists('vint-hill'),
+        clientApiClient.refreshIgnoredFieldLists('vint-hill')]);
+      let ignoredFields = clientApiClient.getHashingIgnoredFieldLists('vint-hill');
+      ignoredFields.should.equal(expected);
       sinon.assert.calledOnceWithExactly(httpClient.request, {
         url: `${clientApiUrl}/hashing-ignored-field-lists`,
         method: 'GET',
@@ -148,12 +183,11 @@ describe('ClientApiClient', () => {
         }
       });
       
-      let ignoredFields = [clientApiClient.getHashingIgnoredFieldLists(),
-        clientApiClient.getHashingIgnoredFieldLists()];
+      clientApiClient.refreshIgnoredFieldLists('vint-hill');
+      clientApiClient.refreshIgnoredFieldLists('vint-hill');
       await clock.tickAsync(6000);
-      ignoredFields = [await ignoredFields[0], await ignoredFields[1]];
-      ignoredFields[0].should.equal(expected);
-      ignoredFields[1].should.equal(expected);
+      let ignoredFields = clientApiClient.getHashingIgnoredFieldLists('vint-hill');
+      ignoredFields.should.equal(expected);
       sinon.assert.callCount(httpClient.request, 3);
     });
 

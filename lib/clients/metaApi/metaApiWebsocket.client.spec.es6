@@ -93,7 +93,6 @@ describe('MetaApiWebsocketClient', () => {
       'activeSynchronizationIds').get(() => []);
     sandbox.stub(client._socketInstances['vint-hill'][1][0].synchronizationThrottler, 
       'activeSynchronizationIds').get(() => []);
-
     sandbox.stub(client._latencyService, 'onConnected').returns();
     sandbox.stub(client._latencyService, 'onDisconnected').returns();
     sandbox.stub(client._latencyService, 'onUnsubscribe').returns();
@@ -2187,6 +2186,173 @@ describe('MetaApiWebsocketClient', () => {
       sinon.assert.calledWith(listener.onPendingOrderCompleted, 'vint-hill:0:ps-mpa-1', update.completedOrderIds[0]);
       sinon.assert.calledWith(listener.onHistoryOrderAdded, 'vint-hill:0:ps-mpa-1', update.historyOrders[0]);
       sinon.assert.calledWith(listener.onDealAdded, 'vint-hill:0:ps-mpa-1', update.deals[0]);
+    });
+
+    // eslint-disable-next-line max-statements
+    it('should call updates again if they arrive during sync', async () => {
+      client._socketInstances['vint-hill'][0][0].synchronizationThrottler = synchronizationThrottler;
+      sandbox.stub(synchronizationThrottler, 'activeSynchronizationIds').get(() => ['ABC']);
+      let update = {
+        accountInformation: {
+          broker: 'True ECN Trading Ltd',
+          currency: 'USD',
+          server: 'ICMarketsSC-Demo',
+          balance: 7319.9,
+          equity: 7306.649913200001,
+          margin: 184.1,
+          freeMargin: 7120.22,
+          leverage: 100,
+          marginLevel: 3967.58283542
+        },
+        updatedPositions: [{
+          id: '46214692',
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'GBPUSD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.17721,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        }],
+        removedPositionIds: ['1234'],
+        updatedOrders: [{
+          id: '46871284',
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'AUDNZD',
+          magic: 123456,
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.01,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }],
+        completedOrderIds: ['2345'],
+        historyOrders: [{
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          currentPrice: 1.261,
+          currentVolume: 0,
+          doneTime: new Date('2020-04-15T02:45:06.521Z'),
+          id: '46214692',
+          magic: 1000,
+          platform: 'mt5',
+          positionId: '46214692',
+          state: 'ORDER_STATE_FILLED',
+          symbol: 'GBPUSD',
+          time: new Date('2020-04-15T02:45:06.260Z'),
+          type: 'ORDER_TYPE_BUY',
+          volume: 0.07
+        }],
+        deals: [{
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          commission: -0.25,
+          entryType: 'DEAL_ENTRY_IN',
+          id: '33230099',
+          magic: 1000,
+          platform: 'mt5',
+          orderId: '46214692',
+          positionId: '46214692',
+          price: 1.26101,
+          profit: 0,
+          swap: 0,
+          symbol: 'GBPUSD',
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          type: 'DEAL_TYPE_BUY',
+          volume: 0.07
+        }]
+      };
+      let listener = {
+        onSynchronizationStarted: () => {},
+        onAccountInformationUpdated: () => {},
+        onPositionsUpdated: () => {},
+        onPositionUpdated: () => {},
+        onPositionRemoved: () => {},
+        onPendingOrdersUpdated: () => {},
+        onPendingOrderUpdated: () => {},
+        onPendingOrderCompleted: () => {},
+        onHistoryOrderAdded: () => {},
+        onDealAdded: () => {},
+        onDealsSynchronized: () => {}
+      };
+      sandbox.stub(listener, 'onSynchronizationStarted').resolves();
+      sandbox.stub(listener, 'onAccountInformationUpdated').resolves();
+      sandbox.stub(listener, 'onPositionsUpdated').resolves();
+      sandbox.stub(listener, 'onPositionUpdated').resolves();
+      sandbox.stub(listener, 'onPositionRemoved').resolves();
+      sandbox.stub(listener, 'onPendingOrdersUpdated').resolves();
+      sandbox.stub(listener, 'onPendingOrderUpdated').resolves();
+      sandbox.stub(listener, 'onPendingOrderCompleted').resolves();
+      sandbox.stub(listener, 'onHistoryOrderAdded').resolves();
+      sandbox.stub(listener, 'onDealAdded').resolves();
+      sandbox.stub(listener, 'onDealsSynchronized').resolves();
+      client.addSynchronizationListener('accountId', listener);
+      server.emit('synchronization', {type: 'synchronizationStarted', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 0, synchronizationId: 'ABC'});
+      await new Promise(res => setTimeout(res, 50));
+      server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId', instanceIndex: 0,
+        host: 'ps-mpa-1'}, update));
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledOnce(listener.onAccountInformationUpdated);
+      sinon.assert.calledOnce(listener.onPositionsUpdated);
+      sinon.assert.calledOnce(listener.onPositionUpdated);
+      sinon.assert.calledOnce(listener.onPositionRemoved);
+      sinon.assert.calledOnce(listener.onPendingOrdersUpdated);
+      sinon.assert.calledOnce(listener.onPendingOrderCompleted);
+      sinon.assert.calledOnce(listener.onHistoryOrderAdded);
+      sinon.assert.calledOnce(listener.onDealAdded);
+      server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId', instanceIndex: 0,
+        host: 'ps-mpa-1'}, update));
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledTwice(listener.onAccountInformationUpdated);
+      sinon.assert.calledTwice(listener.onPositionsUpdated);
+      sinon.assert.calledTwice(listener.onPositionUpdated);
+      sinon.assert.calledTwice(listener.onPositionRemoved);
+      sinon.assert.calledTwice(listener.onPendingOrdersUpdated);
+      sinon.assert.calledTwice(listener.onPendingOrderCompleted);
+      sinon.assert.calledTwice(listener.onHistoryOrderAdded);
+      sinon.assert.calledTwice(listener.onDealAdded);
+      server.emit('synchronization', {type: 'dealSynchronizationFinished', accountId: 'accountId', host: 'ps-mpa-1',
+        instanceIndex: 0, synchronizationId: 'ABC'});
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.calledWith(listener.onAccountInformationUpdated, 'vint-hill:0:ps-mpa-1', update.accountInformation);
+      sinon.assert.calledWith(listener.onPositionsUpdated, 'vint-hill:0:ps-mpa-1', update.updatedPositions);
+      sinon.assert.calledWith(listener.onPositionUpdated, 'vint-hill:0:ps-mpa-1', update.updatedPositions[0]);
+      sinon.assert.calledWith(listener.onPositionRemoved, 'vint-hill:0:ps-mpa-1', update.removedPositionIds[0]);
+      sinon.assert.calledWith(listener.onPendingOrdersUpdated, 'vint-hill:0:ps-mpa-1', update.updatedOrders);
+      sinon.assert.calledWith(listener.onPendingOrderUpdated, 'vint-hill:0:ps-mpa-1', update.updatedOrders[0]);
+      sinon.assert.calledWith(listener.onPendingOrderCompleted, 'vint-hill:0:ps-mpa-1', update.completedOrderIds[0]);
+      sinon.assert.calledWith(listener.onHistoryOrderAdded, 'vint-hill:0:ps-mpa-1', update.historyOrders[0]);
+      sinon.assert.calledWith(listener.onDealAdded, 'vint-hill:0:ps-mpa-1', update.deals[0]);
+      sinon.assert.callCount(listener.onAccountInformationUpdated, 4);
+      sinon.assert.callCount(listener.onPositionsUpdated, 4);
+      sinon.assert.callCount(listener.onPositionUpdated, 4);
+      sinon.assert.callCount(listener.onPositionRemoved, 4);
+      sinon.assert.callCount(listener.onPendingOrdersUpdated, 4);
+      sinon.assert.callCount(listener.onPendingOrderCompleted, 4);
+      sinon.assert.callCount(listener.onHistoryOrderAdded, 4);
+      sinon.assert.callCount(listener.onDealAdded, 4);
+      server.emit('synchronization', Object.assign({type: 'update', accountId: 'accountId', instanceIndex: 0,
+        host: 'ps-mpa-1'}, update));
+      await new Promise(res => setTimeout(res, 50));
+      sinon.assert.callCount(listener.onAccountInformationUpdated, 5);
+      sinon.assert.callCount(listener.onPositionsUpdated, 5);
+      sinon.assert.callCount(listener.onPositionUpdated, 5);
+      sinon.assert.callCount(listener.onPositionRemoved, 5);
+      sinon.assert.callCount(listener.onPendingOrdersUpdated, 5);
+      sinon.assert.callCount(listener.onPendingOrderCompleted, 5);
+      sinon.assert.callCount(listener.onHistoryOrderAdded, 5);
+      sinon.assert.callCount(listener.onDealAdded, 5);
     });
 
     /**

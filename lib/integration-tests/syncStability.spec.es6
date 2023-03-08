@@ -18,6 +18,39 @@ const accountInformation = {
   leverage: 100,
   marginLevel: 3967.58283542
 };
+const defaultPositions = [{
+  id: '46214692',
+  type: 'POSITION_TYPE_BUY',
+  symbol: 'GBPUSD',
+  magic: 1000,
+  time: new Date('2020-04-15T02:45:06.521Z'),
+  updateTime: new Date('2020-04-15T02:45:06.521Z'),
+  openPrice: 1,
+  currentPrice: 1.1,
+  currentTickValue: 1,
+  volume: 0.05,
+  swap: 0,
+  profit: -85.25999999999966,
+  commission: -0.25,
+  clientId: 'TE_GBPUSD_7hyINWqAlE',
+  stopLoss: 1.17721,
+  unrealizedProfit: -85.25999999999901,
+  realizedProfit: -6.536993168992922e-13
+}];
+const defaultOrders = [{
+  id: '46871284',
+  type: 'ORDER_TYPE_BUY_LIMIT',
+  state: 'ORDER_STATE_PLACED',
+  symbol: 'AUDNZD',
+  magic: 123456,
+  platform: 'mt5',
+  time: new Date('2020-04-20T08:38:58.270Z'),
+  openPrice: 1.03,
+  currentPrice: 1.05206,
+  volume: 0.05,
+  currentVolume: 0.01,
+  comment: 'COMMENT2'
+}];
 const errors = [
   {
     'id': 1,
@@ -59,6 +92,14 @@ const errors = [
 ];
 
 let server, server1;
+let defaultSpecifications = [{
+  symbol: 'EURUSD',
+  tickSize: 0.00001,
+  minVolume: 0.01,
+  maxVolume: 200,
+  volumeStep: 0.01
+}];
+let syncHost = 'ps-mpa-0';
 
 class FakeServer {
 
@@ -69,7 +110,7 @@ class FakeServer {
     this._sequenceNumbers = {};
   }
 
-  async authenticate(socket, data, host='ps-mpa-0') {
+  async authenticate(socket, data, host=syncHost) {
     socket.emit('synchronization', {type: 'authenticated', accountId: data.accountId,
       instanceIndex: 0, replicas: 1, host});
   }
@@ -81,7 +122,7 @@ class FakeServer {
     }
   }
 
-  async emitStatus(socket, accountId, host='ps-mpa-0') {
+  async emitStatus(socket, accountId, host=syncHost) {
     const packet = {connected: true, authenticated: true, instanceIndex: 0, type: 'status',
       healthStatus: {rpcApiHealthy: true}, replicas: 1, host,
       connectionId: accountId, accountId: accountId};
@@ -93,28 +134,26 @@ class FakeServer {
       accountInformation});
   }
 
-  async syncAccount(socket, data, host='ps-mpa-0') {
+  async syncAccount(socket, data, host=syncHost, opts={}) {
     const snId = `${data.accountId}:0`;
     this._sequenceNumbers[snId] = this._sequenceNumbers[snId] || 0;
     socket.emit('synchronization', {type: 'synchronizationStarted', accountId: data.accountId, instanceIndex: 0, 
-      synchronizationId: data.requestId, host, sequenceNumber: this._sequenceNumbers[snId]++});
+      synchronizationId: data.requestId, host, sequenceNumber: this._sequenceNumbers[snId]++,
+      specificationsHashIndex: opts.specificationsHashIndex, positionsHashIndex: opts.positionsHashIndex,
+      ordersHashIndex: opts.ordersHashIndex});
     await new Promise(res => setTimeout(res, 50));
     socket.emit('synchronization', {type: 'accountInformation', accountId: data.accountId, accountInformation,
       instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     socket.emit('synchronization',
-      {type: 'specifications', accountId: data.accountId, specifications: [{
-        symbol: 'EURUSD',
-        tickSize: 0.00001,
-        minVolume: 0.01,
-        maxVolume: 200,
-        volumeStep: 0.01
-      }], instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
+      {type: 'specifications', accountId: data.accountId, specifications: opts.specifications || defaultSpecifications,
+        instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     socket.emit('synchronization',
       {type: 'positions', accountId: data.accountId, synchronizationId: data.requestId,
-        positions: [], instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
+        positions: opts.positions || defaultPositions, instanceIndex: 0, host,
+        sequenceNumber: this._sequenceNumbers[snId]++});
     socket.emit('synchronization',
       {type: 'orders', accountId: data.accountId, synchronizationId: data.requestId,
-        orders: [], instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
+        orders: opts.orders || defaultOrders, instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
     await new Promise(res => setTimeout(res, 50));
     socket.emit('synchronization', {type: 'orderSynchronizationFinished', accountId: data.accountId,
       synchronizationId: data.requestId, instanceIndex: 0, host, sequenceNumber: this._sequenceNumbers[snId]++});
@@ -136,6 +175,7 @@ class FakeServer {
 
   enableSync(socket){
     socket.removeAllListeners('request');
+    // eslint-disable-next-line complexity
     socket.on('request', async data => {
       if(data.instanceIndex === 1) {
         await this.respond(socket, data);
@@ -150,7 +190,8 @@ class FakeServer {
           await this.respond(socket, data);
           await new Promise(res => setTimeout(res, 50)); 
           await this.syncAccount(socket, data);
-        } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
+        } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions' || 
+        data.type === 'unsubscribeFromMarketData') {
           await this.respond(socket, data);
         } else if (data.type === 'getAccountInformation') {
           await this.respondAccountInformation(socket, data);
@@ -196,17 +237,24 @@ sequentialProcessing.forEach(param => {
     let clock;
     let sandbox;
     let api;
-
+    let random;
+    
     before(() => {
       MetaApi.enableLog4jsLogging();
       log4js.configure(helpers.assembleLog4jsConfig());
       sandbox = sinon.createSandbox();
-      const mockMath = Object.create(global.Math);
-      mockMath.random = () => 0.2;
-      global.Math = mockMath;
+      random = Math.random;
     });
 
     beforeEach(async () => {
+      syncHost = 'ps-mpa-0';
+      defaultSpecifications = [{
+        symbol: 'EURUSD',
+        tickSize: 0.00001,
+        minVolume: 0.01,
+        maxVolume: 200,
+        volumeStep: 0.01
+      }];
       clock = sinon.useFakeTimers({shouldAdvanceTime: true, now: new Date('2020-04-02T00:00:00.000Z').getTime()});
       api = new MetaApi('token', {application: 'application', domain: 'project-stock.agiliumlabs.cloud',
         useSharedClientApi: true, requestTimeout: 3, retryOpts: {
@@ -229,7 +277,9 @@ sequentialProcessing.forEach(param => {
       });
       api._metaApiWebsocketClient.url = 'http://localhost:6785';
       sandbox.stub(api._connectionRegistry._terminalHashManager._clientApiClient,
-        'getHashingIgnoredFieldLists').resolves({
+        'refreshIgnoredFieldLists').resolves();
+      sandbox.stub(api._connectionRegistry._terminalHashManager._clientApiClient,
+        'getHashingIgnoredFieldLists').returns({
         'g1': {
           'specification': ['description'],
           'position': ['time'],
@@ -1558,6 +1608,421 @@ sequentialProcessing.forEach(param => {
       }).timeout(10000);
 
     });
+
+    describe('specifications sync', () => {
+      
+      it('should synchronize two accounts with similar server names and same data', async () => {
+        api.metatraderAccountApi._metatraderAccountClient.getAccount = (accountId) => ({
+          _id:  accountId,
+          login: '50194988',
+          name: 'mt5a',
+          region: 'vint-hill',
+          reliability: 'regular',
+          server: 'ICMarketsSC-Demo' + accountId.slice(9),
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'DISCONNECTED',
+          state: 'DEPLOYED',
+          type: 'cloud-g1',
+          accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
+        });
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+        connection = account.getStreamingConnection();
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        const response = connection.terminalState.accountInformation;
+        sinon.assert.match(response, accountInformation);
+        (connection.synchronized && connection.terminalState.connected 
+        && connection.terminalState.connectedToBroker).should.equal(true);
+        sinon.assert.match(connection.terminalState.specifications, defaultSpecifications);
+        const connection2 = account2.getStreamingConnection();
+        await connection2.connect();
+        clock.tickAsync(5000); 
+        await connection2.waitSynchronized({timeoutInSeconds: 10});
+        sinon.assert.match(connection2.terminalState.specifications, defaultSpecifications);
+      });
+
+      it('should synchronize two accounts with different specs and same server name', async () => {
+        const specifications2 = [{
+          symbol: 'AUDUSD',
+          tickSize: 0.00001,
+          minVolume: 0.01,
+          maxVolume: 200,
+          volumeStep: 0.01
+        }];
+        fakeServer.io.removeAllListeners('connect');
+        fakeServer.io.on('connect', socket => {
+          server = socket;
+          socket.emit('response', {type: 'response'});
+          socket.removeAllListeners('request');
+          // eslint-disable-next-line complexity
+          socket.on('request', async data => {
+            if(data.instanceIndex === 1) {
+              await fakeServer.respond(socket, data);
+              return;
+            }
+            if(data.type === 'subscribe') {
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks[data.accountId] = 
+                setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            } else if (data.type === 'synchronize') {
+              await fakeServer.respond(socket, data);
+              if(data.accountId === 'accountId2') {
+                await fakeServer.syncAccount(socket, data, undefined, {specifications: specifications2});
+              } else {
+                await fakeServer.syncAccount(socket, data);
+              }
+            } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
+              await fakeServer.respond(socket, data);
+            } else if (data.type === 'getAccountInformation') {
+              await fakeServer.respondAccountInformation(socket, data);
+            } else if (data.type === 'unsubscribe') {
+              fakeServer.deleteStatusTask(data.accountId);
+              await fakeServer.respond(socket, data);
+            }
+          });
+        });
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+        connection = account.getStreamingConnection();
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        const response = connection.terminalState.accountInformation;
+        sinon.assert.match(response, accountInformation);
+        (connection.synchronized && connection.terminalState.connected 
+        && connection.terminalState.connectedToBroker).should.equal(true);
+        sinon.assert.match(connection.terminalState.specifications, defaultSpecifications);
+        const connection2 = account2.getStreamingConnection();
+        await connection2.connect();
+        clock.tickAsync(5000); 
+        await connection2.waitSynchronized({timeoutInSeconds: 10});
+        sinon.assert.match(connection2.terminalState.specifications, specifications2);
+      });
+
+      it('should synchronize two accounts with different specs and different server names', async () => {
+        const specifications2 = [{
+          symbol: 'AUDUSD',
+          tickSize: 0.00001,
+          minVolume: 0.01,
+          maxVolume: 200,
+          volumeStep: 0.01
+        }];
+        api.metatraderAccountApi._metatraderAccountClient.getAccount = (accountId) => ({
+          _id:  accountId,
+          login: '50194988',
+          name: 'mt5a',
+          region: 'vint-hill',
+          reliability: 'regular',
+          server: accountId === 'accountId' ? 'ICMarketsSC-Demo' : 'Tradeview-Demo',
+          provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+          magic: 123456,
+          application: 'MetaApi',
+          connectionStatus: 'DISCONNECTED',
+          state: 'DEPLOYED',
+          type: 'cloud-g1',
+          accessToken: '2RUnoH1ldGbnEneCoqRTgI4QO1XOmVzbH5EVoQsA'
+        });
+        fakeServer.io.removeAllListeners('connect');
+        fakeServer.io.on('connect', socket => {
+          server = socket;
+          socket.emit('response', {type: 'response'});
+          socket.removeAllListeners('request');
+          // eslint-disable-next-line complexity
+          socket.on('request', async data => {
+            if(data.instanceIndex === 1) {
+              await fakeServer.respond(socket, data);
+              return;
+            }
+            if(data.type === 'subscribe') {
+              await new Promise(res => setTimeout(res, 200)); 
+              await fakeServer.respond(socket, data);
+              fakeServer.statusTasks[data.accountId] = 
+                setInterval(() => fakeServer.emitStatus(socket, data.accountId), 100);
+              await new Promise(res => setTimeout(res, 50)); 
+              await fakeServer.authenticate(socket, data);
+            } else if (data.type === 'synchronize') {
+              await fakeServer.respond(socket, data);
+              if(data.accountId === 'accountId2') {
+                await fakeServer.syncAccount(socket, data, undefined, {specifications: specifications2});
+              } else {
+                await fakeServer.syncAccount(socket, data);
+              }
+            } else if (data.type === 'waitSynchronized' || data.type === 'refreshMarketDataSubscriptions') {
+              await fakeServer.respond(socket, data);
+            } else if (data.type === 'getAccountInformation') {
+              await fakeServer.respondAccountInformation(socket, data);
+            } else if (data.type === 'unsubscribe') {
+              fakeServer.deleteStatusTask(data.accountId);
+              await fakeServer.respond(socket, data);
+            }
+          });
+        });
+        const account = await api.metatraderAccountApi.getAccount('accountId');
+        const account2 = await api.metatraderAccountApi.getAccount('accountId2');
+        connection = account.getStreamingConnection();
+        await connection.connect();
+        clock.tickAsync(5000); 
+        await connection.waitSynchronized({timeoutInSeconds: 10});
+        const response = connection.terminalState.accountInformation;
+        sinon.assert.match(response, accountInformation);
+        (connection.synchronized && connection.terminalState.connected 
+        && connection.terminalState.connectedToBroker).should.equal(true);
+        sinon.assert.match(connection.terminalState.specifications, defaultSpecifications);
+        const connection2 = account2.getStreamingConnection();
+        await connection2.connect();
+        clock.tickAsync(5000); 
+        await connection2.waitSynchronized({timeoutInSeconds: 10});
+        sinon.assert.match(connection2.terminalState.specifications, specifications2);
+      });
+
+    });
+
+    // eslint-disable-next-line complexity, max-statements
+    it('should handle random socket events', async () => {
+      const account = await api.metatraderAccountApi.getAccount('accountId');
+      connection = account.getStreamingConnection();
+      await connection.connect();
+      clock.tickAsync(5000);
+      await connection.waitSynchronized({timeoutInSeconds: 10}); 
+      const eventCount = 100;
+      const accountId = 'accountId';
+      const eventLog = [];
+      const historyStorage = {
+        deals: connection.historyStorage.deals,
+        historyOrders: connection.historyStorage.historyOrders
+      };
+      const states = {
+        combined: {
+          connected: false,
+          accountInformation: accountInformation,
+          positions: defaultPositions.slice(0),
+          orders: defaultOrders.slice(0),
+          specifications: defaultSpecifications.slice(0)
+        },
+        'vint-hill:0:ps-mpa-0': {
+          connected: true,
+          synced: true,
+          positions: defaultPositions.slice(0),
+          orders: defaultOrders.slice(0),
+          specifications: defaultSpecifications.slice(0)
+        }
+      };
+      for(let k = 0; k < eventCount; k++) {
+        const synchronizationId = 'ABC';
+        const number = Math.floor(random() * 10);
+        const instanceIndexNumber = Math.floor(random() * 5);
+        const host = 'ps-mpa-' + instanceIndexNumber;
+        const instanceIndex = `vint-hill:0:${host}`;
+        if(!states[instanceIndex]) {
+          states[instanceIndex] = {
+            connected: false,
+            synced: false,
+          };
+        }
+        let accountInfo = {
+          broker: 'True ECN Trading Ltd',
+          currency: 'USD',
+          server: 'ICMarketsSC-Demo',
+          balance: Math.floor(random() * 4500),
+          equity: 7306.649913200001,
+          margin: 184.1,
+          freeMargin: 7120.22,
+          leverage: 100,
+          marginLevel: 3967.58283542
+        };
+        const randomId = (1000000 + Math.floor(random() * 1000000)).toString();
+        const deals = [{
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          commission: -0.25,
+          entryType: 'DEAL_ENTRY_IN',
+          id: randomId,
+          magic: Math.floor(random() * 1000),
+          platform: 'mt5',
+          orderId: '46214692',
+          positionId: '46214692',
+          price: 1.26101,
+          profit: 0,
+          swap: 0,
+          symbol: 'GBPUSD',
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          type: 'DEAL_TYPE_BUY',
+          volume: 0.07
+        }];
+        const historyOrders = [{
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          currentPrice: 1.261,
+          currentVolume: 0,
+          doneTime: new Date('2020-04-15T02:45:06.521Z'),
+          id: randomId,
+          magic: Math.floor(random() * 1000),
+          platform: 'mt5',
+          positionId: '46214692',
+          state: 'ORDER_STATE_FILLED',
+          symbol: 'GBPUSD',
+          time: new Date('2020-04-15T02:45:06.260Z'),
+          type: 'ORDER_TYPE_BUY',
+          volume: 0.07
+        }];
+        let specifications = [{
+          symbol: 'EURUSD',
+          tickSize: 0.00001,
+          minVolume: 0.01,
+          maxVolume: Math.floor(random() * 1000),
+          volumeStep: 0.01
+        }];
+        const prices = [{
+          symbol: 'EURUSD',
+          time: new Date(),
+          bid: random() * 2,
+          ask: random() * 2 - 0.1,
+          profitTickValue: 0.602,
+          lossTickValue: 0.60203
+        }];
+        const positions = [{
+          id: randomId,
+          type: 'POSITION_TYPE_BUY',
+          symbol: 'GBPUSD',
+          magic: 1000,
+          time: new Date('2020-04-15T02:45:06.521Z'),
+          updateTime: new Date('2020-04-15T02:45:06.521Z'),
+          openPrice: 1.26101,
+          currentPrice: 1.24883,
+          currentTickValue: 1,
+          volume: 0.07,
+          swap: 0,
+          profit: -85.25999999999966,
+          commission: -0.25,
+          clientId: 'TE_GBPUSD_7hyINWqAlE',
+          stopLoss: 1.17721,
+          unrealizedProfit: -85.25999999999901,
+          realizedProfit: -6.536993168992922e-13
+        }];
+        const orders = [{
+          id: randomId,
+          type: 'ORDER_TYPE_BUY_LIMIT',
+          state: 'ORDER_STATE_PLACED',
+          symbol: 'AUDNZD',
+          magic: Math.floor(random() * 1000),
+          platform: 'mt5',
+          time: new Date('2020-04-20T08:38:58.270Z'),
+          openPrice: 1.03,
+          currentPrice: 1.05206,
+          volume: 0.01,
+          currentVolume: 0.01,
+          comment: 'COMMENT2'
+        }];
+        let update = {
+          updatedPositions: positions,
+          updatedOrders: orders
+        };
+        const equity = Math.floor(random() * 1000);
+        const freeMargin = Math.floor(random() * 1000);
+        const marginLevel = Math.floor(random() * 1000);
+        const margin = Math.floor(random() * 1000);
+        switch(number) {
+        case 0:
+          eventLog.push(`accountInformation:${instanceIndex}`);
+          server.emit('synchronization', {type: 'accountInformation', accountId, accountInformation: accountInfo,
+            instanceIndex: 0, host});
+          await new Promise(res => setTimeout(res, 200));
+          states.combined.accountInformation = accountInfo;
+          break;
+        case 1:
+          syncHost = host;
+          eventLog.push(`authenticated:${instanceIndex}`);
+          server.emit('synchronization', {type: 'authenticated', accountId,
+            instanceIndex: 0, replicas: 1, host});
+          await new Promise(res => setTimeout(res, 1000));
+          states[instanceIndex].connected = true;
+          states[instanceIndex].synced = true;
+          states.combined.accountInformation = accountInformation;
+          states.combined.orders = defaultOrders.slice(0);
+          states.combined.positions = defaultPositions.slice(0);
+          states.combined.specifications = defaultSpecifications.slice(0);
+          syncHost = 'ps-mpa-0';
+          break;
+        case 2:
+          eventLog.push(`deals:${instanceIndex}`);
+          server.emit('synchronization', {type: 'deals', accountId, deals, instanceIndex: 0, host});
+          await new Promise(res => setTimeout(res, 200));
+          historyStorage.deals.push(deals[0]);
+          historyStorage.deals.sort((a, b) => a.id - b.id);
+          break;
+        case 3:
+          eventLog.push(`deals:${instanceIndex}`);
+          server.emit('synchronization', {type: 'historyOrders', accountId, historyOrders, instanceIndex: 0, host});
+          await new Promise(res => setTimeout(res, 200));
+          historyStorage.historyOrders.push(historyOrders[0]);
+          historyStorage.historyOrders.sort((a, b) => a.id - b.id);
+          break;
+        case 4:
+          eventLog.push(`dealSynchronizationFinished:${instanceIndex}`);
+          server.emit('synchronization', {type: 'dealSynchronizationFinished', accountId, host,
+            instanceIndex: 0, synchronizationId});
+          break;
+        case 5:
+          eventLog.push(`orderSynchronizationFinished:${instanceIndex}`);
+          server.emit('synchronization', {type: 'orderSynchronizationFinished', accountId, host,
+            instanceIndex: 0, synchronizationId});
+          break;
+        case 6:
+          eventLog.push(`downgradeSubscription:${instanceIndex}`);
+          server.emit('synchronization', {type: 'downgradeSubscription', accountId, host,
+            instanceIndex: 0, symbol: 'EURUSD', unsubscriptions: [{type: 'ticks'}, {type: 'books'}]});
+          break;
+        case 7:
+          eventLog.push(`specifications:${instanceIndex}`);
+          server.emit('synchronization',
+            {type: 'specifications', accountId, specifications, instanceIndex: 0, host,
+              removedSymbols: []});
+          await new Promise(res => setTimeout(res, 200));
+          if(states[instanceIndex].synced) {
+            states.combined.specifications = specifications;
+          }
+          break;
+        case 8:
+          eventLog.push(`prices:${instanceIndex}`);
+          server.emit('synchronization', {type: 'prices', accountId, host, prices,
+            equity, margin, freeMargin, marginLevel, instanceIndex: 0});
+          await new Promise(res => setTimeout(res, 200));
+          states.combined.accountInformation.equity = equity;
+          states.combined.accountInformation.margin = margin;
+          states.combined.accountInformation.freeMargin = freeMargin;
+          states.combined.accountInformation.marginLevel = marginLevel;
+          break;  
+        case 9:
+          eventLog.push(`update:${instanceIndex}`);
+          server.emit('synchronization', Object.assign({type: 'update', accountId, instanceIndex: 0, host},
+            update));
+          await new Promise(res => setTimeout(res, 200));
+          if(states[instanceIndex].synced) {
+            states.combined.positions.push(update.updatedPositions[0]);
+            states.combined.orders.push(update.updatedOrders[0]);
+            states.combined.positions.sort((a, b) => a.id - b.id);
+            states.combined.orders.sort((a, b) => a.id - b.id);
+          }
+          break;  
+        }
+        try {
+          sinon.assert.match(connection.terminalState.specifications, states.combined.specifications);
+          sinon.assert.match(connection.terminalState.accountInformation, states.combined.accountInformation);
+          sinon.assert.match(connection.terminalState.positions, states.combined.positions);
+          sinon.assert.match(connection.terminalState.orders, states.combined.orders);
+          sinon.assert.match(connection.historyStorage.deals, historyStorage.deals);
+          sinon.assert.match(connection.historyStorage.historyOrders, historyStorage.historyOrders);
+        } catch (error) {
+          console.log(eventLog.slice(-50), error);
+          throw error;
+        }
+      }
+    }).timeout(120000);
 
     describe('Region replica support', () => {
 

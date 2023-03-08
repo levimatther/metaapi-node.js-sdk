@@ -6,12 +6,14 @@ import crypto from 'crypto-js';
 import TerminalHashManager from './terminalHashManager';
 
 /**
- * @test {TerminalState}
+ * @test {TerminalHashManager}
  */
 describe('TerminalHashManager', () => {
 
   let state, sandbox, clock;
+  let clientApiClient;
   let terminalHashManager;
+  let ignoredFieldLists;
 
   const md5 = (arg) => crypto.MD5(arg).toString();
 
@@ -21,79 +23,88 @@ describe('TerminalHashManager', () => {
 
   beforeEach(() => {
     clock = sinon.useFakeTimers({shouldAdvanceTime: true});
-    const clientApiClient = {
-      getHashingIgnoredFieldLists: () => ({
-        g1: {
-          specification: [
-            'description',
-            'expirationTime',
-            'expirationBrokerTime',
-            'startTime',
-            'startBrokerTime',
-            'pipSize'
-          ],
-          position: [
-            'time',
-            'updateTime',
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'profit',
-            'realizedProfit',
-            'unrealizedProfit',
-            'currentPrice',
-            'currentTickValue',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ],
-          order: [
-            'time',
-            'expirationTime',
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'currentPrice',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ]
-        },
-        g2: {
-          specification: [
-            'pipSize'
-          ],
-          position: [
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'profit',
-            'realizedProfit',
-            'unrealizedProfit',
-            'currentPrice',
-            'currentTickValue',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ],
-          order: [
-            'comment',
-            'brokerComment',
-            'originalComment',
-            'clientId',
-            'currentPrice',
-            'accountCurrencyExchangeRate',
-            'updateSequenceNumber'
-          ]
-        }
-      })
+    clientApiClient = {
+      refreshIgnoredFieldLists: () => {},
+      getHashingIgnoredFieldLists: () => {}
     };
+    ignoredFieldLists = {
+      g1: {
+        specification: [
+          'description',
+          'expirationTime',
+          'expirationBrokerTime',
+          'startTime',
+          'startBrokerTime',
+          'pipSize'
+        ],
+        position: [
+          'time',
+          'updateTime',
+          'comment',
+          'brokerComment',
+          'originalComment',
+          'clientId',
+          'profit',
+          'realizedProfit',
+          'unrealizedProfit',
+          'currentPrice',
+          'currentTickValue',
+          'accountCurrencyExchangeRate',
+          'updateSequenceNumber'
+        ],
+        order: [
+          'time',
+          'expirationTime',
+          'comment',
+          'brokerComment',
+          'originalComment',
+          'clientId',
+          'currentPrice',
+          'accountCurrencyExchangeRate',
+          'updateSequenceNumber'
+        ]
+      },
+      g2: {
+        specification: [
+          'pipSize'
+        ],
+        position: [
+          'comment',
+          'brokerComment',
+          'originalComment',
+          'clientId',
+          'profit',
+          'realizedProfit',
+          'unrealizedProfit',
+          'currentPrice',
+          'currentTickValue',
+          'accountCurrencyExchangeRate',
+          'updateSequenceNumber'
+        ],
+        order: [
+          'comment',
+          'brokerComment',
+          'originalComment',
+          'clientId',
+          'currentPrice',
+          'accountCurrencyExchangeRate',
+          'updateSequenceNumber'
+        ]
+      }
+    };
+    sandbox.stub(clientApiClient, 'getHashingIgnoredFieldLists').returns(ignoredFieldLists);
     terminalHashManager = new TerminalHashManager(clientApiClient);
   });
 
   afterEach(() => {
     clock.restore();
     sandbox.restore();
+  });
+
+  it('should refresh ignored field lists', async () => {
+    sandbox.stub(clientApiClient, 'refreshIgnoredFieldLists').resolves();
+    await terminalHashManager.refreshIgnoredFieldLists('vint-hill');
+    sinon.assert.calledWith(clientApiClient.refreshIgnoredFieldLists, 'vint-hill');
   });
 
   describe('specifications', () => {
@@ -110,13 +121,13 @@ describe('TerminalHashManager', () => {
       const specifications = [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}];
       const hash = await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', specifications);
-      const data = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash);
+      const data = terminalHashManager.getSpecificationsByHash(hash);
       sinon.assert.match(data, { EURUSD: { symbol: 'EURUSD', tickSize: 0.0001 },
         GBPUSD: { symbol: 'GBPUSD' } });
       const updatedHash = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'AUDUSD', tickSize: 0.001}, {symbol: 'BTCUSD'}],
         ['GBPUSD'], hash);
-      const updatedData = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', updatedHash);
+      const updatedData = terminalHashManager.getSpecificationsByHash(updatedHash);
       sinon.assert.match(updatedData, {
         EURUSD: {symbol: 'EURUSD', tickSize: 0.0001},
         AUDUSD: {symbol: 'AUDUSD', tickSize: 0.001},
@@ -124,7 +135,7 @@ describe('TerminalHashManager', () => {
       });
       const updatedHash2 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1',  [{symbol: 'CADUSD', tickSize: 0.001}], ['BTCUSD'], updatedHash);
-      const updatedData2 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', updatedHash2);
+      const updatedData2 = terminalHashManager.getSpecificationsByHash(updatedHash2);
       sinon.assert.match(updatedData2, {
         EURUSD: {symbol: 'EURUSD', tickSize: 0.0001},
         AUDUSD: {symbol: 'AUDUSD', tickSize: 0.001},
@@ -153,9 +164,9 @@ describe('TerminalHashManager', () => {
       await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
           {symbol: 'CADUSD'}]);
-      terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash);
+      terminalHashManager.getSpecificationsByHash(hash);
       await clock.tickAsync(16 * 1000 * 60);
-      const specifications = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash);
+      const specifications = terminalHashManager.getSpecificationsByHash(hash);
       sinon.assert.match(specifications, null);
     });
   
@@ -163,17 +174,51 @@ describe('TerminalHashManager', () => {
       const hash = await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
           {symbol: 'CADUSD', tickSize: 0.001}]);
-      await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
+      const hash2 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'AUDUSD', tickSize: 0.001}, {symbol: 'BTCUSD'},
           {symbol: 'CADUSD', tickSize: 0.002}],
         ['GBPUSD'], hash);
       await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
           {symbol: 'CADUSD'}]);
-      terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash);
+      terminalHashManager.getSpecificationsByHash(hash);
       await clock.tickAsync(16 * 1000 * 60);
-      const specifications = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash);
+      const specifications = terminalHashManager.getSpecificationsByHash(hash);
       sinon.assert.match(specifications, null);
+      const specifications2 = terminalHashManager.getSpecificationsByHash(hash2);
+      sinon.assert.match(specifications2, {
+        EURUSD: { symbol: 'EURUSD', tickSize: 0.0001 },
+        CADUSD: { symbol: 'CADUSD', tickSize: 0.002 },
+        AUDUSD: { symbol: 'AUDUSD', tickSize: 0.001 },
+        BTCUSD: { symbol: 'BTCUSD' }
+      });
+    });
+
+    it('should combine child entry with parent entry with multiple steps', async () => {
+      const hash = await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
+        'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
+          {symbol: 'CADUSD', tickSize: 0.001}]);
+      const hash2 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
+        'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'AUDUSD', tickSize: 0.001}, {symbol: 'BTCUSD'},
+          {symbol: 'CADUSD', tickSize: 0.002}],
+        ['GBPUSD'], hash);
+      const hash3 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
+        'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'AUDUSD', tickSize: 0.003}], [], hash2);
+      const hash4 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
+        'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'AUDUSD', tickSize: 0.004}], [], hash3);
+      const hash5 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
+        'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'AUDUSD', tickSize: 0.005}], [], hash4);
+      const specifications = terminalHashManager.getSpecificationsByHash(hash5);
+      terminalHashManager.addSpecificationReference(hash2, 'connectionId',  'vint-hill:1:ps-mpa-1');
+      sinon.assert.match(specifications, {
+        EURUSD: { symbol: 'EURUSD', tickSize: 0.0001 },
+        CADUSD: { symbol: 'CADUSD', tickSize: 0.002 },
+        AUDUSD: { symbol: 'AUDUSD', tickSize: 0.005 },
+        BTCUSD: { symbol: 'BTCUSD' }
+      });
+      await clock.tickAsync(16 * 1000 * 60);
+      const specifications2 = terminalHashManager.getSpecificationsByHash(hash5);
+      sinon.assert.match(specifications, specifications2);
     });
   
     it('should not clean up unused entry with multiple children', async () => {
@@ -190,9 +235,9 @@ describe('TerminalHashManager', () => {
       await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
           {symbol: 'CADUSD'}]);
-      terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash);
+      terminalHashManager.getSpecificationsByHash(hash);
       await clock.tickAsync(16 * 1000 * 60);
-      terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash);
+      terminalHashManager.getSpecificationsByHash(hash);
     });
   
     it('should combine changes if both child and parent exist', async () => {
@@ -205,11 +250,11 @@ describe('TerminalHashManager', () => {
       const hash3 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'BTCUSD'},
           {symbol: 'CADUSD', tickSize: 0.003}], ['AUDUSD'], hash2);  
-      const data1 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash3);
+      const data1 = terminalHashManager.getSpecificationsByHash(hash3);
       await clock.tickAsync(16 * 1000 * 60);
-      const specifications = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash2);
+      const specifications = terminalHashManager.getSpecificationsByHash(hash2);
       sinon.assert.match(specifications, null);
-      const data2 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash3);
+      const data2 = terminalHashManager.getSpecificationsByHash(hash3);
       sinon.assert.match(data1, data2);
     });
   
@@ -223,15 +268,15 @@ describe('TerminalHashManager', () => {
       const hash3 = await terminalHashManager.updateSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-2', [{symbol: 'BTCUSD'},
           {symbol: 'CADUSD', tickSize: 0.003}], ['AUDUSD'], hash2); 
-      const data1 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash3);
+      const data1 = terminalHashManager.getSpecificationsByHash(hash3);
       await clock.tickAsync(16 * 1000 * 60);
-      const specifications2 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash2);
+      const specifications2 = terminalHashManager.getSpecificationsByHash(hash2);
       sinon.assert.match(specifications2, null);
 
       await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
         'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
           {symbol: 'CADUSD', tickSize: 0.005}]);
-      const data2 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', hash3);
+      const data2 = terminalHashManager.getSpecificationsByHash(hash3);
   
       sinon.assert.match(data1, data2);
     });
@@ -258,27 +303,6 @@ describe('TerminalHashManager', () => {
       sinon.assert.match(lastUsedHashes, [hash2, hash, hash4, hash3]);
     });
 
-    it('should operate with data of an adjacent server', async () => {
-      const hash = await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
-        'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, 
-          {symbol: 'CADUSD', tickSize: 0.001}]);
-      const updatedHash = await terminalHashManager.updateSpecifications('ICMarkets-Demo01', 'cloud-g1',
-        'connectionId', 'vint-hill:1:ps-mpa-1', [{symbol: 'AUDUSD', tickSize: 0.001}, {symbol: 'BTCUSD'},
-          {symbol: 'CADUSD', tickSize: 0.002}], ['GBPUSD'], hash);
-      const data = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo01', updatedHash);
-      const data2 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', updatedHash);
-      const hashes = terminalHashManager.getSpecificationsHashesByHash('ICMarkets-Demo01', updatedHash);
-      const hashes2 = terminalHashManager.getSpecificationsHashesByHash('ICMarkets-Demo02', updatedHash);
-      sinon.assert.match(data, data2);
-      sinon.assert.match(hashes, null);
-      sinon.assert.match(hashes2, {
-        EURUSD: 'c1bb242487a96fcc1d1283f31227024c',
-        CADUSD: '953493300b07e741327a5ae34daf6c41',
-        AUDUSD: '546fe6db57ef786c875de2d62acf91fd',
-        BTCUSD: '85cd5a4604853a7448cdd64c67756043'
-      });
-    });
-
   });
 
   describe('positions', () => {
@@ -289,8 +313,8 @@ describe('TerminalHashManager', () => {
       const hash = await terminalHashManager.recordPositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', positions);
 
-      const recordedPositions = terminalHashManager.getPositionsByHash('accountId', hash);
-      const hashes = terminalHashManager.getPositionsHashesByHash('accountId', hash);
+      const recordedPositions = terminalHashManager.getPositionsByHash(hash);
+      const hashes = terminalHashManager.getPositionsHashesByHash(hash);
       sinon.assert.match(recordedPositions, {
         1: positions[0],
         2: positions[1]
@@ -306,13 +330,13 @@ describe('TerminalHashManager', () => {
       const newPositions = [{id: '1', volume: 30}];
       const updatedHash = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', newPositions, [], hash);
-      const recordedPositions = terminalHashManager.getPositionsByHash('accountId', updatedHash);
+      const recordedPositions = terminalHashManager.getPositionsByHash(updatedHash);
       sinon.assert.match(recordedPositions, {
         1: newPositions[0],
         2: positions[1],
         3: positions[2]
       });
-      const hashes = terminalHashManager.getPositionsHashesByHash('accountId', updatedHash);
+      const hashes = terminalHashManager.getPositionsHashesByHash(updatedHash);
       sinon.assert.match(hashes, {
         1: await terminalHashManager.getItemHash(newPositions[0], 'positions', 'cloud-g1', 'vint-hill'),
         2: await terminalHashManager.getItemHash(positions[1], 'positions', 'cloud-g1', 'vint-hill'),
@@ -321,13 +345,13 @@ describe('TerminalHashManager', () => {
       const newPositions2 = [{id: '3', volume: 50}];
       const updatedHash2 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', newPositions2, [], updatedHash);
-      const recordedPositions2 = terminalHashManager.getPositionsByHash('accountId', updatedHash2);
+      const recordedPositions2 = terminalHashManager.getPositionsByHash(updatedHash2);
       sinon.assert.match(recordedPositions2, {
         1: newPositions[0],
         2: positions[1],
         3: newPositions2[0]
       });
-      const hashes2 = terminalHashManager.getPositionsHashesByHash('accountId', updatedHash2);
+      const hashes2 = terminalHashManager.getPositionsHashesByHash(updatedHash2);
       sinon.assert.match(hashes2, {
         1: await terminalHashManager.getItemHash(newPositions[0], 'positions', 'cloud-g1', 'vint-hill'),
         2: await terminalHashManager.getItemHash(positions[1], 'positions', 'cloud-g1', 'vint-hill'),
@@ -343,7 +367,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], hash);
-      const recordedPositions = terminalHashManager.getPositionsByHash('accountId', updatedHash);
+      const recordedPositions = terminalHashManager.getPositionsByHash(updatedHash);
       sinon.assert.match(recordedPositions, {
         1: positions[0],
         3: positions[2],
@@ -352,7 +376,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash2 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], updatedHash);
-      const recordedPositions2 = terminalHashManager.getPositionsByHash('accountId', updatedHash2);
+      const recordedPositions2 = terminalHashManager.getPositionsByHash(updatedHash2);
       sinon.assert.match(updatedHash, updatedHash2);
       sinon.assert.match({
         1: positions[0],
@@ -362,7 +386,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash3 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3'], updatedHash2);
-      const recordedPositions3 = terminalHashManager.getPositionsByHash('accountId', updatedHash3);
+      const recordedPositions3 = terminalHashManager.getPositionsByHash(updatedHash3);
       sinon.assert.match({
         1: positions[0],
         4: positions[3]
@@ -370,7 +394,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash4 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3', '4'], updatedHash3);
-      const recordedPositions4 = terminalHashManager.getPositionsByHash('accountId', updatedHash4);
+      const recordedPositions4 = terminalHashManager.getPositionsByHash(updatedHash4);
       sinon.assert.match({
         1: positions[0]
       }, recordedPositions4);
@@ -387,12 +411,12 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(60000);
       const updatedHash2 = await terminalHashManager.updatePositions('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2', '3'], updatedHash);
-      const recordedPositions = terminalHashManager.getPositionsByHash('accountId', updatedHash2);
+      const recordedPositions = terminalHashManager.getPositionsByHash(updatedHash2);
       sinon.assert.match(recordedPositions, {
         1: positions[0]
       });
       await clock.tickAsync(550000);
-      const recordedPositions2 = terminalHashManager.getPositionsByHash('accountId', updatedHash2);
+      const recordedPositions2 = terminalHashManager.getPositionsByHash(updatedHash2);
       sinon.assert.match({
         1: positions[0]
       }, recordedPositions2);
@@ -423,8 +447,8 @@ describe('TerminalHashManager', () => {
       const hash = await terminalHashManager.recordOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', orders);
 
-      const recordedOrders = terminalHashManager.getOrdersByHash('accountId', hash);
-      const hashes = terminalHashManager.getOrdersHashesByHash('accountId', hash);
+      const recordedOrders = terminalHashManager.getOrdersByHash(hash);
+      const hashes = terminalHashManager.getOrdersHashesByHash(hash);
       sinon.assert.match(recordedOrders, {
         1: orders[0],
         2: orders[1]
@@ -440,13 +464,13 @@ describe('TerminalHashManager', () => {
       const newOrders = [{id: '1', openPrice: 30}];
       const updatedHash = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', newOrders, [], hash);
-      const recordedOrders = terminalHashManager.getOrdersByHash('accountId', updatedHash);
+      const recordedOrders = terminalHashManager.getOrdersByHash(updatedHash);
       sinon.assert.match(recordedOrders, {
         1: newOrders[0],
         2: orders[1],
         3: orders[2]
       });
-      const hashes = terminalHashManager.getOrdersHashesByHash('accountId', updatedHash);
+      const hashes = terminalHashManager.getOrdersHashesByHash(updatedHash);
       sinon.assert.match(hashes, {
         1: await terminalHashManager.getItemHash(newOrders[0], 'orders', 'cloud-g1', 'vint-hill'),
         2: await terminalHashManager.getItemHash(orders[1], 'orders', 'cloud-g1', 'vint-hill'),
@@ -455,13 +479,13 @@ describe('TerminalHashManager', () => {
       const newOrders2 = [{id: '3', openPrice: 50}];
       const updatedHash2 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', newOrders2, [], updatedHash);
-      const recordedOrders2 = terminalHashManager.getOrdersByHash('accountId', updatedHash2);
+      const recordedOrders2 = terminalHashManager.getOrdersByHash(updatedHash2);
       sinon.assert.match(recordedOrders2, {
         1: newOrders[0],
         2: orders[1],
         3: newOrders2[0]
       });
-      const hashes2 = terminalHashManager.getOrdersHashesByHash('accountId', updatedHash2);
+      const hashes2 = terminalHashManager.getOrdersHashesByHash(updatedHash2);
       sinon.assert.match(hashes2, {
         1: await terminalHashManager.getItemHash(newOrders[0], 'orders', 'cloud-g1', 'vint-hill'),
         2: await terminalHashManager.getItemHash(orders[1], 'orders', 'cloud-g1', 'vint-hill'),
@@ -477,7 +501,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], hash);
-      const recordedOrders = terminalHashManager.getOrdersByHash('accountId', updatedHash);
+      const recordedOrders = terminalHashManager.getOrdersByHash(updatedHash);
       sinon.assert.match(recordedOrders, {
         1: orders[0],
         3: orders[2],
@@ -486,7 +510,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash2 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2'], updatedHash);
-      const recordedOrders2 = terminalHashManager.getOrdersByHash('accountId', updatedHash2);
+      const recordedOrders2 = terminalHashManager.getOrdersByHash(updatedHash2);
       sinon.assert.match(updatedHash, updatedHash2);
       sinon.assert.match(recordedOrders2, {
         1: orders[0],
@@ -496,7 +520,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash3 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3'], updatedHash2);
-      const recordedOrders3 = terminalHashManager.getOrdersByHash('accountId', updatedHash3);
+      const recordedOrders3 = terminalHashManager.getOrdersByHash(updatedHash3);
       sinon.assert.match(recordedOrders3, {
         1: orders[0],
         4: orders[3]
@@ -504,7 +528,7 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(500);
       const updatedHash4 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['3', '4'], updatedHash3);
-      const recordedOrders4 = terminalHashManager.getOrdersByHash('accountId', updatedHash4);
+      const recordedOrders4 = terminalHashManager.getOrdersByHash(updatedHash4);
       sinon.assert.match(recordedOrders4, {
         1: orders[0]
       });
@@ -521,12 +545,12 @@ describe('TerminalHashManager', () => {
       await clock.tickAsync(60000);
       const updatedHash2 = await terminalHashManager.updateOrders('accountId', 'cloud-g1', 'connectionId',
         'vint-hill:1:ps-mpa-1', [], ['2', '3'], updatedHash);
-      const recordedOrders = terminalHashManager.getOrdersByHash('accountId', updatedHash2);
+      const recordedOrders = terminalHashManager.getOrdersByHash(updatedHash2);
       sinon.assert.match(recordedOrders, {
         1: orders[0]
       });
       await clock.tickAsync(550000);
-      const recordedOrders2 = terminalHashManager.getOrdersByHash('accountId', updatedHash2);
+      const recordedOrders2 = terminalHashManager.getOrdersByHash(updatedHash2);
       sinon.assert.match(recordedOrders2, {
         1: orders[0]
       });
@@ -560,25 +584,24 @@ describe('TerminalHashManager', () => {
     const ordersHash = await terminalHashManager.recordOrders('accountId', 'cloud-g1', 'connectionId',
       'vint-hill:1:ps-mpa-1', orders);
     await clock.tickAsync(16 * 60 * 1000);
-    const specsData = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', specificationsHash);
+    const specsData = terminalHashManager.getSpecificationsByHash(specificationsHash);
     sinon.assert.match(specsData, { EURUSD: { symbol: 'EURUSD', tickSize: 0.0001 } });
 
-    const positionsData = terminalHashManager.getPositionsByHash('accountId', positionsHash);
+    const positionsData = terminalHashManager.getPositionsByHash(positionsHash);
     sinon.assert.match(positionsData, { 1: {id: '1', volume: 10} });
 
-    const ordersData = terminalHashManager.getOrdersByHash('accountId', ordersHash);
+    const ordersData = terminalHashManager.getOrdersByHash(ordersHash);
     sinon.assert.match(ordersData, { 1: {id: '1', openPrice: 10} });
-    terminalHashManager.removeConnectionReferences('ICMarkets-Demo02', 'accountId',
-      'connectionId', 'vint-hill:1:ps-mpa-1');
+    terminalHashManager.removeConnectionReferences('connectionId', 'vint-hill:1:ps-mpa-1');
     await clock.tickAsync(16 * 60 * 1000);
 
-    const specsData2 = terminalHashManager.getSpecificationsByHash('ICMarkets-Demo02', specificationsHash);
+    const specsData2 = terminalHashManager.getSpecificationsByHash(specificationsHash);
     sinon.assert.match(specsData2, null);
 
-    const positionsData2 = terminalHashManager.getPositionsByHash('accountId', positionsHash);
+    const positionsData2 = terminalHashManager.getPositionsByHash(positionsHash);
     sinon.assert.match(positionsData2, null);
 
-    const ordersData2 = terminalHashManager.getOrdersByHash('accountId', ordersHash);
+    const ordersData2 = terminalHashManager.getOrdersByHash(ordersHash);
     sinon.assert.match(ordersData2, null);
   });
 
@@ -599,7 +622,7 @@ describe('TerminalHashManager', () => {
     const specificationsHash = await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g1',
       'connectionId', 'vint-hill:1:ps-mpa-1', specifications);
     const resultSpecificationsHashes = 
-      terminalHashManager.getSpecificationsHashesByHash('ICMarkets-Demo02', specificationsHash);
+      terminalHashManager.getSpecificationsHashesByHash(specificationsHash);
     sinon.assert.match(resultSpecificationsHashes.AUDNZD, expectedSpecificationsHash[0]);
     sinon.assert.match(resultSpecificationsHashes.EURUSD, expectedSpecificationsHash[1]);
 
@@ -670,7 +693,7 @@ describe('TerminalHashManager', () => {
     const specificationsHash = await terminalHashManager.recordSpecifications('ICMarkets-Demo02', 'cloud-g2',
       'connectionId', 'vint-hill:1:ps-mpa-1', specifications);
     const resultSpecificationsHashes = 
-      terminalHashManager.getSpecificationsHashesByHash('ICMarkets-Demo02', specificationsHash);
+      terminalHashManager.getSpecificationsHashesByHash(specificationsHash);
     sinon.assert.match(resultSpecificationsHashes.AUDNZD, expectedSpecificationsHash[0]);
     sinon.assert.match(resultSpecificationsHashes.EURUSD, expectedSpecificationsHash[1]);
 
@@ -722,19 +745,6 @@ describe('TerminalHashManager', () => {
     const ordersHash = await terminalHashManager.recordOrders('accountId', 'cloud-g2', 'connectionId',
       'vint-hill:1:ps-mpa-1', orders);
     sinon.assert.match(ordersHash, expectedOrdersHash);
-  });
-
-  it('should reference to specifications of other instance', async () => {
-    let hash = await terminalHashManager.recordSpecifications('BrokerServer1', 'cloud-g1', 'connection1', 'host',
-      [{symbol: 'EURUSD'}]);
-
-    terminalHashManager.removeSpecificationReference('BrokerServer2', 'connection2', 'vint-hill:1:ps-mpa-1');
-    terminalHashManager.addSpecificationReference('BrokerServer2', hash, 'connection2','vint-hill:1:ps-mpa-1');
-
-    let specifications1 = terminalHashManager.getSpecificationsByHash('BrokerServer1', hash);
-    let specifications2 = terminalHashManager.getSpecificationsByHash('BrokerServer2', hash);
-    specifications1.should.deepEqual({'EURUSD': {symbol: 'EURUSD'}});
-    specifications1.should.equal(specifications2);
   });
 
 });

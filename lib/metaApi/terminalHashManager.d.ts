@@ -1,4 +1,4 @@
-import { MetatraderOrder, MetatraderPosition } from "./metaApiWebsocket.client"
+import { MetatraderOrder, MetatraderPosition, MetatraderSymbolSpecification } from "../clients/metaApi/metaApiWebsocket.client"
 import ClientApiClient from "../clients/metaApi/clientApi.client"
 
 export default class TerminalHashManager {
@@ -6,72 +6,72 @@ export default class TerminalHashManager {
   /**
    * Constructs the instance of terminal hash manager class
    * @param {ClientApiClient} clientApiClient client api client
+   * @param {boolean} [keepHashTrees] if set to true, unused data will not be cleared (for use in debugging)
    */
-  constructor(clientApiClient: ClientApiClient)
+  constructor(clientApiClient: ClientApiClient, keepHashTrees?: boolean)
+
+  /**
+   * Refreshes hashing ignored field lists
+   * @param {String} region account region
+   * @returns {Promise} promise resolving when the hashing field lists are updated.
+   */
+  refreshIgnoredFieldLists(region: string): Promise;
 
   /**
    * Returns specifications data by hash
-   * @param {string} serverName server name
    * @param {string} specificationsHash specifications hash
    * @returns {[id: string]: MetatraderSymbolSpecification}
    */
-  getSpecificationsByHash(serverName: string, specificationsHash: string): {[id: string]: MetatraderSymbolSpecification};
+  getSpecificationsByHash(specificationsHash: string): {[id: string]: MetatraderSymbolSpecification};
 
   /**
    * Returns specifications hash data by hash
-   * @param {string} serverName server name
    * @param {string} specificationsHash specifications hash
    * @returns {[id: string]: string}
    */
-  getSpecificationsHashesByHash(serverName: string, specificationsHash: string): {[id: string]: string};
+  getSpecificationsHashesByHash(specificationsHash: string): {[id: string]: string};
 
   /**
    * Returns positions data by hash
-   * @param {string} accountId account id
    * @param {string} positionsHash positions hash
    * @returns {[id: string]: MetatraderPosition}
    */
-  getPositionsByHash(accountId: string, positionsHash: string): {[id: string]: MetatraderPosition};
+  getPositionsByHash(positionsHash: string): {[id: string]: MetatraderPosition};
 
   /**
    * Returns the list of removed position ids for specified hash
-   * @param {string} accountId account id
    * @param {string} positionsHash positions hash
    * @returns {string[]} removed position ids
    */
-  getRemovedPositionsByHash(accountId: string, positionsHash: string): string[];
+  getRemovedPositionsByHash(positionsHash: string): string[];
 
   /**
    * Returns positions hash data by hash
-   * @param {string} accountId account id
    * @param {string} positionsHash positions hash
    * @returns {[id: string]: string} dictionary of position hashes
    */
-  getPositionsHashesByHash(accountId: string, positionsHash: string): {[id: string]: string};
+  getPositionsHashesByHash(positionsHash: string): {[id: string]: string};
 
   /**
    * Returns orders data by hash
-   * @param {string} accountId account id
    * @param {string} ordersHash orders hash
    * @returns {[id: string]: MetatraderOrder} removed position ids
    */
-  getOrdersByHash(accountId: string, ordersHash: string): {[id: string]: MetatraderOrder};
+  getOrdersByHash(ordersHash: string): {[id: string]: MetatraderOrder};
 
   /**
    * Returns completed orders data by hash
-   * @param {string} accountId account id
    * @param {string} ordersHash orders hash
    * @returns {string[]} completed order ids
    */
-  getCompletedOrdersByHash(accountId: string, ordersHash: string): string[];
+  getCompletedOrdersByHash(ordersHash: string): string[];
 
   /**
    * Returns orders hash data by hash
-   * @param {string} accountId account id
    * @param {string} ordersHash orders hash
    * @returns {[id: string]: string} dictionary of order hashes
    */
-  getOrdersHashesByHash(accountId: string, ordersHash: string): {[id: string]: string};
+  getOrdersHashesByHash(ordersHash: string): {[id: string]: string};
 
   /**
    * Creates an entry for specification data and returns hash
@@ -175,62 +175,54 @@ export default class TerminalHashManager {
   
   /**
    * Removes all references for a connection
-   * @param {string} serverName broker server name
-   * @param {string} accountId account id
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removeConnectionReferences(serverName: string, accountId: string, connectionId: string, instanceIndex: string): void;
+  removeConnectionReferences(connectionId: string, instanceIndex: string): void;
 
   /**
    * Adds a reference from a terminal state instance index to a specifications hash
-   * @param {string} serverName server name 
    * @param {string} hash specifications hash
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  addSpecificationReference(serverName: string, hash: string, connectionId: string, instanceIndex: string): void;
+  addSpecificationReference(hash: string, connectionId: string, instanceIndex: string): void;
 
   /**
    * Removes a reference from a terminal state instance index to a specifications hash
-   * @param {string} serverName server name
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removeSpecificationReference(serverName: string, connectionId: string, instanceIndex: string): void;
+  removeSpecificationReference(connectionId: string, instanceIndex: string): void;
 
   /**
    * Adds a reference from a terminal state instance index to a positions hash
-   * @param {string} accountId account id
    * @param {string} hash positions hash
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  addPositionReference(accountId: string, hash: string, connectionId: string, instanceIndex: string): void;
+  addPositionReference(hash: string, connectionId: string, instanceIndex: string): void;
 
   /**
    * Removes a reference from a terminal state instance index to a positions hash
-   * @param {string} accountId account id
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removePositionReference(accountId: string, connectionId: string, instanceIndex: string): void;
+  removePositionReference(connectionId: string, instanceIndex: string): void;
 
   /**
    * Adds a reference from a terminal state instance index to a orders hash
-   * @param {string} accountId account id
    * @param {string} hash positions hash
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  addOrderReference(accountId: string, hash: string, connectionId: string, instanceIndex: string): void;
+  addOrderReference(hash: string, connectionId: string, instanceIndex: string): void;
 
   /**
    * Removes a reference from a terminal state instance index to a orders hash
-   * @param {string} accountId account id
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removeOrderReference(accountId: string, connectionId: string, instanceIndex: string): void;
+  removeOrderReference(connectionId: string, instanceIndex: string): void;
 
 }

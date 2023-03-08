@@ -132,7 +132,12 @@ export declare type MetaApiOpts = {
   /**
    * MT account generator API request timeout. Default is 4 minutes
    */
-  accountGeneratorRequestTimeout?: number
+  accountGeneratorRequestTimeout?: number,
+
+  /**
+   * if set to true, unused data will not be cleared (for use in debugging)
+   */
+  keepHashTrees?: boolean
 }
 
 /**

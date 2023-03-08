@@ -14,12 +14,10 @@ describe('SubscriptionManager', () => {
 
   before(() => {
     sandbox = sinon.createSandbox();
-    const mockMath = Object.create(global.Math);
-    mockMath.random = () => 0.2;
-    global.Math = mockMath;
   });
 
   beforeEach(async () => {  
+    sandbox.stub(Math, 'random').returns(0.2);
     const socketInstances = {'vint-hill': {0: [{socket: {connected: true}}, {socket: {connected: false}}]}};
     client = {
       connect: () => {},

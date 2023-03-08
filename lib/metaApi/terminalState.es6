@@ -30,6 +30,7 @@ export default class TerminalState extends SynchronizationListener {
       specificationsBySymbol: null,
       pricesBySymbol: {},
       removedPositions: {},
+      completedOrders: {},
       specificationsHash: null,
       positionsHash: null,
       ordersHash: null,
@@ -80,7 +81,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   get positions() {
     const hash = this._combinedState.positionsHash;
-    return hash ? Object.values(this._terminalHashManager.getPositionsByHash(this._account.id, hash) || {}) : [];
+    return hash ? Object.values(this._terminalHashManager.getPositionsByHash(hash) || {}) : [];
   }
 
   /**
@@ -89,7 +90,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   get orders() {
     const hash = this._combinedState.ordersHash;
-    return hash ? Object.values(this._terminalHashManager.getOrdersByHash(this._account.id, hash) || {}) : [];
+    return hash ? Object.values(this._terminalHashManager.getOrdersByHash(hash) || {}) : [];
   }
 
   /**
@@ -99,7 +100,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   get specifications() {
     const hash = this._combinedState.specificationsHash;
-    return hash ? Object.values(this._terminalHashManager.getSpecificationsByHash(this._account.server,
+    return hash ? Object.values(this._terminalHashManager.getSpecificationsByHash(
       this._combinedState.specificationsHash) || {}) : [];
   }
 
@@ -128,7 +129,7 @@ export default class TerminalState extends SynchronizationListener {
    */
   specification(symbol) {
     if(this._combinedState.specificationsHash) {
-      const state = this._terminalHashManager.getSpecificationsByHash(this._account.server,
+      const state = this._terminalHashManager.getSpecificationsByHash(
         this._combinedState.specificationsHash);
       return state[symbol];
     } else {
@@ -235,7 +236,6 @@ export default class TerminalState extends SynchronizationListener {
     state.accountInformation = undefined;
     state.pricesBySymbol = {};
     state.positions = [];
-    state.removedPositions = {};
     if(!positionsHash) {
       state.positionsInitialized = false;
       state.positionsHash = null;
@@ -298,7 +298,6 @@ export default class TerminalState extends SynchronizationListener {
    */
   onPositionsSynchronized(instanceIndex, synchronizationId) {
     let state = this._getState(instanceIndex);
-    state.removedPositions = {};
     state.positionsInitialized = true;
   }
 
@@ -312,6 +311,15 @@ export default class TerminalState extends SynchronizationListener {
   async onPositionsUpdated(instanceIndex, positions, removedPositionIds) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    const date = Date.now();
+    removedPositionIds.forEach(id => this._combinedState.removedPositions[id] = date);
+    positions = this._filterRemovedPositions(positions);
+    Object.keys(this._combinedState.removedPositions).forEach(id => {
+      if(this._combinedState.removedPositions[id] < date - 24 * 60 * 60 * 1000) {
+        delete this._combinedState.removedPositions[id];
+      }
+    });
+
     if(instanceState.ordersInitialized) {
       const updatePositions = async (state, instance) => {
         const hash = await this._terminalHashManager.updatePositions(this._account.id, this._account.type, this._id,
@@ -361,34 +369,36 @@ export default class TerminalState extends SynchronizationListener {
     state.ordersInitialized = true;
     this._combinedState.accountInformation = state.accountInformation ? Object.assign({}, state.accountInformation) :
       undefined;
+    state.positions = this._filterRemovedPositions(state.positions);
     if(state.positions.length) {
-      const hash = await this._terminalHashManager.recordPositions(this._account.id,
+      const hash = this._terminalHashManager.recordPositions(this._account.id,
         this._account.type, this._id, instanceIndex, state.positions);
       state.positionsHash = hash;
       this._combinedState.positions = (state.positions || []).map(p => Object.assign({}, p));
       this._combinedState.positionsHash = hash;
     } else if (state.positionsHash) {
-      this._terminalHashManager.removePositionReference(this._account.id, this.id, instanceIndex);
-      this._terminalHashManager.addPositionReference(this._account.id, state.positionsHash,
+      this._terminalHashManager.removePositionReference(this.id, instanceIndex);
+      this._terminalHashManager.addPositionReference(state.positionsHash,
         this.id, instanceIndex);
       this._combinedState.positionsHash = state.positionsHash;
-      this._terminalHashManager.removePositionReference(this._account.id, this.id, this._combinedInstanceIndex);
-      this._terminalHashManager.addPositionReference(this._account.id, state.positionsHash,
+      this._terminalHashManager.removePositionReference(this.id, this._combinedInstanceIndex);
+      this._terminalHashManager.addPositionReference(state.positionsHash,
         this.id, this._combinedInstanceIndex);
     }
+    state.orders = this._filterRemovedOrders(state.orders);
     if(state.orders.length) {
-      const hash = await this._terminalHashManager.recordOrders(this._account.id,
+      const hash = this._terminalHashManager.recordOrders(this._account.id,
         this._account.type, this._id, instanceIndex, state.orders);
       state.ordersHash = hash;
       this._combinedState.orders = (state.orders || []).map(o => Object.assign({}, o));
       this._combinedState.ordersHash = hash;
     } else if (state.ordersHash) {
-      this._terminalHashManager.removeOrderReference(this._account.id, this.id, instanceIndex);
-      this._terminalHashManager.addOrderReference(this._account.id, state.ordersHash,
+      this._terminalHashManager.removeOrderReference(this.id, instanceIndex);
+      this._terminalHashManager.addOrderReference(state.ordersHash,
         this.id, instanceIndex);
       this._combinedState.ordersHash = state.ordersHash;
-      this._terminalHashManager.removeOrderReference(this._account.id, this.id, this._combinedInstanceIndex);
-      this._terminalHashManager.addOrderReference(this._account.id, state.ordersHash,
+      this._terminalHashManager.removeOrderReference(this.id, this._combinedInstanceIndex);
+      this._terminalHashManager.addOrderReference(state.ordersHash,
         this.id, this._combinedInstanceIndex);
     }
     this._logger.trace(() => `${this._account.id}:${instanceIndex}:${synchronizationId}: assigned specifications to ` +
@@ -410,14 +420,12 @@ export default class TerminalState extends SynchronizationListener {
         state.specificationsHash = hash;
       }
     } else if (state.specificationsHash) {
-      this._terminalHashManager.removeSpecificationReference(this._account.server,
-        this.id, instanceIndex);
-      this._terminalHashManager.addSpecificationReference(this._account.server, state.specificationsHash,
+      this._terminalHashManager.removeSpecificationReference(this.id, instanceIndex);
+      this._terminalHashManager.addSpecificationReference(state.specificationsHash,
         this.id, instanceIndex);
       this._combinedState.specificationsHash = state.specificationsHash;
-      this._terminalHashManager.removeSpecificationReference(this._account.server,
-        this.id, this._combinedInstanceIndex);
-      this._terminalHashManager.addSpecificationReference(this._account.server, state.specificationsHash,
+      this._terminalHashManager.removeSpecificationReference(this.id, this._combinedInstanceIndex);
+      this._terminalHashManager.addSpecificationReference(state.specificationsHash,
         this.id, this._combinedInstanceIndex);
     }
     for(let stateIndex of this._getStateIndicesOfSameInstanceNumber(instanceIndex)) {
@@ -437,6 +445,15 @@ export default class TerminalState extends SynchronizationListener {
   async onPendingOrdersUpdated(instanceIndex, orders, completedOrderIds) {
     let instanceState = this._getState(instanceIndex);
     this._refreshStateUpdateTime(instanceIndex);
+    const date = Date.now();
+    completedOrderIds.forEach(id => this._combinedState.completedOrders[id] = date);
+    orders = this._filterRemovedOrders(orders);
+    Object.keys(this._combinedState.completedOrders).forEach(id => {
+      if(this._combinedState.completedOrders[id] < date - 24 * 60 * 60 * 1000) {
+        delete this._combinedState.completedOrders[id];
+      }
+    });
+
     if(instanceState.ordersInitialized) {
       const updatePendingOrders = async (state, instance) => {
         const hash = await this._terminalHashManager.updateOrders(this._account.id, this._account.type, this._id,
@@ -472,10 +489,10 @@ export default class TerminalState extends SynchronizationListener {
         instanceState.specificationsBySymbol[specification.symbol] = specification;
       }
     } else {
-      const hash = await this._terminalHashManager.updateSpecifications(this._account.server, this._account.type,
+      const hash = this._terminalHashManager.updateSpecifications(this._account.server, this._account.type,
         this._id, instanceIndex, specifications, removedSymbols, instanceState.specificationsHash);
       instanceState.specificationsHash = hash;
-      const combinedHash = await this._terminalHashManager.updateSpecifications(this._account.server,
+      const combinedHash = this._terminalHashManager.updateSpecifications(this._account.server,
         this._account.type, this._id, this._combinedInstanceIndex, specifications, removedSymbols,
         this._combinedState.specificationsHash);
       this._combinedState.specificationsHash = combinedHash;
@@ -516,9 +533,9 @@ export default class TerminalState extends SynchronizationListener {
           state.lastQuoteBrokerTime = price.brokerTime;
         }
         state.pricesBySymbol[price.symbol] = price;
-        const allPositions = Object.values(this._terminalHashManager.getPositionsByHash(this._account.id, 
+        const allPositions = Object.values(this._terminalHashManager.getPositionsByHash(
           state.positionsHash) || {});
-        const allOrders = Object.values(this._terminalHashManager.getOrdersByHash(this._account.id, 
+        const allOrders = Object.values(this._terminalHashManager.getOrdersByHash(
           state.ordersHash) || {});
         let positions = allPositions.filter(p => p.symbol === price.symbol);
         let otherPositions = allPositions.filter(p => p.symbol !== price.symbol);
@@ -686,6 +703,14 @@ export default class TerminalState extends SynchronizationListener {
       position.currentPrice = newPositionPrice;
       position.currentTickValue = currentTickValue;
     }
+  }
+
+  _filterRemovedPositions(positions) {
+    return positions.filter(position => !this._combinedState.removedPositions[position.id]);
+  }
+
+  _filterRemovedOrders(orders) {
+    return orders.filter(order => !this._combinedState.completedOrders[order.id]);
   }
   
   _getState(instanceIndex) {
