@@ -1,4 +1,4 @@
-import HttpClient from "../httpClient";
+import DomainClient from "../domain.client";
 import { TooManyRequestsErrorMetadata } from "../errorHandler";
 import SynchronizationListener from "./synchronizationListener";
 import LatencyListener from "./latencyListener"
@@ -11,11 +11,11 @@ export default class MetaApiWebsocketClient {
   
   /**
    * Constructs MetaApi websocket API client instance
-   * @param {HttpClient} httpClient HTTP client
+   * @param {DomainClient} domainClient domain client
    * @param {string} token authorization token
    * @param {Object} opts websocket client options
    */
-  constructor(httpClient: HttpClient, token: string, opts: Object);
+  constructor(domainClient: DomainClient, token: string, opts: Object);
   
   /**
    * Restarts the account synchronization process on an out of order packet

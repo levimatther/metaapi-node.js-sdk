@@ -15,11 +15,18 @@ export default class ClientApiClient extends MetaApiClient {
   constructor(httpClient: HttpClient, domainClient: DomainClient);
 
   /**
+   * Refreshes hashing ignored field lists
+   * @param {String} region account region
+   * @returns {Promise} promise resolving when the hashing field lists are updated.
+   */
+  refreshIgnoredFieldLists(region: string): Promise;
+
+  /**
    * Retrieves hashing ignored field lists
    * @param {string} region account region
-   * @returns {Promise<HashingIgnoredFieldLists>} promise resolving with hashing ignored field lists
+   * @returns {HashingIgnoredFieldLists} promise resolving with hashing ignored field lists
    */
-  getHashingIgnoredFieldLists(region: string): Promise<HashingIgnoredFieldLists>;
+  getHashingIgnoredFieldLists(region: string): HashingIgnoredFieldLists;
 }
 
 /**

@@ -1,3 +1,6 @@
+20.12.0
+  - refactored terminal hash manager
+
 20.11.5
   - update package info
 

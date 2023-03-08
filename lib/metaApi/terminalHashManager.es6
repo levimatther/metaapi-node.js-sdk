@@ -1,5 +1,4 @@
 import crypto from 'crypto-js';
-import Fuse from 'fuse.js';
 import ReferenceTree from './referenceTree';
 
 /**
@@ -10,72 +9,76 @@ export default class TerminalHashManager {
   /**
    * Constructs the instance of terminal hash manager class
    * @param {ClientApiClient} clientApiClient client api client
+   * @param {boolean} [keepHashTrees] if set to true, unused data will not be cleared (for use in debugging)
    */
-  constructor(clientApiClient) {
+  constructor(clientApiClient, keepHashTrees = false) {
     this._clientApiClient = clientApiClient;
-    this._specificationsTree = new ReferenceTree(this, 'symbol', 'specifications', true);
-    this._positionsTree = new ReferenceTree(this, 'id', 'positions');
-    this._ordersTree = new ReferenceTree(this, 'id', 'orders');
+    this._specificationsTree = new ReferenceTree(this, 'symbol', 'specifications', true, keepHashTrees);
+    this._positionsTree = new ReferenceTree(this, 'id', 'positions', false, keepHashTrees);
+    this._ordersTree = new ReferenceTree(this, 'id', 'orders', false, keepHashTrees);
+  }
+
+  /**
+   * Refreshes hashing ignored field lists
+   * @param {String} region account region
+   * @returns {Promise} promise resolving when the hashing field lists are updated.
+   */
+  async refreshIgnoredFieldLists(region) {
+    await this._clientApiClient.refreshIgnoredFieldLists(region);
   }
 
   /**
    * Returns specifications data by hash
-   * @param {string} serverName server name
    * @param {string} specificationsHash specifications hash
    * @returns {[id: string]: MetatraderSymbolSpecification}
    */
-  getSpecificationsByHash(serverName, specificationsHash){
-    return this._specificationsTree.getItemsByHash(serverName, specificationsHash);
+  getSpecificationsByHash(specificationsHash){
+    return this._specificationsTree.getItemsByHash(specificationsHash);
   }
 
   /**
    * Returns specifications hash data by hash
-   * @param {string} serverName server name
    * @param {string} specificationsHash specifications hash
    * @returns {[id: string]: string}
    */
-  getSpecificationsHashesByHash(serverName, specificationsHash){
-    return this._specificationsTree.getHashesByHash(serverName, specificationsHash);
+  getSpecificationsHashesByHash(specificationsHash){
+    return this._specificationsTree.getHashesByHash(specificationsHash);
   }
 
   /**
    * Returns positions data by hash
-   * @param {string} accountId account id
    * @param {string} positionsHash positions hash
    * @returns {[id: string]: MetatraderPosition}
    */
-  getPositionsByHash(accountId, positionsHash) {
-    return this._positionsTree.getItemsByHash(accountId, positionsHash);
+  getPositionsByHash(positionsHash) {
+    return this._positionsTree.getItemsByHash(positionsHash);
   }
 
   /**
    * Returns positions hash data by hash
-   * @param {string} accountId account id
    * @param {string} positionsHash positions hash
    * @returns {[id: string]: string} dictionary of position hashes
    */
-  getPositionsHashesByHash(accountId, positionsHash) {
-    return this._positionsTree.getHashesByHash(accountId, positionsHash);
+  getPositionsHashesByHash(positionsHash) {
+    return this._positionsTree.getHashesByHash(positionsHash);
   }
 
   /**
    * Returns orders data by hash
-   * @param {string} accountId account id
    * @param {string} ordersHash orders hash
    * @returns {[id: string]: MetatraderOrder} removed position ids
    */
-  getOrdersByHash(accountId, ordersHash){
-    return this._ordersTree.getItemsByHash(accountId, ordersHash);
+  getOrdersByHash(ordersHash){
+    return this._ordersTree.getItemsByHash(ordersHash);
   }
 
   /**
    * Returns orders hash data by hash
-   * @param {string} accountId account id
    * @param {string} ordersHash orders hash
    * @returns {[id: string]: string} dictionary of order hashes
    */
-  getOrdersHashesByHash(accountId, ordersHash) {
-    return this._ordersTree.getHashesByHash(accountId, ordersHash);
+  getOrdersHashesByHash(ordersHash) {
+    return this._ordersTree.getHashesByHash(ordersHash);
   }
 
   /**
@@ -87,7 +90,7 @@ export default class TerminalHashManager {
    * @param {MetatraderSymbolSpecification[]} specifications specifications array
    * @returns {string} dictionary hash
    */
-  async recordSpecifications(serverName, accountType, connectionId,
+  recordSpecifications(serverName, accountType, connectionId,
     instanceIndex, specifications) {
     return this._specificationsTree.recordItems(serverName, accountType, connectionId,
       instanceIndex, specifications);
@@ -105,7 +108,7 @@ export default class TerminalHashManager {
    * @returns {string} updated dictionary hash
    */
   // eslint-disable-next-line complexity
-  async updateSpecifications(serverName, accountType, connectionId,
+  updateSpecifications(serverName, accountType, connectionId,
     instanceIndex, specifications, removedSymbols, parentHash) {
     return this._specificationsTree.updateItems(serverName, accountType, connectionId,
       instanceIndex, specifications, removedSymbols, parentHash);
@@ -120,7 +123,7 @@ export default class TerminalHashManager {
    * @param {MetatraderPosition[]} positions positions array
    * @returns {string} dictionary hash
    */
-  async recordPositions(accountId, accountType, connectionId, instanceIndex, positions) {
+  recordPositions(accountId, accountType, connectionId, instanceIndex, positions) {
     return this._positionsTree.recordItems(accountId, accountType, connectionId, instanceIndex, positions);
   }
 
@@ -135,7 +138,7 @@ export default class TerminalHashManager {
    * @param {string} parentHash parent hash
    * @returns {string} updated dictionary hash
    */
-  async updatePositions(accountId, accountType, connectionId,
+  updatePositions(accountId, accountType, connectionId,
     instanceIndex, positions, removedPositions, parentHash) {
     return this._positionsTree.updateItems(accountId, accountType, connectionId,
       instanceIndex, positions, removedPositions, parentHash);
@@ -150,7 +153,7 @@ export default class TerminalHashManager {
    * @param {Array<MetatraderOrder>} orders orders array
    * @returns {string} dictionary hash
    */
-  async recordOrders(accountId, accountType, connectionId, instanceIndex, orders) {
+  recordOrders(accountId, accountType, connectionId, instanceIndex, orders) {
     return this._ordersTree.recordItems(accountId, accountType, connectionId, instanceIndex, orders);
   }
 
@@ -165,7 +168,7 @@ export default class TerminalHashManager {
    * @param {string} parentHash parent hash
    * @returns {string} updated dictionary hash
    */
-  async updateOrders(accountId, accountType, connectionId,
+  updateOrders(accountId, accountType, connectionId,
     instanceIndex, orders, completedOrders, parentHash) {
     return this._ordersTree.updateItems(accountId, accountType, connectionId,
       instanceIndex, orders, completedOrders, parentHash);
@@ -200,47 +203,42 @@ export default class TerminalHashManager {
 
   /**
    * Removes all references for a connection
-   * @param {string} serverName broker server name
-   * @param {string} accountId account id
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removeConnectionReferences(serverName, accountId, connectionId, instanceIndex) {
-    this.removeSpecificationReference(serverName, connectionId, instanceIndex);
-    this.removePositionReference(accountId, connectionId, instanceIndex);
-    this.removeOrderReference(accountId, connectionId, instanceIndex);
+  removeConnectionReferences(connectionId, instanceIndex) {
+    this.removeSpecificationReference(connectionId, instanceIndex);
+    this.removePositionReference(connectionId, instanceIndex);
+    this.removeOrderReference(connectionId, instanceIndex);
   }
 
   /**
    * Adds a reference from a terminal state instance index to a specifications hash
-   * @param {string} serverName server name 
    * @param {string} hash specifications hash
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  addSpecificationReference(serverName, hash, connectionId, instanceIndex) {
-    this._specificationsTree.addReference(serverName, hash, connectionId, instanceIndex);
+  addSpecificationReference(hash, connectionId, instanceIndex) {
+    this._specificationsTree.addReference(hash, connectionId, instanceIndex);
   }
 
   /**
    * Removes a reference from a terminal state instance index to a specifications hash
-   * @param {string} serverName server name
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removeSpecificationReference(serverName, connectionId, instanceIndex) {
-    this._specificationsTree.removeReference(serverName, connectionId, instanceIndex);
+  removeSpecificationReference(connectionId, instanceIndex) {
+    this._specificationsTree.removeReference(connectionId, instanceIndex);
   }
 
   /**
    * Adds a reference from a terminal state instance index to a positions hash
-   * @param {string} accountId account id
    * @param {string} hash positions hash
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  addPositionReference(accountId, hash, connectionId, instanceIndex) {
-    this._positionsTree.addReference(accountId, hash, connectionId, instanceIndex);
+  addPositionReference(hash, connectionId, instanceIndex) {
+    this._positionsTree.addReference(hash, connectionId, instanceIndex);
   }
 
   /**
@@ -249,34 +247,32 @@ export default class TerminalHashManager {
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removePositionReference(accountId, connectionId, instanceIndex) {
-    this._positionsTree.removeReference(accountId, connectionId, instanceIndex);
+  removePositionReference(connectionId, instanceIndex) {
+    this._positionsTree.removeReference(connectionId, instanceIndex);
   }
 
   /**
    * Adds a reference from a terminal state instance index to a orders hash
-   * @param {string} accountId account id
    * @param {string} hash positions hash
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  addOrderReference(accountId, hash, connectionId, instanceIndex) {
-    this._ordersTree.addReference(accountId, hash, connectionId, instanceIndex);
+  addOrderReference(hash, connectionId, instanceIndex) {
+    this._ordersTree.addReference(hash, connectionId, instanceIndex);
   }
 
   /**
    * Removes a reference from a terminal state instance index to a orders hash
-   * @param {string} accountId account id
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removeOrderReference(accountId, connectionId, instanceIndex) {
-    this._ordersTree.removeReference(accountId, connectionId, instanceIndex);
+  removeOrderReference(connectionId, instanceIndex) {
+    this._ordersTree.removeReference(connectionId, instanceIndex);
   }
 
   // eslint-disable-next-line complexity
-  async getItemHash(item, type, accountType, region) {
-    const hashFields = await this._clientApiClient.getHashingIgnoredFieldLists(region);
+  getItemHash(item, type, accountType, region) {
+    const hashFields = this._clientApiClient.getHashingIgnoredFieldLists(region);
     item = Object.assign({}, item);
     switch(type) {
     case 'specifications':

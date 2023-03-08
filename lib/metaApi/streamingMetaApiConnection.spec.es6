@@ -58,6 +58,7 @@ describe('StreamingMetaApiConnection', () => {
   };
 
   let terminalHashManager = {
+    refreshIgnoredFieldLists: () => {},
     getSpecificationsByHash: () => {},
     getPositionsByHash: () => {},
     getOrdersByHash: () => {},
@@ -310,6 +311,7 @@ describe('StreamingMetaApiConnection', () => {
    */
   it('should sychronize on connection', async () => {
     sandbox.stub(client, 'synchronize').resolves();
+    sandbox.stub(terminalHashManager, 'refreshIgnoredFieldLists').resolves();
     sandbox.stub(randomstring, 'generate').returns('synchronizationId');
     api = new StreamingMetaApiConnection(client, terminalHashManager,  {id: 'accountId', accountRegions}, 
       undefined, connectionRegistry);
@@ -320,6 +322,7 @@ describe('StreamingMetaApiConnection', () => {
     await new Promise(res => setTimeout(res, 50));
     sinon.assert.calledWith(client.synchronize, 'accountId', 1, 'ps-mpa-1', 'synchronizationId',
       new Date('2020-01-01T00:00:00.000Z'), new Date('2020-01-02T00:00:00.000Z'));
+    sinon.assert.calledWith(terminalHashManager.refreshIgnoredFieldLists, 'vint-hill');
   });
 
   /**

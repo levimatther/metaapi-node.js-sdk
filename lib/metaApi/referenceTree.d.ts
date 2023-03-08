@@ -10,25 +10,24 @@ export default class ReferenceTree {
    * @param {TerminalHashManager} terminalHashManager terminal hash manager
    * @param {string} idKey field name that contains the item id
    * @param {string} dataType data type
-   * @param {Boolean} [useFuzzySearch] whether to use fuzzy search on nearby categories
+   * @param {boolean} [useFuzzySearch] whether to use fuzzy search on nearby categories
+   * @param {boolean} [keepHashTrees] if set to true, unused data will not be cleared (for use in debugging)
    */
-  constructor(terminalHashManager: TerminalHashManager, idKey: string, dataType: string, useFuzzySearch?: boolean);
+  constructor(terminalHashManager: TerminalHashManager, idKey: string, dataType: string, useFuzzySearch?: boolean, keepHashTrees?: boolean);
 
   /**
    * Returns data by hash
-   * @param {string} categoryName category name
    * @param {string} hash records hash
    * @returns {[id: string]: Object}
    */
-  getItemsByHash(categoryName: string, hash: string): {[id: string]: Object}
+  getItemsByHash(hash: string): {[id: string]: Object}
 
   /**
    * Returns hash data by hash
-   * @param {string} categoryName category name
    * @param {string} hash records hash
    * @returns {[id: string]: string}
    */
-  getHashesByHash(categoryName: string, hash: string): {[id: string]: string}
+  getHashesByHash(hash: string): {[id: string]: string}
 
   /**
    * Creates an entry for data and returns hash
@@ -63,19 +62,17 @@ export default class ReferenceTree {
 
   /**
    * Adds a reference from a terminal state instance index to a records hash
-   * @param {string} categoryName category name 
    * @param {string} hash records hash
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  addReference(categoryName: string, hash: string, connectionId: string, instanceIndex: string): void;
+  addReference(hash: string, connectionId: string, instanceIndex: string): void;
 
   /**
    * Removes a reference from a terminal state instance index to a records hash
-   * @param {string} categoryName category name
    * @param {string} connectionId connection id
    * @param {string} instanceIndex instance index
    */
-  removeReference(categoryName: string, connectionId: string, instanceIndex: string): void;
+  removeReference(connectionId: string, instanceIndex: string): void;
 
 }

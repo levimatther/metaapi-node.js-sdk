@@ -87,6 +87,7 @@ export default class MetaApiWebsocketClient {
     this._packetOrderer = new PacketOrderer(this, opts.packetOrderingTimeout);
     this._packetOrderer.start();
     this._synchronizationHashes = {};
+    this._updateEvents = {};
     if(opts.packetLogger && opts.packetLogger.enabled) {
       this._packetLogger = new PacketLogger(opts.packetLogger);
       this._packetLogger.start();
@@ -1177,6 +1178,8 @@ export default class MetaApiWebsocketClient {
   async unsubscribe(accountId) {
     const region = this.getAccountRegion(accountId);
     this._latencyService.onUnsubscribe(accountId);
+    const updateEventsToRemove = Object.keys(this._updateEvents).filter(key => key.startsWith(accountId));
+    updateEventsToRemove.forEach(key => delete this._updateEvents[key]);
     await Promise.all(Object.keys(this._socketInstances[region]).map(async instanceNumber => {
       try {
         await this._subscriptionManager.unsubscribe(accountId, Number(instanceNumber));
@@ -1883,6 +1886,7 @@ export default class MetaApiWebsocketClient {
         cancelDisconnectTimer();
         await onDisconnected();
       } else if (data.type === 'synchronizationStarted') {
+        this._updateEvents[instanceId] = [];
         this._synchronizationFlags[data.synchronizationId] = {
           accountId: data.accountId, instanceNumber,
           specificationsUpdated: data.specificationsHashIndex === undefined,
@@ -2011,6 +2015,9 @@ export default class MetaApiWebsocketClient {
           delete this._synchronizationFlags[data.synchronizationId];
         }
       } else if (data.type === 'update') {
+        if(this._updateEvents[instanceId]) {
+          this._updateEvents[instanceId].push(data);
+        }
         if (data.accountInformation) {
           for (let listener of this._synchronizationListeners[primaryAccountId] || []) {
             await this._processEvent(
@@ -2100,6 +2107,19 @@ export default class MetaApiWebsocketClient {
           await this._processEvent(
             () => listener.onDealsSynchronized(instanceIndex, data.synchronizationId),
             `${primaryAccountId}:${instanceIndex}:onDealsSynchronized`);
+        }
+        if(this._updateEvents[instanceId]) {
+          this._updateEvents[instanceId] = this._updateEvents[instanceId].map(packet => () => 
+            Promise.resolve(this._processSynchronizationPacket(packet)));
+          if (this._eventQueues[primaryAccountId]) {
+            this._eventQueues[primaryAccountId] =
+              this._updateEvents[instanceId].concat(this._eventQueues[primaryAccountId]);
+            delete this._updateEvents[instanceId];
+          } else {
+            this._eventQueues[primaryAccountId] = this._updateEvents[instanceId];
+            delete this._updateEvents[instanceId];
+            this._callAccountEvents(primaryAccountId);
+          }
         }
       } else if (data.type === 'orderSynchronizationFinished') {
         if (data.synchronizationId && data.synchronizationId !== this._synchronizationIdByInstance[instanceId]) {

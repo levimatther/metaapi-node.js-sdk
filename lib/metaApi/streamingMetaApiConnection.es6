@@ -37,6 +37,7 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
       'refreshSubscriptionsOpts.maxDelayInSeconds');
     this._connectionRegistry = connectionRegistry;
     this._historyStartTime = historyStartTime;
+    this._terminalHashManager = terminalHashManager;
     this._terminalState = new TerminalState(account, terminalHashManager, account.server);
     this._historyStorage = historyStorage || new MemoryHistoryStorage();
     this._healthMonitor = new ConnectionHealthMonitor(this);
@@ -292,6 +293,8 @@ export default class StreamingMetaApiConnection extends MetaApiConnection {
   async onConnected(instanceIndex, replicas) {
     let key = randomstring.generate(32);
     let state = this._getState(instanceIndex);
+    const region = this.getRegion(instanceIndex);
+    await this._terminalHashManager.refreshIgnoredFieldLists(region);
     state.shouldSynchronize = key;
     state.synchronizationRetryIntervalInSeconds = 1;
     state.synchronized = false;
