@@ -315,6 +315,9 @@ export default class ReferenceTree {
   }
 
   _updateCategoryRecord(categoryName, hash) {
+    if(!hash) {
+      return;
+    }
     const date = Date.now();
     this._removeCategoryRecord(categoryName, hash);
     if(!this._hashesByCategory[categoryName]) {

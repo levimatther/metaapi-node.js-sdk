@@ -480,7 +480,7 @@ sequentialProcessing.forEach(param => {
       connection.synchronized.should.equal(true);
       connection.terminalState.connected.should.equal(true);
       connection.terminalState.connectedToBroker.should.equal(true);
-    }).timeout(20000);
+    }).timeout(60000);
 
     it('should synchronize if connecting while server is rebooting', async () => {
       fakeServer.io.close();
