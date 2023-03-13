@@ -1,3 +1,6 @@
+20.12.1
+  - fixed resynchronization after position/order removal
+
 20.12.0
   - refactored terminal hash manager
 

@@ -287,6 +287,17 @@ describe('ReferenceTree', () => {
     sinon.assert.match(lastUsedHashes, [hash3, hash]);
   });
 
+  it('should not include null as last used hash', async () => {
+    const items = [{id: '1', volume: 10}];
+    const hash = await tree.recordItems('accountId', 'cloud-g1', 'connectionId',
+      'vint-hill:1:ps-mpa-1', items);
+    await clock.tickAsync(500);
+    await tree.updateItems('accountId', 'cloud-g1', 'connectionId',
+      'vint-hill:1:ps-mpa-1', [], ['1'], hash);
+    const lastUsedHashes = tree.getLastUsedHashes('accountId');
+    sinon.assert.match(lastUsedHashes, [hash]);
+  });
+
   it('should get fuzzy last used hashes', async () => {
     const data1 = [{symbol: 'EURUSD', tickSize: 0.0001}, {symbol: 'GBPUSD'}, {symbol: 'CADUSD', tickSize: 0.001}];
     const data2 = [{symbol: 'EURUSD', tickSize: 0.0002}, {symbol: 'GBPUSD'}, {symbol: 'CADUSD', tickSize: 0.002}];
