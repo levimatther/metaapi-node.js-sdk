@@ -263,7 +263,7 @@ export default class EquityTrackingClient {
    * @param {PeriodStatisticsListener} listener period statistics event listener
    * @param {String} accountId account id
    * @param {String} trackerId tracker id
-   * @returns {String} listener id
+   * @returns {Promise<String>} listener id
    */
   addPeriodStatisticsListener(listener, accountId, trackerId) {
     return this._periodStatisticsStreamManager.addPeriodStatisticsListener(listener, accountId, trackerId);
@@ -346,7 +346,7 @@ export default class EquityTrackingClient {
    * @param {EquityChartListener} listener equity chart event listener
    * @param {String} accountId account id
    * @param {Date} [startTime] date to start tracking from
-   * @returns {String} listener id
+   * @returns {Promise<string>} listener id
    */
   addEquityChartListener(listener, accountId, startTime) {
     return this._equityChartStreamManager.addEquityChartListener(listener, accountId, startTime);
@@ -363,8 +363,8 @@ export default class EquityTrackingClient {
   /**
    * Adds an equity balance event listener
    * @param {EquityBalanceListener} listener equity balance event listener
-   * @param {String} accountId account id
-   * @returns {String} listener id
+   * @param {string} accountId account id
+   * @returns {Promise<string>} listener id
    */
   addEquityBalanceListener(listener, accountId) {
     return this._equityBalanceStreamManager.addEquityBalanceListener(listener, accountId);
@@ -372,7 +372,7 @@ export default class EquityTrackingClient {
 
   /**
    * Removes equity balance event listener by id
-   * @param {String} listenerId equity balance listener id 
+   * @param {string} listenerId equity balance listener id 
    */
   removeEquityBalanceListener(listenerId) {
     this._equityBalanceStreamManager.removeEquityBalanceListener(listenerId);

@@ -32,8 +32,8 @@ class ExampleEquityBalanceListener extends EquityBalanceListener {
 async function main() {
   try {
     // adding an equity balance listener
-    let equityBalanceListener = new ExampleEquityBalanceListener();
-    let listenerId = riskManagementApi.addEquityBalanceListener(equityBalanceListener, accountId);
+    let equityBalanceListener = new ExampleEquityBalanceListener(accountId);
+    let listenerId = await riskManagementApi.addEquityBalanceListener(equityBalanceListener, accountId);
 
     console.log('Streaming equity balance for 1 minute...');
     await new Promise(res => setTimeout(res, 1000 * 60));

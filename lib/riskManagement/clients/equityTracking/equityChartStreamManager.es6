@@ -46,7 +46,7 @@ export default class EquityChartStreamManager {
    * @param {EquityChartListener} listener equity chart event listener
    * @param {String} accountId account id
    * @param {Date} [startTime] date to start tracking from
-   * @returns {String} listener id
+   * @returns {Promise<string>} listener id
    */
   // eslint-disable-next-line max-statements, complexity
   async addEquityChartListener(listener, accountId, startTime) {
@@ -80,7 +80,9 @@ export default class EquityChartStreamManager {
             delete pendingInitalizationResolves[accountId];
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getAccountListeners()).forEach(accountListener => {
+            accountListener.onError(err);
+          });
           this._logger.error('Error processing onDealsSynchronized event for ' +
           `equity chart listener for account ${accountId}`, err);
         }
@@ -95,7 +97,9 @@ export default class EquityChartStreamManager {
             });
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getAccountListeners()).forEach(accountListener => {
+            accountListener.onError(err);
+          });
           this._logger.error('Error processing onDisconnected event for ' +
           `equity chart listener for account ${accountId}`, err);
         }
@@ -195,7 +199,9 @@ export default class EquityChartStreamManager {
             }
           }     
         } catch (err) {
-          listener.onError(err);
+          Object.values(getAccountListeners()).forEach(accountListener => {
+            accountListener.onError(err);
+          });
           this._logger.error('Error processing onSymbolPriceUpdated event for ' +
           `equity chart listener for account ${accountId}`, err);
         }
@@ -210,7 +216,9 @@ export default class EquityChartStreamManager {
           cache.record.minBalance = Math.min(cache.record.minBalance, balance);
           cache.record.maxBalance = Math.max(cache.record.minBalance, balance);
         } catch (err) {
-          listener.onError(err);
+          Object.values(getAccountListeners()).forEach(accountListener => {
+            accountListener.onError(err);
+          });
           this._logger.error('Error processing onAccountInformationUpdated event for ' +
           `equity chart listener for account ${accountId}`, err);
         }
@@ -222,20 +230,20 @@ export default class EquityChartStreamManager {
     const accountListeners = this.getAccountListeners(accountId);
     accountListeners[listenerId] = listener;
     this._accountsByListenerId[listenerId] = accountId;
-    if(!this._equityChartConnections[accountId]) {
-      const account = await this._metaApi.metatraderAccountApi.getAccount(accountId);
-      let isDeployed = false;
-      while(!isDeployed) {
-        try {
-          await account.waitDeployed();
-          isDeployed = true;  
-        } catch (err) {
-          listener.onError(err);
-          this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
-          await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
-          retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
-        }
+    const account = await this._metaApi.metatraderAccountApi.getAccount(accountId);
+    let isDeployed = false;
+    while(!isDeployed) {
+      try {
+        await account.waitDeployed();
+        isDeployed = true;  
+      } catch (err) {
+        listener.onError(err);
+        this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
+        await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
+        retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
       }
+    }
+    if(!this._equityChartConnections[accountId]) {
       retryIntervalInSeconds = this._retryIntervalInSeconds;
       connection = account.getStreamingConnection();
       this._equityChartConnections[accountId] = connection;

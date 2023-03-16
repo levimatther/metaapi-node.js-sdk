@@ -6,6 +6,17 @@ import {EquityChartItem} from './equityTracking.client';
 export default class EquityChartListener {
 
   /**
+   * Creates an equity chart listener instance
+   * @param {string} accountId account id
+   */
+  constructor(accountId: string);
+
+  /**
+   * Returns account id
+   */
+  get accountId(): string;
+
+  /**
    * Processes equity chart event which occurs when new equity chart data arrives
    * @param {EquityChartItem[]} equityChartEvent equity chart event
    */

@@ -6,6 +6,23 @@ import {PeriodStatistics} from './equityTracking.client';
 export default class PeriodStatisticsListener {
 
   /**
+   * Creates a period statistics listener instance
+   * @param {string} accountId account id
+   * @param {string} trackerId tracker id
+   */
+  constructor(accountId: string, trackerId: string);
+
+  /**
+   * Returns account id
+   */
+  get accountId(): string;
+
+  /**
+   * Returns tracker id
+   */
+  get trackerId(): string;
+
+  /**
    * Processes period statistics event which occurs when new period statistics data arrives
    * @param {PeriodStatistics[]} periodStatisticsEvent period statistics event
    */

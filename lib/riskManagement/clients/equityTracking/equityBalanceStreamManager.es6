@@ -43,7 +43,7 @@ export default class EquityBalanceStreamManager {
    * Adds an equity balance event listener
    * @param {EquityBalanceListener} listener equity balance event listener
    * @param {String} accountId account id
-   * @returns {String} listener id
+   * @returns {Promise<string>} listener id
    */
   // eslint-disable-next-line max-statements, complexity
   async addEquityBalanceListener(listener, accountId) {
@@ -95,7 +95,9 @@ export default class EquityBalanceStreamManager {
             delete pendingInitalizationResolves[accountId];
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getAccountListeners()).forEach(accountListener => {
+            accountListener.onError(err);
+          });
           this._logger.error('Error processing onDealsSynchronized event for ' +
           `equity balance listener for account ${accountId}`, err);
         }
@@ -110,7 +112,9 @@ export default class EquityBalanceStreamManager {
             });
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getAccountListeners()).forEach(accountListener => {
+            accountListener.onError(err);
+          });
           this._logger.error('Error processing onDisconnected event for ' +
         `equity balance listener for account ${accountId}`, err);
         }
@@ -124,7 +128,9 @@ export default class EquityBalanceStreamManager {
             delete pendingInitalizationResolves[accountId];
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getAccountListeners()).forEach(accountListener => {
+            accountListener.onError(err);
+          });
           this._logger.error('Error processing onSymbolPriceUpdated event for ' +
             `equity balance listener for account ${accountId}`, err);
         }
@@ -142,20 +148,20 @@ export default class EquityBalanceStreamManager {
     const accountListeners = this.getAccountListeners(accountId);
     accountListeners[listenerId] = listener;
     this._accountsByListenerId[listenerId] = accountId;
-    if(!this._equityBalanceConnections[accountId]) {
-      const account = await this._metaApi.metatraderAccountApi.getAccount(accountId);
-      let isDeployed = false;
-      while(!isDeployed) {
-        try {
-          await account.waitDeployed();
-          isDeployed = true;  
-        } catch (err) {
-          listener.onError(err);
-          this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
-          await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
-          retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
-        }
+    let isDeployed = false;
+    const account = await this._metaApi.metatraderAccountApi.getAccount(accountId);
+    while(!isDeployed) {
+      try {
+        await account.waitDeployed();
+        isDeployed = true;  
+      } catch (err) {
+        listener.onError(err);
+        this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
+        await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
+        retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
       }
+    }
+    if(!this._equityBalanceConnections[accountId]) {
       retryIntervalInSeconds = this._retryIntervalInSeconds;
       connection = account.getStreamingConnection();
       this._equityBalanceConnections[accountId] = connection;

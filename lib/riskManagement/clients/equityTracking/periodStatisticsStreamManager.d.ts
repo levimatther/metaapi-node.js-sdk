@@ -21,7 +21,7 @@ export default class PeriodStatisticsStreamManager {
    * @param {string} accountId account id to return listeners for
    * @returns {{[listenerId: string]: PeriodStatisticsListener}} dictionary of period statistics listeners
    */
-  getAccountListeners(accountId: string): {[listenerId: string]: PeriodStatisticsListener};
+  getTrackerListeners(accountId: string, trackerId: string): {[listenerId: string]: PeriodStatisticsListener};
 
   /**
    * Adds a period statistics event listener
@@ -30,7 +30,7 @@ export default class PeriodStatisticsStreamManager {
    * @param {string} trackerId tracker id
    * @returns {string} listener id
    */
-  addPeriodStatisticsListener(listener: PeriodStatisticsListener, accountId: string, trackerId: string): string;
+  addPeriodStatisticsListener(listener: PeriodStatisticsListener, accountId: string, trackerId: string): Promise<string>;
 
   /**
    * Removes period statistics event listener by id

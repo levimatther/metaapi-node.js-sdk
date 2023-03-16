@@ -334,7 +334,7 @@ describe('EquityTrackingClient', () => {
         async onDrawdown(drawdownEvents) {}
       }
 
-      listener = new Listener();
+      listener = new Listener('accountId', 'trackerId');
     });
 
     /**
@@ -371,7 +371,7 @@ describe('EquityTrackingClient', () => {
         async onPeriodStatisticsEvent(periodStatisticsEvent) {}
       }
 
-      listener = new Listener();
+      listener = new Listener('accountId', 'trackerId');
     });
 
     /**
@@ -409,7 +409,7 @@ describe('EquityTrackingClient', () => {
         async onEquityChartEvent(equityChartEvent) {}
       }
 
-      listener = new Listener();
+      listener = new Listener('accountId');
     });
 
     /**
