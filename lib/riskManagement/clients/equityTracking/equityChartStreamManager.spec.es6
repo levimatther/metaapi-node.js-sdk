@@ -24,7 +24,7 @@ describe('EquityChartStreamManager', () => {
   let connection;
   let clock;
   let getEquityChartStub;
-  let syncListener;
+  let syncListeners;
   const token = 'token';
   const domain = 'agiliumtrade.agiliumtrade.ai';
   let results; 
@@ -50,6 +50,7 @@ describe('EquityChartStreamManager', () => {
   });
 
   beforeEach(() => {
+    syncListeners = [];
     clock = sandbox.useFakeTimers({shouldAdvanceTime: true});
     callStub = sinon.stub();
     finishStub = sinon.stub();
@@ -79,7 +80,7 @@ describe('EquityChartStreamManager', () => {
       }
     }
 
-    listener = new Listener();
+    listener = new Listener('accountId');
     domainClient = {
       domain, token
     };
@@ -93,7 +94,9 @@ describe('EquityChartStreamManager', () => {
       getStreamingConnection: () => {}
     };
     connection = {
-      addSynchronizationListener: (l) => {syncListener = l;},
+      addSynchronizationListener: (l) => {
+        syncListeners.push(l);
+      },
       connect: () => {},
       waitSynchronized: () => {},
       close: () => {},
@@ -167,8 +170,8 @@ describe('EquityChartStreamManager', () => {
   it('should process price events', async () => {
     const listenerId = equityChartStreamManager.addEquityChartListener(listener, 'accountId');
     await clock.tickAsync(100);
-    await syncListener.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {equity: 10600, balance: 9000});
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {equity: 10600, balance: 9000});
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -195,7 +198,7 @@ describe('EquityChartStreamManager', () => {
       lastBalance: 12000,
       lastEquity: 12000
     }]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -247,8 +250,8 @@ describe('EquityChartStreamManager', () => {
   it('should not process price events if new period not received yet', async () => {
     const listenerId = equityChartStreamManager.addEquityChartListener(listener, 'accountId');
     await clock.tickAsync(100);
-    await syncListener.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {equity: 10600, balance: 9000});
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {equity: 10600, balance: 9000});
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -260,7 +263,7 @@ describe('EquityChartStreamManager', () => {
     });
     await clock.tickAsync(1000);
     getEquityChartStub.resolves([results[1]]);
-    syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -285,7 +288,7 @@ describe('EquityChartStreamManager', () => {
       lastEquity: 10500
     }]);
     sinon.assert.callCount(callStub, 2);
-    syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -296,7 +299,7 @@ describe('EquityChartStreamManager', () => {
       equity: 10500
     });
     await clock.tickAsync(1000);
-    syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -363,10 +366,64 @@ describe('EquityChartStreamManager', () => {
       }
     }
 
-    let listener2 = new Listener2();
+    let listener2 = new Listener2('accountId');
     const listenerId2 = await equityChartStreamManager.addEquityChartListener(listener2, 'accountId');
     await clock.tickAsync(100);
     sinon.assert.calledWith(callStub2, results);
+    equityChartStreamManager.removeEquityChartListener(listenerId);
+    await clock.tickAsync(1000);
+    sinon.assert.notCalled(connection.close);
+    equityChartStreamManager.removeEquityChartListener(listenerId2);
+    await clock.tickAsync(1000);
+    sinon.assert.calledOnce(connection.close);
+    sinon.assert.match(syncListeners.length, 1);
+  });
+
+  /**
+   * @test {EquityChartStreamManager#addEquityChartListener}
+   */
+  it('should handle several listeners simultaneously', async () => {
+    sandbox.stub(connection, 'close');
+    let callStub2 = sinon.stub();
+    let finishStub2 = sinon.stub();
+    let connectedStub2 = sinon.stub();
+    let disconnectedStub2 = sinon.stub();
+    let errorStub2 = sinon.stub();
+
+    class Listener2 extends EquityChartListener {
+      async onEquityRecordUpdated(equityChartEvent) {
+        callStub2(equityChartEvent);
+      }
+
+      async onEquityRecordCompleted(equityChartEvent) {
+        finishStub2(equityChartEvent);
+      }
+
+      async onConnected(instanceIndex) {
+        connectedStub2(instanceIndex);
+      }
+    
+      async onDisconnected(instanceIndex) {
+        disconnectedStub2(instanceIndex);
+      }
+
+      async onError(error) {
+        errorStub2(error);
+      }
+    }
+
+    let listener2 = new Listener2('accountId');
+    const [listenerId, listenerId2] =  await Promise.all([
+      equityChartStreamManager.addEquityChartListener(listener, 'accountId'),
+      equityChartStreamManager.addEquityChartListener(listener2, 'accountId')
+    ]);
+    await clock.tickAsync(100);
+    sinon.assert.calledWith(callStub, results);
+    sinon.assert.calledWith(callStub2, results);
+    sinon.assert.match(syncListeners.length, 1);
+    await syncListeners[0].onDealsSynchronized('vint-hill:1:ps-mpa-1');
+    sinon.assert.calledOnce(connectedStub);
+    sinon.assert.calledOnce(connectedStub2);
     equityChartStreamManager.removeEquityChartListener(listenerId);
     await clock.tickAsync(1000);
     sinon.assert.notCalled(connection.close);
@@ -409,11 +466,11 @@ describe('EquityChartStreamManager', () => {
       }
     }
 
-    let listener2 = new Listener2();
+    let listener2 = new Listener2('accountId');
     const listenerPromise = equityChartStreamManager.addEquityChartListener(listener2, 'accountId');
     await clock.tickAsync(100);
     sinon.assert.notCalled(callStub2);
-    syncListener.onDealsSynchronized('new-york:0:ps-mpa-1');
+    syncListeners[0].onDealsSynchronized('new-york:0:ps-mpa-1');
     const listenerId2 = await listenerPromise;
     sinon.assert.calledWith(callStub2, results);
     equityChartStreamManager.removeEquityChartListener(listenerId);
@@ -430,19 +487,19 @@ describe('EquityChartStreamManager', () => {
   it('should track connection state', async () => {
     equityChartStreamManager.addEquityChartListener(listener, 'accountId');
     await clock.tickAsync(100);
-    await syncListener.onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {equity: 10600, balance: 9000});
-    await syncListener.onDealsSynchronized('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onAccountInformationUpdated('vint-hill:1:ps-mpa-1', {equity: 10600, balance: 9000});
+    await syncListeners[0].onDealsSynchronized('vint-hill:1:ps-mpa-1');
     sinon.assert.calledOnce(connectedStub);
-    await syncListener.onDealsSynchronized('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDealsSynchronized('vint-hill:1:ps-mpa-1');
     sinon.assert.calledOnce(connectedStub);
-    await syncListener.onDisconnected('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDisconnected('vint-hill:1:ps-mpa-1');
     sinon.assert.notCalled(disconnectedStub);
-    await syncListener.onDisconnected('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDisconnected('vint-hill:1:ps-mpa-1');
     sinon.assert.notCalled(disconnectedStub);
     connection.healthMonitor.healthStatus.synchronized = false;
-    await syncListener.onDisconnected('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDisconnected('vint-hill:1:ps-mpa-1');
     sinon.assert.calledOnce(disconnectedStub);
-    await syncListener.onDealsSynchronized('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDealsSynchronized('vint-hill:1:ps-mpa-1');
     sinon.assert.calledTwice(connectedStub);
   });
 

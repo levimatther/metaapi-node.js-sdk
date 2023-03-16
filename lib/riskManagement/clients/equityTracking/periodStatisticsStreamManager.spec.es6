@@ -30,7 +30,7 @@ describe('PeriodStatisticsStreamManager', () => {
   let clock;
   let getPeriodStatisticsStub;
   let getTrackerStub;
-  let syncListener;
+  let syncListeners = [];
   const token = 'token';
   const domain = 'agiliumtrade.agiliumtrade.ai';
   let results; 
@@ -63,6 +63,7 @@ describe('PeriodStatisticsStreamManager', () => {
     connectedStub = sinon.stub();
     disconnectedStub = sinon.stub();
     errorStub = sinon.stub();
+    syncListeners = [];
 
     class Listener extends PeriodStatisticsListener {
       async onPeriodStatisticsUpdated(periodStatisticsEvent) {
@@ -91,7 +92,7 @@ describe('PeriodStatisticsStreamManager', () => {
 
     }
 
-    listener = new Listener();
+    listener = new Listener('accountId', 'tracker1');
     domainClient = {
       domain, token
     };
@@ -113,7 +114,9 @@ describe('PeriodStatisticsStreamManager', () => {
       getStreamingConnection: () => {}
     };
     connection = {
-      addSynchronizationListener: (l) => {syncListener = l;},
+      addSynchronizationListener: (l) => {
+        syncListeners.push(l);
+      },
       removeSynchronizationListener: () => {},
       connect: () => {},
       waitSynchronized: () => {},
@@ -131,6 +134,7 @@ describe('PeriodStatisticsStreamManager', () => {
     getAccountStub = sandbox.stub(metaApi.metatraderAccountApi,
       'getAccount').resolves(account);
     sandbox.stub(account, 'getStreamingConnection').returns(connection);
+    sandbox.stub(connection, 'close').resolves();
 
     results = [
       {
@@ -188,7 +192,7 @@ describe('PeriodStatisticsStreamManager', () => {
     await clock.tickAsync(100);
     sinon.assert.calledWith(updatedStub, results);
     sinon.assert.calledOnce(updatedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -200,7 +204,7 @@ describe('PeriodStatisticsStreamManager', () => {
     });
     await clock.tickAsync(1000);
     sinon.assert.calledOnce(updatedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -238,7 +242,7 @@ describe('PeriodStatisticsStreamManager', () => {
     await clock.tickAsync(100);
     sinon.assert.calledWith(updatedStub, results);
     sinon.assert.calledOnce(updatedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -249,7 +253,7 @@ describe('PeriodStatisticsStreamManager', () => {
       equity: 9000
     });
     sinon.assert.calledOnce(updatedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -260,7 +264,7 @@ describe('PeriodStatisticsStreamManager', () => {
       equity: 9000
     });
     sinon.assert.calledTwice(updatedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -283,7 +287,7 @@ describe('PeriodStatisticsStreamManager', () => {
     await clock.tickAsync(100);
     sinon.assert.calledWith(updatedStub, results);
     sinon.assert.calledOnce(updatedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -294,7 +298,7 @@ describe('PeriodStatisticsStreamManager', () => {
       equity: 9000
     });
     sinon.assert.calledTwice(updatedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -320,7 +324,7 @@ describe('PeriodStatisticsStreamManager', () => {
       thresholdExceeded: false,
       tradeDayCount: 0
     }]);
-    await syncListener.onDealAdded('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', {
       clientId: 'TE_GBPUSD_7hyINWqAlE',
       commission: -0.25,
       entryType: 'DEAL_ENTRY_IN',
@@ -337,7 +341,7 @@ describe('PeriodStatisticsStreamManager', () => {
       type: 'DEAL_TYPE_BALANCE',
       volume: 0.07
     });
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -371,7 +375,7 @@ describe('PeriodStatisticsStreamManager', () => {
       startBrokerTime: '2020-05-12 12:00:00.000',
       thresholdExceeded: false
     }, results[0]]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -384,7 +388,7 @@ describe('PeriodStatisticsStreamManager', () => {
     await clock.tickAsync(1000);
     sinon.assert.callCount(updatedStub, 4);
     sinon.assert.calledOnce(completedStub);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -394,22 +398,447 @@ describe('PeriodStatisticsStreamManager', () => {
       accountCurrencyExchangeRate: 1,
       equity: 11000
     });
+    sinon.assert.callCount(updatedStub, 4);
+  });
+
+  /**
+   * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
+   */
+  // eslint-disable-next-line max-statements
+  it('should process balance deals on multiple trackers', async () => {
+    const updatedStub2 = sinon.stub();
+    const completedStub2 = sinon.stub();
+    const trackerCompletedStub2 = sinon.stub();
+    const connectedStub2 = sinon.stub();
+    const disconnectedStub2 = sinon.stub();
+    const errorStub2 = sinon.stub();
+
+    const updatedStub3 = sinon.stub();
+    const completedStub3 = sinon.stub();
+    const trackerCompletedStub3 = sinon.stub();
+    const connectedStub3 = sinon.stub();
+    const disconnectedStub3 = sinon.stub();
+    const errorStub3 = sinon.stub();
+
+    class Listener2 extends PeriodStatisticsListener {
+      async onPeriodStatisticsUpdated(periodStatisticsEvent) {
+        updatedStub2(periodStatisticsEvent);
+      }
+
+      async onPeriodStatisticsCompleted(periodStatisticsEvent) {
+        completedStub2(periodStatisticsEvent);
+      }
+
+      async onTrackerCompleted(){
+        trackerCompletedStub2();
+      }
+
+      async onConnected(instanceIndex) {
+        connectedStub2(instanceIndex);
+      }
+    
+      async onDisconnected(instanceIndex) {
+        disconnectedStub2(instanceIndex);
+      }
+
+      async onError(error) {
+        errorStub2(error);
+      }
+
+    }
+
+    class Listener3 extends PeriodStatisticsListener {
+      async onPeriodStatisticsUpdated(periodStatisticsEvent) {
+        updatedStub3(periodStatisticsEvent);
+      }
+
+      async onPeriodStatisticsCompleted(periodStatisticsEvent) {
+        completedStub3(periodStatisticsEvent);
+      }
+
+      async onTrackerCompleted(){
+        trackerCompletedStub3();
+      }
+
+      async onConnected(instanceIndex) {
+        connectedStub3(instanceIndex);
+      }
+    
+      async onDisconnected(instanceIndex) {
+        disconnectedStub3(instanceIndex);
+      }
+
+      async onError(error) {
+        errorStub3(error);
+      }
+
+    }
+    const listener2 = new Listener2('accountId', 'tracker2');
+    const listener3 = new Listener3('accountId', 'tracker1');
+    const [listenerId, listenerId2, listenerId3] = await Promise.all([
+      periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1'),
+      periodStatisticsStreamManager.addPeriodStatisticsListener(listener2, 'accountId', 'tracker2'),
+      periodStatisticsStreamManager.addPeriodStatisticsListener(listener3, 'accountId', 'tracker1')
+    ]);
+    await clock.tickAsync(100);
+    sinon.assert.calledWith(updatedStub, results);
+    sinon.assert.calledOnce(updatedStub);
+    const trackerListeners = periodStatisticsStreamManager.getTrackerListeners('accountId', 'tracker1');
+    sinon.assert.match(trackerListeners, {
+      [listenerId]: listener,
+      [listenerId3]: listener3
+    });
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 11:55:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 9000
+    });
+    sinon.assert.calledOnce(updatedStub2);
+    sinon.assert.calledTwice(updatedStub);
+    sinon.assert.calledTwice(updatedStub3);
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 11:55:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 9000
+    });
+    sinon.assert.calledOnce(updatedStub2);
+    sinon.assert.calledTwice(updatedStub);
+    sinon.assert.calledTwice(updatedStub3);
     sinon.assert.calledWith(updatedStub, [{
-      endBrokerTime: '2020-05-13 11:59:59.999',
+      endBrokerTime: '2020-05-12 11:59:59.999',
       exceededThresholdType: undefined,
       initialBalance: 10000,
-      maxAbsoluteDrawdown: 1500,
-      maxAbsoluteProfit: 1000,
-      maxDrawdownTime: '2020-05-12 11:55:05.000',
-      maxProfitTime: '2020-05-12 12:02:00.000',
-      maxRelativeDrawdown: 0.15,
+      maxAbsoluteDrawdown: 1000,
+      maxAbsoluteProfit: 500,
+      maxDrawdownTime: '2020-05-12 11:55:00.000',
+      maxProfitTime: '2020-05-11 14:00:00.000',
+      maxRelativeDrawdown: 0.1,
       maxRelativeProfit: 0.1,
       period: 'day',
-      startBrokerTime: '2020-05-12 12:00:00.000',
+      startBrokerTime: '2020-05-11 12:00:00.000',
       thresholdExceeded: false,
       tradeDayCount: 0
     }]);
+    await syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', {
+      clientId: 'TE_GBPUSD_7hyINWqAlE',
+      commission: -0.25,
+      entryType: 'DEAL_ENTRY_IN',
+      id: '33230099',
+      magic: 1000,
+      platform: 'mt5',
+      orderId: '46214692',
+      positionId: '46214692',
+      price: 1.26101,
+      profit: 500,
+      swap: 0,
+      symbol: 'GBPUSD',
+      time: new Date('2020-04-15T02:45:06.521Z'),
+      type: 'DEAL_TYPE_BALANCE',
+      volume: 0.07
+    });
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 11:55:05.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 9000
+    });
+    sinon.assert.calledOnce(updatedStub2);
+    sinon.assert.calledThrice(updatedStub);
+    sinon.assert.calledThrice(updatedStub3);
+    sinon.assert.calledWith(updatedStub, [{
+      endBrokerTime: '2020-05-12 11:59:59.999',
+      exceededThresholdType: undefined,
+      initialBalance: 10000,
+      maxAbsoluteDrawdown: 1500,
+      maxAbsoluteProfit: 500,
+      maxDrawdownTime: '2020-05-12 11:55:05.000',
+      maxProfitTime: '2020-05-11 14:00:00.000',
+      maxRelativeDrawdown: 0.15,
+      maxRelativeProfit: 0.1,
+      period: 'day',
+      startBrokerTime: '2020-05-11 12:00:00.000',
+      thresholdExceeded: false,
+      tradeDayCount: 0
+    }]);
+    await clock.tickAsync(1000);
+    getPeriodStatisticsStub.resolves([{
+      endBrokerTime: '2020-05-13 11:59:59.999',
+      initialBalance: 10000,
+      period: 'day',
+      startBrokerTime: '2020-05-12 12:00:00.000',
+      thresholdExceeded: false
+    }, results[0]]);
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 12:01:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 10500
+    });
+    await clock.tickAsync(1000);
+    sinon.assert.calledOnce(updatedStub2);
+    sinon.assert.notCalled(completedStub2);
+    sinon.assert.callCount(updatedStub, 4);
+    sinon.assert.calledOnce(completedStub);
+    sinon.assert.callCount(updatedStub3, 4);
+    sinon.assert.calledOnce(completedStub3);
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 12:02:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 11000
+    });
+    await syncListeners[1].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 11:55:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 9000
+    });
+    sinon.assert.calledTwice(updatedStub2);
+    sinon.assert.callCount(updatedStub, 4);
+    sinon.assert.callCount(updatedStub3, 4);
+    await syncListeners[1].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 11:55:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 9000
+    });
+    sinon.assert.calledTwice(updatedStub2);
+    sinon.assert.callCount(updatedStub, 4);
+    sinon.assert.callCount(updatedStub3, 4);
+    sinon.assert.calledWith(updatedStub, [{
+      endBrokerTime: '2020-05-12 11:59:59.999',
+      exceededThresholdType: undefined,
+      initialBalance: 10000,
+      maxAbsoluteDrawdown: 1000,
+      maxAbsoluteProfit: 500,
+      maxDrawdownTime: '2020-05-12 11:55:00.000',
+      maxProfitTime: '2020-05-11 14:00:00.000',
+      maxRelativeDrawdown: 0.1,
+      maxRelativeProfit: 0.1,
+      period: 'day',
+      startBrokerTime: '2020-05-11 12:00:00.000',
+      thresholdExceeded: false,
+      tradeDayCount: 0
+    }]);
+    await syncListeners[1].onDealAdded('vint-hill:1:ps-mpa-1', {
+      clientId: 'TE_GBPUSD_7hyINWqAlE',
+      commission: -0.25,
+      entryType: 'DEAL_ENTRY_IN',
+      id: '33230099',
+      magic: 1000,
+      platform: 'mt5',
+      orderId: '46214692',
+      positionId: '46214692',
+      price: 1.26101,
+      profit: 500,
+      swap: 0,
+      symbol: 'GBPUSD',
+      time: new Date('2020-04-15T02:45:06.521Z'),
+      type: 'DEAL_TYPE_BALANCE',
+      volume: 0.07
+    });
+    await syncListeners[1].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 11:55:05.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 9000
+    });
+    sinon.assert.calledThrice(updatedStub2);
+    sinon.assert.callCount(updatedStub, 4);
+    sinon.assert.callCount(updatedStub3, 4);
+    sinon.assert.calledWith(updatedStub, [{
+      endBrokerTime: '2020-05-12 11:59:59.999',
+      exceededThresholdType: undefined,
+      initialBalance: 10000,
+      maxAbsoluteDrawdown: 1500,
+      maxAbsoluteProfit: 500,
+      maxDrawdownTime: '2020-05-12 11:55:05.000',
+      maxProfitTime: '2020-05-11 14:00:00.000',
+      maxRelativeDrawdown: 0.15,
+      maxRelativeProfit: 0.1,
+      period: 'day',
+      startBrokerTime: '2020-05-11 12:00:00.000',
+      thresholdExceeded: false,
+      tradeDayCount: 0
+    }]);
+    await clock.tickAsync(1000);
+    getPeriodStatisticsStub.resolves([{
+      endBrokerTime: '2020-05-13 11:59:59.999',
+      initialBalance: 10000,
+      period: 'day',
+      startBrokerTime: '2020-05-12 12:00:00.000',
+      thresholdExceeded: false
+    }, results[0]]);
+    await syncListeners[1].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 12:01:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 10500
+    });
+    await clock.tickAsync(1000);
+    sinon.assert.callCount(updatedStub2, 4);
+    sinon.assert.calledOnce(completedStub2);
+    sinon.assert.callCount(updatedStub, 4);
+    sinon.assert.calledOnce(completedStub);
+    sinon.assert.callCount(updatedStub3, 4);
+    sinon.assert.calledOnce(completedStub3);
+    await syncListeners[1].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 12:02:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 11000
+    });
+    sinon.assert.match(syncListeners.length, 2);
+    sinon.assert.calledOnce(connection.close);
+  });
+
+  /**
+   * @test {PeriodStatisticsStreamManager#addPeriodStatisticsListener}
+   */
+  it('should remove sync listeners when all tracker listeners are removed', async () => {
+    sandbox.stub(connection, 'removeSynchronizationListener').returns();
+    const updatedStub2 = sinon.stub();
+    const completedStub2 = sinon.stub();
+    const trackerCompletedStub2 = sinon.stub();
+    const connectedStub2 = sinon.stub();
+    const disconnectedStub2 = sinon.stub();
+    const errorStub2 = sinon.stub();
+
+    const updatedStub3 = sinon.stub();
+    const completedStub3 = sinon.stub();
+    const trackerCompletedStub3 = sinon.stub();
+    const connectedStub3 = sinon.stub();
+    const disconnectedStub3 = sinon.stub();
+    const errorStub3 = sinon.stub();
+
+    class Listener2 extends PeriodStatisticsListener {
+      async onPeriodStatisticsUpdated(periodStatisticsEvent) {
+        updatedStub2(periodStatisticsEvent);
+      }
+
+      async onPeriodStatisticsCompleted(periodStatisticsEvent) {
+        completedStub2(periodStatisticsEvent);
+      }
+
+      async onTrackerCompleted(){
+        trackerCompletedStub2();
+      }
+
+      async onConnected(instanceIndex) {
+        connectedStub2(instanceIndex);
+      }
+    
+      async onDisconnected(instanceIndex) {
+        disconnectedStub2(instanceIndex);
+      }
+
+      async onError(error) {
+        errorStub2(error);
+      }
+
+    }
+
+    class Listener3 extends PeriodStatisticsListener {
+      async onPeriodStatisticsUpdated(periodStatisticsEvent) {
+        updatedStub3(periodStatisticsEvent);
+      }
+
+      async onPeriodStatisticsCompleted(periodStatisticsEvent) {
+        completedStub3(periodStatisticsEvent);
+      }
+
+      async onTrackerCompleted(){
+        trackerCompletedStub3();
+      }
+
+      async onConnected(instanceIndex) {
+        connectedStub3(instanceIndex);
+      }
+    
+      async onDisconnected(instanceIndex) {
+        disconnectedStub3(instanceIndex);
+      }
+
+      async onError(error) {
+        errorStub3(error);
+      }
+
+    }
+    const listener2 = new Listener2('accountId', 'tracker2');
+    const listener3 = new Listener3('accountId', 'tracker1');
+    const listenerId = await periodStatisticsStreamManager.addPeriodStatisticsListener(listener,
+      'accountId', 'tracker1');
+    const listenerId2 = await periodStatisticsStreamManager.addPeriodStatisticsListener(listener2,
+      'accountId', 'tracker2');
+    const listenerId3 = await periodStatisticsStreamManager.addPeriodStatisticsListener(listener3,
+      'accountId', 'tracker1');
+    await clock.tickAsync(100);
+    sinon.assert.calledWith(updatedStub, results);
+    sinon.assert.calledOnce(updatedStub);
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+      symbol: 'EURUSD',
+      bid: 1.02273,
+      ask: 1.02274,
+      brokerTime: '2020-05-12 11:55:00.000',
+      profitTickValue: 1,
+      lossTickValue: 1,
+      accountCurrencyExchangeRate: 1,
+      equity: 9000
+    });
+    sinon.assert.calledOnce(updatedStub2);
+    sinon.assert.calledTwice(updatedStub);
+    sinon.assert.calledTwice(updatedStub3);
     periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId);
+    sinon.assert.notCalled(connection.removeSynchronizationListener);
+    sinon.assert.notCalled(connection.close);
+    periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId3);
+    sinon.assert.calledOnce(connection.removeSynchronizationListener);
+    sinon.assert.notCalled(connection.close);
+    periodStatisticsStreamManager.removePeriodStatisticsListener(listenerId2);
+    sinon.assert.calledTwice(connection.removeSynchronizationListener);
+    sinon.assert.calledOnce(connection.close);
   });
 
   /**
@@ -418,7 +847,7 @@ describe('PeriodStatisticsStreamManager', () => {
   it('should process price events if period completed', async () => {
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -437,7 +866,7 @@ describe('PeriodStatisticsStreamManager', () => {
       thresholdExceeded: false,
       tradeDayCount: 0
     }, results[0]]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -540,7 +969,7 @@ describe('PeriodStatisticsStreamManager', () => {
     getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', absoluteDrawdownThreshold: 500});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -559,7 +988,7 @@ describe('PeriodStatisticsStreamManager', () => {
       thresholdExceeded: false,
       tradeDayCount: 0
     }, results[0]]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -604,7 +1033,7 @@ describe('PeriodStatisticsStreamManager', () => {
     getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', relativeDrawdownThreshold: 0.05});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -623,7 +1052,7 @@ describe('PeriodStatisticsStreamManager', () => {
       thresholdExceeded: false,
       tradeDayCount: 0
     }, results[0]]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -668,7 +1097,7 @@ describe('PeriodStatisticsStreamManager', () => {
     getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', absoluteProfitThreshold: 500});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -687,7 +1116,7 @@ describe('PeriodStatisticsStreamManager', () => {
       thresholdExceeded: false,
       tradeDayCount: 0
     }, results[0]]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -732,7 +1161,7 @@ describe('PeriodStatisticsStreamManager', () => {
     getTrackerStub.resolves({name: 'trackerName1', _id: 'tracker1', relativeProfitThreshold: 0.05});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -751,7 +1180,7 @@ describe('PeriodStatisticsStreamManager', () => {
       thresholdExceeded: false,
       tradeDayCount: 0
     }, results[0]]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -797,7 +1226,7 @@ describe('PeriodStatisticsStreamManager', () => {
       absoluteDrawdownThreshold: 500, absoluteProfitThreshold: 500});
     const listenerId = periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -808,7 +1237,7 @@ describe('PeriodStatisticsStreamManager', () => {
       equity: 9400
     });
     await clock.tickAsync(1000);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -827,7 +1256,7 @@ describe('PeriodStatisticsStreamManager', () => {
       thresholdExceeded: false,
       tradeDayCount: 0
     }, results[0]]);
-    await syncListener.onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
+    await syncListeners[0].onSymbolPriceUpdated('vint-hill:1:ps-mpa-1', {
       symbol: 'EURUSD',
       bid: 1.02273,
       ask: 1.02274,
@@ -871,18 +1300,18 @@ describe('PeriodStatisticsStreamManager', () => {
   it('should track connection state', async () => {
     periodStatisticsStreamManager.addPeriodStatisticsListener(listener, 'accountId', 'tracker1');
     await clock.tickAsync(100);
-    await syncListener.onDealsSynchronized('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDealsSynchronized('vint-hill:1:ps-mpa-1');
     sinon.assert.calledOnce(connectedStub);
-    await syncListener.onDealsSynchronized('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDealsSynchronized('vint-hill:1:ps-mpa-1');
     sinon.assert.calledOnce(connectedStub);
-    await syncListener.onDisconnected('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDisconnected('vint-hill:1:ps-mpa-1');
     sinon.assert.notCalled(disconnectedStub);
-    await syncListener.onDisconnected('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDisconnected('vint-hill:1:ps-mpa-1');
     sinon.assert.notCalled(disconnectedStub);
     connection.healthMonitor.healthStatus.synchronized = false;
-    await syncListener.onDisconnected('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDisconnected('vint-hill:1:ps-mpa-1');
     sinon.assert.calledOnce(disconnectedStub);
-    await syncListener.onDealsSynchronized('vint-hill:1:ps-mpa-1');
+    await syncListeners[0].onDealsSynchronized('vint-hill:1:ps-mpa-1');
     sinon.assert.calledTwice(connectedStub);
   });
 
@@ -973,12 +1402,12 @@ describe('PeriodStatisticsStreamManager', () => {
     };
     await clock.tickAsync(100);
     await Promise.all([
-      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', dealBalance),
+      syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', dealBalance),
       connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', dealBalance)
     ]);
     sinon.assert.calledOnce(updatedStub);
     await Promise.all([
-      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal),
+      syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', deal),
       connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal)
     ]);
     sinon.assert.calledTwice(updatedStub);
@@ -1001,12 +1430,12 @@ describe('PeriodStatisticsStreamManager', () => {
     ]);
     await clock.tickAsync(100);
     await Promise.all([
-      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal2),
+      syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', deal2),
       connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal2)
     ]);
     sinon.assert.calledTwice(updatedStub);
     await Promise.all([
-      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal3),
+      syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', deal3),
       connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal3)
     ]);
     sinon.assert.calledThrice(updatedStub);
@@ -1078,7 +1507,7 @@ describe('PeriodStatisticsStreamManager', () => {
     connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal);
     sinon.assert.calledOnce(updatedStub);
     await Promise.all([
-      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal2),
+      syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', deal2),
       connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal2)
     ]);
     sinon.assert.calledTwice(updatedStub);
@@ -1150,7 +1579,7 @@ describe('PeriodStatisticsStreamManager', () => {
     connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal);
     sinon.assert.calledOnce(updatedStub);
     await Promise.all([
-      syncListener.onDealAdded('vint-hill:1:ps-mpa-1', deal2),
+      syncListeners[0].onDealAdded('vint-hill:1:ps-mpa-1', deal2),
       connection.historyStorage.onDealAdded('vint-hill:1:ps-mpa-1', deal2)
     ]);
     sinon.assert.calledTwice(updatedStub);

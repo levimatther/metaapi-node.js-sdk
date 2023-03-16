@@ -13,6 +13,24 @@
 export default class EquityBalanceListener {
 
   /**
+   * Creates an equity chart listener instance
+   * @param {string} accountId account id
+   */
+  constructor(accountId) {
+    if(!accountId) {
+      throw Error('Account id parameter required');
+    }
+    this._accountId = accountId;
+  }
+
+  /**
+   * Returns account id
+   */
+  get accountId() {
+    return this._accountId;
+  }
+
+  /**
    * Processes an update event when equity or balance changes
    * @param {EquityBalanceData} equityBalanceData equity and balance updated data
    */

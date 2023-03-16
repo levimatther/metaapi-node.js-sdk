@@ -76,7 +76,7 @@ let trackerId = await riskManagementApi.createTracker('accountId', {
 console.log(await riskManagementApi.getTrackers('accountId'));
 
 // retrieve a tracker by id
-console.log(await riskManagementApi.getTrackerById('accountId', 'trackerId'));
+console.log(await riskManagementApi.getTracker('accountId', 'trackerId'));
 
 // update a tracker
 console.log(await riskManagementApi.updateTracker('accountId', trackerId.id, {name: 'Updated name'}));
@@ -114,7 +114,7 @@ class Listener extends TrackerEventListener {
 }
 
 // add listener
-const listener = new Listener();
+const listener = new Listener('accountId', 'trackerId1');
 const listenerId = riskManagementApi.addTrackerEventListener(listener);
 
 // remove listener
@@ -163,8 +163,8 @@ class Listener extends PeriodStatisticsListener {
 }
 
 // add listener
-const listener = new Listener();
-const listenerId = riskManagementApi.addPeriodStatisticsListener(listener, 'accountId', 'trackerId1');
+const listener = new Listener('accountId', 'trackerId1');
+const listenerId = await riskManagementApi.addPeriodStatisticsListener(listener, 'accountId', 'trackerId1');
 
 // remove listener
 riskManagementApi.removePeriodStatisticsListener(listenerId);
@@ -207,8 +207,8 @@ class Listener extends EquityChartListener {
 }
 
 // add listener
-const listener = new Listener();
-const listenerId = riskManagementApi.addEquityChartListener(listener, 'accountId');
+const listener = new Listener('accountId');
+const listenerId = await riskManagementApi.addEquityChartListener(listener, 'accountId');
 
 // remove listener
 riskManagementApi.removeEquityChartListener(listenerId);
@@ -241,8 +241,8 @@ class Listener extends EquityBalanceListener {
 }
 
 // add listener
-const listener = new Listener();
-const listenerId = riskManagementApi.addEquityBalanceListener(listener, 'accountId');
+const listener = new Listener('accountId');
+const listenerId = await riskManagementApi.addEquityBalanceListener(listener, 'accountId');
 
 // remove listener
 riskManagementApi.removeEquityBalanceListener(listenerId);

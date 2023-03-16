@@ -22,10 +22,13 @@ export default class PeriodStatisticsStreamManager {
     this._metaApi = metaApi;
     this._periodStatisticsListeners = {};
     this._accountsByListenerId = {};
+    this._trackersByListenerId = {};
+    this._trackerSyncListeners = {};
     this._periodStatisticsConnections = {};
     this._periodStatisticsCaches = {};
     this._accountSynchronizationFlags = {};
     this._pendingInitalizationResolves = {};
+    this._syncListeners = {};
     this._retryIntervalInSeconds = 1;
     this._fetchInitialDataIntervalId = {};
     this.removePeriodStatisticsListener = this.removePeriodStatisticsListener.bind(this);
@@ -33,15 +36,17 @@ export default class PeriodStatisticsStreamManager {
   }
 
   /**
-   * Returns listeners for account
-   * @param {String} accountId account id to return listeners for
+   * Returns listeners for a tracker
+   * @param {string} accountId account id to return listeners for
+   * @param {string} trackerId tracker id to return listeners for
    * @returns {{[listenerId: string]: PeriodStatisticsListener}} dictionary of period statistics listeners
    */
-  getAccountListeners(accountId) {
-    if(!this._periodStatisticsListeners[accountId]) {
-      this._periodStatisticsListeners[accountId] = {};
+  getTrackerListeners(accountId, trackerId) {
+    if(!this._periodStatisticsListeners[accountId] || !this._periodStatisticsListeners[accountId][trackerId]) {
+      return {};
+    } else {
+      return this._periodStatisticsListeners[accountId][trackerId];
     }
-    return this._periodStatisticsListeners[accountId];
   }
 
   /**
@@ -53,21 +58,26 @@ export default class PeriodStatisticsStreamManager {
    */
   // eslint-disable-next-line complexity, max-statements
   async addPeriodStatisticsListener(listener, accountId, trackerId) {
+    let newTracker = false;
     if(!this._periodStatisticsCaches[accountId]) {
-      this._periodStatisticsCaches[accountId] = {
+      this._periodStatisticsCaches[accountId] = {};
+    }
+    if(!this._periodStatisticsCaches[accountId][trackerId]) {
+      newTracker = true;
+      this._periodStatisticsCaches[accountId][trackerId] = {
         trackerData: {},
         record: {},
-        equityAdjustments: {},
-        lastPeriod: null
+        lastPeriod: {},
+        equityAdjustments: {}
       };
     }
-    const cache = this._periodStatisticsCaches[accountId];
+    const cache = this._periodStatisticsCaches[accountId][trackerId];
     let connection = null;
     let retryIntervalInSeconds = this._retryIntervalInSeconds;
     const equityTrackingClient = this._equityTrackingClient;
     const listenerId = randomstring.generate(10);
     const removePeriodStatisticsListener = this.removePeriodStatisticsListener;
-    const getAccountListeners = () => this.getAccountListeners(accountId);
+    const getTrackerListeners = () => this.getTrackerListeners(accountId, trackerId);
     const pendingInitalizationResolves = this._pendingInitalizationResolves;
     const synchronizationFlags = this._accountSynchronizationFlags;
 
@@ -77,7 +87,7 @@ export default class PeriodStatisticsStreamManager {
         try {
           if(!synchronizationFlags[accountId]) {
             synchronizationFlags[accountId] = true;
-            Object.values(getAccountListeners()).forEach(accountListener => {
+            Object.values(getTrackerListeners()).forEach(accountListener => {
               accountListener.onConnected();
             });
             if(pendingInitalizationResolves[accountId]) {
@@ -96,12 +106,14 @@ export default class PeriodStatisticsStreamManager {
         try {
           if(synchronizationFlags[accountId] && !connection.healthMonitor.healthStatus.synchronized) {
             synchronizationFlags[accountId] = false;
-            Object.values(getAccountListeners()).forEach(accountListener => {
-              accountListener.onDisconnected();
+            Object.values(getTrackerListeners()).forEach(trackerListener => {
+              trackerListener.onDisconnected();
             });
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getTrackerListeners()).forEach(trackerListener => {
+            trackerListener.onError(err);
+          });
           this._logger.error('Error processing onDisconnected event for ' +
           `equity chart listener for account ${accountId}`, err);
         }
@@ -130,7 +142,9 @@ export default class PeriodStatisticsStreamManager {
             .reduce((a, b) => a + b, 0);
           const brokerTime = price.brokerTime;
           if(brokerTime > cache.lastPeriod.endBrokerTime) {
-            listener.onPeriodStatisticsCompleted();
+            Object.values(getTrackerListeners()).forEach(trackerListener => {
+              trackerListener.onPeriodStatisticsCompleted();
+            });
             cache.equityAdjustments = {};
             const startBrokerTime = cache.lastPeriod.startBrokerTime;
             cache.lastPeriod = null;
@@ -141,7 +155,10 @@ export default class PeriodStatisticsStreamManager {
                 await new Promise(res => setTimeout(res, 10000));
               } else {
                 cache.lastPeriod = periods[0];
-                listener.onPeriodStatisticsUpdated(periods.reverse());
+                periods.reverse();
+                Object.values(getTrackerListeners()).forEach(trackerListener => {
+                  trackerListener.onPeriodStatisticsUpdated(periods);
+                });
                 break;
               }
             }
@@ -150,11 +167,13 @@ export default class PeriodStatisticsStreamManager {
               return;
             }
             if(cache.trackerData.endBrokerTime && brokerTime > cache.trackerData.endBrokerTime) {
-              listener.onTrackerCompleted();
+              Object.values(getTrackerListeners()).forEach(trackerListener => {
+                trackerListener.onTrackerCompleted();
+              });
               cache.equityAdjustments = {};
-              connection.removeSynchronizationListener(this);
-              removePeriodStatisticsListener(listenerId);
-              await connection.close();
+              Object.keys(getTrackerListeners()).forEach(trackerListenerId => {
+                removePeriodStatisticsListener(trackerListenerId);
+              });
             }
             
             let absoluteDrawdown = Math.max(0, cache.lastPeriod.initialBalance - equity);
@@ -188,26 +207,30 @@ export default class PeriodStatisticsStreamManager {
                 }
               }
               if(JSON.stringify(cache.record) !== previousRecord) {
-                listener.onPeriodStatisticsUpdated([{
-                  startBrokerTime: cache.lastPeriod.startBrokerTime,
-                  endBrokerTime: cache.lastPeriod.endBrokerTime,
-                  initialBalance: cache.lastPeriod.initialBalance,
-                  maxAbsoluteDrawdown: cache.record.maxAbsoluteDrawdown,
-                  maxAbsoluteProfit: cache.record.maxAbsoluteProfit,
-                  maxDrawdownTime: cache.record.maxDrawdownTime,
-                  maxProfitTime: cache.record.maxProfitTime,
-                  maxRelativeDrawdown: cache.record.maxRelativeDrawdown,
-                  maxRelativeProfit: cache.record.maxRelativeProfit,
-                  period: cache.lastPeriod.period,
-                  exceededThresholdType: cache.record.exceededThresholdType,
-                  thresholdExceeded: cache.record.thresholdExceeded,
-                  tradeDayCount: cache.record.tradeDayCount
-                }]);
+                Object.values(getTrackerListeners()).forEach(trackerListener => {
+                  trackerListener.onPeriodStatisticsUpdated([{
+                    startBrokerTime: cache.lastPeriod.startBrokerTime,
+                    endBrokerTime: cache.lastPeriod.endBrokerTime,
+                    initialBalance: cache.lastPeriod.initialBalance,
+                    maxAbsoluteDrawdown: cache.record.maxAbsoluteDrawdown,
+                    maxAbsoluteProfit: cache.record.maxAbsoluteProfit,
+                    maxDrawdownTime: cache.record.maxDrawdownTime,
+                    maxProfitTime: cache.record.maxProfitTime,
+                    maxRelativeDrawdown: cache.record.maxRelativeDrawdown,
+                    maxRelativeProfit: cache.record.maxRelativeProfit,
+                    period: cache.lastPeriod.period,
+                    exceededThresholdType: cache.record.exceededThresholdType,
+                    thresholdExceeded: cache.record.thresholdExceeded,
+                    tradeDayCount: cache.record.tradeDayCount
+                  }]);
+                });
               }
             }
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getTrackerListeners()).forEach(trackerListener => {
+            trackerListener.onError(err);
+          });
           this._logger.error('Error processing onSymbolPriceUpdated event for ' +
           `period statistics listener for account ${accountId}`, err);
         }
@@ -215,7 +238,7 @@ export default class PeriodStatisticsStreamManager {
 
       async onDealAdded(instanceIndex, deal) {
         try {
-          if(!cache.lastPeriod) {
+          if(!cache.lastPeriod || !Object.keys(cache.lastPeriod).length) {
             return;
           }
           if(deal.type === 'DEAL_TYPE_BALANCE') {
@@ -235,25 +258,29 @@ export default class PeriodStatisticsStreamManager {
             const tradeDayCount = Object.keys(tradedDays).length;
             if(cache.record.tradeDayCount !== tradeDayCount) {
               cache.record.tradeDayCount = tradeDayCount;
-              listener.onPeriodStatisticsUpdated([{
-                startBrokerTime: cache.lastPeriod.startBrokerTime,
-                endBrokerTime: cache.lastPeriod.endBrokerTime,
-                initialBalance: cache.lastPeriod.initialBalance,
-                maxAbsoluteDrawdown: cache.record.maxAbsoluteDrawdown,
-                maxAbsoluteProfit: cache.record.maxAbsoluteProfit,
-                maxDrawdownTime: cache.record.maxDrawdownTime,
-                maxProfitTime: cache.record.maxProfitTime,
-                maxRelativeDrawdown: cache.record.maxRelativeDrawdown,
-                maxRelativeProfit: cache.record.maxRelativeProfit,
-                period: cache.lastPeriod.period,
-                exceededThresholdType: cache.record.exceededThresholdType,
-                thresholdExceeded: cache.record.thresholdExceeded,
-                tradeDayCount: cache.record.tradeDayCount
-              }]);
+              Object.values(getTrackerListeners()).forEach(trackerListener => {
+                trackerListener.onPeriodStatisticsUpdated([{
+                  startBrokerTime: cache.lastPeriod.startBrokerTime,
+                  endBrokerTime: cache.lastPeriod.endBrokerTime,
+                  initialBalance: cache.lastPeriod.initialBalance,
+                  maxAbsoluteDrawdown: cache.record.maxAbsoluteDrawdown,
+                  maxAbsoluteProfit: cache.record.maxAbsoluteProfit,
+                  maxDrawdownTime: cache.record.maxDrawdownTime,
+                  maxProfitTime: cache.record.maxProfitTime,
+                  maxRelativeDrawdown: cache.record.maxRelativeDrawdown,
+                  maxRelativeProfit: cache.record.maxRelativeProfit,
+                  period: cache.lastPeriod.period,
+                  exceededThresholdType: cache.record.exceededThresholdType,
+                  thresholdExceeded: cache.record.thresholdExceeded,
+                  tradeDayCount: cache.record.tradeDayCount
+                }]);
+              });
             }
           }
         } catch (err) {
-          listener.onError(err);
+          Object.values(getTrackerListeners()).forEach(trackerListener => {
+            trackerListener.onError(err);
+          });
           this._logger.error('Error processing onDealAdded event for ' +
           `period statistics listener for account ${accountId}`, err);
         }
@@ -263,27 +290,35 @@ export default class PeriodStatisticsStreamManager {
     const account = await this._metaApi.metatraderAccountApi.getAccount(accountId);
     const tracker = await equityTrackingClient.getTracker(accountId, trackerId);
     cache.trackerData = tracker;
-    const accountListeners = this.getAccountListeners(accountId);
+    if(!this._periodStatisticsListeners[accountId]) {
+      this._periodStatisticsListeners[accountId] = {};
+    }
+    if(!this._periodStatisticsListeners[accountId][trackerId]) {
+      this._periodStatisticsListeners[accountId][trackerId] = {};
+    }
+    const accountListeners = this._periodStatisticsListeners[accountId][trackerId];
     accountListeners[listenerId] = listener;
     this._accountsByListenerId[listenerId] = accountId;
-    if(!this._periodStatisticsConnections[accountId]) {
-      let isDeployed = false;
-      while(!isDeployed) {
-        try {
-          await account.waitDeployed();
-          isDeployed = true;  
-        } catch (err) {
-          listener.onError(err);
-          this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
-          await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
-          retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
-        }
+    this._trackersByListenerId[listenerId] = trackerId;
+    let isDeployed = false;
+    while(!isDeployed) {
+      try {
+        await account.waitDeployed();
+        isDeployed = true;  
+      } catch (err) {
+        listener.onError(err);
+        this._logger.error(`Error wait for account ${accountId} to deploy, retrying`, err);
+        await new Promise(res => setTimeout(res, retryIntervalInSeconds * 1000)); 
+        retryIntervalInSeconds = Math.min(retryIntervalInSeconds * 2, 300);
       }
+    }
+    if(!this._periodStatisticsConnections[accountId]) {
       retryIntervalInSeconds = this._retryIntervalInSeconds;
       connection = account.getStreamingConnection();
       const syncListener = new PeriodStatisticsStreamListener();
       connection.addSynchronizationListener(syncListener);
       this._periodStatisticsConnections[accountId] = connection;
+      this._syncListeners[trackerId] = syncListener;
       
       let isSynchronized = false;
       while(!isSynchronized) {
@@ -302,6 +337,11 @@ export default class PeriodStatisticsStreamManager {
       retryIntervalInSeconds = this._retryIntervalInSeconds;
     } else {
       connection = this._periodStatisticsConnections[accountId];
+      if(newTracker) {
+        const syncListener = new PeriodStatisticsStreamListener();
+        connection.addSynchronizationListener(syncListener);
+        this._syncListeners[trackerId] = syncListener;
+      }
       if(!connection.healthMonitor.healthStatus.synchronized) {
         if(!this._pendingInitalizationResolves[accountId]) {
           this._pendingInitalizationResolves[accountId] = [];
@@ -363,20 +403,36 @@ export default class PeriodStatisticsStreamManager {
    * Removes period statistics event listener by id
    * @param {String} listenerId listener id 
    */
+  // eslint-disable-next-line complexity
   removePeriodStatisticsListener(listenerId) {
-    if(this._accountsByListenerId[listenerId]) {
+    if(this._accountsByListenerId[listenerId] && this._trackersByListenerId[listenerId]) {
       if(this._fetchInitialDataIntervalId[listenerId]) {
         clearInterval(this._fetchInitialDataIntervalId[listenerId]);
         delete this._fetchInitialDataIntervalId[listenerId];
       }
       const accountId = this._accountsByListenerId[listenerId];
+      const trackerId = this._trackersByListenerId[listenerId];
       delete this._accountsByListenerId[listenerId];
-      delete this._accountSynchronizationFlags[accountId];
+      delete this._trackersByListenerId[listenerId];
       if(this._periodStatisticsListeners[accountId]) {
-        delete this._periodStatisticsListeners[accountId][listenerId];
+        if(this._periodStatisticsListeners[accountId][trackerId]) {
+          delete this._periodStatisticsListeners[accountId][trackerId][listenerId];
+          if(!Object.keys(this._periodStatisticsListeners[accountId][trackerId]).length) {
+            delete this._periodStatisticsListeners[accountId][trackerId];
+            if(this._periodStatisticsConnections[accountId] && this._syncListeners[trackerId]) {
+              this._periodStatisticsConnections[accountId]
+                .removeSynchronizationListener(this._syncListeners[trackerId]);
+              delete this._syncListeners[trackerId];
+            }
+          }
+        }
+        if(!Object.keys(this._periodStatisticsListeners[accountId]).length) {
+          delete this._periodStatisticsListeners[accountId];
+        }
       }
       if(this._periodStatisticsConnections[accountId] && 
-        !Object.keys(this._periodStatisticsListeners[accountId]).length) {
+        !this._periodStatisticsListeners[accountId]) {
+        delete this._accountSynchronizationFlags[accountId];
         this._periodStatisticsConnections[accountId].close();
         delete this._periodStatisticsConnections[accountId];
       }

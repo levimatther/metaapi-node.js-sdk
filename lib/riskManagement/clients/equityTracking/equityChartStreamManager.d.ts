@@ -28,9 +28,9 @@ export default class EquityChartStreamManager {
    * @param {EquityChartListener} listener 
    * @param {string} accountId account id
    * @param {Date} startTime date to start tracking from
-   * @returns {String} listener id
+   * @returns {Promise<string>} listener id
    */
-  addEquityChartListener(listener: EquityChartListener, accountId: string, startTime: Date): string;
+  addEquityChartListener(listener: EquityChartListener, accountId: string, startTime: Date): Promise<string>;
 
   /**
    * Removes equity chart event listener by id

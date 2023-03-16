@@ -6,6 +6,23 @@ import {TrackerEvent} from './equityTracking.client';
 export default class TrackerEventListener {
 
   /**
+   * Creates a tracker event listener instance
+   * @param {string} accountId account id
+   * @param {string} trackerId tracker id
+   */
+  constructor(accountId: string, trackerId: string);
+
+  /**
+   * Returns account id
+   */
+  get accountId(): string;
+
+  /**
+   * Returns tracker id
+   */
+  get trackerId(): string;
+
+  /**
    * Processes profit/drawdown event which occurs when a profit/drawdown limit is exceeded in a tracker
    * @param {TrackerEvent} trackerEvent profit/drawdown event
    */

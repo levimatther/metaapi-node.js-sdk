@@ -48,8 +48,9 @@ async function main() {
     console.log('Created an event tracker ' + trackerId.id);
 
     // adding an period statistics listener
-    let periodStatisticsListener = new ExamplePeriodStatisticsListener();
-    let listenerId = riskManagementApi.addPeriodStatisticsListener(periodStatisticsListener, accountId, trackerId.id);
+    let periodStatisticsListener = new ExamplePeriodStatisticsListener(accountId, trackerId.id);
+    let listenerId = 
+      await riskManagementApi.addPeriodStatisticsListener(periodStatisticsListener, accountId, trackerId.id);
 
     console.log('Streaming period statistics events for 1 minute...');
     await new Promise(res => setTimeout(res, 1000 * 60));

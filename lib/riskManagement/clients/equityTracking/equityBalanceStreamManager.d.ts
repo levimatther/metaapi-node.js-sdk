@@ -25,9 +25,9 @@ export default class EquityChartStreamManager {
    * Adds an equity balance event listener
    * @param {EquityBalanceListener} listener 
    * @param {string} accountId account id
-   * @returns {string} listener id
+   * @returns {Promise<string>} listener id
    */
-  addEquityBalanceListener(listener: EquityBalanceListener, accountId: string): string;
+  addEquityBalanceListener(listener: EquityBalanceListener, accountId: string): Promise<string>;
 
   /**
    * Removes equity balance event listener by id

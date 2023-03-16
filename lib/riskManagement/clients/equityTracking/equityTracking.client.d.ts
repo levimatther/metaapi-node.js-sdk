@@ -2,6 +2,7 @@ import DomainClient from '../domain.client';
 import TrackerEventListener from './trackerEventListener';
 import PeriodStatisticsListener from './periodStatisticsListener';
 import EquityChartListener from './equityChartListener';
+import EquityBalanceListener from './equityBalanceListener';
 import MetaApi from '../../../metaApi/metaApi';
 
 /**
@@ -120,9 +121,9 @@ export default class EquityTrackingClient {
    * @param {PeriodStatisticsListener} listener period statistics event listener
    * @param {string} accountId account id
    * @param {string} trackerId tracker id
-   * @return {string} listener id
+   * @return {Promise<string>} listener id
    */
-  addPeriodStatisticsListener(listener: PeriodStatisticsListener, accountId: string, trackerId: string): string;
+  addPeriodStatisticsListener(listener: PeriodStatisticsListener, accountId: string, trackerId: string): Promise<string>;
 
   /**
    * Removes period statistics event listener by id
@@ -147,15 +148,29 @@ export default class EquityTrackingClient {
    * @param {EquityChartListener} listener equity chart event listener
    * @param {string} accountId account id
    * @param {Date} [startTime] date to start tracking from
-   * @return {string} listener id
+   * @return {Promise<string>} listener id
    */
-  addEquityChartListener(listener: EquityChartListener, accountId: string, startTime?: Date): string;
+  addEquityChartListener(listener: EquityChartListener, accountId: string, startTime?: Date): Promise<string>;
 
   /**
    * Removes equity chart event listener by id
    * @param {string} listenerId equity chart listener id
    */
   removeEquityChartListener(listenerId: string): void;
+
+  /**
+   * Adds an equity balance event listener
+   * @param {EquityBalanceListener} listener equity balance event listener
+   * @param {String} accountId account id
+   * @returns {Promise<string>} listener id
+   */
+  addEquityBalanceListener(listener: EquityBalanceListener, accountId: string): Promise<string>;
+
+  /**
+   * Removes equity balance event listener by id
+   * @param {string} listenerId equity balance listener id 
+   */
+  removeEquityBalanceListener(listenerId: string): void;
 }
 
 /**

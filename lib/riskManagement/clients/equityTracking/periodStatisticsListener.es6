@@ -6,6 +6,36 @@
 export default class PeriodStatisticsListener {
 
   /**
+   * Creates a period statistics listener instance
+   * @param {string} accountId account id
+   * @param {string} trackerId tracker id
+   */
+  constructor(accountId, trackerId) {
+    if(!accountId) {
+      throw Error('Account id parameter required');
+    }
+    if(!trackerId) {
+      throw Error('Tracker id parameter required');
+    }
+    this._accountId = accountId;
+    this._trackerId = trackerId;
+  }
+
+  /**
+   * Returns account id
+   */
+  get accountId() {
+    return this._accountId;
+  }
+
+  /**
+   * Returns tracker id
+   */
+  get trackerId() {
+    return this._trackerId;
+  }
+
+  /**
    * Processes period statistics event which occurs when new period statistics data arrives
    * @param {PeriodStatistics[]} periodStatisticsEvent period statistics event
    */

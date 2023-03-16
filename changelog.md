@@ -1,3 +1,7 @@
+21.0.0
+  - breaking change: risk management listeners now require accountId (and trackerId where it's applicable). Check readme for details.
+  - fixed handling multiple listeners for the same tracker/account in risk management api
+
 20.12.1
   - fixed resynchronization after position/order removal
 

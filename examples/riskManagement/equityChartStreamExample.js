@@ -36,8 +36,8 @@ class ExampleEquityChartListener extends EquityChartListener {
 async function main() {
   try {
     // adding an equity chart listener
-    let equityChartListener = new ExampleEquityChartListener();
-    let listenerId = riskManagementApi.addEquityChartListener(equityChartListener, accountId);
+    let equityChartListener = new ExampleEquityChartListener(accountId);
+    let listenerId = await riskManagementApi.addEquityChartListener(equityChartListener, accountId);
 
     console.log('Streaming equity chart events for 1 minute...');
     await new Promise(res => setTimeout(res, 1000 * 60));

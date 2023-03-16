@@ -32,7 +32,7 @@ async function main() {
     console.log('Created an event tracker ' + trackerId.id);
 
     // adding a tracker event listener
-    let trackerEventListener = new ExampleTrackerEventListener();
+    let trackerEventListener = new ExampleTrackerEventListener(accountId, trackerId.id);
     let listenerId = riskManagementApi.addTrackerEventListener(trackerEventListener, accountId, trackerId.id);
 
     console.log('Streaming tracking events for 1 minute...');
