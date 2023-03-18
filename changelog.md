@@ -1,3 +1,6 @@
+21.0.1
+  - fixed hash calculation for browsers
+
 21.0.0
   - breaking change: risk management listeners now require accountId (and trackerId where it's applicable). Check readme for details.
   - fixed handling multiple listeners for the same tracker/account in risk management api
