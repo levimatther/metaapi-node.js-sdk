@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js';
-import {BinarySearchTree} from 'binary-search-tree';
+const isBrowser = process.title === 'browser';
 
 /**
  * Class for managing a data tree with hash references
@@ -311,7 +311,10 @@ export default class ReferenceTree {
     const buf2 = Buffer.from(hex2, 'hex');
     // eslint-disable-next-line no-bitwise
     const bufResult = buf1.map((b, i) => b ^ buf2[i]);
-    return bufResult.toString('hex');
+    return isBrowser
+      // eslint-disable-next-line no-bitwise
+      ? Array.prototype.map.call(bufResult, byte => ('0' + (byte & 0xFF).toString(16)).slice(-2)).join('')
+      : bufResult.toString('hex');
   }
 
   _updateCategoryRecord(categoryName, hash) {
