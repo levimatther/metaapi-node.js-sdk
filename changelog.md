@@ -1,3 +1,7 @@
+21.1.0
+  - added account configuration by end user
+  - login and password are now optional when creating or updating trading account
+  
 21.0.1
   - fixed hash calculation for browsers
 

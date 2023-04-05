@@ -72,7 +72,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * specified, system internal setting will be used which we believe is reasonable for most cases
    * @property {string} [provisioningProfileId] Id of the provisioning profile that was used as the basis for 
    * creating this account
-   * @property {string} login MetaTrader account number
+   * @property {string} [login] MetaTrader account login
    * @property {string} server MetaTrader server name to connect to 
    * @property {Type} type Account type. Executing accounts as cloud-g2 is faster and cheaper
    * @property {Version} version MetaTrader version
@@ -121,7 +121,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
   /**
    * Account state
    * @typedef {'CREATED' | 'DEPLOYING' | 'DEPLOYED' | 'DEPLOY_FAILED' | 'UNDEPLOYING' | 'UNDEPLOYED' |
-   * 'UNDEPLOY_FAILED' | 'DELETING' | 'DELETE_FAILED' | 'REDEPLOY_FAILED'} State
+   * 'UNDEPLOY_FAILED' | 'DELETING' | 'DELETE_FAILED' | 'REDEPLOY_FAILED' | 'DRAFT'} State
    */
 
   /**
@@ -284,9 +284,9 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * specified, system internal setting will be used which we believe is reasonable for most cases
    * @property {string} [provisioningProfileId] Id of the provisioning profile that was used as the basis for creating 
    * this account. Required for cloud account
-   * @property {string} login MetaTrader account number. Only digits are allowed
-   * @property {string} password MetaTrader account password. The password can be either investor password for read-only
-   * access or master password to enable trading features. Required for cloud account
+   * @property {string} [login] MetaTrader account login. Only digits are allowed
+   * @property {string} [password] MetaTrader account password. The password can be either investor password for read-only
+   * access or master password to enable trading features.
    * @property {string} server MetaTrader server name to connect to 
    * @property {Platform} [platform] MetaTrader platform
    * @property {Type} [type] Account type. Executing accounts as cloud-g2 is faster and cheaper. 
@@ -305,7 +305,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * MetaTrader account id model
    * @typedef {Object} MetatraderAccountIdDto
    * @property {string} id MetaTrader account unique identifier
-   * @property {string} state State of the account. Possible values are 'UNDEPLOYED', 'DEPLOYED'
+   * @property {string} state State of the account. Possible values are 'UNDEPLOYED', 'DEPLOYED', 'DRAFT'
    */
 
   /**
@@ -577,8 +577,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * Updated MetaTrader account data
    * @typedef {Object} MetatraderAccountUpdateDto
    * @property {string} name Human-readable account name
-   * @property {string} password MetaTrader account password. The password can be either investor password for read-only
-   * access or master password to enable trading features. Required for cloud account
+   * @property {string} [password] MetaTrader account password. The password can be either investor password for read-only
+   * access or master password to enable trading features
    * @property {string} server MetaTrader server name to connect to
    * @property {number} [magic] Magic value the trades should be performed using.
    * When manualTrades field is set to true, magic value must be 0
@@ -745,6 +745,39 @@ export default class MetatraderAccountClient extends MetaApiClient {
       json: true
     };
     return this._httpClient.request(opts, 'enableMetastatsHourlyTarification');
+  }
+
+  /**
+   * Configuration link
+   * @typedef {Object} ConfigurationLink
+   * @property {string} configurationLink Secure link to allow end user to configure account directly
+   */
+
+  /**
+   * Generates trading account configuration link by account id.
+   * (see https://metaapi.cloud/docs/provisioning/api/account/createConfigurationLink/)
+   * This link can be used by the end user to enter trading account login and password or change the password.
+   * Method is accessible only with API access token
+   * @param {string} accountId Trading account id
+   * @param {number} [ttlInDays] Lifetime of the link in days. Default is 7.
+   * @return {Promise<ConfigurationLink>} promise resolving with configuration link
+   */
+  createConfigurationLink(accountId, ttlInDays) {
+    if (this._isNotJwtToken()) {
+      return this._handleNoAccessError('createConfigurationLink');
+    }
+    const opts = {
+      url: `${this._host}/users/current/accounts/${accountId}/configuration-link`,
+      method: 'PUT',
+      headers: {
+        'auth-token': this._token
+      },
+      qs: {
+        ttlInDays: ttlInDays
+      },
+      json: true
+    };
+    return this._httpClient.request(opts, 'createConfigurationLink');
   }
 
 }

@@ -28,7 +28,7 @@ export default class MetatraderAccountReplica {
 
   /**
    * Returns current account replica state. One of CREATED, DEPLOYING, DEPLOYED, DEPLOY_FAILED, UNDEPLOYING,
-   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED
+   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED, DRAFT
    * @return {State} current account replica state
    */
   get state() {

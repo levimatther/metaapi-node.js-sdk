@@ -762,4 +762,22 @@ describe('MetatraderAccountClient', () => {
     }
   });
 
+  /**
+   * @test {MetatraderAccountClient#createConfigurationLink}
+   */
+  it('should generate a configuration link via API', async () => {
+    await accountClient.createConfigurationLink('id', 14);
+    sinon.assert.calledOnceWithExactly(httpClient.request, {
+      url: `${provisioningApiUrl}/users/current/accounts/id/configuration-link`,
+      method: 'PUT',
+      headers: {
+        'auth-token': token
+      },
+      qs: {
+        ttlInDays: 14
+      },
+      json: true,
+    }, 'createConfigurationLink');
+  });
+
 });

@@ -8,7 +8,7 @@ import ExpertAdvisor from './expertAdvisor';
 import {ValidationError} from '../clients/errorHandler';
 import MetatraderAccountReplica from './metatraderAccountReplica';
 //eslint-disable-next-line max-len
-import {Reliability, State, Version, ConnectionStatus, CopyFactoryRoles, Type, AccountConnection} from '../clients/metaApi/metatraderAccount.client';
+import {Reliability, State, Version, ConnectionStatus, CopyFactoryRoles, Type, AccountConnection, ConfigurationLink} from '../clients/metaApi/metatraderAccount.client';
 
 /**
  * Implements a MetaTrader account entity
@@ -48,7 +48,7 @@ export default class MetatraderAccount {
 
   /**
    * Returns current account state. One of CREATED, DEPLOYING, DEPLOYED, DEPLOY_FAILED, UNDEPLOYING,
-   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED
+   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED, DRAFT
    * @return {State} current account state
    */
   get state() {
@@ -559,7 +559,7 @@ export default class MetatraderAccount {
   /**
    * Creates a trading account replica in a region different from trading account region and starts a cloud API server for it
    * @param {NewMetaTraderAccountDto} account MetaTrader account data
-   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account replica created
+   * @return {Promise<MetatraderAccountReplica>} promise resolving with created MetaTrader account replica entity
    */
   async createReplica(account) {
     await this._metatraderAccountClient.createAccountReplica(this.id, account);
@@ -631,6 +631,16 @@ export default class MetatraderAccount {
    */
   getHistoricalTicks(symbol, startTime, offset, limit) {
     return this._historicalMarketDataClient.getHistoricalTicks(this.id, this.region, symbol, startTime, offset, limit);
+  }
+
+  /**
+   * Generates trading account configuration link by account id.
+   * @param {number} [ttlInDays] Lifetime of the link in days. Default is 7.
+   * @return {Promise<ConfigurationLink>} promise resolving with configuration link
+   */
+  async createConfigurationLink(ttlInDays) {
+    const configurationLink = await this._metatraderAccountClient.createConfigurationLink(this.id, ttlInDays);
+    return configurationLink;
   }
 
   _checkExpertAdvisorAllowed() {
