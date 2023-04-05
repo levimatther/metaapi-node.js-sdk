@@ -61,7 +61,8 @@ export default class MetatraderAccountApi {
   /**
    * Adds a trading account and starts a cloud API server for the trading account
    * @param {NewMetatraderAccountDto} account MetaTrader account data
-   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account created
+   * @return {Promise<MetatraderAccount>} promise resolving with created MetaTrader account entity
    */
-  createAccount(account: NewMetatraderAccountDto): Promise<MetatraderAccountIdDto>;
+  createAccount(account: NewMetatraderAccountDto): Promise<MetatraderAccount>;
+
 }

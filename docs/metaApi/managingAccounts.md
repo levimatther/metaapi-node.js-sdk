@@ -25,7 +25,7 @@ try {
     server: 'ICMarketsSC-Demo',
     magic: 123456,
     quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
-    reliability: 'regular' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
+    reliability: 'high' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
   });
 } catch (err) {
   // process errors
@@ -118,8 +118,26 @@ const account = await api.metatraderAccountApi.createAccount({
   application: 'MetaApi',
   magic: 123456,
   quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
-  reliability: 'regular' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
+  reliability: 'high' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
 });
+```
+
+### Account configuration by end user
+MetaApi supports trading account configuration by end user. If you do not specify trading account login and password in the createAccount method payload the account will be created in a DRAFT state. You then can generate a link your user can use to enter account login and password or change the account password.
+
+```javascript
+// create the account without login and password specified
+const account = await api.metatraderAccountApi.createAccount({
+  name: 'Trading account #1',
+  type: 'cloud',
+  server: 'ICMarketsSC-Demo',
+  provisioningProfileId: provisioningProfile.id,
+  application: 'MetaApi',
+  magic: 123456,
+  quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
+  reliability: 'high' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
+});
+let configurationLink = account.createConfigurationLink();
 ```
 
 ### Retrieving existing accounts via API

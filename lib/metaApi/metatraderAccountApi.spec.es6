@@ -40,6 +40,7 @@ describe('MetatraderAccountApi', () => {
     redeployAccountReplica: () => {},
     deleteAccountReplica: () => {},
     updateAccountReplica: () => {},
+    createConfigurationLink: () => {}
   };
   let eaClient = {
     getExpertAdvisors: () => {},
@@ -296,6 +297,54 @@ describe('MetatraderAccountApi', () => {
     (account instanceof MetatraderAccount).should.be.true();
     sinon.assert.calledWith(client.createAccount, newAccountData);
     sinon.assert.calledWith(client.getAccount, 'id');
+  });
+
+  /**
+   * @test {MetatraderAccountApi#createConfigurationLink}
+   */
+  it('should create configuration link', async () => {
+    sandbox.stub(client, 'createConfigurationLink').resolves({configurationLink: 'configurationLink'});
+    let draftAccount = {
+      _id: 'id',
+      name: 'mt5a',
+      server: 'ICMarketsSC-Demo',
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+      magic: 123456,
+      application: 'MetaApi',
+      connectionStatus: 'DISCONNECTED',
+      state: 'DRAFT',
+      type: 'cloud'
+    };
+    getAccountStub
+      .resolves(draftAccount);
+    let account = await api.getAccount('id');
+    let response = await account.createConfigurationLink();
+    response.configurationLink.should.equal('configurationLink');
+    sinon.assert.calledWith(client.createConfigurationLink, 'id');
+  });
+
+  /**
+   * @test {MetatraderAccountApi#createConfigurationLink}
+   */
+  it('should create configuration link with specified lifetime', async () => {
+    sandbox.stub(client, 'createConfigurationLink').resolves({configurationLink: 'configurationLink'});
+    let draftAccount = {
+      _id: 'id',
+      name: 'mt5a',
+      server: 'ICMarketsSC-Demo',
+      provisioningProfileId: 'f9ce1f12-e720-4b9a-9477-c2d4cb25f076',
+      magic: 123456,
+      application: 'MetaApi',
+      connectionStatus: 'DISCONNECTED',
+      state: 'DRAFT',
+      type: 'cloud'
+    };
+    getAccountStub
+      .resolves(draftAccount);
+    let account = await api.getAccount('id');
+    let response = await account.createConfigurationLink(14);
+    response.configurationLink.should.equal('configurationLink');
+    sinon.assert.calledWith(client.createConfigurationLink, 'id', 14);
   });
 
   /**

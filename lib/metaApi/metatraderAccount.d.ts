@@ -36,7 +36,7 @@ export default class MetatraderAccount {
 
   /**
    * Returns current account state. One of CREATED, DEPLOYING, DEPLOYED, DEPLOY_FAILED, UNDEPLOYING,
-   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED
+   * UNDEPLOYED, UNDEPLOY_FAILED, DELETING, DELETE_FAILED, REDEPLOY_FAILED, DRAFT
    * @return {State} current account state
    */
   get state(): State;
@@ -351,9 +351,9 @@ export default class MetatraderAccount {
   /**
    * Creates a trading account replica in a region different from trading account region and starts a cloud API server for it
    * @param {NewMetaTraderAccountReplicaDto} account MetaTrader account data
-   * @return {Promise<MetatraderAccountIdDto>} promise resolving with an id and state of the MetaTrader account replica created
+   * @return {Promise<MetatraderAccountReplica>} promise resolving with created MetaTrader account replica entity
    */
-  createReplica(account: NewMetaTraderAccountReplicaDto): Promise<MetatraderAccountIdDto>;
+  createReplica(account: NewMetaTraderAccountReplicaDto): Promise<MetatraderAccountReplica>;
 
   /**
    * Updates trading account. 
@@ -411,4 +411,11 @@ export default class MetatraderAccount {
    * @return {Promise<Array<MetatraderTick>>} promise resolving with historical ticks downloaded
    */
   getHistoricalTicks(symbol: string, startTime?: Date, offset?: number, limit?: number): Promise<Array<MetatraderTick>>;
+
+  /**
+   * Generates trading account configuration link by account id.
+   * @param {number} [ttlInDays] Lifetime of the link in days. Default is 7.
+   * @return {Promise<ConfigurationLink>} promise resolving with configuration link
+   */
+  createConfigurationLink(ttlInDays?: number): Promise<ConfigurationLink>
 }

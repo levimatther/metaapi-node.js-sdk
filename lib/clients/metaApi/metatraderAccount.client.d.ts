@@ -204,6 +204,17 @@ export default class MetatraderAccountClient {
    * @return {Promise} promise resolving when account MetaStats hourly tarification is enabled
    */
   enableMetastatsHourlyTarification(id: string): Promise<any>
+
+  /**
+   * Generates trading account configuration link by account id.
+   * (see https://metaapi.cloud/docs/provisioning/api/account/createConfigurationLink/)
+   * This link can be used by the end user to enter trading account login and password or change the password.
+   * Method is accessible only with API access token
+   * @param {string} accountId Trading account id
+   * @param {number} [ttlInDays] Lifetime of the link in days. Default is 7.
+   * @return {Promise<ConfigurationLink>} promise resolving with configuration link
+   */
+  createConfigurationLink(accountId: string, ttlInDays?: number): Promise<ConfigurationLink>
 }
 
 /**
@@ -215,7 +226,7 @@ export declare type Type = 'cloud-g1' | 'cloud-g2'
  * Account state
  */
 export declare type State = 'CREATED' | 'DEPLOYING' | 'DEPLOYED' | 'DEPLOY_FAILED' | 'UNDEPLOYING' | 'UNDEPLOYED' |
- 'UNDEPLOY_FAILED' | 'DELETING' | 'DELETE_FAILED' | 'REDEPLOY_FAILED'
+ 'UNDEPLOY_FAILED' | 'DELETING' | 'DELETE_FAILED' | 'REDEPLOY_FAILED' | 'DRAFT'
 
 /**
  * MT version
@@ -485,7 +496,7 @@ export declare type MetatraderAccountDto = {
   /**
    * MetaTrader account number
    */
-  login: string,
+  login?: string,
 
   /**
    * MetaTrader server name to connect to
@@ -676,15 +687,15 @@ export declare type NewMetatraderAccountDto = {
   provisioningProfileId?: string,
 
   /**
-   * MetaTrader account number. Only digits are allowed
+   * MetaTrader account login. Only digits are allowed
    */
-  login: string,
+  login?: string,
 
   /**
    * MetaTrader account password. The password can be either investor password for read-only
    * access or master password to enable trading features. Required for cloud account
    */
-  password: string,
+  password?: string,
 
   /**
    * MetaTrader server name to connect to
@@ -803,7 +814,7 @@ export declare type MetatraderAccountIdDto = {
   id: string,
   
   /**
-   * State of the account. Possible values are 'UNDEPLOYED', 'DEPLOYED'
+   * State of the account. Possible values are 'UNDEPLOYED', 'DEPLOYED', 'DRAFT'
    */
   state: string
 }
@@ -820,9 +831,9 @@ export declare type MetatraderAccountUpdateDto = {
 
   /**
    * MetaTrader account password. The password can be either investor password for read-only
-   * access or master password to enable trading features. Required for cloud account
+   * access or master password to enable trading features
    */
-  password: string,
+  password?: string,
 
   /**
    * MetaTrader server name to connect to
@@ -927,3 +938,60 @@ export declare type UpdatedMetatraderAccountReplicaDto = {
    */
   copyFactoryResourceSlots?: number
 }
+
+/**
+ * Trading account credentials
+ */
+export declare type TradingAccountCredentials = {
+
+  /**
+   * Trading account login. Only digits are allowed. Required for accounts in draft state
+   */
+  login?: string,
+
+  /**
+   * Trading account password
+   */
+  password: string,
+
+}
+
+/**
+ * Configuration link
+ */
+export declare type ConfigurationLink = {
+
+  /**
+   * Secure link to allow end user to configure account directly
+   */
+  configurationLink: string,
+
+}
+
+/**
+ * Trading account configuration information
+ */
+export declare type TradingAccountConfigurationInformation = {
+
+  /**
+   * Flag indicating the account has been configured
+   */
+  configured?: boolean,
+
+  /**
+   * Trading account login
+   */
+  login?: string,
+
+  /**
+   * Trading account server name
+   */
+  server: string,
+
+  /**
+   * Trading account platform
+   */
+  platform: Platform
+
+}
+
