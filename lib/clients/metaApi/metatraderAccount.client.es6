@@ -299,6 +299,8 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * account. Default is false
    * @property {boolean} [metastatsHourlyTarificationEnabled] Flag indicating that MetaStats hourly tarification
    * should be enabled on account. Default is false
+   * @property {Array<String>} [keywords] Keywords to be used for broker server search.
+   * We recommend to include exact broker company name in this list 
    */
 
   /**
