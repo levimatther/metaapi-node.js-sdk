@@ -24,6 +24,7 @@ try {
     password: 'qwerty',
     server: 'ICMarketsSC-Demo',
     magic: 123456,
+    keywords: ["Raw Trading Ltd"],
     quoteStreamingIntervalInSeconds: 2.5, // set to 0 to receive quote per tick
     reliability: 'high' // set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
   });
@@ -273,7 +274,8 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT4DemoAccount
   leverage: 100,
   serverName: 'Exness-Trial4',
   name: 'Test User',
-  phone: '+12345678901'
+  phone: '+12345678901',
+  keywords: ["Exness Technologies Ltd"]
 });
 
 // optionally specify a provisioning profile id if servers file is not found by server name
@@ -289,40 +291,6 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT4DemoAccount
 
 ```
 
-### Create a MetaTrader 4 live account
-```javascript
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT4LiveAccount({
-  accountType: 'type',
-  balance: 100000,
-  email: 'example@example.com',
-  leverage: 100,
-  serverName: 'Exness-Live4',
-  name: 'Test User',
-  phone: '+12345678901',
-  country: 'Unites States',
-  zip: '12345',
-  state: 'New York',
-  city: 'New York',
-  address: 'customer address'
-});
-
-// optionally specify provisioning profile id is servers file not found by server name
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT4LiveAccount({
-  accountType: 'type',
-  balance: 100000,
-  email: 'example@example.com',
-  leverage: 100,
-  serverName: 'Exness-Live4',
-  name: 'Test User',
-  phone: '+12345678901',
-  country: 'Unites States',
-  zip: '12345',
-  state: 'New York',
-  city: 'New York',
-  address: 'customer address'
-}, provisioningProfile.id);
-```
-
 ### Create a MetaTrader 5 demo account
 ```javascript
 const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount({
@@ -332,7 +300,8 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount
   leverage: 100,
   serverName: 'ICMarketsSC-Demo',
   name: 'Test User',
-  phone: '+12345678901'
+  phone: '+12345678901',
+  keywords: ["Raw Trading Ltd"]
 });
 
 // optionally specify provisioning profile id if servers file not found by server name
@@ -344,39 +313,5 @@ const demoAccount = await api.metatraderAccountGeneratorApi.createMT5DemoAccount
   serverName: 'ICMarketsSC-Demo',
   name: 'Test User',
   phone: '+12345678901'
-}, provisioningProfile.id);
-```
-
-### Create a MetaTrader 5 live account
-```javascript
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT5LiveAccount({
-  accountType: 'type',
-  balance: 100000,
-  email: 'example@example.com',
-  leverage: 100,
-  serverName: 'ICMarketsSC-MT5',
-  name: 'Test User',
-  phone: '+12345678901',
-  country: 'Unites States',
-  zip: '12345',
-  state: 'New York',
-  city: 'New York',
-  address: 'customer address'
-});
-
-// optionally specify a provisioning profile id if servers file is not found by server name
-const demoAccount = await api.metatraderAccountGeneratorApi.createMT5LiveAccount({
-  accountType: 'type',
-  balance: 100000,
-  email: 'example@example.com',
-  leverage: 100,
-  serverName: 'ICMarketsSC-MT5',
-  name: 'Test User',
-  phone: '+12345678901',
-  country: 'Unites States',
-  zip: '12345',
-  state: 'New York',
-  city: 'New York',
-  address: 'customer address'
 }, provisioningProfile.id);
 ```

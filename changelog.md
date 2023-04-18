@@ -1,3 +1,7 @@
+22.0.0
+  - breaking change: MetatraderAccountGeneratorApi refactored, deleted public methods for creating live accounts
+  - added optional field keywords to be used for broker server search
+
 21.1.0
   - added account configuration by end user
   - login and password are now optional when creating or updating trading account

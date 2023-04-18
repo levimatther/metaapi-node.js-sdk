@@ -18,23 +18,8 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * @property {string} name account holder's name
    * @property {string} phone account holder's phone, in international format
    * @property {string} serverName server name
-   */
-
-  /**
-   * New MetaTrader 4 live account request model
-   * @typedef {Object} NewMT4LiveAccount
-   * @property {string} accountType account type. Available account type values can be found in mobile MT application or
-   * in MT terminal downloaded from our broker
-   * @property {string} address account holder's address
-   * @property {string} city account holder's city
-   * @property {string} country account holder's country
-   * @property {string} email account holder's email
-   * @property {number} leverage account leverage
-   * @property {string} name account holder's name
-   * @property {string} phone account holder's phone, in international format
-   * @property {string} serverName server name
-   * @property {string} state account holder's state
-   * @property {string} zip zip address
+   * @property {Array<String>} [keywords] keywords to be used for broker server search.
+   * We recommend to include exact broker company name in this list 
    */
 
   /**
@@ -48,23 +33,8 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
    * @property {string} name account holder's name
    * @property {string} phone account holder's phone, in international format
    * @property {string} serverName server name
-   */
-
-  /**
-   * New MetaTrader 5 live account request model
-   * @typedef {Object} NewMT5LiveAccount
-   * @property {string} accountType account type. Available account type values can be found in mobile MT application or
-   * in MT terminal downloaded from our broker
-   * @property {string} address account holder's address
-   * @property {string} city account holder's city
-   * @property {string} country account holder's country
-   * @property {string} email account holder's email
-   * @property {number} leverage account leverage
-   * @property {string} name account holder's name
-   * @property {string} phone account holder's phone, in international format
-   * @property {string} serverName server name
-   * @property {string} state account holder's state
-   * @property {string} zip zip address
+   * @property {Array<String>} [keywords] keywords to be used for broker server search.
+   * We recommend to include exact broker company name in this list
    */
 
   /**
@@ -101,30 +71,6 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
   }
 
   /**
-   * Creates new MetaTrader 4 live account
-   * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT4LiveAccount/
-   * Method is accessible only with API access token
-   * @param {NewMT4LiveAccount} account account to create
-   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
-   * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credetials
-   */
-  createMT4LiveAccount(account, profileId) {
-    if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('createMT4LiveAccount');
-    }
-    const opts = {
-      url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt4-live-accounts`,
-      method: 'POST',
-      headers: {
-        'auth-token': this._token
-      },
-      json: true,
-      body: account
-    };
-    return this._httpClient.request(opts, 'createMT4LiveAccount');
-  }
-
-  /**
    * Creates new MetaTrader 5 demo account.
    * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5DemoAccount/
    * Method is accessible only with API access token
@@ -146,30 +92,6 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
       body: account
     };
     return this._httpClient.request(opts, 'createMT5DemoAccount');
-  }
-
-  /**
-   * Creates new MetaTrader 5 live account.
-   * See https://metaapi.cloud/docs/provisioning/api/generateAccount/createMT5LiveAccount/
-   * Method is accessible only with API access token
-   * @param {NewMT5LiveAccount} account account to create
-   * @param {string} [profileId] id of the provisioning profile that will be used as the basis for creating this account
-   * @return {Promise<MetatraderAccountCredentialsDto>} promise resolving with MetaTrader account credentials
-   */
-  createMT5LiveAccount(account, profileId) {
-    if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('createMT5LiveAccount');
-    }
-    const opts = {
-      url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt5-live-accounts`,
-      method: 'POST',
-      headers: {
-        'auth-token': this._token
-      },
-      json: true,
-      body: account
-    };
-    return this._httpClient.request(opts, 'createMT5LiveAccount');
   }
 
 }

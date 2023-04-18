@@ -733,6 +733,11 @@ export declare type NewMetatraderAccountDto = {
    * Flag indicating that MetaStats hourly tarification is enabled on account. Default is false
    */
   metastatsHourlyTarificationEnabled?: boolean,
+
+  /**
+   * Keywords to be used for broker server search. We recommend to include exact broker company name in this list
+   */
+  keywords?: Array<String>,
 }
 
 /**
