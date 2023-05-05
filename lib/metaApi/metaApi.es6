@@ -102,14 +102,14 @@ export default class MetaApi {
     const historicalMarketDataHttpClient = new HttpClient(historicalMarketDataRequestTimeout, retryOpts);
     const accountGeneratorHttpClient = new HttpClient(accountGeneratorRequestTimeout, retryOpts);
     const clientApiClient = new ClientApiClient(httpClient, domainClient); 
-    const terminalHashManager = new TerminalHashManager(clientApiClient, opts.keepHashTrees);
+    this._terminalHashManager = new TerminalHashManager(clientApiClient, opts.keepHashTrees);
     this._metaApiWebsocketClient = new MetaApiWebsocketClient(domainClient, token,
       {application, domain,
         requestTimeout, connectTimeout, packetLogger, packetOrderingTimeout, synchronizationThrottler, retryOpts,
         useSharedClientApi, region: opts.region,
         unsubscribeThrottlingIntervalInSeconds: opts.unsubscribeThrottlingIntervalInSeconds});
     this._provisioningProfileApi = new ProvisioningProfileApi(new ProvisioningProfileClient(httpClient, domainClient));
-    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, terminalHashManager,
+    this._connectionRegistry = new ConnectionRegistry(this._metaApiWebsocketClient, this._terminalHashManager,
       application, refreshSubscriptionsOpts);
     let historicalMarketDataClient = new HistoricalMarketDataClient(historicalMarketDataHttpClient, domainClient);
     this._metatraderAccountApi = new MetatraderAccountApi(new MetatraderAccountClient(httpClient, domainClient),
@@ -162,6 +162,7 @@ export default class MetaApi {
     this._metaApiWebsocketClient.removeLatencyListener(this._latencyMonitor);
     this._metaApiWebsocketClient.close();
     this._metaApiWebsocketClient.stop();
+    this._terminalHashManager._stop();
   }
 
 }

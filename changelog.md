@@ -1,3 +1,6 @@
+22.0.1
+ - fixed close method
+
 22.0.0
   - breaking change: MetatraderAccountGeneratorApi refactored, deleted public methods for creating live accounts
   - added optional field keywords to be used for broker server search

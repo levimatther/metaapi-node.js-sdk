@@ -512,6 +512,7 @@ export default class MetaApiWebsocketClient {
    */
   stop() {
     clearInterval(this._clearAccountCacheInterval);
+    clearInterval(this._clearInactiveSyncDataJob);
     this._latencyService.stop();
   }
 

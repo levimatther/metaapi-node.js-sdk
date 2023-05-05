@@ -24,7 +24,7 @@ export default class ReferenceTree {
     this._recordExpirationTime = 10 * 60 * 1000;
     if(!keepHashTrees) {
       this._optimizeTreesJob = this._optimizeTreesJob.bind(this);
-      setInterval(this._optimizeTreesJob, 5 * 60 * 1000);
+      this._interval = setInterval(this._optimizeTreesJob, 5 * 60 * 1000);
     }
   }
 
@@ -393,5 +393,12 @@ export default class ReferenceTree {
         });
       }
     });
+  }
+
+  /**
+   * Stops reference tree optimize job & clears interval
+   */
+  stop() {
+    clearInterval(this._interval);
   }
 }

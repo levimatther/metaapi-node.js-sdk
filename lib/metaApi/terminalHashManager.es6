@@ -353,4 +353,10 @@ export default class TerminalHashManager {
     return crypto.MD5(jsonItem).toString();
   }
 
+  _stop() {
+    this._specificationsTree.stop();
+    this._positionsTree.stop();
+    this._ordersTree.stop();
+  }
+
 }
