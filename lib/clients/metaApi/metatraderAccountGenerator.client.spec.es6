@@ -3,6 +3,7 @@
 import HttpClient from '../httpClient';
 import sinon from 'sinon';
 import MetatraderAccountGeneratorClient from './metatraderAccountGenerator.client';
+import randomstring from 'randomstring';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';
 
@@ -40,6 +41,8 @@ describe('MetatraderAccountGeneratorClient', () => {
    * @test {MetatraderAccountGeneratorClient#createMT4DemoAccount}
    */
   it('should create new MetaTrader 4 demo account', async () => {
+    const transactionId = 'transactionId';
+    sandbox.stub(randomstring, 'generate').returns(transactionId);
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
     requestStub.resolves(expected);
     let account = await client.createMT4DemoAccount(
@@ -55,7 +58,8 @@ describe('MetatraderAccountGeneratorClient', () => {
       url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId1/mt4-demo-accounts`,
       method: 'POST',
       headers: {
-        'auth-token': token
+        'auth-token': token,
+        'transaction-id': transactionId
       },
       body: {
         accountType: 'type',
@@ -66,6 +70,7 @@ describe('MetatraderAccountGeneratorClient', () => {
       },
       json: true,
     }, 'createMT4DemoAccount');
+    sandbox.assert.calledOnce(randomstring.generate);
   });
 
   /**
@@ -89,6 +94,8 @@ describe('MetatraderAccountGeneratorClient', () => {
    * @test {MetatraderAccountGeneratorClient#createMT5DemoAccount}
    */
   it('should create new MetaTrader 5 demo account', async () => {
+    const transactionId = 'transactionId';
+    sandbox.stub(randomstring, 'generate').returns(transactionId);
     let expected = {login: '12345', password: 'qwerty', serverName: 'HugosWay-Demo3', investorPassword: 'qwerty'};
     requestStub.resolves(expected);
     let account = await client.createMT5DemoAccount(
@@ -104,7 +111,8 @@ describe('MetatraderAccountGeneratorClient', () => {
       url: `${provisioningApiUrl}/users/current/provisioning-profiles/profileId2/mt5-demo-accounts`,
       method: 'POST',
       headers: {
-        'auth-token': token
+        'auth-token': token,
+        'transaction-id': transactionId
       },
       body: {
         accountType: 'type',
@@ -115,6 +123,7 @@ describe('MetatraderAccountGeneratorClient', () => {
       },
       json: true,
     }, 'createMT5DemoAccount');
+    sandbox.assert.calledOnce(randomstring.generate);
   });
   
   /**

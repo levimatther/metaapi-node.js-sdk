@@ -3,6 +3,7 @@
 import HttpClient from '../httpClient';
 import sinon from 'sinon';
 import MetatraderAccountClient from './metatraderAccount.client';
+import randomstring from 'randomstring';
 
 const provisioningApiUrl = 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai';
 
@@ -241,6 +242,8 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#createAccount}
    */
   it('should create MetaTrader account via API', async () => {
+    const transactionId = 'transactionId';
+    sandbox.stub(randomstring, 'generate').returns(transactionId);
     let expected = {
       id: 'id'
     };
@@ -263,10 +266,12 @@ describe('MetatraderAccountClient', () => {
       method: 'POST',
       body: account,
       headers: {
-        'auth-token': token
+        'auth-token': token,
+        'transaction-id': transactionId
       },
       json: true,
     }, 'createAccount');
+    sandbox.assert.calledOnce(randomstring.generate);
   });
 
   /**
@@ -290,6 +295,8 @@ describe('MetatraderAccountClient', () => {
    * @test {MetatraderAccountClient#createAccountReplica}
    */
   it('should create MetaTrader account replica via API', async () => {
+    const transactionId = 'transactionId';
+    sandbox.stub(randomstring, 'generate').returns(transactionId);
     let expected = {
       id: 'id'
     };
@@ -305,10 +312,12 @@ describe('MetatraderAccountClient', () => {
       method: 'POST',
       body: replica,
       headers: {
-        'auth-token': token
+        'auth-token': token,
+        'transaction-id': transactionId
       },
       json: true,
     }, 'createAccountReplica');
+    sandbox.assert.calledOnce(randomstring.generate);
   });
 
   /**
