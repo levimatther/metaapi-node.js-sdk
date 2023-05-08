@@ -1,6 +1,7 @@
 'use strict';
 
 import MetaApiClient from '../metaApi.client';
+import randomstring from 'randomstring';
 
 /**
  * metaapi.cloud MetaTrader account generator API client
@@ -62,7 +63,8 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
       url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt4-demo-accounts`,
       method: 'POST',
       headers: {
-        'auth-token': this._token
+        'auth-token': this._token,
+        'transaction-id': randomstring.generate(32)
       },
       json: true,
       body: account
@@ -86,7 +88,8 @@ export default class MetatraderAccountGeneratorClient extends MetaApiClient {
       url: `${this._host}/users/current/provisioning-profiles/${profileId || 'default'}/mt5-demo-accounts`,
       method: 'POST',
       headers: {
-        'auth-token': this._token
+        'auth-token': this._token,
+        'transaction-id': randomstring.generate(32)
       },
       json: true,
       body: account

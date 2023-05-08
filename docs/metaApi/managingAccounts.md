@@ -48,7 +48,7 @@ try {
 }
 ```
 
-If the settings have not yet been detected for the broker, the server will begin the process of detection, and you will receive a response with wait time:
+Broker settings detection or connection validation might take some time. If so you will receive response with request processing stage and wait time:
 
 ```
 Retrying request in 60 seconds because request returned message: Automatic broker settings detection is in progress, please retry in 60 seconds

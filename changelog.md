@@ -1,3 +1,6 @@
+22.1.0
+ - added transaction-id header for MetatraderAccountGenerator client and MetatraderAccount client methods to create account, create account replica and generate demo accounts
+
 22.0.1
  - fixed close method
 
