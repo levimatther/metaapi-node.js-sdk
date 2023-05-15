@@ -253,7 +253,7 @@ describe('HttpClient#request', () => {
         stub.callsFake((options)=> {
           options.callback(null, {headers: {'retry-after': 30}, statusCode: 202});
         });
-        httpClient = new HttpClientMock(stub, 60, {maxDelayInSeconds: 3});
+        httpClient = new HttpClientMock(stub, 60, {maxDelayInSeconds: 3, longRunningRequestTimeoutInMinutes: 0.25});
         try {
           await httpClient.request(opts);
           should.not.exist('Should not exist this assertion');
@@ -271,7 +271,8 @@ describe('HttpClient#request', () => {
         stub.callsFake((options)=> {
           options.callback(null, {headers: {'retry-after': 1}, statusCode: 202});
         });
-        httpClient = new HttpClientMock(stub, 60, {maxDelayInSeconds: 2, retries: 3});
+        httpClient = new HttpClientMock(stub, 60, {maxDelayInSeconds: 2, retries: 3, 
+          longRunningRequestTimeoutInMinutes: 0.1});
         try {
           clock.tickAsync(5000);
           await httpClient.request(opts);

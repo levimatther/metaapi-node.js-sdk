@@ -19,6 +19,7 @@ export default class HttpClient {
    * @property {Number} [retries] the number of attempts to retry failed request, default 5
    * @property {Number} [minDelayInSeconds] minimum delay in seconds before retrying, default 1
    * @property {Number} [maxDelayInSeconds] maximum delay in seconds before retrying, default 30
+   * @property {Number} [longRunningRequestTimeoutInMinutes] timeout in minutes for long running requests, default 10
    * @property {Number} [subscribeCooldownInSeconds] time to disable new subscriptions for
    */
 
@@ -35,6 +36,8 @@ export default class HttpClient {
       'retryOpts.minDelayInSeconds') * 1000;
     this._maxRetryDelay = validator.validateNonZero(retryOpts.maxDelayInSeconds, 30,
       'retryOpts.maxDelayInSeconds') * 1000;
+    this._longRunningRequestTimeout = validator.validateNumber(retryOpts.longRunningRequestTimeoutInMinutes, 10,
+      'retryOpts.longRunningRequestTimeoutInMinutes') * 60 * 1000;
     this._logger = LoggerManager.getLogger('HttpClient');
   }
 
@@ -43,7 +46,8 @@ export default class HttpClient {
    * @param {Object} options request options
    * @returns {Object|String|any} request result
    */
-  async request(options, type = '', retryCounter = 0, endTime = Date.now() + this._maxRetryDelay * this._retries) {
+  async request(options, type = '', retryCounter = 0, endTime = Date.now() + this._maxRetryDelay * this._retries, 
+    isLongRunning = false) {
     options.timeout = this._timeout;
     let retryAfterSeconds = 0;
     options.callback = (e, res) => {
@@ -51,6 +55,10 @@ export default class HttpClient {
         retryAfterSeconds = res.headers['retry-after'];
         if(isNaN(retryAfterSeconds)) {
           retryAfterSeconds = Math.max((new Date(retryAfterSeconds).getTime() - Date.now()) / 1000, 1);
+        }
+        if (!isLongRunning) {
+          endTime = Date.now() + this._longRunningRequestTimeout;
+          isLongRunning = true;
         }
       }
     };
@@ -67,7 +75,7 @@ export default class HttpClient {
           'returned message:', body.message);
       }
       await this._handleRetry(endTime, retryAfterSeconds * 1000);
-      body = await this.request(options, type, retryCounter, endTime);
+      body = await this.request(options, type, retryCounter, endTime, isLongRunning);
     }
     return body;
   }

@@ -174,6 +174,11 @@ export declare type RetryOpts = {
   minDelayInSeconds?: number,
 
   /**
+   * timeout in minutes for long running requests, default 10
+   */
+  longRunningRequestTimeoutInMinutes?: number,
+
+  /**
    * maximum delay in seconds until request retry, default value is 30
    */
   maxDelayInSeconds?: number

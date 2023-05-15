@@ -39,6 +39,11 @@ export declare type RetryOptions = {
   maxDelayInSeconds?: number,
 
   /**
+   * timeout in minutes for long running requests, default 10
+   */
+  longRunningRequestTimeoutInMinutes?: number,
+
+  /**
    * time to disable new subscriptions for
    */
   subscribeCooldownInSeconds?: number

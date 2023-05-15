@@ -25,6 +25,7 @@ import TerminalHashManager from './terminalHashManager';
  * @property {Number} [retries] maximum amount of request retries, default value is 5
  * @property {Number} [minDelayInSeconds] minimum delay in seconds until request retry, default value is 1
  * @property {Number} [maxDelayInSeconds] maximum delay in seconds until request retry, default value is 30
+ * @property {Number} [longRunningRequestTimeoutInMinutes] timeout in minutes for long running requests, default 10
  */
 
 /**
