@@ -1,3 +1,8 @@
+22.2.0
+ - added new retryOpts option for `HttpClient` to configure long running requests timeout
+ - updated `HttpClient` request method: added endTime update after 202 response,
+ added isLongRunning parameter
+
 22.1.0
  - added transaction-id header for MetatraderAccountGenerator client and MetatraderAccount client methods to create account, create account replica and generate demo accounts
 
