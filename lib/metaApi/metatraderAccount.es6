@@ -251,11 +251,11 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Returns flag indicating that MetaStats hourly tarification is enabled on account
-   * @return {boolean} flag indicating that MetaStats hourly tarification is enabled on account
+   * Returns flag indicating that MetaStats API is enabled on account
+   * @return {boolean} flag indicating that MetaStats API is enabled on account
    */
-  get metastatsHourlyTarificationEnabled() {
-    return this._data.metastatsHourlyTarificationEnabled;
+  get metastatsApiEnabled() {
+    return this._data.metastatsApiEnabled;
   }
     
   /**
@@ -420,13 +420,13 @@ export default class MetatraderAccount {
   }
 
   /**
-   * Enables MetaStats hourly tarification for trading account.
+   * Enables MetaStats API for trading account.
    * The account will be temporary stopped to perform this action.
    * Note that this is a paid option
-   * @returns {Promise} promise resolving when account MetaStats hourly tarification is enabled
+   * @returns {Promise} promise resolving when account MetaStats API is enabled
    */
-  async enableMetastatsHourlyTarification() {
-    await this._metatraderAccountClient.enableMetastatsHourlyTarification(this.id);
+  async enableMetaStatsApi() {
+    await this._metatraderAccountClient.enableMetaStatsApi(this.id);
     await this.reload();
   }
 

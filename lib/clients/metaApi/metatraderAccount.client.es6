@@ -84,8 +84,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Array<CopyFactoryRoles>} copyFactoryRoles Account roles for CopyFactory2 application
    * @property {boolean} riskManagementApiEnabled Flag indicating that risk management API is enabled on
    * account
-   * @property {boolean} metastatsHourlyTarificationEnabled Flag indicating that MetaStats hourly tarification
-   * is enabled on account
+   * @property {boolean} metastatsApiEnabled Flag indicating that MetaStats API is enabled on account
    * @property {string} accessToken Authorization token to be used for accessing single account data.
    * Intended to be used in browser API.
    * @property {Array<AccountConnection>} connections Active account connections
@@ -298,8 +297,7 @@ export default class MetatraderAccountClient extends MetaApiClient {
    * @property {Array<CopyFactoryRoles>} [copyFactoryRoles] Account roles for CopyFactory2 API
    * @property {boolean} [riskManagementApiEnabled] Flag indicating that risk management API should be enabled on
    * account. Default is false
-   * @property {boolean} [metastatsHourlyTarificationEnabled] Flag indicating that MetaStats hourly tarification
-   * should be enabled on account. Default is false
+   * @property {boolean} [metastatsApiEnabled] Flag indicating that MetaStats API should be enabled on account. Default is false
    * @property {Array<String>} [keywords] Keywords to be used for broker server search.
    * We recommend to include exact broker company name in this list 
    */
@@ -729,27 +727,27 @@ export default class MetatraderAccountClient extends MetaApiClient {
   }
 
   /**
-   * Enables MetaStats hourly tarification for trading account.
+   * Enables MetaStats API for trading account.
    * The account will be temporary stopped to perform this action.
    * Note that this is a paid option (see
-   * https://metaapi.cloud/docs/provisioning/api/account/enableMetaStatsHourlyTarification/).
+   * https://metaapi.cloud/docs/provisioning/api/account/enableMetaStatsApi/).
    * Method is accessible only with API access token
    * @param {string} id MetaTrader account id
-   * @return {Promise} promise resolving when account MetaStats hourly tarification is enabled
+   * @return {Promise} promise resolving when account MetaStats API is enabled
    */
-  enableMetastatsHourlyTarification(id) {
+  enableMetaStatsApi(id) {
     if (this._isNotJwtToken()) {
-      return this._handleNoAccessError('enableMetastatsHourlyTarification');
+      return this._handleNoAccessError('enableMetaStatsApi');
     }
     const opts = {
-      url: `${this._host}/users/current/accounts/${id}/enable-metastats-hourly-tarification`,
+      url: `${this._host}/users/current/accounts/${id}/enable-metastats-api`,
       method: 'POST',
       headers: {
         'auth-token': this._token
       },
       json: true
     };
-    return this._httpClient.request(opts, 'enableMetastatsHourlyTarification');
+    return this._httpClient.request(opts, 'enableMetaStatsApi');
   }
 
   /**

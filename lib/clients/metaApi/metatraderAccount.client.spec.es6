@@ -740,32 +740,32 @@ describe('MetatraderAccountClient', () => {
   });
 
   /**
-   * @test {MetatraderAccountClient#enableMetastatsHourlyTarification}
+   * @test {MetatraderAccountClient#enableMetaStatsApi}
    */
-  it('should enable MetaStats hourly tarification via API', async () => {
-    await accountClient.enableMetastatsHourlyTarification('id');
+  it('should enable MetaStats API via API', async () => {
+    await accountClient.enableMetaStatsApi('id');
     sinon.assert.calledOnceWithExactly(httpClient.request, {
-      url: `${provisioningApiUrl}/users/current/accounts/id/enable-metastats-hourly-tarification`,
+      url: `${provisioningApiUrl}/users/current/accounts/id/enable-metastats-api`,
       method: 'POST',
       headers: {
         'auth-token': token
       },
       json: true,
-    }, 'enableMetastatsHourlyTarification');
+    }, 'enableMetaStatsApi');
   });
   
   /**
-     * @test {MetatraderAccountClient#enableMetastatsHourlyTarification}
+     * @test {MetatraderAccountClient#enableMetaStatsApi}
      */
-  it('should not enable MetaStats hourly tarification via API with account token', async () => {
+  it('should not enable MetaStats API via API with account token', async () => {
     domainClient.token = 'token';
     accountClient = new MetatraderAccountClient(httpClient, domainClient);
     try {
-      await accountClient.enableMetastatsHourlyTarification('id');
+      await accountClient.enableMetaStatsApi('id');
       sinon.assert.fail();
     } catch (error) {
       error.message.should.equal(
-        'You can not invoke enableMetastatsHourlyTarification method, because you have connected with account ' +
+        'You can not invoke enableMetaStatsApi method, because you have connected with account ' +
           'access token. Please use API access token from https://app.metaapi.cloud/token page to invoke this method.'
       );
     }
