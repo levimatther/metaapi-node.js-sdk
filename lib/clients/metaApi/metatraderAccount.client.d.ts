@@ -195,15 +195,15 @@ export default class MetatraderAccountClient {
   enableRiskManagementApi(id: string): Promise<any>
 
   /**
-   * Enables MetaStats hourly tarification for trading account.
+   * Enables MetaStats API for trading account.
    * The account will be temporary stopped to perform this action.
    * Note that this is a paid option (see
-   * https://metaapi.cloud/docs/provisioning/api/account/enableMetaStatsHourlyTarification/).
+   * https://metaapi.cloud/docs/provisioning/api/account/enableMetaStatsApi/).
    * Method is accessible only with API access token
    * @param {string} id MetaTrader account id
-   * @return {Promise} promise resolving when account MetaStats hourly tarification is enabled
+   * @return {Promise} promise resolving when account MetaStats API is enabled
    */
-  enableMetastatsHourlyTarification(id: string): Promise<any>
+  enableMetaStatsApi(id: string): Promise<any>
 
   /**
    * Generates trading account configuration link by account id.
@@ -537,9 +537,9 @@ export declare type MetatraderAccountDto = {
   riskManagementApiEnabled?: boolean,
 
   /**
-   * Flag indicating that MetaStats hourly tarification is enabled on account
+   * Flag indicating that MetaStats API is enabled on account
    */
-  metastatsHourlyTarificationEnabled?: boolean,
+  metastatsApiEnabled?: boolean,
 
   /**
    * Authorization token to be used for accessing single account data.
@@ -730,9 +730,9 @@ export declare type NewMetatraderAccountDto = {
   riskManagementApiEnabled?: boolean,
 
   /**
-   * Flag indicating that MetaStats hourly tarification is enabled on account. Default is false
+   * Flag indicating that MetaStats API is enabled on account. Default is false
    */
-  metastatsHourlyTarificationEnabled?: boolean,
+  metastatsApiEnabled?: boolean,
 
   /**
    * Keywords to be used for broker server search. We recommend to include exact broker company name in this list

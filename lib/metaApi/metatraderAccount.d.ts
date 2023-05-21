@@ -191,10 +191,10 @@ export default class MetatraderAccount {
   get riskManagementApiEnabled(): boolean;
 
   /**
-   * Returns flag indicating that MetaStats hourly tarification is enabled on account
-   * @return {boolean} flag indicating that MetaStats hourly tarification is enabled on account
+   * Returns flag indicating that MetaStats API is enabled on account
+   * @return {boolean} flag indicating that MetaStats API is enabled on account
    */
-  get metastatsHourlyTarificationEnabled(): boolean;
+  get metastatsApiEnabled(): boolean;
     
   /**
    * Returns authorization access token to be used for accessing single account data.
@@ -295,12 +295,12 @@ export default class MetatraderAccount {
   enableRiskManagementApi(): Promise<any>;
 
   /**
-   * Enables MetaStats hourly tarification for trading account.
+   * Enables MetaStats API for trading account.
    * The account will be temporary stopped to perform this action.
    * Note that this is a paid option
-   * @returns {Promise} promise resolving when account MetaStats hourly tarification is enabled
+   * @returns {Promise} promise resolving when account MetaStats API is enabled
    */
-  enableMetastatsHourlyTarification(): Promise<any>;
+  enableMetaStatsApi(): Promise<any>;
 
   /**
    * Waits until API server has finished deployment and account reached the DEPLOYED state

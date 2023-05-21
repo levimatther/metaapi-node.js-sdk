@@ -31,7 +31,7 @@ describe('MetatraderAccountApi', () => {
     updateAccount: () => {},
     increaseReliability: () => {},
     enableRiskManagementApi: () => {},
-    enableMetastatsHourlyTarification: () => {},
+    enableMetaStatsApi: () => {},
     createAccountReplica: () => {},
     getAccountReplica: () => {},
     getAccountReplicas: () => {},
@@ -115,7 +115,7 @@ describe('MetatraderAccountApi', () => {
       baseCurrency: 'USD',
       copyFactoryRoles: ['PROVIDER'],
       riskManagementApiEnabled: false,
-      metastatsHourlyTarificationEnabled: false,
+      metastatsApiEnabled: false,
       connections: [{
         region: 'region',
         zone: 'zone',
@@ -157,7 +157,7 @@ describe('MetatraderAccountApi', () => {
     account.baseCurrency.should.equal('USD');
     account.copyFactoryRoles.should.deepEqual(['PROVIDER']);
     account.riskManagementApiEnabled.should.equal(false);
-    account.metastatsHourlyTarificationEnabled.should.equal(false);
+    account.metastatsApiEnabled.should.equal(false);
     account.connections.should.deepEqual([{
       region: 'region',
       zone: 'zone',
@@ -201,7 +201,7 @@ describe('MetatraderAccountApi', () => {
       baseCurrency: 'USD',
       copyFactoryRoles: ['PROVIDER'],
       riskManagementApiEnabled: false,
-      metastatsHourlyTarificationEnabled: false,
+      metastatsApiEnabled: false,
       connections: [{
         region: 'region',
         zone: 'zone',
@@ -242,7 +242,7 @@ describe('MetatraderAccountApi', () => {
     account.baseCurrency.should.equal('USD');
     account.copyFactoryRoles.should.deepEqual(['PROVIDER']);
     account.riskManagementApiEnabled.should.equal(false);
-    account.metastatsHourlyTarificationEnabled.should.equal(false);
+    account.metastatsApiEnabled.should.equal(false);
     account.connections.should.deepEqual([{
       region: 'region',
       zone: 'zone',
@@ -621,9 +621,9 @@ describe('MetatraderAccountApi', () => {
   });
 
   /**
-   * @test {MetatraderAccount#enableMetastatsHourlyTarification}
+   * @test {MetatraderAccount#enableMetaStatsApi}
    */
-  it('should enable account MetaStats hourly tarification', async () => {
+  it('should enable account MetaStats API', async () => {
     getAccountStub
       .onFirstCall().resolves({
         _id: 'id',
@@ -648,13 +648,13 @@ describe('MetatraderAccountApi', () => {
         connectionStatus: 'CONNECTED',
         state: 'UNDEPLOYING',
         type: 'cloud',
-        metastatsHourlyTarificationEnabled: true
+        metastatsApiEnabled: true
       });
-    sandbox.stub(client, 'enableMetastatsHourlyTarification').resolves();
+    sandbox.stub(client, 'enableMetaStatsApi').resolves();
     let account = await api.getAccount('id');
-    await account.enableMetastatsHourlyTarification();
-    account.metastatsHourlyTarificationEnabled.should.be.true();
-    sinon.assert.calledWith(client.enableMetastatsHourlyTarification, 'id');
+    await account.enableMetaStatsApi();
+    account.metastatsApiEnabled.should.be.true();
+    sinon.assert.calledWith(client.enableMetaStatsApi, 'id');
     sinon.assert.calledWith(client.getAccount, 'id');
     sinon.assert.calledTwice(client.getAccount);
   });
