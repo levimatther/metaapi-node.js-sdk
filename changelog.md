@@ -1,3 +1,6 @@
+23.1.0
+ - updated CopyFactory SDK
+
 23.0.0
  - breaking change: replaced enableMetastatsHourlyTarification method name with enableMetaStatsApi
  - breaking change: replaced metastatsHourlyTarificationEnabled field with metastatsApiEnabled
